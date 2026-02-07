@@ -1,0 +1,813 @@
+{
+  "@@locale": "en",
+  
+  "appName": "Lumina",
+  "@appName": {
+    "description": "Application name"
+  },
+  
+  "library": "Library",
+  "@library": {
+    "description": "Library tab label"
+  },
+  
+  "bookshelf": "Bookshelf",
+  "@bookshelf": {
+    "description": "Bookshelf tab label"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings tab label"
+  },
+  
+  "allBooks": "All Books",
+  "@allBooks": {
+    "description": "All books shelf name"
+  },
+  
+  "reading": "Reading",
+  "@reading": {
+    "description": "Reading shelf name"
+  },
+  
+  "finished": "Finished",
+  "@finished": {
+    "description": "Finished shelf name"
+  },
+  
+  "toRead": "To Read",
+  "@toRead": {
+    "description": "To read shelf name"
+  },
+  
+  "addBook": "Add Book",
+  "@addBook": {
+    "description": "Add book button label"
+  },
+  
+  "importBook": "Import Book",
+  "@importBook": {
+    "description": "Import book action"
+  },
+  
+  "deleteBook": "Delete Book",
+  "@deleteBook": {
+    "description": "Delete book action"
+  },
+  
+  "deleteBookConfirm": "Are you sure you want to delete this book?",
+  "@deleteBookConfirm": {
+    "description": "Delete book confirmation message"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button label"
+  },
+  
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button label"
+  },
+  
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button label"
+  },
+  
+  "tableOfContents": "Table of Contents",
+  "@tableOfContents": {
+    "description": "Table of contents label"
+  },
+  
+  "chapter": "Chapter",
+  "@chapter": {
+    "description": "Chapter label"
+  },
+  
+  "page": "Page",
+  "@page": {
+    "description": "Page label"
+  },
+  
+  "progress": "Progress",
+  "@progress": {
+    "description": "Progress label"
+  },
+  
+  "webdavSync": "WebDAV Sync",
+  "@webdavSync": {
+    "description": "WebDAV sync label"
+  },
+  
+  "syncNow": "Sync Now",
+  "@syncNow": {
+    "description": "Sync now button label"
+  },
+  
+  "serverUrl": "Server URL",
+  "@serverUrl": {
+    "description": "Server URL label"
+  },
+  
+  "username": "Username",
+  "@username": {
+    "description": "Username label"
+  },
+  
+  "password": "Password",
+  "@password": {
+    "description": "Password label"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button label"
+  },
+  
+  "language": "Language",
+  "@language": {
+    "description": "Language setting label"
+  },
+  
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+  
+  "chinese": "Chinese",
+  "@chinese": {
+    "description": "Chinese language option"
+  },
+  
+  "theme": "Theme",
+  "@theme": {
+    "description": "Theme setting label"
+  },
+  
+  "lightMode": "Light Mode",
+  "@lightMode": {
+    "description": "Light mode option"
+  },
+  
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Dark mode option"
+  },
+  
+  "fontSize": "Font Size",
+  "@fontSize": {
+    "description": "Font size setting label"
+  },
+  
+  "lineHeight": "Line Height",
+  "@lineHeight": {
+    "description": "Line height setting label"
+  },
+  
+  "publisher": "Publisher",
+  "@publisher": {
+    "description": "Publisher label"
+  },
+  
+  "readingTime": "Reading Time",
+  "@readingTime": {
+    "description": "Reading time label"
+  },
+  
+  "lastRead": "Last Read",
+  "@lastRead": {
+    "description": "Last read time label"
+  },
+  
+  "noBooks": "No books yet",
+  "@noBooks": {
+    "description": "Empty library message"
+  },
+  
+  "addYourFirstBook": "Add your first book to get started",
+  "@addYourFirstBook": {
+    "description": "Empty library hint"
+  },
+  
+  "searchBooks": "Search books",
+  "@searchBooks": {
+    "description": "Search books placeholder"
+  },
+  
+  "sortBy": "Sort by",
+  "@sortBy": {
+    "description": "Sort by label"
+  },
+  
+  "title": "Title",
+  "@title": {
+    "description": "Title sort option"
+  },
+  
+  "recentlyAdded": "Recently Added",
+  "@recentlyAdded": {
+    "description": "Recently added sort option"
+  },
+  
+  "recentlyRead": "Recently Read",
+  "@recentlyRead": {
+    "description": "Recently read sort option"
+  },
+  
+  "error": "Error",
+  "@error": {
+    "description": "Error label"
+  },
+  
+  "success": "Success",
+  "@success": {
+    "description": "Success label"
+  },
+  
+  "loading": "Loading",
+  "@loading": {
+    "description": "Loading label"
+  },
+  
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button label"
+  },
+  
+  "back": "Back",
+  "@back": {
+    "description": "Back button label"
+  },
+  
+  "next": "Next",
+  "@next": {
+    "description": "Next button label"
+  },
+  
+  "previous": "Previous",
+  "@previous": {
+    "description": "Previous button label"
+  },
+  
+  "close": "Close",
+  "@close": {
+    "description": "Close button label"
+  },
+  
+  "version": "Version",
+  "@version": {
+    "description": "Version label"
+  },
+  
+  "all": "All",
+  "@all": {
+    "description": "All books tab label"
+  },
+  
+  "uncategorized": "Uncategorized",
+  "@uncategorized": {
+    "description": "Uncategorized books tab label"
+  },
+  
+  "selectAll": "Select All",
+  "@selectAll": {
+    "description": "Select all button label"
+  },
+  
+  "deselectAll": "Deselect All",
+  "@deselectAll": {
+    "description": "Deselect all button label"
+  },
+  
+  "sort": "Sort",
+  "@sort": {
+    "description": "Sort button tooltip"
+  },
+  
+  "editCategory": "Edit Category",
+  "@editCategory": {
+    "description": "Edit category dialog title"
+  },
+  
+  "categoryName": "Category name",
+  "@categoryName": {
+    "description": "Category name input label"
+  },
+  
+  "sortBooksBy": "Sort Books by",
+  "@sortBooksBy": {
+    "description": "Sort books bottom sheet title"
+  },
+  
+  "titleAZ": "Title (A-Z)",
+  "@titleAZ": {
+    "description": "Sort by title ascending"
+  },
+  
+  "titleZA": "Title (Z-A)",
+  "@titleZA": {
+    "description": "Sort by title descending"
+  },
+  
+  "authorAZ": "Author (A-Z)",
+  "@authorAZ": {
+    "description": "Sort by author ascending"
+  },
+  
+  "authorZA": "Author (Z-A)",
+  "@authorZA": {
+    "description": "Sort by author descending"
+  },
+  
+  "readingProgress": "Reading Progress",
+  "@readingProgress": {
+    "description": "Sort by reading progress"
+  },
+  
+  "noItemsInCategory": "No items in this Category",
+  "@noItemsInCategory": {
+    "description": "Empty category message"
+  },
+  
+  "selected": "{count} selected",
+  "@selected": {
+    "description": "Selection count label",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "move": "Move",
+  "@move": {
+    "description": "Move button label"
+  },
+  
+  "deleted": "Deleted",
+  "@deleted": {
+    "description": "Deleted badge label"
+  },
+  
+  "moveTo": "Move to ...",
+  "@moveTo": {
+    "description": "Move to dialog title"
+  },
+  
+  "createNewCategory": "Create New Category",
+  "@createNewCategory": {
+    "description": "Create new category option"
+  },
+  
+  "newCategory": "New Category",
+  "@newCategory": {
+    "description": "New category dialog title"
+  },
+  
+  "create": "Create",
+  "@create": {
+    "description": "Create button label"
+  },
+  
+  "deleteBooks": "Delete Books",
+  "@deleteBooks": {
+    "description": "Delete books dialog title"
+  },
+  
+  "deleteBooksConfirm": "Delete selected books permanently?",
+  "@deleteBooksConfirm": {
+    "description": "Delete books confirmation message"
+  },
+  
+  "movedTo": "Moved to \"{name}\"",
+  "@movedTo": {
+    "description": "Successfully moved message",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "failedToMove": "Failed to move items",
+  "@failedToMove": {
+    "description": "Failed to move error message"
+  },
+  
+  "failedToDelete": "Failed to delete",
+  "@failedToDelete": {
+    "description": "Failed to delete error message"
+  },
+  
+  "invalidFileSelected": "Invalid file selected",
+  "@invalidFileSelected": {
+    "description": "Invalid file error message"
+  },
+  
+  "importing": "Importing...",
+  "@importing": {
+    "description": "Importing progress message"
+  },
+  
+  "successfullyImported": "Successfully imported \"{title}\"",
+  "@successfullyImported": {
+    "description": "Successfully imported message",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "importFailed": "Import failed: {error}",
+  "@importFailed": {
+    "description": "Import failed error message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "syncCompleted": "Sync completed",
+  "@syncCompleted": {
+    "description": "Sync completed message"
+  },
+  
+  "syncFailed": "Sync failed (long press sync button for settings): {message}",
+  "@syncFailed": {
+    "description": "Sync failed error message",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "syncError": "Sync error: {error}",
+  "@syncError": {
+    "description": "Sync error message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "tapSyncLongPressSettings": "Tap: Sync Now\nLong press: Settings",
+  "@tapSyncLongPressSettings": {
+    "description": "Sync button tooltip"
+  },
+  
+  "errorLoadingLibrary": "Error loading library: {error}",
+  "@errorLoadingLibrary": {
+    "description": "Error loading library message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "bookNotFound": "Book not found",
+  "@bookNotFound": {
+    "description": "Book not found error message"
+  },
+  
+  "progressPercent": "Progress: {percent}%",
+  "@progressPercent": {
+    "description": "Reading progress percentage",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "notStarted": "Not started",
+  "@notStarted": {
+    "description": "Book not started reading status"
+  },
+  
+  "chaptersCount": "{count} chapters",
+  "@chaptersCount": {
+    "description": "Number of chapters",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "epubVersion": "EPUB {version}",
+  "@epubVersion": {
+    "description": "EPUB version label",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "continueReading": "Continue Reading",
+  "@continueReading": {
+    "description": "Continue reading button label"
+  },
+  
+  "startReading": "Start Reading",
+  "@startReading": {
+    "description": "Start reading button label"
+  },
+  
+  "collapse": "Collapse",
+  "@collapse": {
+    "description": "Collapse button label"
+  },
+  
+  "expandAll": "Expand all",
+  "@expandAll": {
+    "description": "Expand all button label"
+  },
+  
+  "bookManifestNotFound": "Book manifest not found",
+  "@bookManifestNotFound": {
+    "description": "Book manifest not found error message"
+  },
+  
+  "errorLoadingBook": "Error loading book: {error}",
+  "@errorLoadingBook": {
+    "description": "Error loading book message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "firstChapterOfBook": "This is the first chapter of the book",
+  "@firstChapterOfBook": {
+    "description": "First chapter notification"
+  },
+  
+  "lastChapterOfBook": "This is the last chapter of the book",
+  "@lastChapterOfBook": {
+    "description": "Last chapter notification"
+  },
+  
+  "lastPageOfBook": "This is the last page of the book",
+  "@lastPageOfBook": {
+    "description": "Last page notification"
+  },
+  
+  "firstPageOfBook": "This is the first page of the book",
+  "@firstPageOfBook": {
+    "description": "First page notification"
+  },
+  
+  "chapterHasNoContent": "This chapter has no content",
+  "@chapterHasNoContent": {
+    "description": "Empty chapter notification"
+  },
+  
+  "serverSettings": "Server Settings",
+  "@serverSettings": {
+    "description": "Server settings section title"
+  },
+  
+  "serverUrlHint": "https://cloud.example.com/remote.php/dav/files/username/",
+  "@serverUrlHint": {
+    "description": "Server URL input hint"
+  },
+  
+  "serverUrlRequired": "Server URL is required",
+  "@serverUrlRequired": {
+    "description": "Server URL validation error"
+  },
+  
+  "urlMustStartWith": "URL must start with http:// or https://",
+  "@urlMustStartWith": {
+    "description": "URL format validation error"
+  },
+  
+  "usernameRequired": "Username is required",
+  "@usernameRequired": {
+    "description": "Username validation error"
+  },
+  
+  "passwordRequired": "Password is required",
+  "@passwordRequired": {
+    "description": "Password validation error"
+  },
+  
+  "remoteFolderPath": "Remote Folder Path",
+  "@remoteFolderPath": {
+    "description": "Remote folder path label"
+  },
+  
+  "remoteFolderHint": "LuminaReader/",
+  "@remoteFolderHint": {
+    "description": "Remote folder path hint"
+  },
+  
+  "folderPathRequired": "Folder path is required",
+  "@folderPathRequired": {
+    "description": "Folder path validation error"
+  },
+  
+  "testing": "Testing...",
+  "@testing": {
+    "description": "Testing connection status"
+  },
+  
+  "testConnection": "Test Connection",
+  "@testConnection": {
+    "description": "Test connection button label"
+  },
+  
+  "syncInformation": "Sync Information",
+  "@syncInformation": {
+    "description": "Sync information section title"
+  },
+  
+  "lastSync": "Last Sync",
+  "@lastSync": {
+    "description": "Last sync time label"
+  },
+  
+  "never": "Never",
+  "@never": {
+    "description": "Never synced status"
+  },
+  
+  "justNow": "Just now",
+  "@justNow": {
+    "description": "Just now time indicator"
+  },
+  
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "description": "Minutes ago time indicator",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "description": "Hours ago time indicator",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "daysAgo": "{days}d ago",
+  "@daysAgo": {
+    "description": "Days ago time indicator",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "lastError": "Last Error",
+  "@lastError": {
+    "description": "Last error label"
+  },
+  
+  "fillAllRequiredFields": "Please fill in all required fields",
+  "@fillAllRequiredFields": {
+    "description": "Fill all fields validation message"
+  },
+  
+  "connectionSuccessful": "Connection successful!",
+  "@connectionSuccessful": {
+    "description": "Connection test success message"
+  },
+  
+  "connectionFailed": "Connection failed. Check your settings: {details}",
+  "@connectionFailed": {
+    "description": "Connection test failed message",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "errorWithDetails": "Error: {error}",
+  "@errorWithDetails": {
+    "description": "Error message with details",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "failedToCreateCategory": "Failed to create category!",
+  "@failedToCreateCategory": {
+    "description": "Failed to create category message"
+  },
+
+  "categoryNameCannotBeEmpty": "Category name cannot be empty",
+  "@categoryNameCannotBeEmpty": {
+    "description": "Category name empty validation message"
+  },
+
+  "categoryCreated": "Category \"{name}\" created",
+  "@categoryCreated": {
+    "description": "Category created success message",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+
+  "categoryDeleted": "Category \"{name}\" deleted",
+  "@categoryDeleted": {
+    "description": "Category deleted success message",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+
+  "failedToDeleteCategory": "Failed to delete category!",
+  "@failedToDeleteCategory": {
+    "description": "Failed to delete category message"
+  },
+
+  "experimentalFeature": "Experimental Feature",
+  "@experimentalFeature": {
+    "description": "Experimental feature title"
+  },
+
+  "experimentalFeatureWarning": "WebDAV sync is currently in experimental stage and may have some issues or instability.\n\nPlease ensure before using:\n• Important data is backed up\n• Understand WebDAV server configuration\n• Network connection is stable\n\nPlease provide feedback if you encounter any issues.",
+  "@experimentalFeatureWarning": {
+    "description": "Experimental feature warning content"
+  },
+
+  "iKnow": "I Know",
+  "@iKnow": {
+    "description": "I know button text"
+  },
+
+  "invalidFileType": "Invalid file type. Please select an EPUB file.",
+  "@invalidFileType": {
+    "description": "Invalid file type error message"
+  },
+
+  "fileAccessError": "Unable to access file",
+  "@fileAccessError": {
+    "description": "File access error message"
+  },
+
+  "about": "About",
+  "@about": {
+    "description": "About page title"
+  },
+
+  "projectInfo": "Project Info",
+  "@projectInfo": {
+    "description": "Project information section title"
+  },
+
+  "github": "GitHub",
+  "@github": {
+    "description": "GitHub label"
+  },
+
+  "author": "Author",
+  "@author": {
+    "description": "Author label"
+  },
+
+  "tips": "Tips",
+  "@tips": {
+    "description": "Tips section title"
+  },
+
+  "tipLongPressTab": "Long press on tab to edit category",
+  "@tipLongPressTab": {
+    "description": "Tip for long pressing tab to edit category"
+  },
+
+  "tipLongPressSync": "Long press sync button to access sync settings",
+  "@tipLongPressSync": {
+    "description": "Tip for long pressing sync button"
+  },
+
+  "tipLongPressNextTrack": "Long press previous/next button to jump to previous/next chapter",
+  "@tipLongPressNextTrack": {
+    "description": "Tip for long pressing previous/next button"
+  }
+}

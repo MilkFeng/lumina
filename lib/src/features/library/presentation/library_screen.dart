@@ -1,0 +1,1205 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
+import '../../../core/services/toast_service.dart';
+import '../application/library_notifier.dart';
+import '../application/bookshelf_notifier.dart';
+import '../data/shelf_book_repository.dart';
+import '../domain/shelf_book.dart';
+import '../domain/shelf_group.dart';
+import '../../../core/widgets/book_cover.dart';
+import '../../sync/application/sync_notifier.dart';
+import '../../../../l10n/app_localizations.dart';
+
+/// Library Screen - Displays user's book collection with advanced bookshelf features
+class LibraryScreen extends ConsumerStatefulWidget {
+  const LibraryScreen({super.key});
+
+  @override
+  ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends ConsumerState<LibraryScreen>
+    with TickerProviderStateMixin {
+  TabController? _tabController;
+  bool _isUpdatingFromState = false;
+  int _lastTabIndex = 0;
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  void _initializeTabController(BookshelfState state) {
+    final tabCount =
+        2 + state.availableGroups.length; // All + Uncategorized + groups
+
+    if (_tabController == null || _tabController!.length != tabCount) {
+      final previousController = _tabController;
+      previousController?.removeListener(_handleTabChange);
+      _tabController = TabController(
+        length: tabCount,
+        vsync: this,
+        initialIndex: _getTabIndexFromState(state),
+      );
+      _lastTabIndex = _tabController!.index;
+      _tabController!.addListener(_handleTabChange);
+      if (previousController != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          previousController.dispose();
+        });
+      }
+    }
+  }
+
+  int _getTabIndexFromState(BookshelfState state) {
+    if (state.filterGroupId == -1) return 1;
+    if (state.filterGroupId == null) return 0;
+    final index = state.availableGroups.indexWhere(
+      (g) => g.id == state.filterGroupId,
+    );
+    return index == -1 ? 0 : index + 2;
+  }
+
+  void _handleTabChange() {
+    if (_tabController == null || _isUpdatingFromState) return;
+    final newIndex = _tabController!.index;
+    if (newIndex == _lastTabIndex) return;
+    _lastTabIndex = newIndex;
+
+    final state = ref.read(bookshelfNotifierProvider).valueOrNull;
+    if (state == null) return;
+
+    if (newIndex == 0) {
+      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(null);
+      return;
+    }
+
+    if (newIndex == 1) {
+      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(-1);
+      return;
+    }
+
+    final newGroupId = state.availableGroups[newIndex - 2].id;
+    if (state.filterGroupId != newGroupId) {
+      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(newGroupId);
+    }
+  }
+
+  void _syncTabIndexWithState(BookshelfState state) {
+    if (_tabController == null) return;
+
+    final expectedIndex = _getTabIndexFromState(state);
+    if (_tabController!.index != expectedIndex) {
+      _isUpdatingFromState = true;
+      _lastTabIndex = expectedIndex;
+      _tabController!.animateTo(expectedIndex);
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _isUpdatingFromState = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bookshelfState = ref.watch(bookshelfNotifierProvider);
+
+    final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
+    final isSelectionMode = state?.isSelectionMode ?? false;
+
+    return PopScope(
+      canPop: !isSelectionMode,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+
+        if (isSelectionMode) {
+          ref.read(bookshelfNotifierProvider.notifier).toggleSelectionMode();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: bookshelfState.when(
+          loading: () =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          error: (error, stack) => Center(
+            child: Text(
+              AppLocalizations.of(
+                context,
+              )!.errorLoadingLibrary(error.toString()),
+            ),
+          ),
+          data: (state) {
+            _initializeTabController(state);
+            _syncTabIndexWithState(state);
+            return _buildTabView(context, ref, state);
+          },
+        ),
+        floatingActionButton: _buildFAB(context, ref),
+      ),
+    );
+  }
+
+  Widget? _buildFAB(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
+
+    if (state?.isSelectionMode ?? false) {
+      // Show selection actions FAB
+      return null; // We'll use bottom bar for selection actions
+    }
+
+    return FloatingActionButton(
+      onPressed: () => _handleImportBook(context, ref),
+      child: const Icon(Icons.add_outlined),
+    );
+  }
+
+  Widget _buildTabView(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+  ) {
+    if (_tabController == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Stack(
+      children: [
+        NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [_buildSliverAppBar(context, ref, state)];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            physics: state.isSelectionMode
+                ? const NeverScrollableScrollPhysics()
+                : null,
+            children: _buildTabViewChildren(context, ref, state),
+          ),
+        ),
+        // Selection mode bottom bar
+        if (state.isSelectionMode)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildSelectionBar(context, ref, state),
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _buildTabViewChildren(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+  ) {
+    final tabs = <Widget>[];
+
+    // "All" tab
+    tabs.add(_buildTabContent(ref, state, null));
+    tabs.add(_buildTabContent(ref, state, -1));
+
+    // Group tabs
+    for (final group in state.availableGroups) {
+      tabs.add(_buildTabContent(ref, state, group.id));
+    }
+
+    return tabs;
+  }
+
+  Widget _buildTabContent(WidgetRef ref, BookshelfState state, int? groupId) {
+    final isActiveTab = state.filterGroupId == groupId;
+    final booksForTab = isActiveTab ? state.books : state.cachedBooks[groupId];
+    if (booksForTab == null) {
+      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+    }
+
+    // Use Builder to get the correct context inside NestedScrollView
+    return Builder(
+      builder: (BuildContext context) {
+        return CustomScrollView(
+          key: PageStorageKey<String>('tab_$groupId'),
+          slivers: [
+            SliverOverlapInjector(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            ),
+            _buildItemsGrid(context, ref, state, booksForTab),
+            if (state.isSelectionMode)
+              const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSliverAppBar(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+  ) {
+    final isSelectionMode = state.isSelectionMode;
+
+    return SliverOverlapAbsorber(
+      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+      sliver: SliverAppBar(
+        pinned: true,
+        floating: false,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        leading: isSelectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close_outlined),
+                onPressed: () {
+                  ref
+                      .read(bookshelfNotifierProvider.notifier)
+                      .toggleSelectionMode();
+                },
+              )
+            : null,
+        title: GestureDetector(
+          onTap: isSelectionMode
+              ? null
+              : () {
+                  context.push('/about');
+                },
+          child: Text(
+            isSelectionMode
+                ? AppLocalizations.of(context)!.selected(state.selectedCount)
+                : AppLocalizations.of(context)!.appName,
+          ),
+        ),
+        actions: [
+          if (isSelectionMode)
+            TextButton(
+              onPressed: () {
+                if (state.selectedCount == state.books.length) {
+                  ref.read(bookshelfNotifierProvider.notifier).clearSelection();
+                } else {
+                  ref.read(bookshelfNotifierProvider.notifier).selectAll();
+                }
+              },
+              child: Text(
+                state.selectedCount == state.books.length
+                    ? AppLocalizations.of(context)!.deselectAll
+                    : AppLocalizations.of(context)!.selectAll,
+              ),
+            )
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.sort_rounded),
+              onPressed: () => _showSortBottomSheet(context, ref, state),
+              tooltip: AppLocalizations.of(context)!.sort,
+            ),
+            _SyncButton(
+              onSync: () {
+                ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
+              },
+            ),
+          ],
+        ],
+        bottom: isSelectionMode
+            ? null
+            : TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                tabs: _buildTabs(context, ref, state),
+                indicatorSize: TabBarIndicatorSize.label,
+              ),
+      ),
+    );
+  }
+
+  List<Widget> _buildTabs(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+  ) {
+    final tabs = <Widget>[];
+    // "All" tab
+    tabs.add(
+      Tab(
+        child: Text(
+          AppLocalizations.of(context)!.all,
+          style: AppTheme.contentTextStyle,
+        ),
+      ),
+    );
+    tabs.add(
+      Tab(
+        child: Text(
+          AppLocalizations.of(context)!.uncategorized,
+          style: AppTheme.contentTextStyle,
+        ),
+      ),
+    );
+
+    // Group tabs
+    for (final group in state.availableGroups) {
+      tabs.add(
+        Tab(
+          child: GestureDetector(
+            onLongPress: () {
+              HapticFeedback.selectionClick();
+              final l10n = AppLocalizations.of(context)!;
+              _showEditGroupDialog(context, ref, group, l10n);
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Text(group.name, style: AppTheme.contentTextStyle),
+          ),
+        ),
+      );
+    }
+
+    return tabs;
+  }
+
+  Future<void> _showEditGroupDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ShelfGroup group,
+    AppLocalizations l10n,
+  ) async {
+    var draftName = group.name;
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          AppLocalizations.of(context)!.editCategory,
+          style: AppTheme.contentTextStyle,
+        ),
+        content: TextFormField(
+          initialValue: group.name,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.categoryName,
+          ),
+          onChanged: (value) => draftName = value,
+          onFieldSubmitted: (value) => Navigator.pop(context, value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final result = await ref
+                  .read(bookshelfNotifierProvider.notifier)
+                  .deleteGroup(group.id);
+              if (context.mounted) {
+                if (result) {
+                  ToastService.showSuccess(l10n.categoryDeleted(group.name));
+                } else {
+                  ToastService.showError(l10n.failedToDeleteCategory);
+                }
+              }
+            },
+            child: Text(l10n.delete),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, draftName.trim()),
+            child: Text(AppLocalizations.of(context)!.save),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && result != group.name) {
+      await ref
+          .read(bookshelfNotifierProvider.notifier)
+          .renameGroup(group.id, result);
+    }
+  }
+
+  void _showSortBottomSheet(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _SortBottomSheet(
+        currentSort: state.sortBy,
+        onSortSelected: (sortBy) {
+          ref.read(bookshelfNotifierProvider.notifier).changeSortOrder(sortBy);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  Widget _buildItemsGrid(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+    List<ShelfBook> books,
+  ) {
+    if (books.isEmpty) {
+      return SliverFillRemaining(
+        child: Center(
+          child: Text(
+            AppLocalizations.of(context)!.noItemsInCategory,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 128),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.55,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final book = books[index];
+          return _BookCard(
+            book: book,
+            isSelected: state.selectedBookIds.contains(book.id),
+            isSelectionMode: state.isSelectionMode,
+            onTap: () {
+              if (state.isSelectionMode) {
+                ref
+                    .read(bookshelfNotifierProvider.notifier)
+                    .toggleItemSelection(book);
+              } else {
+                context.push('/book/${book.fileHash}').then((value) {
+                  ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
+                });
+              }
+            },
+            onLongPress: () {
+              if (!state.isSelectionMode) {
+                HapticFeedback.selectionClick();
+                ref
+                    .read(bookshelfNotifierProvider.notifier)
+                    .toggleSelectionMode();
+                ref
+                    .read(bookshelfNotifierProvider.notifier)
+                    .toggleItemSelection(book);
+              }
+            },
+          );
+        }, childCount: books.length),
+      ),
+    );
+  }
+
+  Widget _buildSelectionBar(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: Theme.of(context).colorScheme.outline),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildActionButton(
+                context,
+                icon: Icons.drive_file_move_outlined,
+                label: AppLocalizations.of(context)!.move,
+                onPressed: state.hasSelection
+                    ? () => _showMoveToGroup(context, ref, state)
+                    : null,
+              ),
+              _buildActionButton(
+                context,
+                icon: Icons.delete_outlined,
+                label: AppLocalizations.of(context)!.delete,
+                onPressed: state.hasSelection
+                    ? () => _confirmDelete(context, ref)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    final enabled = onPressed != null;
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: enabled
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface.withAlpha(77),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: enabled
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurface.withAlpha(77),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showMoveToGroup(
+    BuildContext context,
+    WidgetRef ref,
+    BookshelfState state,
+  ) async {
+    const createGroupResult = -2;
+
+    final l10n = AppLocalizations.of(context)!;
+
+    var result = await showDialog<int?>(
+      context: context,
+      builder: (context) => _GroupSelectionDialog(
+        groups: state.availableGroups,
+        createGroupResult: createGroupResult,
+      ),
+    );
+    String? newName;
+
+    if (result == createGroupResult) {
+      final name = await _promptForGroupName(context);
+      if (!context.mounted) return;
+      if (name != null && name.trim().isNotEmpty) {
+        final groupId = await ref
+            .read(bookshelfNotifierProvider.notifier)
+            .createGroup(name);
+
+        if (groupId == null) {
+          if (state is AsyncError) {
+            ToastService.showError(l10n.failedToCreateCategory);
+          }
+          return;
+        } else {
+          ToastService.showSuccess(l10n.categoryCreated(name));
+        }
+
+        result = groupId;
+        newName = name;
+      } else {
+        ToastService.showError(l10n.categoryNameCannotBeEmpty);
+        return;
+      }
+    }
+
+    if (result != null) {
+      final targetGroupId = result == -1 ? null : result;
+      final success = await ref
+          .read(bookshelfNotifierProvider.notifier)
+          .moveSelectedItems(targetGroupId);
+      if (!context.mounted) return;
+      {
+        if (success) {
+          var targetName = l10n.categoryName;
+          if (targetGroupId == null) {
+            targetName = l10n.uncategorized;
+          } else {
+            if (newName != null) {
+              targetName = newName;
+            } else {
+              for (final group in state.availableGroups) {
+                if (group.id == targetGroupId) {
+                  targetName = group.name;
+                  break;
+                }
+              }
+            }
+          }
+          ToastService.showSuccess(l10n.movedTo(targetName));
+        } else {
+          ToastService.showError(l10n.failedToMove);
+        }
+      }
+    }
+  }
+
+  Future<String?> _promptForGroupName(BuildContext context) async {
+    var draftName = '';
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.newCategory),
+        content: TextField(
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.categoryName,
+          ),
+          onChanged: (value) => draftName = value,
+          onSubmitted: (value) => Navigator.pop(context, value.trim()),
+          style: AppTheme.contentTextStyle,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, draftName.trim()),
+            child: Text(AppLocalizations.of(context)!.create),
+          ),
+        ],
+      ),
+    );
+    return (result?.trim().isNotEmpty ?? false) ? result : null;
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.deleteBooks),
+        content: Text(AppLocalizations.of(context)!.deleteBooksConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(AppLocalizations.of(context)!.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await ref
+          .read(bookshelfNotifierProvider.notifier)
+          .deleteSelected();
+      if (context.mounted) {
+        if (success) {
+          ToastService.showSuccess(AppLocalizations.of(context)!.deleted);
+        } else {
+          ToastService.showError(AppLocalizations.of(context)!.failedToDelete);
+        }
+      }
+    }
+  }
+
+  Future<void> _handleImportBook(BuildContext context, WidgetRef ref) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['epub'],
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final finalName = result.files.single.name;
+      final fileExtension = finalName.contains('.')
+          ? finalName.split('.').last
+          : '';
+      if (fileExtension.toLowerCase() != 'epub') {
+        if (context.mounted) {
+          ToastService.showError(AppLocalizations.of(context)!.invalidFileType);
+        }
+        return;
+      }
+
+      final filePath = result.files.single.path;
+
+      if (filePath == null) {
+        if (context.mounted) {
+          ToastService.showError(AppLocalizations.of(context)!.fileAccessError);
+        }
+        return;
+      }
+
+      if (context.mounted) {
+        ToastService.showInfo(AppLocalizations.of(context)!.importing);
+      }
+
+      final file = File(filePath);
+      final importResult = await ref
+          .read(libraryNotifierProvider.notifier)
+          .importBook(file);
+
+      FilePicker.platform.clearTemporaryFiles();
+
+      if (context.mounted) {
+        importResult.fold(
+          (error) {
+            ToastService.showError(error);
+          },
+          (book) {
+            ToastService.showSuccess(
+              AppLocalizations.of(context)!.successfullyImported(book.title),
+            );
+            // Refresh bookshelf
+            ref.read(bookshelfNotifierProvider.notifier).refresh();
+          },
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.importFailed(e.toString()),
+        );
+      }
+    }
+  }
+}
+
+class _SyncButton extends ConsumerStatefulWidget {
+  final Function()? onSync;
+
+  const _SyncButton({this.onSync});
+
+  @override
+  ConsumerState<_SyncButton> createState() => _SyncButtonState();
+}
+
+class _SyncButtonState extends ConsumerState<_SyncButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _turns;
+  bool _isAnimating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _turns = Tween<double>(begin: 0, end: 1).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _startAnimation() {
+    if (!_isAnimating) {
+      setState(() => _isAnimating = true);
+      _controller.repeat();
+    }
+  }
+
+  void _stopAnimation() {
+    if (!mounted) return;
+    _controller.stop();
+    _controller.reset();
+    setState(() => _isAnimating = false);
+  }
+
+  Future<void> _performSync() async {
+    if (_isAnimating) return;
+
+    _startAnimation();
+
+    try {
+      final success = await ref
+          .read(syncNotifierProvider.notifier)
+          .performSync();
+
+      if (mounted) {
+        if (success) {
+          ToastService.showSuccess(AppLocalizations.of(context)!.syncCompleted);
+          widget.onSync?.call();
+        } else {
+          final state = ref.read(syncNotifierProvider).valueOrNull;
+          if (state is SyncError) {
+            ToastService.showError(
+              AppLocalizations.of(context)!.syncFailed(state.message),
+            );
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.syncError(e.toString()),
+        );
+      }
+    } finally {
+      _stopAnimation();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Listen to sync state to show real-time feedback
+    ref.listen<AsyncValue<SyncState>>(syncNotifierProvider, (previous, next) {
+      next.whenData((state) {
+        if (state is SyncInProgress) {
+          _startAnimation();
+        } else {
+          _stopAnimation();
+        }
+      });
+    });
+
+    return IconButton(
+      onPressed: _isAnimating ? null : _performSync,
+      onLongPress: () {
+        context.push('/sync-settings');
+      },
+      tooltip: AppLocalizations.of(context)!.tapSyncLongPressSettings,
+      icon: RotationTransition(turns: _turns, child: Icon(Icons.sync_outlined)),
+    );
+  }
+}
+
+// Book Card Widget with selection support
+class _BookCard extends StatelessWidget {
+  final ShelfBook book;
+  final bool isSelected;
+  final bool isSelectionMode;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  const _BookCard({
+    required this.book,
+    required this.isSelected,
+    required this.isSelectionMode,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // V2: coverPath is already absolute
+    final coverPath = book.coverPath;
+
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Book Cover with selection overlay
+              Expanded(
+                child: Stack(
+                  children: [
+                    Hero(
+                      tag: 'book-cover-${book.id}',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: BookCover(relativePath: coverPath),
+                      ),
+                    ),
+                    // Selection overlay
+                    if (isSelectionMode)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withAlpha(102)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withAlpha(51),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Title
+              Text(
+                book.title,
+                style: AppTheme.contentTextStyle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 4),
+
+              // Author
+              Text(
+                book.author,
+                style: AppTheme.contentTextStyle.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              // Reading progress indicator
+              if (book.readingProgress > 0 && !book.isDeleted)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: book.readingProgress,
+                      minHeight: 3,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(51),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          // Selection checkbox
+          if (isSelectionMode)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.surface,
+                  border: Border.all(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outline,
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      )
+                    : null,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// Group Selection Dialog
+class _GroupSelectionDialog extends StatelessWidget {
+  final List<ShelfGroup> groups;
+  final int createGroupResult;
+
+  const _GroupSelectionDialog({
+    required this.groups,
+    required this.createGroupResult,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      title: Text(AppLocalizations.of(context)!.moveTo),
+      contentPadding: const EdgeInsets.all(12),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView(
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.create_new_folder_outlined),
+              title: Text(
+                AppLocalizations.of(context)!.createNewCategory,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+              onTap: () => Navigator.pop(context, createGroupResult),
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_off_outlined),
+              title: Text(
+                AppLocalizations.of(context)!.uncategorized,
+                style: AppTheme.contentTextStyle,
+              ),
+              onTap: () => Navigator.pop(context, -1),
+            ),
+            ...groups.map(
+              (group) => ListTile(
+                leading: const Icon(Icons.folder_outlined),
+                title: Text(group.name, style: AppTheme.contentTextStyle),
+                onTap: () => Navigator.pop(context, group.id),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(AppLocalizations.of(context)!.cancel),
+        ),
+      ],
+    );
+  }
+}
+
+// Sort Bottom Sheet
+class _SortBottomSheet extends StatelessWidget {
+  final ShelfBookSortBy currentSort;
+  final Function(ShelfBookSortBy) onSortSelected;
+
+  const _SortBottomSheet({
+    required this.currentSort,
+    required this.onSortSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                AppLocalizations.of(context)!.sortBooksBy,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildSortOption(
+              context,
+              icon: Icons.access_time_outlined,
+              label: AppLocalizations.of(context)!.recentlyAdded,
+              sortBy: ShelfBookSortBy.recentlyAdded,
+            ),
+            _buildSortOption(
+              context,
+              icon: Icons.auto_stories_outlined,
+              label: AppLocalizations.of(context)!.recentlyRead,
+              sortBy: ShelfBookSortBy.recentlyRead,
+            ),
+            const Divider(height: 1),
+            _buildSortOption(
+              context,
+              icon: Icons.sort_by_alpha_outlined,
+              label: AppLocalizations.of(context)!.titleAZ,
+              sortBy: ShelfBookSortBy.titleAsc,
+            ),
+            _buildSortOption(
+              context,
+              icon: Icons.sort_by_alpha_outlined,
+              label: AppLocalizations.of(context)!.titleZA,
+              sortBy: ShelfBookSortBy.titleDesc,
+              iconRotation: true,
+            ),
+            const Divider(height: 1),
+            _buildSortOption(
+              context,
+              icon: Icons.person_outline_outlined,
+              label: AppLocalizations.of(context)!.authorAZ,
+              sortBy: ShelfBookSortBy.authorAsc,
+            ),
+            _buildSortOption(
+              context,
+              icon: Icons.person_outline_outlined,
+              label: AppLocalizations.of(context)!.authorZA,
+              sortBy: ShelfBookSortBy.authorDesc,
+              iconRotation: true,
+            ),
+            const Divider(height: 1),
+            _buildSortOption(
+              context,
+              icon: Icons.show_chart_outlined,
+              label: AppLocalizations.of(context)!.readingProgress,
+              sortBy: ShelfBookSortBy.progress,
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortOption(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required ShelfBookSortBy sortBy,
+    bool iconRotation = false,
+  }) {
+    final isSelected = currentSort == sortBy;
+
+    return ListTile(
+      leading: Transform.rotate(
+        angle: iconRotation ? 3.14159 : 0,
+        child: Icon(
+          icon,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.onSurface.withAlpha(153),
+        ),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.onSurface,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(
+              Icons.check_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            )
+          : null,
+      onTap: () => onSortSelected(sortBy),
+    );
+  }
+}

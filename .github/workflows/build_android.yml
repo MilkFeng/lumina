@@ -1,0 +1,88 @@
+name: Build APKs & AAB
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build APKs & AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.38.9'
+          cache: true
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Create Output Dir
+        run: mkdir -p build/outputs
+
+      - name: Build App Bundle
+        run: |
+          flutter build appbundle --release
+          
+          NEW_NAME="lumina-${{ github.ref_name }}-bundle-release.aab"
+          
+          mv build/app/outputs/bundle/release/app-release.aab build/outputs/$NEW_NAME
+          echo "Moved AAB to build/outputs/$NEW_NAME"
+
+      - name: Build Universal APK
+        run: |
+          flutter build apk --release
+          
+          NEW_NAME="lumina-${{ github.ref_name }}-universal-release.apk"
+          
+          mv build/app/outputs/flutter-apk/app-release.apk build/outputs/$NEW_NAME
+          echo "Moved Universal APK to build/outputs/$NEW_NAME"
+
+      - name: Build Split APKs
+        run: |
+          flutter build apk --release --split-per-abi
+          
+          cd build/app/outputs/flutter-apk/
+          for file in app-*-release.apk; do
+            abi=${file#app-}
+            abi=${abi%-release.apk}
+            
+            NEW_NAME="lumina-${{ github.ref_name }}-$abi-release.apk"
+            
+            mv "$file" "${{ github.workspace }}/build/outputs/$NEW_NAME"
+            echo "Renamed $file to $NEW_NAME"
+          done
+
+      - name: Release to GitHub
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            build/outputs/*
+          generate_release_notes: true
+          prerelease: false
