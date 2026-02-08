@@ -22,8 +22,8 @@ class EpubImportService {
   EpubImportService({
     required ShelfBookRepository shelfBookRepo,
     required BookManifestRepository manifestRepo,
-  })  : _shelfBookRepo = shelfBookRepo,
-        _manifestRepo = manifestRepo;
+  }) : _shelfBookRepo = shelfBookRepo,
+       _manifestRepo = manifestRepo;
 
   /// Import an EPUB file
   /// Returns Either:

@@ -10,11 +10,12 @@ import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../core/services/toast_service.dart';
 import '../application/library_notifier.dart';
 import '../application/bookshelf_notifier.dart';
-import '../data/shelf_book_repository.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
-import '../../../core/widgets/book_cover.dart';
-import '../../sync/application/sync_notifier.dart';
+import 'widgets/book_grid_item.dart';
+import 'widgets/sync_button.dart';
+import 'widgets/group_selection_dialog.dart';
+import 'widgets/sort_bottom_sheet.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Library Screen - Displays user's book collection with advanced bookshelf features
@@ -298,7 +299,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               onPressed: () => _showSortBottomSheet(context, ref, state),
               tooltip: AppLocalizations.of(context)!.sort,
             ),
-            _SyncButton(
+            SyncButton(
               onSync: () {
                 ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
               },
@@ -428,7 +429,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => _SortBottomSheet(
+      builder: (context) => SortBottomSheet(
         currentSort: state.sortBy,
         onSortSelected: (sortBy) {
           ref.read(bookshelfNotifierProvider.notifier).changeSortOrder(sortBy);
@@ -468,21 +469,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         ),
         delegate: SliverChildBuilderDelegate((context, index) {
           final book = books[index];
-          return _BookCard(
+          return BookGridItem(
             book: book,
             isSelected: state.selectedBookIds.contains(book.id),
             isSelectionMode: state.isSelectionMode,
-            onTap: () {
-              if (state.isSelectionMode) {
-                ref
-                    .read(bookshelfNotifierProvider.notifier)
-                    .toggleItemSelection(book);
-              } else {
-                context.push('/book/${book.fileHash}').then((value) {
-                  ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
-                });
-              }
-            },
             onLongPress: () {
               if (!state.isSelectionMode) {
                 HapticFeedback.selectionClick();
@@ -591,7 +581,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
     var result = await showDialog<int?>(
       context: context,
-      builder: (context) => _GroupSelectionDialog(
+      builder: (context) => GroupSelectionDialog(
         groups: state.availableGroups,
         createGroupResult: createGroupResult,
       ),
@@ -782,424 +772,5 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         );
       }
     }
-  }
-}
-
-class _SyncButton extends ConsumerStatefulWidget {
-  final Function()? onSync;
-
-  const _SyncButton({this.onSync});
-
-  @override
-  ConsumerState<_SyncButton> createState() => _SyncButtonState();
-}
-
-class _SyncButtonState extends ConsumerState<_SyncButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _turns;
-  bool _isAnimating = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _turns = Tween<double>(begin: 0, end: 1).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _startAnimation() {
-    if (!_isAnimating) {
-      setState(() => _isAnimating = true);
-      _controller.repeat();
-    }
-  }
-
-  void _stopAnimation() {
-    if (!mounted) return;
-    _controller.stop();
-    _controller.reset();
-    setState(() => _isAnimating = false);
-  }
-
-  Future<void> _performSync() async {
-    if (_isAnimating) return;
-
-    _startAnimation();
-
-    try {
-      final success = await ref
-          .read(syncNotifierProvider.notifier)
-          .performSync();
-
-      if (mounted) {
-        if (success.isRight()) {
-          ToastService.showSuccess(AppLocalizations.of(context)!.syncCompleted);
-          widget.onSync?.call();
-        } else {
-          final state = ref.read(syncNotifierProvider).valueOrNull;
-          if (state is SyncFailure) {
-            ToastService.showError(
-              state.userMessage,
-            );
-            return;
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ToastService.showError(
-          AppLocalizations.of(context)!.syncError(e.toString()),
-        );
-      }
-    } finally {
-      _stopAnimation();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Listen to sync state to show real-time feedback
-    ref.listen<AsyncValue<SyncState>>(syncNotifierProvider, (previous, next) {
-      next.whenData((state) {
-        if (state is SyncInProgress) {
-          _startAnimation();
-        } else {
-          _stopAnimation();
-        }
-      });
-    });
-
-    return IconButton(
-      onPressed: _isAnimating ? null : _performSync,
-      onLongPress: () {
-        context.push('/sync-settings');
-      },
-      tooltip: AppLocalizations.of(context)!.tapSyncLongPressSettings,
-      icon: RotationTransition(turns: _turns, child: Icon(Icons.sync_outlined)),
-    );
-  }
-}
-
-// Book Card Widget with selection support
-class _BookCard extends StatelessWidget {
-  final ShelfBook book;
-  final bool isSelected;
-  final bool isSelectionMode;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
-
-  const _BookCard({
-    required this.book,
-    required this.isSelected,
-    required this.isSelectionMode,
-    required this.onTap,
-    required this.onLongPress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // V2: coverPath is already absolute
-    final coverPath = book.coverPath;
-
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Book Cover with selection overlay
-              Expanded(
-                child: Stack(
-                  children: [
-                    Hero(
-                      tag: 'book-cover-${book.id}',
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: BookCover(relativePath: coverPath),
-                      ),
-                    ),
-                    // Selection overlay
-                    if (isSelectionMode)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withAlpha(102)
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withAlpha(51),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Title
-              Text(
-                book.title,
-                style: AppTheme.contentTextStyle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              const SizedBox(height: 4),
-
-              // Author
-              Text(
-                book.author,
-                style: AppTheme.contentTextStyle.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
-                  fontSize: 12,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              // Reading progress indicator
-              if (book.readingProgress > 0 && !book.isDeleted)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: book.readingProgress,
-                      minHeight: 3,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primary.withAlpha(51),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          // Selection checkbox
-          if (isSelectionMode)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.surface,
-                  border: Border.all(
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.outline,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? Icon(
-                        Icons.check,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      )
-                    : null,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// Group Selection Dialog
-class _GroupSelectionDialog extends StatelessWidget {
-  final List<ShelfGroup> groups;
-  final int createGroupResult;
-
-  const _GroupSelectionDialog({
-    required this.groups,
-    required this.createGroupResult,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      title: Text(AppLocalizations.of(context)!.moveTo),
-      contentPadding: const EdgeInsets.all(12),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.create_new_folder_outlined),
-              title: Text(
-                AppLocalizations.of(context)!.createNewCategory,
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
-              onTap: () => Navigator.pop(context, createGroupResult),
-            ),
-            ListTile(
-              leading: const Icon(Icons.folder_off_outlined),
-              title: Text(
-                AppLocalizations.of(context)!.uncategorized,
-                style: AppTheme.contentTextStyle,
-              ),
-              onTap: () => Navigator.pop(context, -1),
-            ),
-            ...groups.map(
-              (group) => ListTile(
-                leading: const Icon(Icons.folder_outlined),
-                title: Text(group.name, style: AppTheme.contentTextStyle),
-                onTap: () => Navigator.pop(context, group.id),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(AppLocalizations.of(context)!.cancel),
-        ),
-      ],
-    );
-  }
-}
-
-// Sort Bottom Sheet
-class _SortBottomSheet extends StatelessWidget {
-  final ShelfBookSortBy currentSort;
-  final Function(ShelfBookSortBy) onSortSelected;
-
-  const _SortBottomSheet({
-    required this.currentSort,
-    required this.onSortSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                AppLocalizations.of(context)!.sortBooksBy,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildSortOption(
-              context,
-              icon: Icons.access_time_outlined,
-              label: AppLocalizations.of(context)!.recentlyAdded,
-              sortBy: ShelfBookSortBy.recentlyAdded,
-            ),
-            _buildSortOption(
-              context,
-              icon: Icons.auto_stories_outlined,
-              label: AppLocalizations.of(context)!.recentlyRead,
-              sortBy: ShelfBookSortBy.recentlyRead,
-            ),
-            const Divider(height: 1),
-            _buildSortOption(
-              context,
-              icon: Icons.sort_by_alpha_outlined,
-              label: AppLocalizations.of(context)!.titleAZ,
-              sortBy: ShelfBookSortBy.titleAsc,
-            ),
-            _buildSortOption(
-              context,
-              icon: Icons.sort_by_alpha_outlined,
-              label: AppLocalizations.of(context)!.titleZA,
-              sortBy: ShelfBookSortBy.titleDesc,
-              iconRotation: true,
-            ),
-            const Divider(height: 1),
-            _buildSortOption(
-              context,
-              icon: Icons.person_outline_outlined,
-              label: AppLocalizations.of(context)!.authorAZ,
-              sortBy: ShelfBookSortBy.authorAsc,
-            ),
-            _buildSortOption(
-              context,
-              icon: Icons.person_outline_outlined,
-              label: AppLocalizations.of(context)!.authorZA,
-              sortBy: ShelfBookSortBy.authorDesc,
-              iconRotation: true,
-            ),
-            const Divider(height: 1),
-            _buildSortOption(
-              context,
-              icon: Icons.show_chart_outlined,
-              label: AppLocalizations.of(context)!.readingProgress,
-              sortBy: ShelfBookSortBy.progress,
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSortOption(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required ShelfBookSortBy sortBy,
-    bool iconRotation = false,
-  }) {
-    final isSelected = currentSort == sortBy;
-
-    return ListTile(
-      leading: Transform.rotate(
-        angle: iconRotation ? 3.14159 : 0,
-        child: Icon(
-          icon,
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onSurface.withAlpha(153),
-        ),
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.onSurface,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      trailing: isSelected
-          ? Icon(
-              Icons.check_outlined,
-              color: Theme.of(context).colorScheme.primary,
-            )
-          : null,
-      onTap: () => onSortSelected(sortBy),
-    );
   }
 }

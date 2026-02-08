@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/shelf_book.dart';
 import '../../../../core/widgets/book_cover.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../application/bookshelf_notifier.dart';
 
 /// Book grid item widget - displays a single book in the grid
+/// This is a dumb/presentational widget that accepts data and callbacks
 class BookGridItem extends ConsumerWidget {
   final ShelfBook book;
   final bool isSelectionMode;
@@ -30,38 +32,60 @@ class BookGridItem extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Book Cover
+              // Book Cover with selection overlay
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                child: Stack(
+                  children: [
+                    Hero(
+                      tag: 'book-cover-${book.id}',
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: BookCover(relativePath: book.coverPath),
+                        ),
                       ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: BookCover(
-                      relativePath: book.coverPath,
                     ),
-                  ),
+                    // Selection overlay
+                    if (isSelectionMode)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withAlpha(102)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withAlpha(51),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 12),
 
               // Book Title
               Text(
                 book.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                style: AppTheme.contentTextStyle,
               ),
+
+              const SizedBox(height: 4),
 
               // Book Author
               if (book.author.isNotEmpty)
@@ -69,19 +93,27 @@ class BookGridItem extends ConsumerWidget {
                   book.author,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                  style: AppTheme.contentTextStyle.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha(153),
+                    fontSize: 12,
+                  ),
                 ),
 
               // Reading Progress Indicator
-              if (book.readingProgress > 0)
+              if (book.readingProgress > 0 && !book.isDeleted)
                 Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: LinearProgressIndicator(
-                    value: book.readingProgress,
-                    minHeight: 2,
-                    backgroundColor: Colors.grey[300],
+                  padding: const EdgeInsets.only(top: 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: book.readingProgress,
+                      minHeight: 3,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(51),
+                    ),
                   ),
                 ),
             ],
@@ -91,33 +123,37 @@ class BookGridItem extends ConsumerWidget {
           if (isSelectionMode)
             Positioned(
               top: 8,
-              right: 8,
+              left: 8,
               child: Container(
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.white,
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.surface,
                   border: Border.all(
                     color: isSelected
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey,
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outline,
                     width: 2,
                   ),
                 ),
-                child: Icon(
-                  isSelected ? Icons.check : null,
-                  size: 20,
-                  color: Colors.white,
-                ),
+                child: isSelected
+                    ? Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      )
+                    : null,
               ),
             ),
 
           // Finished Badge
-          if (book.isFinished)
+          if (book.isFinished && !isSelectionMode)
             Positioned(
               top: 8,
-              left: 8,
+              right: 8,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -141,8 +177,10 @@ class BookGridItem extends ConsumerWidget {
       // Toggle selection
       ref.read(bookshelfNotifierProvider.notifier).toggleItemSelection(book);
     } else {
-      // Navigate to book detail
-      context.push('/book/${book.fileHash}');
+      // Navigate to book detail and reload on return
+      context.push('/book/${book.fileHash}').then((_) {
+        ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
+      });
     }
   }
 }

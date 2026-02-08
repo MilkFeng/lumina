@@ -103,7 +103,7 @@ class BookManifestRepository {
   Future<List<TocItem>> getFlattenedToc(String fileHash) async {
     final manifest = await getManifestByHash(fileHash);
     if (manifest == null) return [];
-    
+
     return _flattenTocItems(manifest.toc);
   }
 

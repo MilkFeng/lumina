@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../domain/shelf_book.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../../../core/widgets/book_cover.dart';
+import '../../../core/widgets/expandable_text.dart';
 import '../../../../l10n/app_localizations.dart';
 
 part 'book_detail_screen.g.dart';
@@ -142,44 +143,13 @@ class BookDetailScreen extends ConsumerWidget {
             // Description (if available)
             if (book.description != null && book.description!.isNotEmpty) ...[
               const SizedBox(height: 24),
-              StatefulBuilder(
-                builder: (context, setState) {
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      final span = TextSpan(
-                        text: book.description!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontFamily: AppTheme.fontFamilyContent,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      );
-
-                      final tp = TextPainter(
-                        text: span,
-                        maxLines: 4,
-                        textDirection: TextDirection.ltr,
-                      );
-                      tp.layout(maxWidth: constraints.maxWidth);
-
-                      final isExceeded = tp.didExceedMaxLines;
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                            alignment: Alignment.topCenter,
-                            child: _ExpandableText(
-                              text: book.description!,
-                              isExceeded: isExceeded,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
+              ExpandableText(
+                text: book.description!,
+                maxLines: 4,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFamily: AppTheme.fontFamilyContent,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
 
@@ -291,56 +261,6 @@ class BookDetailScreen extends ConsumerWidget {
           color: Theme.of(context).colorScheme.secondary,
         ),
       ),
-    );
-  }
-}
-
-class _ExpandableText extends StatefulWidget {
-  final String text;
-  final bool isExceeded;
-
-  const _ExpandableText({required this.text, required this.isExceeded});
-
-  @override
-  State<_ExpandableText> createState() => _ExpandableTextState();
-}
-
-class _ExpandableTextState extends State<_ExpandableText> {
-  bool _isExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.text,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontFamily: AppTheme.fontFamilyContent,
-            fontWeight: FontWeight.w400,
-          ),
-          maxLines: _isExpanded ? null : 4,
-          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-        ),
-        if (widget.isExceeded)
-          InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(
-                _isExpanded
-                    ? AppLocalizations.of(context)!.collapse
-                    : AppLocalizations.of(context)!.expandAll,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

@@ -48,7 +48,7 @@ class WebDavSyncService {
       password: config.password,
       remoteFolderPath: config.remoteFolderPath,
     );
-    
+
     return result.fold(
       (failure) => left(failure.message),
       (success) => right(success),
@@ -637,7 +637,7 @@ class WebDavSyncService {
         localFile: epubFile,
         remoteFileName: remoteFileName,
       );
-      
+
       return result.fold(
         (failure) => left(failure.message),
         (success) => right(success),

@@ -80,7 +80,7 @@ class LibraryNotifier extends _$LibraryNotifier {
     final errors = <String>[];
 
     final importService = ref.read(epubImportServiceProvider);
-    
+
     for (final file in files) {
       final result = await importService.importBook(file);
 
@@ -106,7 +106,7 @@ class LibraryNotifier extends _$LibraryNotifier {
     try {
       final repository = ref.read(shelfBookRepositoryProvider);
       final importService = ref.read(epubImportServiceProvider);
-      
+
       // Get book
       final result = await repository.softDeleteBook(bookId);
       if (result.isRight()) {

@@ -8,11 +8,11 @@ part 'webdav_service_provider.g.dart';
 @riverpod
 WebDavService webDavService(WebDavServiceRef ref) {
   final service = WebDavService();
-  
+
   // Dispose when provider is disposed
   ref.onDispose(() {
     service.dispose();
   });
-  
+
   return service;
 }

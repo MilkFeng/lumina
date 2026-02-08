@@ -7,11 +7,7 @@ sealed class SyncFailure {
   final Object? error;
   final StackTrace? stackTrace;
 
-  const SyncFailure({
-    required this.message,
-    this.error,
-    this.stackTrace,
-  });
+  const SyncFailure({required this.message, this.error, this.stackTrace});
 
   @override
   String toString() => message;
@@ -34,9 +30,7 @@ class NetworkConnectionFailure extends SyncFailure {
   }
 
   factory NetworkConnectionFailure.unreachable(String serverUrl) {
-    return NetworkConnectionFailure(
-      message: 'Cannot reach server: $serverUrl',
-    );
+    return NetworkConnectionFailure(message: 'Cannot reach server: $serverUrl');
   }
 }
 
@@ -49,9 +43,7 @@ class AuthenticationFailure extends SyncFailure {
   });
 
   factory AuthenticationFailure.invalidCredentials() {
-    return const AuthenticationFailure(
-      message: 'Invalid username or password',
-    );
+    return const AuthenticationFailure(message: 'Invalid username or password');
   }
 
   factory AuthenticationFailure.unauthorized() {
@@ -105,16 +97,11 @@ class DataParseFailure extends SyncFailure {
   });
 
   factory DataParseFailure.invalidJson(Object? error) {
-    return DataParseFailure(
-      message: 'Invalid JSON format',
-      error: error,
-    );
+    return DataParseFailure(message: 'Invalid JSON format', error: error);
   }
 
   factory DataParseFailure.snapshotCorrupted() {
-    return const DataParseFailure(
-      message: 'Snapshot file is corrupted',
-    );
+    return const DataParseFailure(message: 'Snapshot file is corrupted');
   }
 }
 
@@ -141,28 +128,18 @@ class MergeConflictFailure extends SyncFailure {
 
 /// Failure when accessing local storage
 class StorageFailure extends SyncFailure {
-  const StorageFailure({
-    required super.message,
-    super.error,
-    super.stackTrace,
-  });
+  const StorageFailure({required super.message, super.error, super.stackTrace});
 
   factory StorageFailure.noSpace() {
-    return const StorageFailure(
-      message: 'Insufficient storage space',
-    );
+    return const StorageFailure(message: 'Insufficient storage space');
   }
 
   factory StorageFailure.permissionDenied() {
-    return const StorageFailure(
-      message: 'Storage permission denied',
-    );
+    return const StorageFailure(message: 'Storage permission denied');
   }
 
   factory StorageFailure.fileNotFound(String path) {
-    return StorageFailure(
-      message: 'File not found: $path',
-    );
+    return StorageFailure(message: 'File not found: $path');
   }
 }
 
@@ -181,9 +158,7 @@ class ConfigurationFailure extends SyncFailure {
   }
 
   factory ConfigurationFailure.invalidConfig() {
-    return const ConfigurationFailure(
-      message: 'Invalid sync configuration',
-    );
+    return const ConfigurationFailure(message: 'Invalid sync configuration');
   }
 }
 
@@ -233,11 +208,7 @@ class ServerFailure extends SyncFailure {
 
 /// Generic failure for unexpected errors
 class UnknownFailure extends SyncFailure {
-  const UnknownFailure({
-    required super.message,
-    super.error,
-    super.stackTrace,
-  });
+  const UnknownFailure({required super.message, super.error, super.stackTrace});
 
   factory UnknownFailure.fromException(Object error, StackTrace? stackTrace) {
     return UnknownFailure(
@@ -263,31 +234,22 @@ extension SyncResultX<T> on SyncResult<T> {
 
   /// Map failure to another failure
   SyncResult<T> mapFailure(SyncFailure Function(SyncFailure) transform) {
-    return fold(
-      (failure) => left(transform(failure)),
-      (value) => right(value),
-    );
+    return fold((failure) => left(transform(failure)), (value) => right(value));
   }
 
   /// Execute action on success
   SyncResult<T> onSuccess(void Function(T) action) {
-    return fold(
-      (failure) => left(failure),
-      (value) {
-        action(value);
-        return right(value);
-      },
-    );
+    return fold((failure) => left(failure), (value) {
+      action(value);
+      return right(value);
+    });
   }
 
   /// Execute action on failure
   SyncResult<T> onFailure(void Function(SyncFailure) action) {
-    return fold(
-      (failure) {
-        action(failure);
-        return left(failure);
-      },
-      (value) => right(value),
-    );
+    return fold((failure) {
+      action(failure);
+      return left(failure);
+    }, (value) => right(value));
   }
 }
