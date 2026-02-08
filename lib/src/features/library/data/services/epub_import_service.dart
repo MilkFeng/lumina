@@ -4,11 +4,11 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fpdart/fpdart.dart';
-import '../../features/library/domain/shelf_book.dart';
-import '../../features/library/domain/book_manifest.dart';
-import '../../features/library/data/shelf_book_repository.dart';
-import '../../features/library/data/book_manifest_repository.dart';
-import 'epub_zip_parser.dart';
+import '../../domain/shelf_book.dart';
+import '../../domain/book_manifest.dart';
+import '../shelf_book_repository.dart';
+import '../book_manifest_repository.dart';
+import '../parsers/epub_zip_parser.dart';
 
 /// Service for importing EPUB files using "stream-from-zip" strategy
 /// - Copies EPUB to AppDocDir/books/{fileHash}.epub (keeps compressed)
@@ -20,11 +20,10 @@ class EpubImportService {
   final BookManifestRepository _manifestRepo;
 
   EpubImportService({
-    ShelfBookRepository? shelfBookRepo,
-    BookManifestRepository? manifestRepo,
-    EpubZipParser? zipParser,
-  }) : _shelfBookRepo = shelfBookRepo ?? ShelfBookRepository(),
-       _manifestRepo = manifestRepo ?? BookManifestRepository();
+    required ShelfBookRepository shelfBookRepo,
+    required BookManifestRepository manifestRepo,
+  })  : _shelfBookRepo = shelfBookRepo,
+        _manifestRepo = manifestRepo;
 
   /// Import an EPUB file
   /// Returns Either:

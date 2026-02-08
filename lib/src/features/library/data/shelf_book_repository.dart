@@ -2,7 +2,6 @@ import 'package:isar/isar.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
-import '../../../core/database/isar_service.dart';
 
 /// Sorting options for shelf book list
 enum ShelfBookSortBy {
@@ -18,10 +17,13 @@ enum ShelfBookSortBy {
 /// Repository for ShelfBook CRUD operations
 /// Lightweight queries for UI display and sync
 class ShelfBookRepository {
+  final Isar _isar;
+
+  ShelfBookRepository({required Isar isar}) : _isar = isar;
+
   /// Get all books (excluding deleted) sorted by import date (newest first)
   Future<List<ShelfBook>> getAllBooks() async {
-    final isar = await IsarService.getInstance();
-    return await isar.shelfBooks
+    return await _isar.shelfBooks
         .filter()
         .isDeletedEqualTo(false)
         .sortByImportDateDesc()
@@ -34,7 +36,7 @@ class ShelfBookRepository {
     String? groupName,
     bool includeAll = false,
   }) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
 
     // Build filter conditions
     var query = isar.shelfBooks.filter().isDeletedEqualTo(false);
@@ -71,7 +73,7 @@ class ShelfBookRepository {
 
   /// Get all groups (flat structure, no nesting)
   Future<List<ShelfGroup>> getGroups() async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.shelfGroups
         .filter()
         .isDeletedEqualTo(false)
@@ -81,7 +83,7 @@ class ShelfBookRepository {
 
   /// Get all groups (for move dialog)
   Future<List<ShelfGroup>> getAllGroups() async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.shelfGroups
         .filter()
         .isDeletedEqualTo(false)
@@ -91,24 +93,42 @@ class ShelfBookRepository {
 
   /// Get group by ID
   Future<ShelfGroup?> getGroupById(int id) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.shelfGroups.get(id);
   }
 
   /// Create a new group
   Future<Either<String, int>> createGroup({required String name}) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final now = DateTime.now().millisecondsSinceEpoch;
-      final group = ShelfGroup()
-        ..name = name
-        ..creationDate = now
-        ..updatedAt = now
-        ..isDeleted = false;
-      final id = await isar.writeTxn(() async {
-        return await isar.shelfGroups.put(group);
-      });
-      return right(id);
+      // check if group already exists
+      final existingGroup = await isar.shelfGroups
+          .where()
+          .nameEqualTo(name)
+          .findFirst();
+      if (existingGroup != null) {
+        // if group is marked as deleted, undelete it
+        if (existingGroup.isDeleted) {
+          existingGroup.isDeleted = false;
+          existingGroup.updatedAt = now;
+          final id = await isar.writeTxn(() async {
+            return await isar.shelfGroups.put(existingGroup);
+          });
+          return right(id);
+        }
+        return left('Group already exists');
+      } else {
+        final group = ShelfGroup()
+          ..name = name
+          ..creationDate = now
+          ..updatedAt = now
+          ..isDeleted = false;
+        final id = await isar.writeTxn(() async {
+          return await isar.shelfGroups.put(group);
+        });
+        return right(id);
+      }
     } catch (e) {
       return left('Create group failed: $e');
     }
@@ -120,7 +140,7 @@ class ShelfBookRepository {
     required String name,
   }) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       return await isar.writeTxn(() async {
         final group = await isar.shelfGroups.get(groupId);
         if (group == null) {
@@ -155,7 +175,7 @@ class ShelfBookRepository {
   /// Delete a group and unassign its books
   Future<Either<String, bool>> deleteGroup({required int groupId}) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       return await isar.writeTxn(() async {
         final group = await isar.shelfGroups.get(groupId);
         if (group == null) {
@@ -193,7 +213,7 @@ class ShelfBookRepository {
     String? groupName,
   }) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       await isar.writeTxn(() async {
         final book = await isar.shelfBooks.get(bookId);
         if (book != null) {
@@ -214,7 +234,7 @@ class ShelfBookRepository {
     String? targetGroupName,
   }) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final now = DateTime.now().millisecondsSinceEpoch;
       await isar.writeTxn(() async {
         for (final bookId in bookIds) {
@@ -235,7 +255,7 @@ class ShelfBookRepository {
   /// Soft delete a book (marks as deleted instead of removing)
   Future<Either<String, bool>> softDeleteBook(int bookId) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       await isar.writeTxn(() async {
         final book = await isar.shelfBooks.get(bookId);
         if (book != null) {
@@ -252,13 +272,13 @@ class ShelfBookRepository {
 
   /// Get book by ID
   Future<ShelfBook?> getBookById(int id) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.shelfBooks.get(id);
   }
 
   /// Get book by file hash
   Future<ShelfBook?> getBookByHash(String fileHash) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.shelfBooks.where().fileHashEqualTo(fileHash).findFirst();
   }
 
@@ -287,7 +307,7 @@ class ShelfBookRepository {
   /// Save or update a book
   Future<Either<String, int>> saveBook(ShelfBook book) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final id = await isar.writeTxn(() async {
         return await isar.shelfBooks.put(book);
       });
@@ -300,7 +320,7 @@ class ShelfBookRepository {
   /// Delete a book permanently by ID
   Future<Either<String, bool>> deleteBook(int id) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final success = await isar.writeTxn(() async {
         return await isar.shelfBooks.delete(id);
       });
@@ -318,7 +338,7 @@ class ShelfBookRepository {
     required double? scrollPosition,
   }) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final now = DateTime.now().millisecondsSinceEpoch;
       await isar.writeTxn(() async {
         final book = await isar.shelfBooks.get(bookId);
@@ -340,7 +360,7 @@ class ShelfBookRepository {
   /// Mark book as finished
   Future<Either<String, bool>> markAsFinished(int bookId) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       await isar.writeTxn(() async {
         final book = await isar.shelfBooks.get(bookId);
         if (book != null) {
@@ -358,7 +378,7 @@ class ShelfBookRepository {
 
   /// Get recently opened books
   Future<List<ShelfBook>> getRecentBooks({int limit = 10}) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.shelfBooks
         .filter()
         .isDeletedEqualTo(false)
@@ -371,7 +391,7 @@ class ShelfBookRepository {
 
   /// Search books by title or author
   Future<List<ShelfBook>> searchBooks(String query) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     final lowercaseQuery = query.toLowerCase();
 
     return await isar.shelfBooks

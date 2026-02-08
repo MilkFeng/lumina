@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../domain/shelf_book.dart';
-import '../data/shelf_book_repository.dart';
+import '../data/repositories/shelf_book_repository_provider.dart';
 import '../../../core/widgets/book_cover.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -13,7 +13,7 @@ part 'book_detail_screen.g.dart';
 /// Provider to fetch a single book by file hash
 @riverpod
 Future<ShelfBook?> bookDetail(BookDetailRef ref, String fileHash) async {
-  final repository = ShelfBookRepository();
+  final repository = ref.watch(shelfBookRepositoryProvider);
   return await repository.getBookByHash(fileHash);
 }
 

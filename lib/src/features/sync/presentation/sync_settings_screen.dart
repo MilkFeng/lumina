@@ -383,16 +383,16 @@ class _SyncSettingsScreenState extends ConsumerState<SyncSettingsScreen> {
           );
 
       if (mounted) {
-        if (success) {
+        if (success.isRight()) {
           ToastService.showSuccess(
             AppLocalizations.of(context)!.connectionSuccessful,
           );
         } else {
           ToastService.showError(
             AppLocalizations.of(context)!.connectionFailed(
-              ref.read(syncNotifierProvider).valueOrNull is SyncError
-                  ? (ref.read(syncNotifierProvider).valueOrNull as SyncError)
-                        .message
+              ref.read(syncNotifierProvider).valueOrNull is SyncFailure
+                  ? (ref.read(syncNotifierProvider).valueOrNull as SyncFailure)
+                        .userMessage
                   : '',
             ),
           );

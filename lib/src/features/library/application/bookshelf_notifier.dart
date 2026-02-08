@@ -1,9 +1,10 @@
-import 'package:lumina/src/core/services/epub_import_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
 import '../data/shelf_book_repository.dart';
-import 'package:isar/isar.dart';
+import '../data/repositories/shelf_book_repository_provider.dart';
+import '../data/services/epub_import_service_provider.dart';
+import '../data/services/epub_import_service.dart';
 
 part 'bookshelf_notifier.g.dart';
 
@@ -68,17 +69,18 @@ class BookshelfState {
   bool get hasSelection => selectedCount > 0;
 }
 
-/// Notifier for managing bookshelf operations - Updated for stream-from-zip
+/// Notifier for managing bookshelf operations with dependency injection
 @riverpod
 class BookshelfNotifier extends _$BookshelfNotifier {
-  late final ShelfBookRepository _repository;
-  late final EpubImportService _importService;
   static const int _maxCachedTabs = 8;
+
+  // Access repositories via providers (lazy initialization)
+  ShelfBookRepository get _repository => ref.read(shelfBookRepositoryProvider);
+  EpubImportService get _importService => ref.read(epubImportServiceProvider);
 
   @override
   Future<BookshelfState> build() async {
-    _repository = ShelfBookRepository();
-    _importService = EpubImportService();
+    // Dependencies are injected via providers
     return await _loadBooks();
   }
 
@@ -175,7 +177,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   }
 
   /// Create a new group (flat structure, no nesting)
-  Future<Id?> createGroup(String name) async {
+  Future<int?> createGroup(String name) async {
     final result = await _repository.createGroup(name: name);
     if (result.isLeft()) {
       return null;

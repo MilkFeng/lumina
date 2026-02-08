@@ -1,15 +1,18 @@
 import 'package:isar/isar.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/book_manifest.dart';
-import '../../../core/database/isar_service.dart';
 
 /// Repository for BookManifest CRUD operations
 /// Heavy queries only when opening the reader
 class BookManifestRepository {
+  final Isar _isar;
+
+  BookManifestRepository({required Isar isar}) : _isar = isar;
+
   /// Get manifest by file hash
   /// This is the primary query when opening a book
   Future<BookManifest?> getManifestByHash(String fileHash) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.bookManifests
         .where()
         .fileHashEqualTo(fileHash)
@@ -18,7 +21,7 @@ class BookManifestRepository {
 
   /// Get manifest by ID
   Future<BookManifest?> getManifestById(int id) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.bookManifests.get(id);
   }
 
@@ -31,7 +34,7 @@ class BookManifestRepository {
   /// Save or update a manifest
   Future<Either<String, int>> saveManifest(BookManifest manifest) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final id = await isar.writeTxn(() async {
         return await isar.bookManifests.put(manifest);
       });
@@ -44,7 +47,7 @@ class BookManifestRepository {
   /// Delete a manifest by file hash
   Future<Either<String, bool>> deleteManifestByHash(String fileHash) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final success = await isar.writeTxn(() async {
         final manifest = await isar.bookManifests
             .where()
@@ -64,7 +67,7 @@ class BookManifestRepository {
   /// Delete a manifest by ID
   Future<Either<String, bool>> deleteManifest(int id) async {
     try {
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final success = await isar.writeTxn(() async {
         return await isar.bookManifests.delete(id);
       });
@@ -76,7 +79,7 @@ class BookManifestRepository {
 
   /// Get all manifests (rarely used, mainly for debugging/migration)
   Future<List<BookManifest>> getAllManifests() async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     return await isar.bookManifests.where().findAll();
   }
 

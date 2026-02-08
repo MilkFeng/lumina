@@ -841,14 +841,14 @@ class _SyncButtonState extends ConsumerState<_SyncButton>
           .performSync();
 
       if (mounted) {
-        if (success) {
+        if (success.isRight()) {
           ToastService.showSuccess(AppLocalizations.of(context)!.syncCompleted);
           widget.onSync?.call();
         } else {
           final state = ref.read(syncNotifierProvider).valueOrNull;
-          if (state is SyncError) {
+          if (state is SyncFailure) {
             ToastService.showError(
-              AppLocalizations.of(context)!.syncFailed(state.message),
+              state.userMessage,
             );
             return;
           }

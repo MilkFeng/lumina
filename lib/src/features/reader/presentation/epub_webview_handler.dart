@@ -3,7 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:lumina/src/features/library/domain/book_manifest.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../../core/services/epub_stream_service.dart';
+import '../data/services/epub_stream_service.dart';
 
 /// WebView request handler for streaming EPUB content
 /// Intercepts requests to virtual domain and serves files from compressed EPUB
@@ -15,8 +15,8 @@ class EpubWebViewHandler {
   static const String virtualDomain = 'localhost';
   static const String virtualScheme = 'epub';
 
-  EpubWebViewHandler({EpubStreamService? streamService})
-    : _streamService = streamService ?? EpubStreamService();
+  EpubWebViewHandler({required EpubStreamService streamService})
+    : _streamService = streamService;
 
   /// Create WebView resource request handler
   /// This should be set as the shouldInterceptRequest callback
