@@ -2,13 +2,14 @@ import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:fpdart/fpdart.dart';
-import '../../features/library/domain/shelf_book.dart';
-import '../../features/library/domain/book_manifest.dart';
-import '../../features/library/data/shelf_book_repository.dart';
-import '../../features/library/data/book_manifest_repository.dart';
-import 'epub_zip_parser.dart';
+import '../../domain/shelf_book.dart';
+import '../../domain/book_manifest.dart';
+import '../shelf_book_repository.dart';
+import '../book_manifest_repository.dart';
+import '../parsers/epub_zip_parser.dart';
 
 /// Service for importing EPUB files using "stream-from-zip" strategy
 /// - Copies EPUB to AppDocDir/books/{fileHash}.epub (keeps compressed)
@@ -20,11 +21,10 @@ class EpubImportService {
   final BookManifestRepository _manifestRepo;
 
   EpubImportService({
-    ShelfBookRepository? shelfBookRepo,
-    BookManifestRepository? manifestRepo,
-    EpubZipParser? zipParser,
-  }) : _shelfBookRepo = shelfBookRepo ?? ShelfBookRepository(),
-       _manifestRepo = manifestRepo ?? BookManifestRepository();
+    required ShelfBookRepository shelfBookRepo,
+    required BookManifestRepository manifestRepo,
+  }) : _shelfBookRepo = shelfBookRepo,
+       _manifestRepo = manifestRepo;
 
   /// Import an EPUB file
   /// Returns Either:
@@ -299,17 +299,42 @@ class EpubImportService {
       }
 
       // Determine file extension from MIME type or filename
-      final extension = _getImageExtension(coverPath);
-      final outputPath = '${coversDir.path}/$fileHash$extension';
+      var extension = _getImageExtension(coverPath);
 
       // Write cover to disk
-      final coverData = coverFile.content as List<int>;
-      await File(outputPath).writeAsBytes(coverData);
+      final rawCoverData = coverFile.content;
+      var coverData = _compressImage(rawCoverData);
+      if (coverData != null) {
+        extension = '.jpg';
+      } else {
+        coverData = rawCoverData;
+      }
+
+      final outputPath = '${coversDir.path}/$fileHash$extension';
+      await File(outputPath).writeAsBytes(coverData as List<int>);
 
       return 'covers/$fileHash$extension';
     } catch (e) {
       // Cover extraction is non-critical, log and continue
       debugPrint('Cover extraction failed: $e');
+      return null;
+    }
+  }
+
+  /// Compress image to JPEG
+  Uint8List? _compressImage(Uint8List rawBytes) {
+    try {
+      final image = img.decodeImage(rawBytes);
+      if (image == null) return null;
+
+      img.Image resizedImage = image;
+      if (image.width > 500) {
+        resizedImage = img.copyResize(image, width: 500);
+      }
+
+      return Uint8List.fromList(img.encodeJpg(resizedImage, quality: 80));
+    } catch (e) {
+      debugPrint('Image compression worker error: $e');
       return null;
     }
   }

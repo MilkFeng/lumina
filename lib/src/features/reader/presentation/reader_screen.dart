@@ -9,8 +9,9 @@ import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../library/domain/book_manifest.dart';
-import '../../library/data/shelf_book_repository.dart';
-import '../../library/data/book_manifest_repository.dart';
+import '../../library/data/repositories/shelf_book_repository_provider.dart';
+import '../../library/data/repositories/book_manifest_repository_provider.dart';
+import '../data/services/epub_stream_service_provider.dart';
 import 'epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
 import './toc_drawer.dart';
@@ -29,10 +30,6 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
-  // Repositories
-  final _shelfBookRepo = ShelfBookRepository();
-  final _manifestRepo = BookManifestRepository();
-
   final GlobalKey _webViewKey = GlobalKey();
 
   Timer? _longPressTimer;
@@ -73,7 +70,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void initState() {
     super.initState();
-    _webViewHandler = EpubWebViewHandler();
+    _webViewHandler = EpubWebViewHandler(
+      streamService: ref.read(epubStreamServiceProvider),
+    );
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 240),
@@ -94,7 +93,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   void dispose() {
     _longPressTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    _saveProgress();
     _animController.dispose();
     super.dispose();
   }
@@ -119,7 +117,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Future<void> _loadBook() async {
     try {
       // Load ShelfBook
-      final book = await _shelfBookRepo.getBookByHash(widget.fileHash);
+      final shelfBookRepo = ref.read(shelfBookRepositoryProvider);
+      final book = await shelfBookRepo.getBookByHash(widget.fileHash);
       if (book == null) {
         if (mounted) {
           ToastService.showError(AppLocalizations.of(context)!.bookNotFound);
@@ -129,7 +128,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
 
       // Load BookManifest
-      final manifest = await _manifestRepo.getManifestByHash(widget.fileHash);
+      final manifestRepo = ref.read(bookManifestRepositoryProvider);
+      final manifest = await manifestRepo.getManifestByHash(widget.fileHash);
       if (manifest == null) {
         if (mounted) {
           ToastService.showError(
@@ -183,7 +183,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     }
 
-    await _shelfBookRepo.updateProgress(
+    final shelfBookRepo = ref.read(shelfBookRepositoryProvider);
+    await shelfBookRepo.updateProgress(
       bookId: _book!.id,
       currentChapterIndex: _currentChapterIndex,
       progress: progress,

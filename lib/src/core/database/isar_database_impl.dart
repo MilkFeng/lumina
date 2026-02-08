@@ -3,14 +3,15 @@ import 'package:path_provider/path_provider.dart';
 import '../../features/library/domain/shelf_book.dart';
 import '../../features/library/domain/book_manifest.dart';
 import '../../features/library/domain/shelf_group.dart';
+import 'isar_database.dart';
 
-/// Isar database service - V2 Architecture (Stream-from-Zip)
-/// Singleton pattern for global access
-class IsarService {
-  static Isar? _instance;
+/// Concrete implementation of IsarDatabase
+/// Manages Isar database lifecycle and provides access to the instance
+class IsarDatabaseImpl implements IsarDatabase {
+  Isar? _instance;
 
-  /// Get Isar instance (lazy initialization)
-  static Future<Isar> getInstance() async {
+  @override
+  Future<Isar> getInstance() async {
     if (_instance != null) {
       return _instance!;
     }
@@ -29,8 +30,8 @@ class IsarService {
     return _instance!;
   }
 
-  /// Close database (call on app dispose)
-  static Future<void> close() async {
+  @override
+  Future<void> close() async {
     await _instance?.close();
     _instance = null;
   }

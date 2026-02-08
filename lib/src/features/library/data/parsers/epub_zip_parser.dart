@@ -3,7 +3,7 @@ import 'package:archive/archive_io.dart';
 import 'package:fast_gbk/fast_gbk.dart';
 import 'package:xml/xml.dart';
 import 'package:fpdart/fpdart.dart';
-import '../../features/library/domain/book_manifest.dart';
+import '../../domain/book_manifest.dart';
 
 /// Parser that reads EPUB structure directly from ZIP archive
 /// No full extraction required - reads specific files in-memory
@@ -204,9 +204,6 @@ class EpubZipParser {
       for (int i = 0; i < spineIndexMap.length; i++) {
         spineAnchors[i] = [];
       }
-
-      print('spineIndexMap: $spineIndexMap');
-      print('Initial spineAnchors: $spineAnchors');
 
       // Step 3: Try to parse NCX/NAV for chapter structure
       final tocId = spineElement.getAttribute('toc');
@@ -415,7 +412,6 @@ class EpubZipParser {
       int spineIdx = -1;
       if (href != null) {
         final normalizedPath = _normalizePath(href.path);
-        print('Resolving href: "$hrefStr" -> normalized="$normalizedPath"');
         spineIdx = spineIndexMap[normalizedPath] ?? -1;
 
         // Record anchor usage (empty/null anchor means "TOP")

@@ -1,4 +1,4 @@
-import 'package:lumina/src/core/services/epub_import_service.dart';
+import '../../library/data/services/epub_import_service.dart';
 import 'package:isar/isar.dart';
 
 import 'dart:convert';
@@ -11,7 +11,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../domain/sync_snapshot.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../library/domain/shelf_group.dart';
-import '../../../core/database/isar_service.dart';
 import 'webdav_service.dart';
 import 'sync_config_repository.dart';
 
@@ -21,17 +20,20 @@ class WebDavSyncService {
   final WebDavService _webDavService;
   final SyncConfigRepository _configRepository;
   final EpubImportService _epubImportService;
+  final Isar _isar;
 
   static const String snapshotFileName = 'snapshot.json';
   static const String booksFolder = 'books';
 
   WebDavSyncService({
-    WebDavService? webDavService,
-    SyncConfigRepository? configRepository,
-    EpubImportService? epubImportService,
-  }) : _webDavService = webDavService ?? WebDavService(),
-       _configRepository = configRepository ?? SyncConfigRepository(),
-       _epubImportService = epubImportService ?? EpubImportService();
+    required WebDavService webDavService,
+    required SyncConfigRepository configRepository,
+    required EpubImportService epubImportService,
+    required Isar isar,
+  }) : _webDavService = webDavService,
+       _configRepository = configRepository,
+       _epubImportService = epubImportService,
+       _isar = isar;
 
   /// Initialize WebDAV connection from stored config
   Future<Either<String, bool>> initializeFromConfig() async {
@@ -40,11 +42,16 @@ class WebDavSyncService {
       return left('Sync not configured');
     }
 
-    return await _webDavService.initialize(
+    final result = await _webDavService.initialize(
       serverUrl: config.serverUrl,
       username: config.username,
       password: config.password,
       remoteFolderPath: config.remoteFolderPath,
+    );
+
+    return result.fold(
+      (failure) => left(failure.message),
+      (success) => right(success),
     );
   }
 
@@ -137,7 +144,7 @@ class WebDavSyncService {
   Future<Either<String, SyncSnapshot>> _pullSnapshot() async {
     final result = await _webDavService.downloadText(snapshotFileName);
 
-    return result.fold((error) => left(error), (jsonString) async {
+    return result.fold((failure) => left(failure.message), (jsonString) async {
       try {
         // Parse in isolate to avoid blocking UI
         final snapshot = await compute(_parseSnapshotIsolate, jsonString);
@@ -150,7 +157,7 @@ class WebDavSyncService {
 
   /// STEP 2: Three-way merge logic
   Future<MergeResult> _mergeWithCloud(SyncSnapshot? cloudSnapshot) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
 
     // Fetch all local data (including deleted)
     final localGroups = await isar.shelfGroups.where().anyId().findAll();
@@ -220,7 +227,7 @@ class WebDavSyncService {
     MergeResult result,
     SyncSnapshot? cloudSnapshot,
   ) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
 
     await isar.writeTxn(() async {
       // Insert new groups
@@ -474,7 +481,7 @@ class WebDavSyncService {
 
   /// Get books that need to be downloaded
   Future<List<ShelfBook>> _getBooksNeedingDownload() async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     final allBooks = await isar.shelfBooks
         .filter()
         .isDeletedEqualTo(false)
@@ -494,7 +501,7 @@ class WebDavSyncService {
   Future<List<ShelfBook>> _getBooksNeedingUpload(
     Set<String> remoteRealFileHashes,
   ) async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
     final allBooks = await isar.shelfBooks
         .filter()
         .isDeletedEqualTo(false)
@@ -550,7 +557,7 @@ class WebDavSyncService {
       }
 
       // Update book record
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       await isar.writeTxn(() async {
         final bookToUpdate = await isar.shelfBooks
             .filter()
@@ -596,7 +603,7 @@ class WebDavSyncService {
   Future<Either<String, bool>> _uploadBook(ShelfBook book) async {
     try {
       // Pre-upload check: Re-verify book status in database
-      final isar = await IsarService.getInstance();
+      final isar = _isar;
       final currentBook = await isar.shelfBooks
           .filter()
           .fileHashEqualTo(book.fileHash)
@@ -626,9 +633,14 @@ class WebDavSyncService {
       }
 
       final remoteFileName = '$booksFolder/${currentBook.fileHash}.epub';
-      return await _webDavService.uploadFile(
+      final result = await _webDavService.uploadFile(
         localFile: epubFile,
         remoteFileName: remoteFileName,
+      );
+
+      return result.fold(
+        (failure) => left(failure.message),
+        (success) => right(success),
       );
     } catch (e) {
       return left('Upload failed: $e');
@@ -669,7 +681,7 @@ class WebDavSyncService {
 
   /// Generate snapshot from local database
   Future<SyncSnapshot> _generateLocalSnapshot() async {
-    final isar = await IsarService.getInstance();
+    final isar = _isar;
 
     // Fetch all data (including deleted for tombstone records)
     final localGroups = await isar.shelfGroups.where().anyId().findAll();

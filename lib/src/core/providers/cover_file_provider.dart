@@ -16,11 +16,11 @@ Future<File?> coverFile(CoverFileRef ref, String? relativePath) async {
   try {
     // Get app documents directory
     final appDir = await getApplicationDocumentsDirectory();
-    
+
     // Decode URI components and construct full path
     final decodedPath = Uri.decodeFull(relativePath);
     final file = File('${appDir.path}/$decodedPath');
-    
+
     // Check if file exists
     final exists = await file.exists();
     return exists ? file : null;

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lumina/src/core/services/epub_zip_parser.dart';
+import 'package:lumina/src/features/library/data/parsers/epub_zip_parser.dart';
 
 void main() {
   group('EpubZipParser', () {

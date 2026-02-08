@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'src/app.dart';
-import 'src/core/database/isar_service.dart';
+import 'src/core/database/providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Create provider container
+  final container = ProviderContainer();
+
   // Initialize Isar database
-  await IsarService.getInstance();
+  await container.read(isarProvider.future);
 
   // Force portrait orientation for mobile
   await SystemChrome.setPreferredOrientations([
@@ -29,6 +32,11 @@ void main() async {
     ),
   );
 
-  runApp(const ProviderScope(child: LuminaReaderApp()));
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const LuminaReaderApp(),
+    ),
+  );
   FilePicker.platform.clearTemporaryFiles();
 }

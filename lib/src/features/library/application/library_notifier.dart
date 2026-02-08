@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
-import '../data/shelf_book_repository.dart';
-import '../../../core/services/epub_import_service.dart';
+import '../data/repositories/shelf_book_repository_provider.dart';
+import '../data/services/epub_import_service_provider.dart';
 
 part 'library_notifier.g.dart';
 
@@ -24,24 +24,19 @@ class LibraryError extends LibraryState {
   LibraryError(this.message);
 }
 
-/// Notifier for managing library operations
-/// Updated to use ShelfBook and EpubImportService (stream-from-zip)
+/// Notifier for managing library operations with dependency injection
 @riverpod
 class LibraryNotifier extends _$LibraryNotifier {
-  late final ShelfBookRepository _repository;
-  late final EpubImportService _importService;
-
   @override
   Future<LibraryState> build() async {
-    _repository = ShelfBookRepository();
-    _importService = EpubImportService();
     return await _loadBooks();
   }
 
   /// Load all books from database
   Future<LibraryState> _loadBooks() async {
     try {
-      final books = await _repository.getAllBooks();
+      final repository = ref.read(shelfBookRepositoryProvider);
+      final books = await repository.getAllBooks();
       return LibraryLoaded(books);
     } catch (e) {
       return LibraryError('Failed to load books: $e');
@@ -53,8 +48,9 @@ class LibraryNotifier extends _$LibraryNotifier {
     state = const AsyncValue.loading();
 
     try {
+      final importService = ref.read(epubImportServiceProvider);
       // Single call to import service handles everything
-      final importResult = await _importService.importBook(file);
+      final importResult = await importService.importBook(file);
 
       if (importResult.isLeft()) {
         final error = importResult.getLeft().toNullable()!;
@@ -83,8 +79,10 @@ class LibraryNotifier extends _$LibraryNotifier {
     int failedCount = 0;
     final errors = <String>[];
 
+    final importService = ref.read(epubImportServiceProvider);
+
     for (final file in files) {
-      final result = await _importService.importBook(file);
+      final result = await importService.importBook(file);
 
       result.fold((error) {
         failedCount++;
@@ -106,8 +104,11 @@ class LibraryNotifier extends _$LibraryNotifier {
   /// Delete a book (removes .epub file, cover, and database records)
   Future<Either<String, bool>> deleteBook(int bookId) async {
     try {
+      final repository = ref.read(shelfBookRepositoryProvider);
+      final importService = ref.read(epubImportServiceProvider);
+
       // Get book
-      final result = await _repository.softDeleteBook(bookId);
+      final result = await repository.softDeleteBook(bookId);
       if (result.isRight()) {
         await refresh();
 
@@ -118,13 +119,13 @@ class LibraryNotifier extends _$LibraryNotifier {
         return left(result.getLeft().toNullable()!);
       }
 
-      final book = await _repository.getBookById(bookId);
+      final book = await repository.getBookById(bookId);
       if (book == null) {
         return left('Book not found');
       }
 
       // Delete using import service (handles files + database)
-      final deleteResult = await _importService.deleteBook(book);
+      final deleteResult = await importService.deleteBook(book);
       if (deleteResult.isLeft()) {
         return left(deleteResult.getLeft().toNullable()!);
       }
@@ -144,7 +145,8 @@ class LibraryNotifier extends _$LibraryNotifier {
     String? groupName,
   }) async {
     try {
-      final result = await _repository.updateBookGroup(
+      final repository = ref.read(shelfBookRepositoryProvider);
+      final result = await repository.updateBookGroup(
         bookId: bookId,
         groupName: groupName,
       );
@@ -158,16 +160,4 @@ class LibraryNotifier extends _$LibraryNotifier {
       return left('Update category failed: $e');
     }
   }
-}
-
-/// Provider for ShelfBook repository
-@riverpod
-ShelfBookRepository shelfBookRepository(ShelfBookRepositoryRef ref) {
-  return ShelfBookRepository();
-}
-
-/// Provider for EPUB import service
-@riverpod
-EpubImportService epubImportService(EpubImportServiceRef ref) {
-  return EpubImportService();
 }
