@@ -106,9 +106,8 @@ class BookDetailScreen extends ConsumerWidget {
                 tag: 'book-cover-${book.id}',
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: 200,
-                    height: 300,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: 300),
                     child: BookCover(relativePath: coverPath),
                   ),
                 ),

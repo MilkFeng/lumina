@@ -59,6 +59,9 @@ dependencies:
   package_info_plus: ^9.0.0
   url_launcher: ^6.3.2
   flutter_svg: ^2.2.3
+
+  # Image Compression
+  image: ^4.7.2
   
 
 dev_dependencies:
