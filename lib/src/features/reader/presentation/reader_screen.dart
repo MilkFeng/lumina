@@ -1004,13 +1004,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                                 await _webViewController?.evaluateJavascript(
                                   source: 'restoreScrollPosition($ratio)',
                                 );
-                                await _webViewController?.evaluateJavascript(
-                                  source: 'reveal()',
-                                );
-                              } else {
-                                await _webViewController?.evaluateJavascript(
-                                  source: 'reveal()',
-                                );
                               }
                             }
                           },
@@ -1023,6 +1016,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                               setState(() {
                                 _currentPageInChapter = args[0] as int;
                               });
+                              _saveProgress();
                             }
                           },
                         );
@@ -1057,13 +1051,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         );
 
                         controller.addJavaScriptHandler(
-                          handlerName: 'onRenderComplete',
-                          callback: (args) {
+                          handlerName: 'onReveal',
+                          callback: (args) async {
                             if (mounted) {
                               setState(() {
                                 _isWebViewLoading = false;
                               });
                             }
+                            _saveProgress();
+                            debugPrint('WebView: RenderComplete');
+                          },
+                        );
+
+                        controller.addJavaScriptHandler(
+                          handlerName: 'onRenderComplete',
+                          callback: (args) async {
+                            await _webViewController?.evaluateJavascript(
+                              source: "reveal();",
+                            );
+                            _saveProgress();
                             debugPrint('WebView: RenderComplete');
                           },
                         );
