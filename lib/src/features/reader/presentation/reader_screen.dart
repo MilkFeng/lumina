@@ -839,7 +839,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   ),
                   Expanded(
                     child: Text(
-                      _spineItems.isEmpty ? 'Loading...' : activateTocTitle,
+                      _spineItems.isEmpty
+                          ? '${AppLocalizations.of(context)?.loading}...'
+                          : activateTocTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontFamily: AppTheme.fontFamilyContent,
@@ -1015,10 +1017,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       child: SafeArea(
                         child: IconButton(
                           icon: const Icon(
-                            Icons.close,
+                            Icons.close_outlined,
                             color: Colors.white,
                             shadows: [
-                              Shadow(color: Colors.black54, blurRadius: 4),
+                              Shadow(color: Colors.black, blurRadius: 10),
                             ],
                             size: 32,
                           ),
