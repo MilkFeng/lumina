@@ -609,5 +609,23 @@ function reveal() {
     window.flutter_inappwebview.callHandler('onReveal');
   });
 }
+
+function checkElementAt(x, y) {
+  const iframe = document.getElementById('frame-curr');
+  if (!iframe || !iframe.contentDocument) return;
+
+  const doc = iframe.contentDocument;
+
+  let el = doc.elementFromPoint(x, y);
+  if (!el) return;
+
+  while (el && el !== doc.body) {
+    if (el.tagName.toLowerCase() === 'img') {
+      window.flutter_inappwebview.callHandler('onImageLongPress', el.src);
+      return;
+    }
+    el = el.parentElement;
+  }
+}
   ''';
 }

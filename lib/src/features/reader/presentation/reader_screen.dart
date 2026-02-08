@@ -1056,9 +1056,26 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         left: true,
         right: true,
         child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
+          behavior: HitTestBehavior.opaque,
           onTapUp: (details) {
             _handleTapZone(details.globalPosition.dx);
+          },
+          onLongPressStart: (details) async {
+            const padding = 16.0;
+
+            final localX = details.localPosition.dx - padding;
+            final localY = details.localPosition.dy - padding;
+
+            if (localX < 0 ||
+                localY < 0 ||
+                localX > _webviewWidth ||
+                localY > _webviewHeight) {
+              return;
+            }
+
+            await _webViewController?.evaluateJavascript(
+              source: "checkElementAt($localX, $localY);",
+            );
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -1074,12 +1091,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 return Stack(
                   children: [
                     InAppWebView(
-                      gestureRecognizers:
-                          <Factory<OneSequenceGestureRecognizer>>{
-                            Factory<OneSequenceGestureRecognizer>(
-                              () => EagerGestureRecognizer(),
-                            ),
-                          },
                       key: _webViewKey,
                       initialData: InAppWebViewInitialData(
                         data: generateSkeletonHtml(
