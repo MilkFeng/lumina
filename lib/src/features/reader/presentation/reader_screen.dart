@@ -93,7 +93,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   void dispose() {
     _longPressTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    _saveProgress();
     _animController.dispose();
     super.dispose();
   }
