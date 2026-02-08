@@ -140,7 +140,7 @@ class EpubWebViewHandler {
   /// Generate full URL for a specific file
   static String getFileUrl(String fileHash, Href href) {
     final url =
-        '$virtualScheme://$virtualDomain/book/$fileHash/${href.path}${href.anchor != null ? '#${href.anchor}' : ''}';
+        '$virtualScheme://$virtualDomain/book/$fileHash/${href.path}${'#${href.anchor}'}';
     return Uri.encodeFull(url);
   }
 

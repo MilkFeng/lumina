@@ -59,7 +59,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   final Map<String, List<String>> _spineToAnchorsMap = {};
   Set<String> _activeAnchors = {};
 
-  int _currentTocId = -1;
   final List<TocItem> _flatToc = [];
   final Map<Href, int> _hrefToTocIndexMap = {};
 
