@@ -101,6 +101,14 @@ html, body {
   background-color: transparent !important;
   touch-action: none !important;
   overflow-y: hidden !important;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* CRITICAL: Disable all scrolling vertically - horizontal only */
