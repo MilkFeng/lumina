@@ -572,6 +572,8 @@ function cycleFrames(direction) {
   }
 
   updatePageCount('frame-curr', direction);
+  updatePageCount('frame-prev', direction);
+  updatePageCount('frame-next', direction);
   detectActiveAnchor(elPrev);
   detectActiveAnchor(elCurr);
   detectActiveAnchor(elNext);
