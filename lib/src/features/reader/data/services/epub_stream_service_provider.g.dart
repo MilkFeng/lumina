@@ -6,7 +6,7 @@ part of 'epub_stream_service_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$epubStreamServiceHash() => r'e6a51a5df7ea441d21dc06b2c94dcaab489f237c';
+String _$epubStreamServiceHash() => r'901eb53eb955354f9f25e7bcab726eb9dae06fb7';
 
 /// Provider for EpubStreamService
 /// This service handles streaming EPUB files without extraction

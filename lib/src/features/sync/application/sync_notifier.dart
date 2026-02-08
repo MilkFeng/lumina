@@ -41,10 +41,10 @@ class SyncSuccess extends SyncState {
   SyncSuccess(this.message, this.timestamp, [this.stats]);
 }
 
-class SyncFailure extends SyncState {
+class SyncFailureState extends SyncState {
   final failures.SyncFailure failure;
 
-  SyncFailure(this.failure);
+  SyncFailureState(this.failure);
 
   /// Get user-friendly error message
   String get userMessage => _getUserFriendlyMessage(failure);
@@ -105,7 +105,9 @@ class SyncNotifier extends _$SyncNotifier {
       }
       return SyncConfigured(config);
     } catch (e, stackTrace) {
-      return SyncFailure(failures.UnknownFailure.fromException(e, stackTrace));
+      return SyncFailureState(
+        failures.UnknownFailure.fromException(e, stackTrace),
+      );
     }
   }
 
@@ -133,7 +135,7 @@ class SyncNotifier extends _$SyncNotifier {
       // Handle initialization failure
       if (initResult.isLeft()) {
         final failure = initResult.failureOrNull!;
-        state = AsyncValue.data(SyncFailure(failure));
+        state = AsyncValue.data(SyncFailureState(failure));
         return left(failure);
       }
 
@@ -145,7 +147,7 @@ class SyncNotifier extends _$SyncNotifier {
       // Handle connection test failure
       if (testResult.isLeft()) {
         final failure = testResult.failureOrNull!;
-        state = AsyncValue.data(SyncFailure(failure));
+        state = AsyncValue.data(SyncFailureState(failure));
         return left(failure);
       }
 
@@ -153,7 +155,7 @@ class SyncNotifier extends _$SyncNotifier {
       final dirResult = await webDav.ensureRemoteDirectory();
       if (dirResult.isLeft()) {
         final failure = dirResult.failureOrNull!;
-        state = AsyncValue.data(SyncFailure(failure));
+        state = AsyncValue.data(SyncFailureState(failure));
         return left(failure);
       }
 
@@ -171,7 +173,7 @@ class SyncNotifier extends _$SyncNotifier {
         final failure = failures.ConfigurationFailure(
           message: 'Failed to save config: $errorMsg',
         );
-        state = AsyncValue.data(SyncFailure(failure));
+        state = AsyncValue.data(SyncFailureState(failure));
         return left(failure);
       }
 
@@ -180,7 +182,7 @@ class SyncNotifier extends _$SyncNotifier {
       return right(true);
     } catch (e, stackTrace) {
       final failure = failures.UnknownFailure.fromException(e, stackTrace);
-      state = AsyncValue.data(SyncFailure(failure));
+      state = AsyncValue.data(SyncFailureState(failure));
       return left(failure);
     }
   }
@@ -197,7 +199,7 @@ class SyncNotifier extends _$SyncNotifier {
         final failure = failures.ConfigurationFailure(
           message: 'Failed to save: $errorMsg',
         );
-        state = AsyncValue.data(SyncFailure(failure));
+        state = AsyncValue.data(SyncFailureState(failure));
         return left(failure);
       }
 
@@ -205,7 +207,7 @@ class SyncNotifier extends _$SyncNotifier {
       return right(true);
     } catch (e, stackTrace) {
       final failure = failures.UnknownFailure.fromException(e, stackTrace);
-      state = AsyncValue.data(SyncFailure(failure));
+      state = AsyncValue.data(SyncFailureState(failure));
       return left(failure);
     }
   }
@@ -226,7 +228,7 @@ class SyncNotifier extends _$SyncNotifier {
       if (result.isLeft()) {
         final errorMsg = result.getLeft().toNullable()!;
         final failure = failures.UnknownFailure(message: errorMsg);
-        state = AsyncValue.data(SyncFailure(failure));
+        state = AsyncValue.data(SyncFailureState(failure));
         return left(failure);
       }
 
@@ -249,14 +251,19 @@ class SyncNotifier extends _$SyncNotifier {
       );
 
       // Reload config after delay to get updated last sync date
+      // Using unawaited to avoid blocking, and catching errors in case of disposal
       Future.delayed(const Duration(seconds: 2), () async {
-        state = await AsyncValue.guard(() => _loadConfig());
+        try {
+          state = await AsyncValue.guard(() => _loadConfig());
+        } catch (_) {
+          // Ignore errors that occur if notifier is disposed
+        }
       });
 
       return right(true);
     } catch (e, stackTrace) {
       final failure = failures.UnknownFailure.fromException(e, stackTrace);
-      state = AsyncValue.data(SyncFailure(failure));
+      state = AsyncValue.data(SyncFailureState(failure));
       return left(failure);
     }
   }
@@ -273,7 +280,7 @@ class SyncNotifier extends _$SyncNotifier {
         final failure = failures.ConfigurationFailure(
           message: 'Failed to delete: $errorMsg',
         );
-        state = AsyncValue.data(SyncFailure(failure));
+        state = AsyncValue.data(SyncFailureState(failure));
         return left(failure);
       }
 
@@ -281,7 +288,7 @@ class SyncNotifier extends _$SyncNotifier {
       return right(true);
     } catch (e, stackTrace) {
       final failure = failures.UnknownFailure.fromException(e, stackTrace);
-      state = AsyncValue.data(SyncFailure(failure));
+      state = AsyncValue.data(SyncFailureState(failure));
       return left(failure);
     }
   }
@@ -295,12 +302,12 @@ class SyncNotifier extends _$SyncNotifier {
   bool get isSyncing => state.valueOrNull is SyncInProgress;
 
   /// Check if has error
-  bool get hasError => state.valueOrNull is SyncFailure;
+  bool get hasError => state.valueOrNull is SyncFailureState;
 
   /// Get current failure if any
   failures.SyncFailure? get currentFailure {
     final currentState = state.valueOrNull;
-    if (currentState is SyncFailure) {
+    if (currentState is SyncFailureState) {
       return currentState.failure;
     }
     return null;

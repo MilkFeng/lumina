@@ -23,7 +23,7 @@ final isarDatabaseProvider = Provider<IsarDatabase>.internal(
 );
 
 typedef IsarDatabaseRef = ProviderRef<IsarDatabase>;
-String _$isarHash() => r'9e3d8d8a55d27866fb0ae7a96dec5032e5fd0c87';
+String _$isarHash() => r'8adffff302ffdac95f157c90001907c2b78cd017';
 
 /// Provider for Isar instance
 /// Convenience provider that returns the actual Isar instance

@@ -10,6 +10,7 @@ import '../domain/failures/sync_failures.dart';
 class WebDavService {
   webdav.Client? _client;
   String? _remoteFolderPath;
+  String? _serverUrl;
   bool _isInitialized = false;
 
   /// Check if service is initialized
@@ -33,6 +34,7 @@ class WebDavService {
 
       // Ensure server URL ends with /
       final normalizedUrl = serverUrl.endsWith('/') ? serverUrl : '$serverUrl/';
+      _serverUrl = normalizedUrl;
 
       _remoteFolderPath = remoteFolderPath.endsWith('/')
           ? remoteFolderPath
@@ -91,7 +93,7 @@ class WebDavService {
       );
     } on SocketException {
       return left(
-        NetworkConnectionFailure.unreachable(_remoteFolderPath ?? 'unknown'),
+        NetworkConnectionFailure.unreachable(_serverUrl ?? 'unknown server'),
       );
     } catch (e, stackTrace) {
       // Handle authentication errors from webdav_client
@@ -462,6 +464,7 @@ class WebDavService {
   void dispose() {
     _client = null;
     _remoteFolderPath = null;
+    _serverUrl = null;
     _isInitialized = false;
   }
 }

@@ -69,7 +69,7 @@ class _SyncButtonState extends ConsumerState<SyncButton>
           widget.onSync?.call();
         } else {
           final state = ref.read(syncNotifierProvider).valueOrNull;
-          if (state is SyncFailure) {
+          if (state is SyncFailureState) {
             ToastService.showError(state.userMessage);
             return;
           }

@@ -5,6 +5,7 @@ import '../../domain/shelf_book.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../application/bookshelf_notifier.dart';
+import '../../../../../l10n/app_localizations.dart';
 
 /// Book grid item widget - displays a single book in the grid
 /// This is a dumb/presentational widget that accepts data and callbacks
@@ -193,6 +194,8 @@ class EmptyLibraryPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(48.0),
@@ -206,14 +209,14 @@ class EmptyLibraryPlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Your library is empty',
+              l10n.noBooks,
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
             ),
             const SizedBox(height: 12),
             Text(
-              'Add your first book to get started',
+              l10n.addYourFirstBook,
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
@@ -223,7 +226,7 @@ class EmptyLibraryPlaceholder extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onImportTap,
               icon: const Icon(Icons.add),
-              label: const Text('Import Book'),
+              label: Text(l10n.importBook),
             ),
           ],
         ),

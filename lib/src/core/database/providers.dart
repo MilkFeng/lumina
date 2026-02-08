@@ -17,5 +17,5 @@ IsarDatabase isarDatabase(IsarDatabaseRef ref) {
 @Riverpod(keepAlive: true)
 Future<Isar> isar(IsarRef ref) async {
   final database = ref.watch(isarDatabaseProvider);
-  return await database.getInstance() as Isar;
+  return await database.getInstance();
 }
