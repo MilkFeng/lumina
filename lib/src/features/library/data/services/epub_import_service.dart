@@ -414,7 +414,7 @@ class _ParseResult {
   final String opfRootPath;
   final String epubVersion;
   final int totalChapters;
-  final List<String> spine;
+  final List<SpineItem> spine;
   final List<TocItem> toc;
   final List<ManifestItem> manifestItems;
 

@@ -182,30 +182,37 @@ class EpubZipParser {
           ? opfPath.substring(0, opfPath.lastIndexOf('/'))
           : '';
 
-      // Step 1: Build spine mapping (path -> index)
-      final spineList = <String>[];
-      final spineIndexMap = <String, int>{};
+      // Step 1: Build spine list with full metadata
+      final spineItems = <SpineItem>[];
+      final spineIndexMap = <String, int>{}; // path -> index for TOC mapping
       int index = 0;
+
       for (final itemref in spineElement.findElements('itemref')) {
         final idref = itemref.getAttribute('idref');
+        final linearAttr = itemref.getAttribute('linear');
+        final isLinear = linearAttr == null || linearAttr.toLowerCase() != 'no';
+
         if (idref != null && manifestMap.containsKey(idref)) {
           final href = manifestMap[idref]!.$1;
           final resolvedPath = _normalizePath(
             opfDir.isEmpty ? href.path : '$opfDir/${href.path}',
           );
-          spineList.add(idref);
+
+          spineItems.add(
+            SpineItem(
+              index: index,
+              href: resolvedPath,
+              idref: idref,
+              linear: isLinear,
+            ),
+          );
+
           spineIndexMap[resolvedPath] = index;
           index++;
         }
       }
 
-      // Step 2: Initialize anchor tracking map (index -> List<anchor>)
-      final spineAnchors = <int, List<String>>{};
-      for (int i = 0; i < spineIndexMap.length; i++) {
-        spineAnchors[i] = [];
-      }
-
-      // Step 3: Try to parse NCX/NAV for chapter structure
+      // Step 2: Parse TOC structure (NCX or NAV)
       final tocId = spineElement.getAttribute('toc');
       List<TocItem> toc = [];
 
@@ -218,27 +225,27 @@ class EpubZipParser {
 
         if (tocFile != null) {
           final tocContent = _decodeString(tocFile.content as List<int>);
-          toc = _parseNcx(
-            tocContent,
-            manifestMap,
-            opfDir,
-            spineIndexMap,
-            spineAnchors,
-          );
+          toc = _parseNcx(tocContent, manifestMap, opfDir, spineIndexMap);
         }
       }
 
-      // Fallback: use spine order as flat chapter list
+      // Fallback: Create flat TOC from spine if no NCX/NAV found
       if (toc.isEmpty) {
-        toc = _parseSpineAsChapters(
-          spineElement,
-          manifestMap,
-          opfDir,
-          spineIndexMap,
-        );
-      } else {
-        // Step 4: Smart hydration - fill gaps in TOC
-        toc = _fillTocGaps(toc, spineList, manifestMap, opfDir, spineAnchors);
+        toc = _parseSpineAsChapters(spineItems, opfDir);
+      }
+
+      // Generate id for each TocItem
+      int tocIdCounter = 0;
+      void assignTocIds(TocItem item, [int parentId = -1]) {
+        item.id = tocIdCounter++;
+        item.parentId = parentId;
+        for (final child in item.children) {
+          assignTocIds(child, item.id);
+        }
+      }
+
+      for (final item in toc) {
+        assignTocIds(item);
       }
 
       final result = EpubZipParseResult(
@@ -251,10 +258,7 @@ class EpubZipParser {
         opfRootPath: opfPath,
         epubVersion: version,
         totalChapters: toc.expand((item) => item.flatten()).length,
-        spine: spineElement
-            .findElements('itemref')
-            .map((e) => e.getAttribute('idref')!)
-            .toList(),
+        spine: spineItems,
         toc: toc,
         manifestItems: manifestMap.entries
             .map(
@@ -351,13 +355,14 @@ class EpubZipParser {
     );
   }
 
-  /// Parse NCX file for chapter structure
+  /// Parse NCX file for TOC navigation tree
+  /// Returns the pure hierarchical structure as defined in the NCX
+  /// No gap-filling or spine merging is performed
   static List<TocItem> _parseNcx(
     String content,
     Map<String, (Href, String?)> manifestMap,
     String opfDir,
     Map<String, int> spineIndexMap,
-    Map<int, List<String>> spineAnchors,
   ) {
     try {
       final doc = XmlDocument.parse(content);
@@ -373,7 +378,6 @@ class EpubZipParser {
         0,
         opfDir,
         spineIndexMap,
-        spineAnchors,
       );
     } catch (e) {
       return [];
@@ -381,13 +385,13 @@ class EpubZipParser {
   }
 
   /// Parse navPoint elements recursively
+  /// Builds the pure hierarchical TOC tree as defined in the NCX
   static List<TocItem> _parseNavPoints(
     Iterable<XmlElement> navPoints,
     Map<String, (Href, String?)> manifestMap,
     int depth,
     String opfDir,
     Map<String, int> spineIndexMap,
-    Map<int, List<String>> spineAnchors,
   ) {
     final chapters = <TocItem>[];
 
@@ -408,32 +412,23 @@ class EpubZipParser {
       final hrefStr = opfDir.isEmpty ? src : '$opfDir/$src';
       var href = _resolveHref(hrefStr);
 
-      // Track spine index and anchors
+      // Map to spine index for progress tracking
       int spineIdx = -1;
       if (href != null) {
         final normalizedPath = _normalizePath(href.path);
         spineIdx = spineIndexMap[normalizedPath] ?? -1;
-
-        // Record anchor usage (empty/null anchor means "TOP")
-        if (spineIdx >= 0) {
-          final anchor = href.anchor ?? 'TOP';
-          if (anchor.isEmpty) {
-            spineAnchors[spineIdx]!.add('TOP');
-          } else {
-            spineAnchors[spineIdx]!.add(anchor);
-          }
-        }
       }
 
+      // Parse nested children recursively
       final children = _parseNavPoints(
         navPoint.findElements('navPoint'),
         manifestMap,
         depth + 1,
         opfDir,
         spineIndexMap,
-        spineAnchors,
       );
 
+      // Skip parent label if first child has the same href
       if (children.isNotEmpty && children.first.href == href) {
         href = null;
       }
@@ -441,7 +436,11 @@ class EpubZipParser {
       chapters.add(
         TocItem()
           ..label = label
-          ..href = href ?? Href()
+          ..href =
+              href ??
+              (Href()
+                ..path = ''
+                ..anchor = 'top')
           ..depth = depth
           ..spineIndex = spineIdx
           ..children = children,
@@ -451,40 +450,32 @@ class EpubZipParser {
     return chapters;
   }
 
-  /// Parse spine as flat chapter list (fallback)
+  /// Parse spine as flat TOC list (fallback when no NCX/NAV exists)
+  /// Creates simple sequential chapter entries from spine order
   static List<TocItem> _parseSpineAsChapters(
-    XmlElement spineElement,
-    Map<String, (Href, String?)> manifestMap,
+    List<SpineItem> spineItems,
     String opfDir,
-    Map<String, int> spineIndexMap,
   ) {
     final chapters = <TocItem>[];
     int chapterNum = 1;
 
-    for (final itemref in spineElement.findElements('itemref')) {
-      final idref = itemref.getAttribute('idref');
-      if (idref != null && manifestMap.containsKey(idref)) {
-        final href = manifestMap[idref]!.$1;
-        final resolvedHrefPath = opfDir.isEmpty
-            ? href.path
-            : '$opfDir/${href.path}';
-        final resolvedHref = Href()
-          ..path = resolvedHrefPath
-          ..anchor = href.anchor;
+    for (final spineItem in spineItems) {
+      // Only include linear items in fallback TOC
+      if (!spineItem.linear) continue;
 
-        final normalizedPath = _normalizePath(resolvedHrefPath);
-        final spineIdx = spineIndexMap[normalizedPath] ?? -1;
+      final href = Href()
+        ..path = spineItem.href
+        ..anchor = 'top';
 
-        chapters.add(
-          TocItem()
-            ..label = 'Chapter $chapterNum'
-            ..href = resolvedHref
-            ..depth = 0
-            ..spineIndex = spineIdx
-            ..children = [],
-        );
-        chapterNum++;
-      }
+      chapters.add(
+        TocItem()
+          ..label = 'Chapter $chapterNum'
+          ..href = href
+          ..depth = 0
+          ..spineIndex = spineItem.index
+          ..children = [],
+      );
+      chapterNum++;
     }
 
     return chapters;
@@ -495,7 +486,7 @@ class EpubZipParser {
     final parts = href.split('#');
     return Href()
       ..path = parts[0]
-      ..anchor = parts.length > 1 ? parts[1] : null;
+      ..anchor = parts.length > 1 ? parts[1] : 'top';
   }
 
   /// Normalize path for consistent comparison
@@ -513,158 +504,6 @@ class EpubZipParser {
     path = path.replaceAll(RegExp(r'/+'), '/');
     return path;
   }
-
-  /// Fill gaps in TOC by comparing with spine
-  /// Handles two cases:
-  /// - Case A (Ghost Chapter): Spine file completely missing from NCX
-  /// - Case B (Missing Start): Spine file referenced but no TOP anchor
-  static List<TocItem> _fillTocGaps(
-    List<TocItem> toc,
-    List<String> spine,
-    Map<String, (Href, String?)> manifestMap,
-    String opfDir,
-    Map<int, List<String>> spineAnchors,
-  ) {
-    final result = List<TocItem>.from(toc);
-
-    // Iterate through spine indices to detect gaps
-    for (int i = 0; i < spine.length; i++) {
-      final idref = spine[i];
-      if (!manifestMap.containsKey(idref)) continue;
-
-      final href = manifestMap[idref]!.$1;
-      final filePath = opfDir.isEmpty ? href.path : '$opfDir/${href.path}';
-      final anchors = spineAnchors[i] ?? [];
-
-      // Case A: Ghost Chapter (completely missing from NCX)
-      if (anchors.isEmpty) {
-        final idref = spine[i];
-        final ghostItem = _createGhostChapter(filePath, i, idref);
-        _insertGhostChapter(result, ghostItem, i);
-      }
-      // Case B: Missing Start (no TOP anchor)
-      else if (!anchors.contains('TOP')) {
-        final idref = spine[i];
-        final startItem = _createMissingStart(filePath, i, idref);
-        _insertMissingStart(result, startItem, i);
-      }
-    }
-
-    return result;
-  }
-
-  /// Create a ghost chapter item for a spine file not in NCX
-  static TocItem _createGhostChapter(
-    String filePath,
-    int spineIndex,
-    String idref,
-  ) {
-    final label = idref.isNotEmpty ? idref : 'Chapter ${spineIndex + 1}';
-    return TocItem()
-      ..label = '$label (Missing from TOC)'
-      ..href = (Href()
-        ..path = filePath
-        ..anchor = null)
-      ..depth = 0
-      ..spineIndex = spineIndex
-      ..children = [];
-  }
-
-  /// Create a missing start item for a spine file without TOP anchor
-  static TocItem _createMissingStart(
-    String filePath,
-    int spineIndex,
-    String idref,
-  ) {
-    final label = idref.isNotEmpty ? idref : 'Chapter ${spineIndex + 1}';
-    return TocItem()
-      ..label = 'Start (Missing Anchor) - $label'
-      ..href = (Href()
-        ..path = filePath
-        ..anchor = null)
-      ..depth = 0
-      ..spineIndex = spineIndex
-      ..children = [];
-  }
-
-  /// Insert ghost chapter at the correct position in TOC
-  /// Finds the last root-level node with spineIndex = i-1 and inserts after it
-  static void _insertGhostChapter(
-    List<TocItem> toc,
-    TocItem ghostItem,
-    int targetSpineIndex,
-  ) {
-    if (targetSpineIndex == 0) {
-      // Insert at beginning
-      toc.insert(0, ghostItem);
-      return;
-    }
-
-    // Find the last root-level item with spineIndex = targetSpineIndex - 1
-    int insertPosition = -1;
-    for (int i = toc.length - 1; i >= 0; i--) {
-      if (toc[i].depth == 0 && toc[i].spineIndex == targetSpineIndex - 1) {
-        insertPosition = i + 1;
-        break;
-      }
-    }
-
-    if (insertPosition >= 0 && insertPosition <= toc.length) {
-      toc.insert(insertPosition, ghostItem);
-    } else {
-      // Fallback: find any item with lower spine index
-      for (int i = 0; i < toc.length; i++) {
-        if (toc[i].spineIndex >= targetSpineIndex) {
-          toc.insert(i, ghostItem);
-          return;
-        }
-      }
-      // If all items are before target, append at end
-      toc.add(ghostItem);
-    }
-  }
-
-  /// Insert missing start item before the first occurrence of targetSpineIndex
-  /// Does NOT modify the existing item, just inserts before it
-  static void _insertMissingStart(
-    List<TocItem> toc,
-    TocItem startItem,
-    int targetSpineIndex,
-  ) {
-    // Find first item (at any depth) with matching spineIndex
-    final insertPosition = _findFirstItemWithSpineIndex(toc, targetSpineIndex);
-
-    if (insertPosition >= 0) {
-      toc.insert(insertPosition, startItem);
-    } else {
-      // Fallback: shouldn't happen if anchors tracking is correct
-      toc.add(startItem);
-    }
-  }
-
-  /// Recursively find the first item with given spineIndex
-  /// Returns the position in the flattened root list
-  static int _findFirstItemWithSpineIndex(
-    List<TocItem> toc,
-    int targetSpineIndex,
-  ) {
-    for (int i = 0; i < toc.length; i++) {
-      if (toc[i].spineIndex == targetSpineIndex) {
-        return i;
-      }
-      // Check children recursively
-      final childPos = _findFirstItemWithSpineIndex(
-        toc[i].children,
-        targetSpineIndex,
-      );
-      if (childPos >= 0) {
-        // Found in child, but we need to insert at parent level
-        // Insert before the parent that contains this child
-        return i;
-      }
-    }
-    return -1;
-  }
 }
 
 /// Result of EPUB ZIP parsing
@@ -678,7 +517,7 @@ class EpubZipParseResult {
   final String opfRootPath;
   final String epubVersion;
   final int totalChapters;
-  final List<String> spine;
+  final List<SpineItem> spine;
   final List<TocItem> toc;
   final List<ManifestItem> manifestItems;
 

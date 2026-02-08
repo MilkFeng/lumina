@@ -486,20 +486,20 @@ class MockBookManifestRepository extends _i1.Mock
       ) as _i3.Future<List<_i9.BookManifest>>);
 
   @override
-  _i3.Future<String?> getSpinePathByIndex(
+  _i3.Future<_i9.SpineItem?> getSpineItemByIndex(
     String? fileHash,
     int? index,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getSpinePathByIndex,
+          #getSpineItemByIndex,
           [
             fileHash,
             index,
           ],
         ),
-        returnValue: _i3.Future<String?>.value(),
-      ) as _i3.Future<String?>);
+        returnValue: _i3.Future<_i9.SpineItem?>.value(),
+      ) as _i3.Future<_i9.SpineItem?>);
 
   @override
   _i3.Future<int?> getSpineCount(String? fileHash) => (super.noSuchMethod(

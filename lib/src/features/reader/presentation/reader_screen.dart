@@ -52,8 +52,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   bool _isWebViewLoading = true;
 
   bool _showControls = false;
-  int _currentChapterIndex = 0;
-  List<TocItem> _flatChapters = [];
+  int _currentSpineItemIndex = 0;
+  List<SpineItem> _spineItems = [];
+
+  // TOC Synchronization: Pre-calculated lookup maps
+  final Map<String, List<String>> _spineToAnchorsMap = {};
+  Set<String> _activeAnchors = {};
+
+  final List<TocItem> _flatToc = [];
+  final Map<Href, int> _hrefToTocIndexMap = {};
 
   // Pagination
   int _currentPageInChapter = 0;
@@ -140,19 +147,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         return;
       }
 
-      // Flatten TOC
-      final flatChapters = manifest.toc
-          .expand((item) => item.flatten())
-          .where((item) => item.href.path.isNotEmpty)
-          .toList();
+      // Get spine items (true reading order)
+      final spineItems = manifest.spine;
 
       setState(() {
         _book = book;
         _manifest = manifest;
-        _flatChapters = flatChapters;
-        _currentChapterIndex = book.currentChapterIndex;
+        _spineItems = spineItems;
+        _currentSpineItemIndex = book.currentChapterIndex;
         _initialProgressToRestore = book.chapterScrollPosition;
       });
+
+      // Pre-calculate TOC lookup maps for O(1) synchronization
+      _preprogress();
     } catch (e) {
       if (mounted) {
         ToastService.showError(
@@ -160,6 +167,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         );
         context.pop();
       }
+    }
+  }
+
+  void _preprogress() {
+    _flatToc.clear();
+    _hrefToTocIndexMap.clear();
+    _spineToAnchorsMap.clear();
+
+    void processItem(TocItem item) {
+      item.id = _flatToc.length;
+      _flatToc.add(item);
+      _hrefToTocIndexMap[item.href] = item.id;
+
+      final filePath = item.href.path;
+      final anchorId = item.href.anchor;
+      _spineToAnchorsMap.putIfAbsent(filePath, () => []).add(anchorId);
+
+      for (final child in item.children) {
+        processItem(child);
+      }
+    }
+
+    for (final item in _manifest!.toc) {
+      processItem(item);
     }
   }
 
@@ -173,9 +204,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
 
     var progress = 0.0;
-    if (_flatChapters.isNotEmpty) {
-      final delta = 1.0 / _flatChapters.length;
-      progress = (_currentChapterIndex + 1) / _flatChapters.length;
+    if (_spineItems.isNotEmpty) {
+      final delta = 1.0 / _spineItems.length;
+      progress = (_currentSpineItemIndex + 1) / _spineItems.length;
       if (_totalPagesInChapter > 0) {
         progress -= delta;
         progress +=
@@ -186,7 +217,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final shelfBookRepo = ref.read(shelfBookRepositoryProvider);
     await shelfBookRepo.updateProgress(
       bookId: _book!.id,
-      currentChapterIndex: _currentChapterIndex,
+      currentChapterIndex: _currentSpineItemIndex,
       progress: progress,
       scrollPosition: scrollPosition,
     );
@@ -224,16 +255,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _scaffoldKey.currentState?.openDrawer();
   }
 
-  void _navigateToChapter(int index) {
-    if (index < 0 || index >= _flatChapters.length) return;
+  void _navigateToSpineItem(int index, [String anchor = 'top']) {
+    if (index < 0 || index >= _spineItems.length) return;
 
     setState(() {
-      _currentChapterIndex = index;
+      _currentSpineItemIndex = index;
       _currentPageInChapter = 0; // Reset to first page of new chapter
       _initialProgressToRestore = null;
     });
 
-    _loadCarousel();
+    _loadCarousel(anchor);
     _saveProgress();
   }
 
@@ -254,8 +285,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return null;
   }
 
-  Future<void> _previousChapter() async {
-    if (_currentChapterIndex <= 0) {
+  String _getAnchorsForSpine(String spinePath) {
+    final anchors = _spineToAnchorsMap[spinePath] ?? [];
+    final jsonAnchors = anchors.map((a) => '"$a"').join(',');
+    return '[$jsonAnchors]';
+  }
+
+  /// Inject TOC anchor whitelist into JS for the given spine file
+  /// This is called when a frame is loaded with a new chapter
+  void _handleScrollAnchors(List<String> anchorIds) {
+    setState(() {
+      _activeAnchors = anchorIds.toSet();
+    });
+  }
+
+  Future<void> _previousSpineItem() async {
+    if (_currentSpineItemIndex <= 0) {
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
@@ -266,15 +311,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     await _webViewController?.evaluateJavascript(source: "cycleFrames('prev')");
 
     setState(() {
-      _currentChapterIndex--;
+      _currentSpineItemIndex--;
       _initialProgressToRestore = null;
     });
-    _preloadPreviousOf(_currentChapterIndex);
+
+    _preloadPreviousOf(_currentSpineItemIndex);
     _saveProgress();
   }
 
-  Future<void> _previousChapterFirstPage() async {
-    if (_currentChapterIndex <= 0) {
+  Future<void> _previousSpineItemFirstPage() async {
+    if (_currentSpineItemIndex <= 0) {
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
@@ -285,16 +331,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     await _webViewController?.evaluateJavascript(source: "cycleFrames('prev')");
 
     setState(() {
-      _currentChapterIndex--;
+      _currentSpineItemIndex--;
       _currentPageInChapter = 0;
       _initialProgressToRestore = null;
     });
-    _preloadPreviousOf(_currentChapterIndex);
+
+    _preloadPreviousOf(_currentSpineItemIndex);
     _saveProgress();
   }
 
-  Future<void> _nextChapter() async {
-    if (_currentChapterIndex >= _flatChapters.length - 1) {
+  Future<void> _nextSpineItem() async {
+    if (_currentSpineItemIndex >= _spineItems.length - 1) {
       ToastService.showError(AppLocalizations.of(context)!.lastChapterOfBook);
       return;
     }
@@ -305,27 +352,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     await _webViewController?.evaluateJavascript(source: "cycleFrames('next')");
     setState(() {
-      _currentChapterIndex++;
+      _currentSpineItemIndex++;
       _currentPageInChapter = 0;
       _initialProgressToRestore = null;
     });
 
-    _preloadNextOf(_currentChapterIndex);
+    _preloadNextOf(_currentSpineItemIndex);
     _saveProgress();
   }
 
   Future<void> _preloadNextOf(int currentIndex) async {
     final nextIndex = currentIndex + 1;
-    if (nextIndex < _flatChapters.length) {
-      String? endAnchor;
-      if (nextIndex + 1 < _flatChapters.length) {
-        endAnchor = _flatChapters[nextIndex + 1].href.anchor;
-      }
-
-      final url = _getChapterUrl(nextIndex);
+    if (nextIndex < _spineItems.length) {
+      // Note: SpineItem.href is a String, not an Href object with anchor
+      // End anchors come from TOC, not spine
+      final url = _getSpineItemUrl(nextIndex);
+      final nextSpinePath = _spineItems[nextIndex].href;
       await _webViewController?.evaluateJavascript(
         source:
-            "loadFrame('next', '$url', ${endAnchor != null ? "'$endAnchor'" : 'null'})",
+            "loadFrame('next', '$url', ${_getAnchorsForSpine(nextSpinePath)})",
       );
     }
   }
@@ -333,17 +378,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Future<void> _preloadPreviousOf(int currentIndex) async {
     final prevIndex = currentIndex - 1;
     if (prevIndex >= 0) {
-      final url = _getChapterUrl(prevIndex);
-      var endAnchor = _flatChapters[currentIndex].href.anchor;
+      final url = _getSpineItemUrl(prevIndex);
+      // Note: SpineItem.href is a String, not an Href object with anchor
+      final prevSpinePath = _spineItems[prevIndex].href;
       await _webViewController?.evaluateJavascript(
         source:
-            "loadFrame('prev', '$url', ${endAnchor != null ? "'$endAnchor'" : 'null'})",
+            "loadFrame('prev', '$url', ${_getAnchorsForSpine(prevSpinePath)})",
       );
     }
   }
 
-  Future<void> _loadCarousel() async {
-    if (_flatChapters.isEmpty || _webViewController == null) return;
+  Future<void> _loadCarousel([String anchor = 'top']) async {
+    if (_spineItems.isEmpty || _webViewController == null) return;
     if (mounted) {
       setState(() {
         _isWebViewLoading = true;
@@ -351,52 +397,46 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
 
     // Get paths for current, previous, and next chapters
-    final currIndex = _currentChapterIndex;
+    final currIndex = _currentSpineItemIndex;
     final prevIndex = currIndex > 0 ? currIndex - 1 : null;
-    final nextIndex = currIndex < _flatChapters.length - 1
-        ? currIndex + 1
-        : null;
+    final nextIndex = currIndex < _spineItems.length - 1 ? currIndex + 1 : null;
 
     // Load current chapter
-    final currUrl = _getChapterUrl(currIndex);
-    String? endAnchor;
-    if (nextIndex != null) {
-      endAnchor = _flatChapters[nextIndex].href.anchor;
-    }
+    final currUrl = _getSpineItemUrl(currIndex, anchor);
+    final currentSpinePath = _spineItems[currIndex].href;
+    // Note: End anchors come from TOC mapping, not spine directly
     await _webViewController?.evaluateJavascript(
       source:
-          "loadFrame('curr', '$currUrl', ${endAnchor != null ? "'$endAnchor'" : 'null'})",
+          "loadFrame('curr', '$currUrl', ${_getAnchorsForSpine(currentSpinePath)})",
     );
 
     // Load previous chapter if exists
     if (prevIndex != null) {
-      final prevUrl = _getChapterUrl(prevIndex);
-      final endAnchor = _flatChapters[currIndex].href.anchor;
+      final prevUrl = _getSpineItemUrl(prevIndex);
+      final prevSpinePath = _spineItems[prevIndex].href;
       await _webViewController?.evaluateJavascript(
         source:
-            "loadFrame('prev', '$prevUrl', ${endAnchor != null ? "'$endAnchor'" : 'null'})",
+            "loadFrame('prev', '$prevUrl', ${_getAnchorsForSpine(prevSpinePath)})",
       );
     }
 
     // Load next chapter if exists
     if (nextIndex != null) {
-      final nextUrl = _getChapterUrl(nextIndex);
-      var endAnchor = _flatChapters[nextIndex].href.anchor;
-      if (nextIndex + 1 < _flatChapters.length) {
-        endAnchor = _flatChapters[nextIndex + 1].href.anchor;
-      }
+      final nextUrl = _getSpineItemUrl(nextIndex);
+      final nextSpinePath = _spineItems[nextIndex].href;
       await _webViewController?.evaluateJavascript(
         source:
-            "loadFrame('next', '$nextUrl', ${endAnchor != null ? "'$endAnchor'" : 'null'})",
+            "loadFrame('next', '$nextUrl', ${_getAnchorsForSpine(nextSpinePath)})",
       );
     }
   }
 
-  String _getChapterUrl(int index) {
-    return EpubWebViewHandler.getFileUrl(
-      widget.fileHash,
-      _flatChapters[index].href,
-    );
+  String _getSpineItemUrl(int index, [String anchor = 'top']) {
+    // Create Href object from spine item's href string
+    final href = Href()
+      ..path = _spineItems[index].href
+      ..anchor = anchor;
+    return EpubWebViewHandler.getFileUrl(widget.fileHash, href);
   }
 
   void _goToPage(int pageIndex) {
@@ -414,7 +454,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (_currentPageInChapter < _totalPagesInChapter - 1) {
       _goToPage(_currentPageInChapter + 1);
     } else {
-      _nextChapter();
+      _nextSpineItem();
     }
     _saveProgress();
   }
@@ -423,7 +463,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (_currentPageInChapter > 0) {
       _goToPage(_currentPageInChapter - 1);
     } else {
-      _previousChapter();
+      _previousSpineItem();
     }
     _saveProgress();
   }
@@ -433,12 +473,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     if (isNext) {
       if (_currentPageInChapter >= _totalPagesInChapter - 1 &&
-          _currentChapterIndex >= _flatChapters.length - 1) {
+          _currentSpineItemIndex >= _spineItems.length - 1) {
         ToastService.showError(AppLocalizations.of(context)!.lastPageOfBook);
         return;
       }
     } else {
-      if (_currentPageInChapter <= 0 && _currentChapterIndex <= 0) {
+      if (_currentPageInChapter <= 0 && _currentSpineItemIndex <= 0) {
         ToastService.showError(AppLocalizations.of(context)!.firstPageOfBook);
         return;
       }
@@ -556,7 +596,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return TocDrawer(
       book: _book!,
       toc: _manifest!.toc,
-      currentChapterIndex: _currentChapterIndex,
+      activeTocItems: _resolveActiveItems(),
       onTocItemSelected: _navigateToTocItem,
     );
   }
@@ -569,13 +609,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       return;
     }
 
-    final index = _flatChapters.indexWhere((c) => c.href == targetHref);
+    // Find spine index by matching href path
+    final index = _spineItems.indexWhere((s) => s.href == targetHref.path);
 
     if (index != -1) {
-      _navigateToChapter(index);
+      _navigateToSpineItem(index, targetHref.anchor);
     } else {
       debugPrint(
-        "Warning: Chapter with href $targetHref not found in flat list.",
+        "Warning: Chapter with href ${targetHref.path} not found in spine.",
       );
     }
   }
@@ -609,8 +650,41 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     });
   }
 
+  Set<Href> _generateActivatedHrefKeys() {
+    final path = _spineItems[_currentSpineItemIndex].href;
+    return _activeAnchors
+        .map(
+          (anchor) => Href()
+            ..path = path
+            ..anchor = anchor,
+        )
+        .toSet();
+  }
+
+  /// Resolve active TOC item by TOC ID (used for scroll-based highlighting)
+  Set<TocItem> _resolveActiveItems() {
+    final activeHrefKeys = _generateActivatedHrefKeys();
+    final activeItems = activeHrefKeys
+        .map((href) {
+          final tocIndex = _hrefToTocIndexMap[href];
+          if (tocIndex != null && tocIndex >= 0 && tocIndex < _flatToc.length) {
+            return _flatToc[tocIndex];
+          } else {
+            return null;
+          }
+        })
+        .whereType<TocItem>()
+        .toSet();
+    return activeItems;
+  }
+
   /// STEP 4.4: Build reader body with WebView interception
   Widget _buildReaderBody() {
+    final activeItems = _resolveActiveItems();
+    final activateTocTitle = activeItems.isNotEmpty
+        ? activeItems.last.label
+        : '';
+
     return Stack(
       children: [
         Positioned.fill(
@@ -676,9 +750,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   ),
                   Expanded(
                     child: Text(
-                      _flatChapters.isEmpty
-                          ? 'Loading...'
-                          : _flatChapters[_currentChapterIndex].label,
+                      _spineItems.isEmpty ? 'Loading...' : activateTocTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontFamily: AppTheme.fontFamilyContent,
@@ -731,15 +803,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       GestureDetector(
-                        onLongPressStart: _currentChapterIndex > 0
+                        onLongPressStart: _currentSpineItemIndex > 0
                             ? (_) {
                                 HapticFeedback.selectionClick();
-                                _previousChapterFirstPage();
+                                _previousSpineItemFirstPage();
                                 _longPressTimer = Timer.periodic(
                                   const Duration(milliseconds: 800),
                                   (timer) {
                                     HapticFeedback.selectionClick();
-                                    _previousChapterFirstPage();
+                                    _previousSpineItemFirstPage();
                                   },
                                 );
                               }
@@ -753,7 +825,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         child: IconButton(
                           icon: const Icon(Icons.chevron_left_outlined),
                           onPressed:
-                              (_currentChapterIndex > 0 ||
+                              (_currentSpineItemIndex > 0 ||
                                   _currentPageInChapter > 0)
                               ? () => _performPageTurn(false)
                               : null,
@@ -764,9 +836,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _flatChapters.isEmpty
+                            _spineItems.isEmpty
                                 ? '0/0'
-                                : '${_currentChapterIndex + 1}/${_flatChapters.length}',
+                                : '${_currentSpineItemIndex + 1}/${_spineItems.length}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           if (_totalPagesInChapter > 1)
@@ -779,15 +851,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
                       GestureDetector(
                         onLongPressStart:
-                            _currentChapterIndex < _flatChapters.length - 1
+                            _currentSpineItemIndex < _spineItems.length - 1
                             ? (_) {
                                 HapticFeedback.selectionClick();
-                                _nextChapter();
+                                _nextSpineItem();
                                 _longPressTimer = Timer.periodic(
                                   const Duration(milliseconds: 800),
                                   (timer) {
                                     HapticFeedback.selectionClick();
-                                    _nextChapter();
+                                    _nextSpineItem();
                                   },
                                 );
                               }
@@ -801,8 +873,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         child: IconButton(
                           icon: const Icon(Icons.chevron_right_outlined),
                           onPressed:
-                              (_currentChapterIndex <
-                                      _flatChapters.length - 1 ||
+                              (_currentSpineItemIndex <
+                                      _spineItems.length - 1 ||
                                   _currentPageInChapter <
                                       _totalPagesInChapter - 1)
                               ? () => _performPageTurn(true)
@@ -995,6 +1067,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                             debugPrint('WebView: RenderComplete');
                           },
                         );
+
+                        controller.addJavaScriptHandler(
+                          handlerName: 'onScrollAnchors',
+                          callback: (args) {
+                            if (args.isEmpty) return;
+                            final List<String> anchors = List<String>.from(
+                              args[0] as List,
+                            );
+                            _handleScrollAnchors(anchors);
+                          },
+                        );
                       },
                       onLoadStop: (controller, url) async {
                         await controller.evaluateJavascript(
@@ -1033,8 +1116,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Widget _buildScreenshotContainer(Uint8List screenshot) {
-    // return Container(color: Colors.blue);
-
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,

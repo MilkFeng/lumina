@@ -170,7 +170,6 @@ figure {
 a {
   pointer-events: none !important;
   text-decoration: none !important;
-  color: inherit !important;
   cursor: default !important;
 }
 
@@ -197,22 +196,10 @@ let framePages = {
   'frame-next': 0
 };
 
-let framePageStarts = {
-  'frame-prev': 0,
-  'frame-curr': 0,
-  'frame-next': 0
-};
-
-let startAnchors = {
-  'frame-prev': null,
-  'frame-curr': null,
-  'frame-next': null
-};
-
-let endAnchors = {
-  'frame-prev': null,
-  'frame-curr': null,
-  'frame-next': null
+let tocAnchors = {
+  'frame-prev': [],
+  'frame-curr': [],
+  'frame-next': []
 };
 
 function getWidth(iframe) {
@@ -222,13 +209,12 @@ function getWidth(iframe) {
 let PAGINATION_CSS = `${generatePaginationCss(viewWidth, viewHeight, defaultTextColor)}`;
 
 // Load a chapter into a specific iframe slot
-function loadFrame(slot, url, endAnchor) {
+function loadFrame(slot, url, anchors) {
   const iframe = document.getElementById('frame-' + slot);
   if (!iframe) return;
 
-  endAnchors[iframe.id] = endAnchor;
+  tocAnchors['frame-' + slot] = anchors || [];
 
-  // Clear previous onload to prevent ghost calls
   iframe.onload = null;
   
   if (iframe.src == null || iframe.src === '' || iframe.src === 'about:blank') {
@@ -256,10 +242,10 @@ function loadFrame(slot, url, endAnchor) {
 
 function waitForAllResources() {
   const imagesReady = Promise.all(Array.from(document.images).map(img => {
-      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-      return new Promise(resolve => {
-          img.onload = img.onerror = resolve;
-      });
+    if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = img.onerror = resolve;
+    });
   }));
 
   const fontsReady = document.fonts.ready;
@@ -270,53 +256,19 @@ function waitForAllResources() {
   ]);
 }
 
-function calculateStartPageIndex(iframe) {
-  if (!iframe || !iframe.contentDocument) return 0;
-
-  const startAnchor = startAnchors[iframe.id];
-  if (startAnchor) {
-    const startEl = iframe.contentDocument.getElementById(startAnchor);
-    if (startEl) {
-      const startLeft = startEl.offsetLeft + startEl.offsetWidth / 5;
-      const viewportWidth = getWidth(iframe);
-      return Math.round((startLeft + 128) / (viewportWidth + 128));
-    }
-  }
-  return 0;
-}
-
-function calculateEndPageIndex(iframe) {
+function calculatePageCount(iframe) {
   if (!iframe || !iframe.contentDocument) return;
 
-  const endAnchor = endAnchors[iframe.id];
-  if (endAnchor) {
-    const endEl = iframe.contentDocument.getElementById(endAnchor);
-    if (endEl) {
-      const endRight = endEl.offsetLeft + endEl.offsetWidth / 5;
-      const viewportWidth = getWidth(iframe);
-      return Math.round((endRight + 128) / (viewportWidth + 128));
-    }
-  }
   const scrollWidth = iframe.contentDocument.body.scrollWidth;
   const viewportWidth = getWidth(iframe);
   const pageCount = Math.round((scrollWidth + 128) / (viewportWidth + 128));
   return pageCount;
 }
 
-function calculatePageCount(iframe) {
-  if (!iframe || !iframe.contentDocument) return;
-
-  const startPageIndex = calculateStartPageIndex(iframe);
-  const endPageIndex = calculateEndPageIndex(iframe);
-
-  return endPageIndex - startPageIndex;
-}
-
 function calculateScrollLeft(iframe, pageIndex) {
   if (!iframe || !iframe.contentDocument) return;
   const viewportWidth = getWidth(iframe);
-  const offsetPageIndex = pageIndex + framePageStarts[iframe.id];
-  const scrollLeft = offsetPageIndex * viewportWidth + (offsetPageIndex * 128);
+  const scrollLeft = pageIndex * viewportWidth + (pageIndex * 128);
   return scrollLeft;
 }
 
@@ -333,23 +285,23 @@ function polyfillCss(doc) {
           var style = rule.style;
           
           if (style.breakBefore && style.breakBefore !== 'auto') {
-            style.breakBefore = 'always';
+            style.breakBefore = 'column';
             style.webkitColumnBreakBefore = 'always';
           }
           
           if (style.pageBreakBefore && style.pageBreakBefore !== 'auto') {
             style.webkitColumnBreakBefore = 'always';
-            style.breakBefore = 'always';
+            style.breakBefore = 'column';
           }
 
           if (style.breakAfter && style.breakAfter !== 'auto') {
-            style.breakAfter = 'always';
+            style.breakAfter = 'column';
             style.webkitColumnBreakAfter = 'always';
           }
 
           if (style.pageBreakAfter && style.pageBreakAfter !== 'auto') {
             style.webkitColumnBreakAfter = 'always';
-            style.breakAfter = 'always';
+            style.breakAfter = 'column';
           }
         }
       }
@@ -359,19 +311,84 @@ function polyfillCss(doc) {
   }
 }
 
+// Detect the "last passed anchor" algorithm
+function detectActiveAnchor(iframe) {
+  if (!iframe || !iframe.contentDocument) return;
+  if (iframe.id !== 'frame-curr') return; // Only track anchors in the current frame
+
+  let anchors = tocAnchors['frame-curr'];
+  if (!anchors || anchors.length === 0) {
+    return;
+  }
+  
+  const doc = iframe.contentDocument;
+  let activeAnchors = [];
+  let lastPassedAnchor = 'top';
+  const threshold = 50; // Left threshold in pixels for horizontal scrolling
+  
+  // Iterate through anchors to find the last one that has passed the threshold
+  for (let i = 0; i < anchors.length; i++) {
+    const anchorId = anchors[i];
+    if (anchorId === 'top') {
+      if (doc.body.scrollLeft < threshold) {
+        activeAnchors.push('top');
+      }
+      continue;
+    }
+
+    const element = doc.getElementById(anchorId);
+    
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      
+      // If this anchor has scrolled past the left edge (left < 50px from viewport left)
+      if (rect.left < threshold && rect.right > threshold) {
+        activeAnchors.push(anchorId);
+        // Continue to find potentially later anchors
+      }
+
+      if (rect.left < threshold) {
+        lastPassedAnchor = anchorId;
+      }
+    }
+  }
+
+  if (activeAnchors.length === 0 && lastPassedAnchor) {
+    activeAnchors.push(lastPassedAnchor);
+  }  
+  window.flutter_inappwebview.callHandler('onScrollAnchors', activeAnchors);
+}
+
+function calculatePageIndexOfAnchor(iframe, anchorId) {
+  if (!iframe || !iframe.contentDocument) return 0;
+  const doc = iframe.contentDocument;
+  const element = doc.getElementById(anchorId);
+  if (!element) return 0;
+
+  const viewportWidth = getWidth(iframe);
+  const elementRect = element.getBoundingClientRect();
+  const bodyRect = doc.body.getBoundingClientRect();
+  const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width /5);
+
+  const pageIndex = Math.round((absoluteLeft + 128) / (viewportWidth + 128));
+  return pageIndex;
+}
+
 // Called when an iframe finishes loading
 function onFrameLoad(iframe) {
   if (!iframe || !iframe.contentDocument) return;
-
-  const url = new URL(iframe.src);
-  if (url.hash) {
-    startAnchors[iframe.id] = url.hash.substring(1);
-  } else {
-    startAnchors[iframe.id] = null;
-  }
-  endAnchors[iframe.id] = endAnchors[iframe.id];
   
   const doc = iframe.contentDocument;
+
+  let pageIndex = 0;
+
+  const url = iframe.src;
+  if (url && url.includes('#')) {
+    const anchor = url.split('#')[1];
+    pageIndex = calculatePageIndexOfAnchor(iframe, anchor);
+    const scrollLeft = calculateScrollLeft(iframe, pageIndex);
+    doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+  }
   
   // Inject CSS
   const style = doc.createElement('style');
@@ -384,7 +401,6 @@ function onFrameLoad(iframe) {
   
   // Inject click handler with 3-zone tap logic
   doc.body.onclick = function(e) {
-    console.log('Body clicked at: ' + e.clientX + ', ' + e.clientY);
     const clickX = e.clientX;
     const width = window.innerWidth || 1;
     const ratio = clickX / width;
@@ -407,13 +423,16 @@ function onFrameLoad(iframe) {
 
     requestAnimationFrame(() => {
       const pageCount = calculatePageCount(iframe);
-      const pageStart = calculateStartPageIndex(iframe);
       framePages[iframe.id] = pageCount;
-      framePageStarts[iframe.id] = pageStart;
       if (iframe.id === 'frame-curr') {
         window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
+        window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
       }
     });
+  });
+
+  requestAnimationFrame(() => {
+    detectActiveAnchor(iframe);
   });
 }
 
@@ -424,6 +443,10 @@ function jumpToPage(pageIndex) {
 
   const scrollLeft = calculateScrollLeft(iframe, pageIndex);
   iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+
+  requestAnimationFrame(() => {
+    detectActiveAnchor(iframe);
+  });
 }
 
 function jumpToPageFor(slot, pageIndex) {
@@ -433,6 +456,10 @@ function jumpToPageFor(slot, pageIndex) {
   
   const scrollLeft = calculateScrollLeft(iframe, pageIndex);
   iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+
+  requestAnimationFrame(() => {
+    detectActiveAnchor(iframe);
+  });
 }
 
 // Restore scroll position using ratio and snap to column boundaries
@@ -447,15 +474,12 @@ function restoreScrollPosition(ratio) {
   window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
 }
 
-function updatePageCountAndStart(iframeId, direction) {
+function updatePageCount(iframeId, direction) {
   const iframe = document.getElementById(iframeId);
   if (!iframe || !iframe.contentWindow) return;
   
   const pageCount = calculatePageCount(iframe);
   framePages[iframeId] = pageCount;
-
-  const pageStart = calculateStartPageIndex(iframe);
-  framePageStarts[iframeId] = pageStart;
   
   // If this is the current frame, notify Flutter
   if (iframeId === 'frame-curr') {
@@ -502,26 +526,10 @@ function cycleFrames(direction) {
     recycled.src = 'about:blank'; // Clear it
 
     // cycle anchors
-    const tempStart = startAnchors['frame-prev'];
-    const tempEnd = endAnchors['frame-prev'];
-    const tempStartPageIndex = framePageStarts['frame-prev'];
-    const tempPageCount = framePages['frame-prev'];
-
-    startAnchors['frame-prev'] = startAnchors['frame-curr'];
-    endAnchors['frame-prev'] = endAnchors['frame-curr'];
-    framePageStarts['frame-prev'] = framePageStarts['frame-curr'];
-    framePages['frame-prev'] = framePages['frame-curr'];
-
-    startAnchors['frame-curr'] = startAnchors['frame-next'];
-    endAnchors['frame-curr'] = endAnchors['frame-next'];
-    framePageStarts['frame-curr'] = framePageStarts['frame-next'];
-    framePages['frame-curr'] = framePages['frame-next'];
-
-    startAnchors['frame-next'] = tempStart;
-    endAnchors['frame-next'] = tempEnd;
-    framePageStarts['frame-next'] = tempStartPageIndex;
-    framePages['frame-next'] = tempPageCount;
-    
+    const tempAnchors = tocAnchors['frame-prev'];
+    tocAnchors['frame-prev'] = tocAnchors['frame-curr'];
+    tocAnchors['frame-curr'] = tocAnchors['frame-next'];
+    tocAnchors['frame-next'] = tempAnchors;
   } else if (direction === 'prev') {
     // Logic:
     // Old Prev (Hidden, but loaded) -> Becomes New Curr
@@ -547,31 +555,17 @@ function cycleFrames(direction) {
     recycled.style.pointerEvents = 'none';
     recycled.src = 'about:blank';
 
-
     // cycle anchors
-    const tempStart = startAnchors['frame-next'];
-    const tempEnd = endAnchors['frame-next'];
-    const tempStartPageIndex = framePageStarts['frame-next'];
-    const tempPageCount = framePages['frame-next'];
-
-    startAnchors['frame-next'] = startAnchors['frame-curr'];
-    endAnchors['frame-next'] = endAnchors['frame-curr'];
-    framePageStarts['frame-next'] = framePageStarts['frame-curr'];
-    framePages['frame-next'] = framePages['frame-curr'];
-
-    startAnchors['frame-curr'] = startAnchors['frame-prev'];
-    endAnchors['frame-curr'] = endAnchors['frame-prev'];
-    framePageStarts['frame-curr'] = framePageStarts['frame-prev'];
-    framePages['frame-curr'] = framePages['frame-prev'];
-
-    startAnchors['frame-prev'] = tempStart;
-    endAnchors['frame-prev'] = tempEnd;
-    framePageStarts['frame-prev'] = tempStartPageIndex;
-    framePages['frame-prev'] = tempPageCount;
-    
+    const tempAnchors = tocAnchors['frame-next'];
+    tocAnchors['frame-next'] = tocAnchors['frame-curr'];
+    tocAnchors['frame-curr'] = tocAnchors['frame-prev'];
+    tocAnchors['frame-prev'] = tempAnchors;
   }
 
-  updatePageCountAndStart('frame-curr', direction);
+  updatePageCount('frame-curr', direction);
+  detectActiveAnchor(elPrev);
+  detectActiveAnchor(elCurr);
+  detectActiveAnchor(elNext);
 }
 
 // Helper to scroll the PREV frame to the last page immediately
@@ -606,5 +600,5 @@ function replaceStyles(skeletonCss, iframeCss) {
 
   PAGINATION_CSS = iframeCss;
 }
-''';
+  ''';
 }

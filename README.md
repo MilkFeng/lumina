@@ -150,7 +150,7 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Table of contents navigation
 - [x] Adaptive light/dark themes
 - [x] Internationalization support (Chinese/English)
-- [ ] Avoid duplicate page turns when two NCX navigation points are on the same page
+- [x] Avoid duplicate page turns when two NCX navigation points are on the same page
 - [ ] Tap images to view full-size
 - [ ] Edit book metadata (cover, title, author, etc.)
 - [ ] Swipe page turning mode

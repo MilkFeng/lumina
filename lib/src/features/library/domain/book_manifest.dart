@@ -20,13 +20,16 @@ class BookManifest {
   /// e.g., "OEBPS/content.opf" or "content.opf"
   late String opfRootPath;
 
-  /// Ordered list of content file paths (from spine element)
-  /// Each entry is a path relative to the OPF root directory
-  /// e.g., ["chapter1.xhtml", "chapter2.xhtml", ...]
-  late List<String> spine;
+  /// Linear reading order (from spine element in OPF)
+  /// Determines sequential navigation (Next/Previous page logic)
+  /// Each item contains the complete spine metadata
+  late List<SpineItem> spine;
 
-  /// Table of Contents structure (nested navigation)
+  /// Table of Contents structure (nested navigation tree)
   /// Parsed from NCX (EPUB 2.0) or NAV document (EPUB 3.0)
+  /// Pure hierarchical navigation - does NOT need to cover every spine item
+  /// Each TocItem points to a specific location (href + anchor) and references
+  /// a spineIndex for quick lookup and progress tracking
   late List<TocItem> toc;
 
   /// Manifest map entries (id -> file path)
@@ -42,6 +45,34 @@ class BookManifest {
   late DateTime lastUpdated;
 }
 
+/// Embedded object representing a single spine entry
+/// Spine defines the linear reading order (Next/Previous navigation)
+@embedded
+class SpineItem {
+  /// Sequential order in the spine (0-based)
+  late int index;
+
+  /// Relative path to the content resource (e.g., "text/chap1.xhtml")
+  /// Path is relative to OPF root directory
+  late String href;
+
+  /// ID reference from the OPF manifest
+  /// Links this spine item to a manifest entry
+  late String idref;
+
+  /// Linear reading flag (from EPUB spine itemref "linear" attribute)
+  /// If false, content is auxiliary (e.g., footnotes) and should be skipped
+  /// during sequential navigation. Defaults to true.
+  late bool linear;
+
+  SpineItem({
+    this.index = 0,
+    this.href = '',
+    this.idref = '',
+    this.linear = true,
+  });
+}
+
 /// Embedded object representing a file reference with optional anchor
 @embedded
 class Href {
@@ -49,7 +80,17 @@ class Href {
   late String path;
 
   /// Optional anchor (e.g., "chapter1.xhtml#section2")
-  String? anchor;
+  late String anchor = 'top';
+
+  @override
+  bool operator ==(Object other) {
+    return other is Href && other.path == path && other.anchor == anchor;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(path, anchor);
+  }
 }
 
 /// Embedded object representing a single manifest entry
@@ -69,22 +110,32 @@ class ManifestItem {
 }
 
 /// Embedded object representing a TOC navigation point
-/// Supports nested structure for hierarchical chapters
+/// Represents a pure navigation tree entry - NOT every spine item needs a TocItem
+/// Used exclusively for rendering the navigation drawer/menu
 @embedded
 class TocItem {
+  /// Unique ID for this TOC item
+  /// Used for identification and state management
+  late int id;
+
   /// Display label (e.g., "Chapter 1: Introduction")
   late String label;
 
-  /// Content file path (with optional anchor)
+  /// Content file path with optional anchor
   /// e.g., "chapter1.xhtml" or "chapter1.xhtml#section2"
+  /// This href can point anywhere in the book, including mid-chapter locations
   late Href href;
 
   /// Nesting level (0 = top level, 1 = first nested, etc.)
   late int depth;
 
-  /// Index in the spine (for navigation and gap detection)
-  /// -1 means not found in spine
+  /// Index in the spine list for quick lookup and progress tracking
+  /// Used to map TOC entries to sequential reading positions
+  /// -1 means the href doesn't correspond to a spine item start (e.g., deep link)
   int spineIndex = -1;
+
+  /// Parent TOC item ID (-1 for top-level items)
+  late int parentId;
 
   /// Nested sub-items (for hierarchical TOC)
   late List<TocItem> children;
