@@ -83,9 +83,9 @@ class BookManifestRepository {
     return await isar.bookManifests.where().findAll();
   }
 
-  /// Get spine file path by index
+  /// Get spine item by index
   /// Convenience method to avoid loading full manifest for simple navigation
-  Future<String?> getSpinePathByIndex(String fileHash, int index) async {
+  Future<SpineItem?> getSpineItemByIndex(String fileHash, int index) async {
     final manifest = await getManifestByHash(fileHash);
     if (manifest != null && index >= 0 && index < manifest.spine.length) {
       return manifest.spine[index];

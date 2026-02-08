@@ -46,7 +46,8 @@ const BookManifestSchema = CollectionSchema(
     r'spine': PropertySchema(
       id: 5,
       name: r'spine',
-      type: IsarType.stringList,
+      type: IsarType.objectList,
+      target: r'SpineItem',
     ),
     r'toc': PropertySchema(
       id: 6,
@@ -77,6 +78,7 @@ const BookManifestSchema = CollectionSchema(
   },
   links: {},
   embeddedSchemas: {
+    r'SpineItem': SpineItemSchema,
     r'TocItem': TocItemSchema,
     r'Href': HrefSchema,
     r'ManifestItem': ManifestItemSchema
@@ -106,9 +108,10 @@ int _bookManifestEstimateSize(
   bytesCount += 3 + object.opfRootPath.length * 3;
   bytesCount += 3 + object.spine.length * 3;
   {
+    final offsets = allOffsets[SpineItem]!;
     for (var i = 0; i < object.spine.length; i++) {
       final value = object.spine[i];
-      bytesCount += value.length * 3;
+      bytesCount += SpineItemSchema.estimateSize(value, offsets, allOffsets);
     }
   }
   bytesCount += 3 + object.toc.length * 3;
@@ -138,7 +141,12 @@ void _bookManifestSerialize(
     object.manifest,
   );
   writer.writeString(offsets[4], object.opfRootPath);
-  writer.writeStringList(offsets[5], object.spine);
+  writer.writeObjectList<SpineItem>(
+    offsets[5],
+    allOffsets,
+    SpineItemSchema.serialize,
+    object.spine,
+  );
   writer.writeObjectList<TocItem>(
     offsets[6],
     allOffsets,
@@ -166,7 +174,13 @@ BookManifest _bookManifestDeserialize(
       ) ??
       [];
   object.opfRootPath = reader.readString(offsets[4]);
-  object.spine = reader.readStringList(offsets[5]) ?? [];
+  object.spine = reader.readObjectList<SpineItem>(
+        offsets[5],
+        SpineItemSchema.deserialize,
+        allOffsets,
+        SpineItem(),
+      ) ??
+      [];
   object.toc = reader.readObjectList<TocItem>(
         offsets[6],
         TocItemSchema.deserialize,
@@ -201,7 +215,13 @@ P _bookManifestDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readObjectList<SpineItem>(
+            offset,
+            SpineItemSchema.deserialize,
+            allOffsets,
+            SpineItem(),
+          ) ??
+          []) as P;
     case 6:
       return (reader.readObjectList<TocItem>(
             offset,
@@ -1016,142 +1036,6 @@ extension BookManifestQueryFilter
   }
 
   QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'spine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'spine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'spine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'spine',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'spine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'spine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'spine',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'spine',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'spine',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
-      spineElementIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'spine',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition>
       spineLengthEqualTo(int length) {
     return QueryBuilder.apply(this, (query) {
       return query.listLength(
@@ -1338,6 +1222,13 @@ extension BookManifestQueryObject
     });
   }
 
+  QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition> spineElement(
+      FilterQuery<SpineItem> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'spine');
+    });
+  }
+
   QueryBuilder<BookManifest, BookManifest, QAfterFilterCondition> tocElement(
       FilterQuery<TocItem> q) {
     return QueryBuilder.apply(this, (query) {
@@ -1497,12 +1388,6 @@ extension BookManifestQueryWhereDistinct
       return query.addDistinctBy(r'opfRootPath', caseSensitive: caseSensitive);
     });
   }
-
-  QueryBuilder<BookManifest, BookManifest, QDistinct> distinctBySpine() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'spine');
-    });
-  }
 }
 
 extension BookManifestQueryProperty
@@ -1544,7 +1429,8 @@ extension BookManifestQueryProperty
     });
   }
 
-  QueryBuilder<BookManifest, List<String>, QQueryOperations> spineProperty() {
+  QueryBuilder<BookManifest, List<SpineItem>, QQueryOperations>
+      spineProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'spine');
     });
@@ -1564,6 +1450,427 @@ extension BookManifestQueryProperty
 // coverage:ignore-file
 // ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
 
+const SpineItemSchema = Schema(
+  name: r'SpineItem',
+  id: 6514641446194570479,
+  properties: {
+    r'href': PropertySchema(
+      id: 0,
+      name: r'href',
+      type: IsarType.string,
+    ),
+    r'idref': PropertySchema(
+      id: 1,
+      name: r'idref',
+      type: IsarType.string,
+    ),
+    r'index': PropertySchema(
+      id: 2,
+      name: r'index',
+      type: IsarType.long,
+    ),
+    r'linear': PropertySchema(
+      id: 3,
+      name: r'linear',
+      type: IsarType.bool,
+    )
+  },
+  estimateSize: _spineItemEstimateSize,
+  serialize: _spineItemSerialize,
+  deserialize: _spineItemDeserialize,
+  deserializeProp: _spineItemDeserializeProp,
+);
+
+int _spineItemEstimateSize(
+  SpineItem object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  bytesCount += 3 + object.href.length * 3;
+  bytesCount += 3 + object.idref.length * 3;
+  return bytesCount;
+}
+
+void _spineItemSerialize(
+  SpineItem object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeString(offsets[0], object.href);
+  writer.writeString(offsets[1], object.idref);
+  writer.writeLong(offsets[2], object.index);
+  writer.writeBool(offsets[3], object.linear);
+}
+
+SpineItem _spineItemDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = SpineItem(
+    href: reader.readStringOrNull(offsets[0]) ?? '',
+    idref: reader.readStringOrNull(offsets[1]) ?? '',
+    index: reader.readLongOrNull(offsets[2]) ?? 0,
+    linear: reader.readBoolOrNull(offsets[3]) ?? true,
+  );
+  return object;
+}
+
+P _spineItemDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 1:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 2:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 3:
+      return (reader.readBoolOrNull(offset) ?? true) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+extension SpineItemQueryFilter
+    on QueryBuilder<SpineItem, SpineItem, QFilterCondition> {
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'href',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'href',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'href',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'href',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'href',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'href',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'href',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'href',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'href',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> hrefIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'href',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'idref',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'idref',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'idref',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'idref',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'idref',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'idref',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'idref',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'idref',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'idref',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> idrefIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'idref',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> indexEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'index',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> indexGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'index',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> indexLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'index',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> indexBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'index',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> linearEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'linear',
+        value: value,
+      ));
+    });
+  }
+}
+
+extension SpineItemQueryObject
+    on QueryBuilder<SpineItem, SpineItem, QFilterCondition> {}
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
 const HrefSchema = Schema(
   name: r'Href',
   id: 5929635220176271520,
@@ -1573,8 +1880,13 @@ const HrefSchema = Schema(
       name: r'anchor',
       type: IsarType.string,
     ),
-    r'path': PropertySchema(
+    r'hashCode': PropertySchema(
       id: 1,
+      name: r'hashCode',
+      type: IsarType.long,
+    ),
+    r'path': PropertySchema(
+      id: 2,
       name: r'path',
       type: IsarType.string,
     )
@@ -1591,12 +1903,7 @@ int _hrefEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  {
-    final value = object.anchor;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
+  bytesCount += 3 + object.anchor.length * 3;
   bytesCount += 3 + object.path.length * 3;
   return bytesCount;
 }
@@ -1608,7 +1915,8 @@ void _hrefSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.anchor);
-  writer.writeString(offsets[1], object.path);
+  writer.writeLong(offsets[1], object.hashCode);
+  writer.writeString(offsets[2], object.path);
 }
 
 Href _hrefDeserialize(
@@ -1618,8 +1926,8 @@ Href _hrefDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Href();
-  object.anchor = reader.readStringOrNull(offsets[0]);
-  object.path = reader.readString(offsets[1]);
+  object.anchor = reader.readString(offsets[0]);
+  object.path = reader.readString(offsets[2]);
   return object;
 }
 
@@ -1631,8 +1939,10 @@ P _hrefDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 1:
+      return (reader.readLong(offset)) as P;
+    case 2:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1640,24 +1950,8 @@ P _hrefDeserializeProp<P>(
 }
 
 extension HrefQueryFilter on QueryBuilder<Href, Href, QFilterCondition> {
-  QueryBuilder<Href, Href, QAfterFilterCondition> anchorIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'anchor',
-      ));
-    });
-  }
-
-  QueryBuilder<Href, Href, QAfterFilterCondition> anchorIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'anchor',
-      ));
-    });
-  }
-
   QueryBuilder<Href, Href, QAfterFilterCondition> anchorEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1670,7 +1964,7 @@ extension HrefQueryFilter on QueryBuilder<Href, Href, QFilterCondition> {
   }
 
   QueryBuilder<Href, Href, QAfterFilterCondition> anchorGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1685,7 +1979,7 @@ extension HrefQueryFilter on QueryBuilder<Href, Href, QFilterCondition> {
   }
 
   QueryBuilder<Href, Href, QAfterFilterCondition> anchorLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1700,8 +1994,8 @@ extension HrefQueryFilter on QueryBuilder<Href, Href, QFilterCondition> {
   }
 
   QueryBuilder<Href, Href, QAfterFilterCondition> anchorBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -1780,6 +2074,58 @@ extension HrefQueryFilter on QueryBuilder<Href, Href, QFilterCondition> {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'anchor',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Href, Href, QAfterFilterCondition> hashCodeEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hashCode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Href, Href, QAfterFilterCondition> hashCodeGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'hashCode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Href, Href, QAfterFilterCondition> hashCodeLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'hashCode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Href, Href, QAfterFilterCondition> hashCodeBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'hashCode',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -2488,13 +2834,23 @@ const TocItemSchema = Schema(
       type: IsarType.object,
       target: r'Href',
     ),
-    r'label': PropertySchema(
+    r'id': PropertySchema(
       id: 3,
+      name: r'id',
+      type: IsarType.long,
+    ),
+    r'label': PropertySchema(
+      id: 4,
       name: r'label',
       type: IsarType.string,
     ),
+    r'parentId': PropertySchema(
+      id: 5,
+      name: r'parentId',
+      type: IsarType.long,
+    ),
     r'spineIndex': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'spineIndex',
       type: IsarType.long,
     )
@@ -2544,8 +2900,10 @@ void _tocItemSerialize(
     HrefSchema.serialize,
     object.href,
   );
-  writer.writeString(offsets[3], object.label);
-  writer.writeLong(offsets[4], object.spineIndex);
+  writer.writeLong(offsets[3], object.id);
+  writer.writeString(offsets[4], object.label);
+  writer.writeLong(offsets[5], object.parentId);
+  writer.writeLong(offsets[6], object.spineIndex);
 }
 
 TocItem _tocItemDeserialize(
@@ -2569,8 +2927,10 @@ TocItem _tocItemDeserialize(
         allOffsets,
       ) ??
       Href();
-  object.label = reader.readString(offsets[3]);
-  object.spineIndex = reader.readLong(offsets[4]);
+  object.id = reader.readLong(offsets[3]);
+  object.label = reader.readString(offsets[4]);
+  object.parentId = reader.readLong(offsets[5]);
+  object.spineIndex = reader.readLong(offsets[6]);
   return object;
 }
 
@@ -2599,8 +2959,12 @@ P _tocItemDeserializeProp<P>(
           ) ??
           Href()) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readLong(offset)) as P;
+    case 6:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2747,6 +3111,58 @@ extension TocItemQueryFilter
     });
   }
 
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> idEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> idGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> idLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> idBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<TocItem, TocItem, QAfterFilterCondition> labelEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -2873,6 +3289,59 @@ extension TocItemQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'label',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> parentIdEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'parentId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> parentIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'parentId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> parentIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'parentId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TocItem, TocItem, QAfterFilterCondition> parentIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'parentId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }

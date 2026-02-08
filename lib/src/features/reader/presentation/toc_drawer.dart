@@ -1,22 +1,36 @@
+import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/domain/book_manifest.dart';
-import 'package:flutter/material.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../../core/widgets/book_cover.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// Table of Contents Drawer - Tree-structured chapter navigation
+/// Helper class to represent a visible row in the flattened list
+class _TocRowItem {
+  final TocItem item;
+  final int depth;
+  final bool isExpanded;
+  final bool hasChildren;
+
+  _TocRowItem({
+    required this.item,
+    required this.depth,
+    required this.isExpanded,
+    required this.hasChildren,
+  });
+}
+
 class TocDrawer extends StatefulWidget {
   final ShelfBook book;
   final List<TocItem> toc;
-  final int currentChapterIndex;
+  final Set<TocItem> activeTocItems;
   final Function(TocItem) onTocItemSelected;
 
   const TocDrawer({
     super.key,
     required this.book,
     required this.toc,
-    required this.currentChapterIndex,
+    required this.activeTocItems,
     required this.onTocItemSelected,
   });
 
@@ -25,114 +39,185 @@ class TocDrawer extends StatefulWidget {
 }
 
 class _TocDrawerState extends State<TocDrawer> {
-  late final ScrollController scrollController;
-  late final List<TocItem> flatChapters;
+  final ScrollController _scrollController = ScrollController();
+
+  // State: Set of expanded item IDs (assuming TocItem has a unique 'id' or we use 'label')
+  // Using identity hashCode as fallback if no ID exists, but ideally TocItem should have a unique ID.
+  final Set<TocItem> _expandedItems = {};
+
+  // Cache: The flattened list of visible items
+  List<_TocRowItem> _visibleItems = [];
 
   @override
   void initState() {
     super.initState();
-    flatChapters = widget.toc.expand((item) => item.safeFlatten()).toList();
-    scrollController = ScrollController(
-      initialScrollOffset: _calculateInitializedScrollOffset(),
-    );
-    _scheduleScrollToActive();
+    _initExpansionState();
+    _regenerateVisibleItems();
+
+    // Schedule initial scroll only once
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToFirstActive();
+    });
   }
 
   @override
   void didUpdateWidget(covariant TocDrawer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentChapterIndex != widget.currentChapterIndex ||
-        oldWidget.toc != widget.toc) {
-      _scheduleScrollToActive();
+
+    // If TOC structure changed, reset everything
+    if (widget.toc != oldWidget.toc) {
+      _expandedItems.clear();
+      _initExpansionState();
+      _regenerateVisibleItems();
+    }
+    // If only active items changed, maybe auto-expand and scroll
+    else if (widget.activeTocItems != oldWidget.activeTocItems) {
+      // Optional: Auto-expand to show active item if it's hidden
+      bool expandedChanged = _autoExpandParents();
+
+      if (expandedChanged) {
+        _regenerateVisibleItems();
+      } else {
+        // If structure didn't change (no new expansion), we just need to repaint.
+        // setState is called automatically by framework when didUpdateWidget returns,
+        // but since _visibleItems is cached, we don't need to do anything heavy.
+      }
+
+      // Don't auto-scroll on every minor update while user is reading,
+      // only if the Drawer was just opened (handled in initState)
+      // or explicitly requested.
     }
   }
 
-  int _findIndex(TocItem tocItem, TocItem targetItem) {
-    var index = 0;
-    if (tocItem == targetItem) {
-      return index;
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Initialize expansion: Auto-expand path to active items
+  void _initExpansionState() {
+    _autoExpandParents();
+  }
+
+  /// Ensures parents of active items are expanded
+  bool _autoExpandParents() {
+    bool changed = false;
+    if (widget.activeTocItems.isEmpty) return false;
+
+    // Helper to find path to active item
+    bool findAndExpand(TocItem current, TocItem target) {
+      if (current == target) return true;
+
+      for (final child in current.children) {
+        if (findAndExpand(child, target)) {
+          // If child contains target, expand current
+          if (!_expandedItems.contains(current)) {
+            _expandedItems.add(current);
+            changed = true;
+          }
+          return true;
+        }
+      }
+      return false;
     }
-    for (final item in tocItem.children) {
-      index += 1;
-      final childIndex = _findIndex(item, targetItem);
-      if (childIndex != -1) {
-        return index + childIndex;
+
+    for (final root in widget.toc) {
+      for (final active in widget.activeTocItems) {
+        findAndExpand(root, active);
       }
     }
-    return -1;
+    return changed;
   }
 
-  double _getOffset(TocItem tocItem) {
-    var index = 0;
-    for (final item in widget.toc) {
-      final childIndex = _findIndex(item, tocItem);
-      if (childIndex != -1) {
-        index += childIndex;
-        break;
+  /// Flatten the tree into a list, respecting expansion state
+  void _regenerateVisibleItems() {
+    final newItems = <_TocRowItem>[];
+
+    void traverse(List<TocItem> items, int depth) {
+      for (final item in items) {
+        final isExpanded = _expandedItems.contains(item);
+        final hasChildren = item.children.isNotEmpty;
+
+        newItems.add(
+          _TocRowItem(
+            item: item,
+            depth: depth,
+            isExpanded: isExpanded,
+            hasChildren: hasChildren,
+          ),
+        );
+
+        if (hasChildren && isExpanded) {
+          traverse(item.children, depth + 1);
+        }
       }
-      index += 1;
-    }
-    return index * 56.0;
-  }
-
-  double _calculateInitializedScrollOffset() {
-    final activeItem = _resolveActiveItem(
-      widget.toc,
-      widget.currentChapterIndex,
-    );
-    if (activeItem == null) return 0.0;
-
-    final activeOffset = _getOffset(activeItem);
-    var targetOffset = activeOffset - 56.0 * 4;
-    if (targetOffset < 0) {
-      targetOffset = 0;
     }
 
-    return targetOffset;
-  }
+    traverse(widget.toc, 0);
 
-  void _scheduleScrollToActive() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final offset = _calculateInitializedScrollOffset();
-      scrollController.jumpTo(offset);
+    setState(() {
+      _visibleItems = newItems;
     });
+  }
+
+  void _toggleExpansion(TocItem item) {
+    if (_expandedItems.contains(item)) {
+      _expandedItems.remove(item);
+    } else {
+      _expandedItems.add(item);
+    }
+    _regenerateVisibleItems();
+  }
+
+  void _scrollToFirstActive() {
+    if (widget.activeTocItems.isEmpty || _visibleItems.isEmpty) return;
+
+    // Find index in the FLAT list
+    final index = _visibleItems.indexWhere(
+      (row) => widget.activeTocItems.contains(row.item),
+    );
+
+    if (index != -1 && _scrollController.hasClients) {
+      // Estimate offset: index * itemHeight
+      // 56.0 is the fixed extent height
+      final offset = (index * 56.0) - (56.0 * 4); // Center it a bit
+      _scrollController.jumpTo(
+        offset.clamp(0.0, _scrollController.position.maxScrollExtent),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeItem = _resolveActiveItem(
-      widget.toc,
-      widget.currentChapterIndex,
-    );
-
-    bool hasGrandChapters = widget.toc.any((item) => item.children.isNotEmpty);
 
     return Drawer(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           children: [
-            // Header - Book Cover & Metadata
             _buildHeader(context, isDark),
-
-            // Divider
             Divider(
               height: 1,
               thickness: 1,
               color: isDark ? Colors.grey[800] : Colors.grey[300],
             ),
-
-            // Chapter List
             Expanded(
-              child: ListView(
-                itemExtent: hasGrandChapters ? null : 56.0,
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                children: [
-                  ..._buildChapterTree(context, widget.toc, isDark, activeItem),
-                  SizedBox(height: 64), // Extra padding at bottom
-                ],
+              // Optimization: ListView.builder only builds items on screen
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: _visibleItems.length + 1, // +1 for bottom padding
+                itemExtent:
+                    56.0, // Fixed height significantly boosts performance
+                itemBuilder: (context, index) {
+                  if (index == _visibleItems.length) {
+                    return const SizedBox(height: 56); // Bottom padding
+                  }
+
+                  final row = _visibleItems[index];
+                  return _buildRowItem(context, row, isDark);
+                },
               ),
             ),
           ],
@@ -141,7 +226,86 @@ class _TocDrawerState extends State<TocDrawer> {
     );
   }
 
-  /// Build drawer header with book cover and metadata
+  Widget _buildRowItem(BuildContext context, _TocRowItem row, bool isDark) {
+    final item = row.item;
+    final isActive = widget.activeTocItems.contains(item);
+
+    // Indentation calculation
+    final double paddingLeft = 16.0 + (row.depth * 16.0);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          // If it has children, tapping anywhere could toggle expand,
+          // OR separate tap logic (tap text to go, tap icon to expand).
+          // Here mimicking ExpansionTile: Tap whole row to toggle if has children, else go.
+          /* Strategy: 
+             - If Leaf: Select & Close
+             - If Parent: Toggle Expansion (Classic Tree View behavior)
+             
+             Note: If you want parents to be selectable too, you need a separate 
+             expand button on the right.
+          */
+          if (row.hasChildren) {
+            _toggleExpansion(item);
+          } else {
+            widget.onTocItemSelected(item);
+            Navigator.of(context).pop();
+          }
+        },
+        child: Container(
+          height: 56.0,
+          padding: EdgeInsets.only(left: paddingLeft, right: 16.0),
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              // Expansion Icon (Chevron)
+              if (row.hasChildren)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Icon(
+                    row.isExpanded
+                        ? Icons.expand_more_outlined
+                        : Icons.chevron_right_outlined,
+                    size: 20,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                )
+              else
+                // Placeholder to align text if desired, or remove for compact look
+                const SizedBox(width: 28),
+
+              // Label
+              Expanded(
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: isActive
+                        ? (isDark ? Colors.white : Colors.black)
+                        : (isDark ? Colors.grey[400] : Colors.grey[700]),
+                    fontFamily: AppTheme.fontFamilyContent,
+                  ),
+                ),
+              ),
+
+              // Active Indicator
+              if (isActive)
+                Icon(
+                  Icons.circle_outlined,
+                  size: 8,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -209,156 +373,6 @@ class _TocDrawerState extends State<TocDrawer> {
           ),
         ],
       ),
-    );
-  }
-
-  /// Build chapter tree with proper nesting
-  List<Widget> _buildChapterTree(
-    BuildContext context,
-    List<TocItem> toc,
-    bool isDark,
-    TocItem? activeItem,
-  ) {
-    final widgets = <Widget>[];
-
-    int index = 0;
-    for (final tocItem in toc) {
-      widgets.addAll(
-        _buildChapterItem(context, tocItem, index, isDark, activeItem),
-      );
-      index += tocItem.flatten().length;
-    }
-
-    return widgets;
-  }
-
-  /// Build a single chapter item (with children if any)
-  List<Widget> _buildChapterItem(
-    BuildContext context,
-    TocItem tocItem,
-    int startIndex,
-    bool isDark,
-    TocItem? activeItem,
-  ) {
-    final widgets = <Widget>[];
-    final chapterIndex = flatChapters.indexOf(tocItem);
-    final isActive = tocItem == activeItem;
-    if (tocItem.children.isEmpty) {
-      // Simple list tile for leaf chapters
-      final tile = _buildListTile(
-        context,
-        tocItem,
-        chapterIndex,
-        isActive,
-        isDark,
-      );
-      widgets.add(tile);
-    } else {
-      final shouldExpand = _shouldExpand(tocItem, activeItem);
-      // Expansion tile for chapters with children
-      final expansionTile = Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-          splashFactory: NoSplash.splashFactory,
-        ),
-        child: ExpansionTile(
-          tilePadding: EdgeInsets.only(
-            left: 16.0 + (tocItem.depth * 16.0),
-            right: 16.0,
-          ),
-          initiallyExpanded: shouldExpand,
-          title: Text(
-            tocItem.label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-              color: isActive
-                  ? (isDark ? Colors.white : Colors.black)
-                  : (isDark ? Colors.grey[400] : Colors.grey[700]),
-              fontFamily: AppTheme.fontFamilyContent,
-            ),
-          ),
-          onExpansionChanged: (_) {},
-          children: [
-            // Build child chapters
-            ...tocItem.children.expand((child) {
-              final childIndex = flatChapters.indexOf(child);
-              return _buildChapterItem(
-                context,
-                child,
-                childIndex,
-                isDark,
-                activeItem,
-              );
-            }),
-          ],
-        ),
-      );
-      widgets.add(expansionTile);
-    }
-
-    return widgets;
-  }
-
-  TocItem? _resolveActiveItem(List<TocItem> toc, int currentChapterIndex) {
-    if (currentChapterIndex < 0 || currentChapterIndex >= flatChapters.length) {
-      return null;
-    }
-    return flatChapters[currentChapterIndex];
-  }
-
-  bool _shouldExpand(TocItem tocItem, TocItem? activeItem) {
-    if (activeItem == null || tocItem.children.isEmpty) {
-      return false;
-    }
-    return _isInSubtree(tocItem, activeItem);
-  }
-
-  bool _isInSubtree(TocItem root, TocItem target) {
-    if (identical(root, target)) {
-      return true;
-    }
-    for (final child in root.children) {
-      if (_isInSubtree(child, target)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /// Build a simple list tile for a chapter
-  Widget _buildListTile(
-    BuildContext context,
-    TocItem tocItem,
-    int tocItemIndex,
-    bool isActive,
-    bool isDark,
-  ) {
-    return ListTile(
-      contentPadding: EdgeInsets.only(
-        left: 16.0 + (tocItem.depth * 16.0),
-        right: 16.0,
-      ),
-      title: Text(
-        tocItem.label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-          color: isActive
-              ? (isDark ? Colors.white : Colors.black)
-              : (isDark ? Colors.grey[400] : Colors.grey[700]),
-          fontFamily: AppTheme.fontFamilyContent,
-        ),
-      ),
-      onTap: () {
-        widget.onTocItemSelected(tocItem);
-        Navigator.of(context).pop(); // Close drawer
-      },
-      trailing: isActive
-          ? Icon(
-              Icons.circle_outlined,
-              size: 8,
-              color: isDark ? Colors.white : Colors.black,
-            )
-          : null,
     );
   }
 }
