@@ -301,7 +301,7 @@ class EpubImportService {
 
       // Write cover to disk
       final rawCoverData = coverFile.content;
-      var coverData = _compressImage(rawCoverData);
+      var coverData = await compute(_compressImageInIsolate, rawCoverData);
       if (coverData != null) {
         extension = '.jpg';
       } else {
@@ -315,24 +315,6 @@ class EpubImportService {
     } catch (e) {
       // Cover extraction is non-critical, log and continue
       debugPrint('Cover extraction failed: $e');
-      return null;
-    }
-  }
-
-  /// Compress image to JPEG
-  Uint8List? _compressImage(Uint8List rawBytes) {
-    try {
-      final image = img.decodeImage(rawBytes);
-      if (image == null) return null;
-
-      img.Image resizedImage = image;
-      if (image.width > 500) {
-        resizedImage = img.copyResize(image, width: 500);
-      }
-
-      return Uint8List.fromList(img.encodeJpg(resizedImage, quality: 80));
-    } catch (e) {
-      debugPrint('Image compression worker error: $e');
       return null;
     }
   }
@@ -466,5 +448,23 @@ Future<Either<String, _ParseResult>> _parseEpubInIsolate(
     return right(result);
   } catch (e) {
     return left('Parse error: $e');
+  }
+}
+
+/// Isolate function to compress image to JPEG
+Uint8List? _compressImageInIsolate(Uint8List rawBytes) {
+  try {
+    final image = img.decodeImage(rawBytes);
+    if (image == null) return null;
+
+    img.Image resizedImage = image;
+    if (image.width > 500) {
+      resizedImage = img.copyResize(image, width: 500);
+    }
+
+    return Uint8List.fromList(img.encodeJpg(resizedImage, quality: 80));
+  } catch (e) {
+    debugPrint('Image compression worker error: $e');
+    return null;
   }
 }
