@@ -33,7 +33,6 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
-  transition: opacity 0.15s ease-in-out;
 }
 
 /* Prev iframe: hidden, low z-index */

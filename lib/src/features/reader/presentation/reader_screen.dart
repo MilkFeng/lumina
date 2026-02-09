@@ -278,7 +278,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _scaffoldKey.currentState?.openDrawer();
   }
 
-  void _navigateToSpineItem(int index, [String anchor = 'top']) {
+  Future<void> _navigateToSpineItem(int index, [String anchor = 'top']) async {
     if (index < 0 || index >= _spineItems.length) return;
 
     setState(() {
@@ -287,7 +287,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _initialProgressToRestore = null;
     });
 
-    _loadCarousel(anchor);
+    await _loadCarousel(anchor);
     _saveProgress();
   }
 
@@ -462,31 +462,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return EpubWebViewHandler.getFileUrl(widget.fileHash, href);
   }
 
-  void _goToPage(int pageIndex) {
+  Future<void> _goToPage(int pageIndex) async {
     if (pageIndex < 0 || pageIndex >= _totalPagesInChapter) return;
 
     setState(() {
       _currentPageInChapter = pageIndex;
     });
 
-    _webViewController?.evaluateJavascript(source: 'jumpToPage($pageIndex)');
+    await _webViewController?.evaluateJavascript(
+      source: 'jumpToPage($pageIndex)',
+    );
     _saveProgress();
   }
 
-  void _nextPage() {
+  Future<void> _nextPage() async {
     if (_currentPageInChapter < _totalPagesInChapter - 1) {
-      _goToPage(_currentPageInChapter + 1);
+      await _goToPage(_currentPageInChapter + 1);
     } else {
-      _nextSpineItem();
+      await _nextSpineItem();
     }
     _saveProgress();
   }
 
-  void _previousPage() {
+  Future<void> _previousPage() async {
     if (_currentPageInChapter > 0) {
-      _goToPage(_currentPageInChapter - 1);
+      await _goToPage(_currentPageInChapter - 1);
     } else {
-      _previousSpineItem();
+      await _previousSpineItem();
     }
     _saveProgress();
   }
@@ -523,9 +525,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (screenshot == null) {
       _isAnimating = false;
       if (isNext) {
-        _nextPage();
+        await _nextPage();
       } else {
-        _previousPage();
+        await _previousPage();
       }
       return;
     }
@@ -570,9 +572,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     _animController.reset();
     if (isNext) {
-      _nextPage();
+      await _nextPage();
     } else {
-      _previousPage();
+      await _previousPage();
     }
 
     if (!mounted) {
@@ -597,7 +599,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   Widget build(BuildContext context) {
     if (_book == null || _manifest == null) {
-      return Scaffold(appBar: AppBar(), body: const Center());
+      return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: Center(),
+      );
     }
 
     return PopScope(
@@ -630,7 +635,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
-  void _navigateToTocItem(TocItem item) {
+  Future<void> _navigateToTocItem(TocItem item) async {
     final targetHref = _findFirstValidHref(item);
 
     if (targetHref == null) {
@@ -642,7 +647,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final index = _spineItems.indexWhere((s) => s.href == targetHref.path);
 
     if (index != -1) {
-      _navigateToSpineItem(index, targetHref.anchor);
+      await _navigateToSpineItem(index, targetHref.anchor);
     } else {
       debugPrint(
         "Warning: Chapter with href ${targetHref.path} not found in spine.",
