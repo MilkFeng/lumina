@@ -280,7 +280,7 @@ class _TocDrawerState extends State<TocDrawer> {
               Expanded(
                 child: Text(
                   item.label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,

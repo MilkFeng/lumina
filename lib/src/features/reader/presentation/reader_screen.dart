@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +31,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
 }
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   final GlobalKey _webViewKey = GlobalKey();
 
   Timer? _longPressTimer;
@@ -43,8 +45,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   InAppWebViewController? _webViewController;
 
   late final AnimationController _animController;
+  late final AnimationController _imageOpacityController;
   late Animation<Offset> _slideAnimation;
   late Animation<Offset> _slideAnimation2;
+  late Animation<double> _imageOpacityAnimation;
   Uint8List? _screenshotData;
   Uint8List? _screenshotData2;
   bool _isAnimating = false;
@@ -54,6 +58,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   bool _showControls = false;
   int _currentSpineItemIndex = 0;
   List<SpineItem> _spineItems = [];
+
+  // Image viewer state
+  String? _zoomedImageUrl;
+  Uint8List? _zoomedImageData;
+  bool _loadingZoomedImage = false;
 
   // TOC Synchronization: Pre-calculated lookup maps
   final Map<String, List<String>> _spineToAnchorsMap = {};
@@ -84,6 +93,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       vsync: this,
       duration: const Duration(milliseconds: 240),
     );
+    _imageOpacityController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
@@ -92,6 +105,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       begin: Offset.zero,
       end: Offset.zero,
     ).animate(_animController);
+    _imageOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _imageOpacityController, curve: Curves.easeIn),
+    );
     WidgetsBinding.instance.addObserver(this);
     _loadBook();
   }
@@ -101,6 +117,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _longPressTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _animController.dispose();
+    _imageOpacityController.dispose();
     super.dispose();
   }
 
@@ -580,13 +597,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       );
     }
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      drawer: RepaintBoundary(child: _buildTocDrawer()),
-      body: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: RepaintBoundary(child: _buildReaderBody()),
+    return PopScope(
+      canPop: _zoomedImageData == null && !_loadingZoomedImage,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+        _closeImageViewer();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        drawer: RepaintBoundary(child: _buildTocDrawer()),
+        body: Container(
+          color: Theme.of(context).colorScheme.surface,
+          child: RepaintBoundary(child: _buildReaderBody()),
+        ),
       ),
     );
   }
@@ -678,6 +704,69 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return activeItems;
   }
 
+  /// Handle image long-press event from WebView
+  Future<void> _handleImageLongPress(String imageUrl) async {
+    if (_book == null) return;
+
+    // Provide haptic feedback
+    HapticFeedback.mediumImpact();
+
+    setState(() {
+      _zoomedImageUrl = imageUrl;
+      _loadingZoomedImage = true;
+      _zoomedImageData = null;
+    });
+
+    try {
+      // Parse the image URL and fetch the image data
+      final uri = WebUri(imageUrl);
+
+      // Use the existing WebView handler to fetch the image
+      final response = await _webViewHandler.handleRequest(
+        epubPath: _book!.filePath!,
+        fileHash: widget.fileHash,
+        requestUrl: uri,
+      );
+
+      if (response != null && response.data != null) {
+        setState(() {
+          _zoomedImageData = response.data;
+          _loadingZoomedImage = false;
+        });
+        // Trigger fade-in animation
+        _imageOpacityController.reset();
+        _imageOpacityController.forward();
+      } else {
+        // Failed to load image
+        setState(() {
+          _zoomedImageUrl = null;
+          _loadingZoomedImage = false;
+        });
+        if (mounted) {
+          ToastService.showError('Failed to load image');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading zoomed image: $e');
+      setState(() {
+        _zoomedImageUrl = null;
+        _loadingZoomedImage = false;
+      });
+      if (mounted) {
+        ToastService.showError('Error loading image');
+      }
+    }
+  }
+
+  /// Close the image viewer
+  void _closeImageViewer() {
+    setState(() {
+      _zoomedImageUrl = null;
+      _zoomedImageData = null;
+      _loadingZoomedImage = false;
+    });
+  }
+
   /// STEP 4.4: Build reader body with WebView interception
   Widget _buildReaderBody() {
     final activeItems = _resolveActiveItems();
@@ -750,7 +839,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   ),
                   Expanded(
                     child: Text(
-                      _spineItems.isEmpty ? 'Loading...' : activateTocTitle,
+                      _spineItems.isEmpty
+                          ? '${AppLocalizations.of(context)?.loading}...'
+                          : activateTocTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontFamily: AppTheme.fontFamilyContent,
@@ -890,6 +981,58 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             ),
           ),
         ),
+
+        if (_zoomedImageUrl != null && !_loadingZoomedImage)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeImageViewer,
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.9),
+                child: Stack(
+                  children: [
+                    // Image viewer
+                    if (_zoomedImageData != null)
+                      Positioned.fill(
+                        child: FadeTransition(
+                          opacity: _imageOpacityAnimation,
+                          child: InteractiveViewer(
+                            minScale: 0.5,
+                            maxScale: 4.0,
+                            boundaryMargin: const EdgeInsets.all(0),
+                            constrained: true,
+                            child: Center(
+                              child: Image.memory(
+                                _zoomedImageData!,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Close button
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: SafeArea(
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.close_outlined,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 10),
+                            ],
+                            size: 32,
+                          ),
+                          onPressed: _closeImageViewer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -917,6 +1060,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           onTapUp: (details) {
             _handleTapZone(details.globalPosition.dx);
           },
+          onLongPressStart: (details) async {
+            const padding = 16.0;
+
+            final localX = details.localPosition.dx - padding;
+            final localY = details.localPosition.dy - padding;
+
+            if (localX < 0 ||
+                localY < 0 ||
+                localX > _webviewWidth ||
+                localY > _webviewHeight) {
+              return;
+            }
+
+            await _webViewController?.evaluateJavascript(
+              source: "checkElementAt($localX, $localY);",
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: LayoutBuilder(
@@ -940,6 +1100,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
                       ),
                       initialSettings: InAppWebViewSettings(
+                        disableContextMenu: true,
+                        disableLongPressContextMenuOnLinks: true,
+                        selectionGranularity: SelectionGranularity.CHARACTER,
                         transparentBackground: true,
                         allowFileAccessFromFileURLs: true,
                         allowUniversalAccessFromFileURLs: true,
@@ -955,6 +1118,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           EpubWebViewHandler.virtualScheme,
                         ],
                       ),
+                      onLongPressHitTestResult: (controller, hitTestResult) {
+                        if (hitTestResult.type ==
+                            InAppWebViewHitTestResultType.IMAGE_TYPE) {
+                          final imageUrl = hitTestResult.extra;
+                          if (imageUrl != null && imageUrl.isNotEmpty) {
+                            _handleImageLongPress(imageUrl);
+                          }
+                        }
+                      },
                       shouldInterceptRequest: (controller, request) async {
                         return await _webViewHandler.handleRequest(
                           epubPath: _book!.filePath!,
@@ -1004,13 +1176,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                                 await _webViewController?.evaluateJavascript(
                                   source: 'restoreScrollPosition($ratio)',
                                 );
-                                await _webViewController?.evaluateJavascript(
-                                  source: 'reveal()',
-                                );
-                              } else {
-                                await _webViewController?.evaluateJavascript(
-                                  source: 'reveal()',
-                                );
                               }
                             }
                           },
@@ -1023,6 +1188,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                               setState(() {
                                 _currentPageInChapter = args[0] as int;
                               });
+                              _saveProgress();
                             }
                           },
                         );
@@ -1057,13 +1223,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         );
 
                         controller.addJavaScriptHandler(
-                          handlerName: 'onRenderComplete',
-                          callback: (args) {
+                          handlerName: 'onReveal',
+                          callback: (args) async {
                             if (mounted) {
                               setState(() {
                                 _isWebViewLoading = false;
                               });
                             }
+                            _saveProgress();
+                            debugPrint('WebView: RenderComplete');
+                          },
+                        );
+
+                        controller.addJavaScriptHandler(
+                          handlerName: 'onRenderComplete',
+                          callback: (args) async {
+                            await _webViewController?.evaluateJavascript(
+                              source: "reveal();",
+                            );
+                            _saveProgress();
                             debugPrint('WebView: RenderComplete');
                           },
                         );
@@ -1076,6 +1254,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                               args[0] as List,
                             );
                             _handleScrollAnchors(anchors);
+                          },
+                        );
+
+                        controller.addJavaScriptHandler(
+                          handlerName: 'onImageLongPress',
+                          callback: (args) {
+                            if (args.isNotEmpty && args[0] is String) {
+                              final imageUrl = args[0] as String;
+                              _handleImageLongPress(imageUrl);
+                            }
                           },
                         );
                       },

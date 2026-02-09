@@ -101,6 +101,14 @@ html, body {
   background-color: transparent !important;
   touch-action: none !important;
   overflow-y: hidden !important;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* CRITICAL: Disable all scrolling vertically - horizontal only */
@@ -379,16 +387,6 @@ function onFrameLoad(iframe) {
   if (!iframe || !iframe.contentDocument) return;
   
   const doc = iframe.contentDocument;
-
-  let pageIndex = 0;
-
-  const url = iframe.src;
-  if (url && url.includes('#')) {
-    const anchor = url.split('#')[1];
-    pageIndex = calculatePageIndexOfAnchor(iframe, anchor);
-    const scrollLeft = calculateScrollLeft(iframe, pageIndex);
-    doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
-  }
   
   // Inject CSS
   const style = doc.createElement('style');
@@ -424,9 +422,20 @@ function onFrameLoad(iframe) {
     requestAnimationFrame(() => {
       const pageCount = calculatePageCount(iframe);
       framePages[iframe.id] = pageCount;
+
+      let pageIndex = 0;
+      const url = iframe.src;
+      if (url && url.includes('#')) {
+        const anchor = url.split('#')[1];
+        pageIndex = calculatePageIndexOfAnchor(iframe, anchor);
+        const scrollLeft = calculateScrollLeft(iframe, pageIndex);
+        doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+      }
+
       if (iframe.id === 'frame-curr') {
         window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
         window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
+        window.flutter_inappwebview.callHandler('onRenderComplete');
       }
     });
   });
@@ -563,6 +572,8 @@ function cycleFrames(direction) {
   }
 
   updatePageCount('frame-curr', direction);
+  updatePageCount('frame-prev', direction);
+  updatePageCount('frame-next', direction);
   detectActiveAnchor(elPrev);
   detectActiveAnchor(elCurr);
   detectActiveAnchor(elNext);
@@ -573,12 +584,6 @@ function cycleFrames(direction) {
 function jumpToLastPageOfFrame(slot) {
   const pageCount = framePages['frame-' + slot];
   jumpToPageFor(slot, pageCount - 1);
-}
-
-function reveal() {
-  requestAnimationFrame(function() {
-    window.flutter_inappwebview.callHandler('onRenderComplete');
-  });
 }
 
 function replaceStyles(skeletonCss, iframeCss) {
@@ -599,6 +604,30 @@ function replaceStyles(skeletonCss, iframeCss) {
   }
 
   PAGINATION_CSS = iframeCss;
+}
+
+function reveal() {
+  requestAnimationFrame(() => {
+    window.flutter_inappwebview.callHandler('onReveal');
+  });
+}
+
+function checkElementAt(x, y) {
+  const iframe = document.getElementById('frame-curr');
+  if (!iframe || !iframe.contentDocument) return;
+
+  const doc = iframe.contentDocument;
+
+  let el = doc.elementFromPoint(x, y);
+  if (!el) return;
+
+  while (el && el !== doc.body) {
+    if (el.tagName.toLowerCase() === 'img') {
+      window.flutter_inappwebview.callHandler('onImageLongPress', el.src);
+      return;
+    }
+    el = el.parentElement;
+  }
 }
   ''';
 }
