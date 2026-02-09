@@ -8,6 +8,10 @@
 
 > A lightweight EPUB e-book reader built with Flutter, featuring cloud synchronization via WebDAV
 
+## 🚧 Early Development Stage
+
+Please note that this project is currently in Alpha. Breaking changes to the database schema may occur without migration scripts in early versions.
+
 ## ✨ Key Features
 
 - 📚 **EPUB Reading** - Supports EPUB 2.0/3.0 formats with smooth page turning, automatic reading progress saving, and complete EPUB rendering based on WebView
