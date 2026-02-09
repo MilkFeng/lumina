@@ -1246,6 +1246,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         controller.addJavaScriptHandler(
                           handlerName: 'onRenderComplete',
                           callback: (args) async {
+                            await Future.delayed(
+                              const Duration(milliseconds: 50),
+                            );
                             await _webViewController?.evaluateJavascript(
                               source: "reveal();",
                             );
