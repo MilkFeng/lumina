@@ -110,11 +110,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          _loadBook();
-        }
-      });
+      if (mounted) {
+        _loadBook();
+      }
     });
   }
 
