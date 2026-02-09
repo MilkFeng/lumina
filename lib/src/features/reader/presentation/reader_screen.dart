@@ -109,7 +109,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       CurvedAnimation(parent: _imageOpacityController, curve: Curves.easeIn),
     );
     WidgetsBinding.instance.addObserver(this);
-    _loadBook();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _loadBook();
+        }
+      });
+    });
   }
 
   @override
@@ -591,10 +597,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   Widget build(BuildContext context) {
     if (_book == null || _manifest == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+      return Scaffold(appBar: AppBar(), body: const Center());
     }
 
     return PopScope(
@@ -1099,25 +1102,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         ),
                         baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
                       ),
-                      initialSettings: InAppWebViewSettings(
-                        disableContextMenu: true,
-                        disableLongPressContextMenuOnLinks: true,
-                        selectionGranularity: SelectionGranularity.CHARACTER,
-                        transparentBackground: true,
-                        allowFileAccessFromFileURLs: true,
-                        allowUniversalAccessFromFileURLs: true,
-                        useShouldInterceptRequest: true,
-                        useOnLoadResource: false,
-                        useShouldOverrideUrlLoading: true,
-                        javaScriptEnabled: true,
-                        disableHorizontalScroll: true,
-                        disableVerticalScroll: true,
-                        supportZoom: false,
-                        useHybridComposition: false,
-                        resourceCustomSchemes: [
-                          EpubWebViewHandler.virtualScheme,
-                        ],
-                      ),
+                      initialSettings: EpubWebViewHandler.defaultSettings,
                       onLongPressHitTestResult: (controller, hitTestResult) {
                         if (hitTestResult.type ==
                             InAppWebViewHitTestResultType.IMAGE_TYPE) {

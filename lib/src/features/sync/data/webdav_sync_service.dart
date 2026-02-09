@@ -1,3 +1,5 @@
+import 'package:lumina/src/core/storage/app_storage.dart';
+
 import '../../library/data/services/epub_import_service.dart';
 import 'package:isar/isar.dart';
 
@@ -487,12 +489,10 @@ class WebDavSyncService {
         .isDeletedEqualTo(false)
         .findAll();
 
-    final appDir = await getApplicationDocumentsDirectory();
-
     return allBooks.where((book) {
       // Need download if filePath is null or file doesn't exist
       if (book.filePath == null) return true;
-      final fullPath = '${appDir.path}/${book.filePath!}';
+      final fullPath = '${AppStorage.documentsPath}/${book.filePath!}';
       return !File(fullPath).existsSync();
     }).toList();
   }
@@ -507,12 +507,10 @@ class WebDavSyncService {
         .isDeletedEqualTo(false)
         .findAll();
 
-    final appDir = await getApplicationDocumentsDirectory();
-
     return allBooks.where((book) {
       // Need upload if filePath exists locally but not in cloud
       if (book.filePath == null) return false;
-      final fullPath = '${appDir.path}/${book.filePath!}';
+      final fullPath = '${AppStorage.documentsPath}/${book.filePath!}';
       if (!File(fullPath).existsSync()) return false;
       return !remoteRealFileHashes.contains(book.fileHash);
     }).toList();
@@ -534,8 +532,7 @@ class WebDavSyncService {
       final epubBytes = downloadResult.getRight().toNullable()!;
 
       // Save to local storage
-      final appDir = await getApplicationDocumentsDirectory();
-      final booksDir = Directory('${appDir.path}/books');
+      final booksDir = Directory('${AppStorage.documentsPath}/books');
       if (!booksDir.existsSync()) {
         booksDir.createSync(recursive: true);
       }
@@ -621,8 +618,7 @@ class WebDavSyncService {
         return left('Book has no local file');
       }
 
-      final appDir = await getApplicationDocumentsDirectory();
-      final fullPath = '${appDir.path}/${currentBook.filePath!}';
+      final fullPath = '${AppStorage.documentsPath}/${currentBook.filePath!}';
 
       final epubFile = File(fullPath);
       if (!epubFile.existsSync()) {

@@ -3,6 +3,7 @@ import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
+import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/shelf_book.dart';
@@ -82,8 +83,7 @@ class EpubImportService {
         parseData.opfRootPath,
       );
 
-      final appDir = await getApplicationDocumentsDirectory();
-      final relativePath = epubPath.replaceAll(appDir.path, '');
+      final relativePath = epubPath.replaceAll(AppStorage.documentsPath, '');
 
       // Step 6: Create ShelfBook entity
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -242,8 +242,7 @@ class EpubImportService {
     String fileHash,
   ) async {
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final booksDir = Directory('${appDir.path}/books');
+      final booksDir = Directory('${AppStorage.documentsPath}/books');
       if (!await booksDir.exists()) {
         await booksDir.create(recursive: true);
       }
@@ -276,8 +275,7 @@ class EpubImportService {
     }
 
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final coversDir = Directory('${appDir.path}/covers');
+      final coversDir = Directory('${AppStorage.documentsPath}/covers');
       if (!await coversDir.exists()) {
         await coversDir.create(recursive: true);
       }
@@ -357,8 +355,7 @@ class EpubImportService {
   /// Delete a file (helper for cleanup)
   Future<void> _deleteFile(String path) async {
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final absolutePath = '${appDir.path}/$path';
+      final absolutePath = '${AppStorage.documentsPath}/$path';
       final file = File(absolutePath);
       if (await file.exists()) {
         await file.delete();

@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../features/library/domain/shelf_book.dart';
 import '../../features/library/domain/book_manifest.dart';
@@ -16,14 +17,13 @@ class IsarDatabaseImpl implements IsarDatabase {
       return _instance!;
     }
 
-    final dir = await getApplicationDocumentsDirectory();
     _instance = await Isar.open(
       [
         ShelfBookSchema, // Lightweight UI entity
         ShelfGroupSchema, // Folder/group entity
         BookManifestSchema, // Heavy reader entity
       ],
-      directory: dir.path,
+      directory: AppStorage.documentsPath,
       inspector: true, // Enable Isar Inspector for debugging
     );
 

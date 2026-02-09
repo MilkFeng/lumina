@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -14,12 +15,9 @@ Future<File?> coverFile(CoverFileRef ref, String? relativePath) async {
   }
 
   try {
-    // Get app documents directory
-    final appDir = await getApplicationDocumentsDirectory();
-
     // Decode URI components and construct full path
     final decodedPath = Uri.decodeFull(relativePath);
-    final file = File('${appDir.path}/$decodedPath');
+    final file = File('${AppStorage.documentsPath}/$decodedPath');
 
     // Check if file exists
     final exists = await file.exists();
