@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/features/library/domain/book_manifest.dart';
-import 'package:path_provider/path_provider.dart';
 import '../data/services/epub_stream_service.dart';
 
 /// WebView request handler for streaming EPUB content
@@ -14,6 +14,7 @@ class EpubWebViewHandler {
   /// Format: epub://localhost/book/{fileHash}/{filePath}
   static const String virtualDomain = 'localhost';
   static const String virtualScheme = 'epub';
+  static const _headers = {'Cache-Control': 'public, max-age=31536000'};
 
   EpubWebViewHandler({required EpubStreamService streamService})
     : _streamService = streamService;
@@ -41,15 +42,13 @@ class EpubWebViewHandler {
       final data = result.getRight().toNullable()!.$1;
       final mimeType = result.getRight().toNullable()!.$2;
 
-      final headers = {'Cache-Control': 'public, max-age=31536000'};
-
       // Return the file content
       return WebResourceResponse(
         contentType: mimeType,
         statusCode: 200,
         reasonPhrase: 'OK',
         data: data,
-        headers: headers,
+        headers: _headers,
       );
     } catch (e) {
       // Internal error
@@ -110,8 +109,7 @@ class EpubWebViewHandler {
 
       final fileRelativePath = relativePath.split('#')[0];
 
-      final appDir = await getApplicationDocumentsDirectory();
-      epubPath = '${appDir.path}/$epubPath';
+      epubPath = '${AppStorage.documentsPath}/$epubPath';
 
       final result = await _streamService.readFileFromEpub(
         epubPath: epubPath,
@@ -150,4 +148,22 @@ class EpubWebViewHandler {
         requestUrl.host == virtualDomain &&
         requestUrl.path.startsWith('/book/');
   }
+
+  static final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
+    disableContextMenu: true,
+    disableLongPressContextMenuOnLinks: true,
+    selectionGranularity: SelectionGranularity.CHARACTER,
+    transparentBackground: true,
+    allowFileAccessFromFileURLs: true,
+    allowUniversalAccessFromFileURLs: true,
+    useShouldInterceptRequest: true,
+    useOnLoadResource: false,
+    useShouldOverrideUrlLoading: true,
+    javaScriptEnabled: true,
+    disableHorizontalScroll: true,
+    disableVerticalScroll: true,
+    supportZoom: false,
+    useHybridComposition: false,
+    resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
+  );
 }

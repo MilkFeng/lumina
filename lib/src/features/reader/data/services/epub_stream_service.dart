@@ -13,20 +13,41 @@ class EpubStreamService {
   _EpubWorker? _worker;
   String? _currentBookPath;
 
+  Completer<void>? _initCompleter;
+
+  /// Warm up the service by spawning the background isolate.
+  Future<void> warmUp() async {
+    if (_worker != null) return;
+
+    if (_initCompleter != null) return _initCompleter!.future;
+    _initCompleter = Completer<void>();
+
+    try {
+      _worker = await _EpubWorker.spawn();
+      _initCompleter!.complete();
+    } catch (e) {
+      _initCompleter!.completeError(e);
+      _initCompleter = null;
+    }
+  }
+
   /// Open a book session.
   /// Spawns a background isolate and parses the ZIP headers once.
   /// Must be called before [readFileFromEpub].
   Future<void> openBook(String epubPath) async {
-    // If we are already open for this book, do nothing
-    if (_worker != null && _currentBookPath == epubPath) return;
-
-    // If another book is open, close it first
-    if (_worker != null) {
-      dispose();
+    if (_worker == null) {
+      await warmUp();
     }
 
-    _currentBookPath = epubPath;
-    _worker = await _EpubWorker.spawn(epubPath);
+    if (_currentBookPath == epubPath) return;
+
+    try {
+      await _worker!.loadBook(epubPath);
+      _currentBookPath = epubPath;
+    } catch (e) {
+      _currentBookPath = null;
+      rethrow;
+    }
   }
 
   /// Read a specific file from the currently opened EPUB.
@@ -126,19 +147,19 @@ class _EpubWorker {
   final ReceivePort _receivePort;
 
   // Map to track pending requests: RequestID -> Completer
-  final _pendingRequests = <int, Completer<Uint8List?>>{};
+  final _pendingRequests = <int, Completer<dynamic>>{};
   int _nextRequestId = 0;
 
   _EpubWorker._(this._isolate, this._sendPort, this._receivePort) {
     _receivePort.listen(_handleResponse);
   }
 
-  static Future<_EpubWorker> spawn(String epubPath) async {
+  static Future<_EpubWorker> spawn() async {
     final receivePort = ReceivePort();
     // Start the isolate
     final isolate = await Isolate.spawn(
       _workerEntryPoint,
-      _InitMessage(receivePort.sendPort, epubPath),
+      receivePort.sendPort,
     );
 
     // Wait for the first message (the SendPort from the worker)
@@ -151,6 +172,14 @@ class _EpubWorker {
     sendPort.send(responsePort.sendPort);
 
     return _EpubWorker._(isolate, sendPort, responsePort);
+  }
+
+  Future<void> loadBook(String path) {
+    final completer = Completer<void>();
+    final id = _nextRequestId++;
+    _pendingRequests[id] = completer;
+    _sendPort.send(_LoadMessage(id, path));
+    return completer.future;
   }
 
   Future<Uint8List?> requestFile(String path) {
@@ -183,10 +212,10 @@ class _EpubWorker {
 
 // --- Messages ---
 
-class _InitMessage {
-  final SendPort sendPort;
-  final String epubPath;
-  _InitMessage(this.sendPort, this.epubPath);
+class _LoadMessage {
+  final int id;
+  final String path;
+  _LoadMessage(this.id, this.path);
 }
 
 class _RequestMessage {
@@ -204,48 +233,84 @@ class _ResponseMessage {
 
 // --- Isolate Entry Point ---
 
-void _workerEntryPoint(_InitMessage initMsg) {
-  final mainSendPort = initMsg.sendPort;
+void _workerEntryPoint(SendPort mainSendPort) {
   final commandPort = ReceivePort();
 
   // 1. Send our command port back to the main thread
   mainSendPort.send(commandPort.sendPort);
+
+  // Warm up the ZIP decoder by performing a dummy decode (JIT compilation)
+  try {
+    final dummyZipBytes = Uint8List.fromList([
+      0x50,
+      0x4B,
+      0x05,
+      0x06,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+    ]);
+    ZipDecoder().decodeBytes(dummyZipBytes, verify: false);
+    debugPrint("Background Worker: Code warmed up (JIT compiled).");
+  } catch (e) {
+    debugPrint("Background Worker: Warm-up failed: $e");
+  }
 
   // 2. Open EPUB and Cache Headers (The expensive part, done once!)
   InputFileStream? inputStream;
   Archive? archive;
   SendPort? responsePort;
 
-  try {
-    inputStream = InputFileStream(initMsg.epubPath);
-    // Parse headers only. This creates the map of files.
-    archive = ZipDecoder().decodeStream(inputStream, verify: false);
-  } catch (e) {
-    // If init fails, we can't really report back easily in this simple protocol
-    // In production, send an error message back.
-    debugPrint('EpubWorker Init Failed: $e');
-  }
-
-  // 3. Listen for requests
   commandPort.listen((message) {
     if (message is SendPort) {
-      // Handshake step 2: Receive the port to send data back to
       responsePort = message;
     } else if (message == 'shutdown') {
       inputStream?.close();
       commandPort.close();
+    } else if (message is _LoadMessage) {
+      if (responsePort == null) return;
+
+      try {
+        inputStream?.close();
+        archive = null;
+
+        inputStream = InputFileStream(message.path);
+        archive = ZipDecoder().decodeStream(inputStream!, verify: false);
+
+        responsePort!.send(_ResponseMessage(message.id, null));
+      } catch (e) {
+        responsePort!.send(
+          _ResponseMessage(message.id, null, error: 'Failed to load book: $e'),
+        );
+      }
     } else if (message is _RequestMessage) {
-      if (responsePort == null || archive == null) {
-        // Should not happen if flow is correct
+      if (responsePort == null) return;
+
+      if (archive == null) {
+        responsePort!.send(
+          _ResponseMessage(message.id, null, error: 'No book loaded'),
+        );
         return;
       }
 
       try {
-        // FAST LOOKUP: findFile uses the cached map inside 'archive'
-        final file = archive.findFile(message.path);
-
+        final file = archive!.findFile(message.path);
         if (file != null) {
-          // Only decompress this specific file
           final content = file.content as List<int>;
           final bytes = Uint8List.fromList(content);
           responsePort!.send(_ResponseMessage(message.id, bytes));

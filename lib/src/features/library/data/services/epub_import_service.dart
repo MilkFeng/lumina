@@ -3,7 +3,7 @@ import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
+import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/shelf_book.dart';
 import '../../domain/book_manifest.dart';
@@ -82,8 +82,7 @@ class EpubImportService {
         parseData.opfRootPath,
       );
 
-      final appDir = await getApplicationDocumentsDirectory();
-      final relativePath = epubPath.replaceAll(appDir.path, '');
+      final relativePath = epubPath.replaceAll(AppStorage.documentsPath, '');
 
       // Step 6: Create ShelfBook entity
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -242,8 +241,7 @@ class EpubImportService {
     String fileHash,
   ) async {
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final booksDir = Directory('${appDir.path}/books');
+      final booksDir = Directory('${AppStorage.documentsPath}/books');
       if (!await booksDir.exists()) {
         await booksDir.create(recursive: true);
       }
@@ -276,8 +274,7 @@ class EpubImportService {
     }
 
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final coversDir = Directory('${appDir.path}/covers');
+      final coversDir = Directory('${AppStorage.documentsPath}/covers');
       if (!await coversDir.exists()) {
         await coversDir.create(recursive: true);
       }
@@ -303,7 +300,7 @@ class EpubImportService {
 
       // Write cover to disk
       final rawCoverData = coverFile.content;
-      var coverData = _compressImage(rawCoverData);
+      var coverData = await compute(_compressImageInIsolate, rawCoverData);
       if (coverData != null) {
         extension = '.jpg';
       } else {
@@ -317,24 +314,6 @@ class EpubImportService {
     } catch (e) {
       // Cover extraction is non-critical, log and continue
       debugPrint('Cover extraction failed: $e');
-      return null;
-    }
-  }
-
-  /// Compress image to JPEG
-  Uint8List? _compressImage(Uint8List rawBytes) {
-    try {
-      final image = img.decodeImage(rawBytes);
-      if (image == null) return null;
-
-      img.Image resizedImage = image;
-      if (image.width > 500) {
-        resizedImage = img.copyResize(image, width: 500);
-      }
-
-      return Uint8List.fromList(img.encodeJpg(resizedImage, quality: 80));
-    } catch (e) {
-      debugPrint('Image compression worker error: $e');
       return null;
     }
   }
@@ -357,8 +336,7 @@ class EpubImportService {
   /// Delete a file (helper for cleanup)
   Future<void> _deleteFile(String path) async {
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      final absolutePath = '${appDir.path}/$path';
+      final absolutePath = '${AppStorage.documentsPath}/$path';
       final file = File(absolutePath);
       if (await file.exists()) {
         await file.delete();
@@ -469,5 +447,23 @@ Future<Either<String, _ParseResult>> _parseEpubInIsolate(
     return right(result);
   } catch (e) {
     return left('Parse error: $e');
+  }
+}
+
+/// Isolate function to compress image to JPEG
+Uint8List? _compressImageInIsolate(Uint8List rawBytes) {
+  try {
+    final image = img.decodeImage(rawBytes);
+    if (image == null) return null;
+
+    img.Image resizedImage = image;
+    if (image.width > 500) {
+      resizedImage = img.copyResize(image, width: 500);
+    }
+
+    return Uint8List.fromList(img.encodeJpg(resizedImage, quality: 80));
+  } catch (e) {
+    debugPrint('Image compression worker error: $e');
+    return null;
   }
 }

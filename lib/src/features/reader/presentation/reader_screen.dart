@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,6 +65,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   // TOC Synchronization: Pre-calculated lookup maps
   final Map<String, List<String>> _spineToAnchorsMap = {};
+
+  // Use previous spine item's last toc item as fallback
+  final List<TocItem> _TocItemFallback = [];
   Set<String> _activeAnchors = {};
 
   final List<TocItem> _flatToc = [];
@@ -109,7 +111,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       CurvedAnimation(parent: _imageOpacityController, curve: Curves.easeIn),
     );
     WidgetsBinding.instance.addObserver(this);
-    _loadBook();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadBook();
+      }
+    });
   }
 
   @override
@@ -164,13 +170,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         return;
       }
 
-      // Get spine items (true reading order)
-      final spineItems = manifest.spine;
-
       setState(() {
         _book = book;
         _manifest = manifest;
-        _spineItems = spineItems;
+        _spineItems = manifest.spine;
         _currentSpineItemIndex = book.currentChapterIndex;
         _initialProgressToRestore = book.chapterScrollPosition;
       });
@@ -208,6 +211,26 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     for (final item in _manifest!.toc) {
       processItem(item);
+    }
+
+    TocItem toc = TocItem()
+      ..label = _book!.title
+      ..href = (Href()
+        ..path = ''
+        ..anchor = 'top')
+      ..id = -1;
+    _TocItemFallback.clear();
+    for (final spineItem in _spineItems) {
+      final anchors = _spineToAnchorsMap[spineItem.href] ?? [];
+      _TocItemFallback.add(toc);
+      if (anchors.isNotEmpty) {
+        final lastHref = Href()
+          ..path = spineItem.href
+          ..anchor = anchors.last;
+        toc = _hrefToTocIndexMap[lastHref] != null
+            ? _flatToc[_hrefToTocIndexMap[lastHref]!]
+            : toc;
+      }
     }
   }
 
@@ -272,7 +295,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _scaffoldKey.currentState?.openDrawer();
   }
 
-  void _navigateToSpineItem(int index, [String anchor = 'top']) {
+  Future<void> _navigateToSpineItem(int index, [String anchor = 'top']) async {
     if (index < 0 || index >= _spineItems.length) return;
 
     setState(() {
@@ -281,7 +304,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _initialProgressToRestore = null;
     });
 
-    _loadCarousel(anchor);
+    await _loadCarousel(anchor);
     _saveProgress();
   }
 
@@ -456,31 +479,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return EpubWebViewHandler.getFileUrl(widget.fileHash, href);
   }
 
-  void _goToPage(int pageIndex) {
+  Future<void> _goToPage(int pageIndex) async {
     if (pageIndex < 0 || pageIndex >= _totalPagesInChapter) return;
 
     setState(() {
       _currentPageInChapter = pageIndex;
     });
 
-    _webViewController?.evaluateJavascript(source: 'jumpToPage($pageIndex)');
+    await _webViewController?.evaluateJavascript(
+      source: 'jumpToPage($pageIndex)',
+    );
     _saveProgress();
   }
 
-  void _nextPage() {
+  Future<void> _nextPage() async {
     if (_currentPageInChapter < _totalPagesInChapter - 1) {
-      _goToPage(_currentPageInChapter + 1);
+      await _goToPage(_currentPageInChapter + 1);
     } else {
-      _nextSpineItem();
+      await _nextSpineItem();
     }
     _saveProgress();
   }
 
-  void _previousPage() {
+  Future<void> _previousPage() async {
     if (_currentPageInChapter > 0) {
-      _goToPage(_currentPageInChapter - 1);
+      await _goToPage(_currentPageInChapter - 1);
     } else {
-      _previousSpineItem();
+      await _previousSpineItem();
     }
     _saveProgress();
   }
@@ -517,9 +542,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (screenshot == null) {
       _isAnimating = false;
       if (isNext) {
-        _nextPage();
+        await _nextPage();
       } else {
-        _previousPage();
+        await _previousPage();
       }
       return;
     }
@@ -564,9 +589,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     _animController.reset();
     if (isNext) {
-      _nextPage();
+      await _nextPage();
     } else {
-      _previousPage();
+      await _previousPage();
     }
 
     if (!mounted) {
@@ -592,8 +617,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Widget build(BuildContext context) {
     if (_book == null || _manifest == null) {
       return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: Center(),
       );
     }
 
@@ -627,7 +652,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
-  void _navigateToTocItem(TocItem item) {
+  Future<void> _navigateToTocItem(TocItem item) async {
     final targetHref = _findFirstValidHref(item);
 
     if (targetHref == null) {
@@ -639,7 +664,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final index = _spineItems.indexWhere((s) => s.href == targetHref.path);
 
     if (index != -1) {
-      _navigateToSpineItem(index, targetHref.anchor);
+      await _navigateToSpineItem(index, targetHref.anchor);
     } else {
       debugPrint(
         "Warning: Chapter with href ${targetHref.path} not found in spine.",
@@ -701,6 +726,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         })
         .whereType<TocItem>()
         .toSet();
+    if (activeItems.isEmpty && _TocItemFallback.isNotEmpty) {
+      activeItems.add(_TocItemFallback[_currentSpineItemIndex]);
+    }
     return activeItems;
   }
 
@@ -772,7 +800,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final activeItems = _resolveActiveItems();
     final activateTocTitle = activeItems.isNotEmpty
         ? activeItems.last.label
-        : '';
+        : _TocItemFallback[_currentSpineItemIndex].label;
 
     return Stack(
       children: [
@@ -839,9 +867,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   ),
                   Expanded(
                     child: Text(
-                      _spineItems.isEmpty
-                          ? '${AppLocalizations.of(context)?.loading}...'
-                          : activateTocTitle,
+                      _spineItems.isEmpty ? _book!.title : activateTocTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontFamily: AppTheme.fontFamilyContent,
@@ -1099,25 +1125,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         ),
                         baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
                       ),
-                      initialSettings: InAppWebViewSettings(
-                        disableContextMenu: true,
-                        disableLongPressContextMenuOnLinks: true,
-                        selectionGranularity: SelectionGranularity.CHARACTER,
-                        transparentBackground: true,
-                        allowFileAccessFromFileURLs: true,
-                        allowUniversalAccessFromFileURLs: true,
-                        useShouldInterceptRequest: true,
-                        useOnLoadResource: false,
-                        useShouldOverrideUrlLoading: true,
-                        javaScriptEnabled: true,
-                        disableHorizontalScroll: true,
-                        disableVerticalScroll: true,
-                        supportZoom: false,
-                        useHybridComposition: false,
-                        resourceCustomSchemes: [
-                          EpubWebViewHandler.virtualScheme,
-                        ],
-                      ),
+                      initialSettings: EpubWebViewHandler.defaultSettings,
                       onLongPressHitTestResult: (controller, hitTestResult) {
                         if (hitTestResult.type ==
                             InAppWebViewHitTestResultType.IMAGE_TYPE) {
@@ -1238,6 +1246,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         controller.addJavaScriptHandler(
                           handlerName: 'onRenderComplete',
                           callback: (args) async {
+                            await Future.delayed(
+                              const Duration(milliseconds: 50),
+                            );
                             await _webViewController?.evaluateJavascript(
                               source: "reveal();",
                             );
