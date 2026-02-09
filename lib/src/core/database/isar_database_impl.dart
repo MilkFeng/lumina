@@ -1,6 +1,5 @@
 import 'package:isar/isar.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../features/library/domain/shelf_book.dart';
 import '../../features/library/domain/book_manifest.dart';
 import '../../features/library/domain/shelf_group.dart';

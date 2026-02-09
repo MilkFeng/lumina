@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'cover_file_provider.g.dart';
