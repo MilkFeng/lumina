@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,6 +65,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   // TOC Synchronization: Pre-calculated lookup maps
   final Map<String, List<String>> _spineToAnchorsMap = {};
+
+  // Use previous spine item's last toc item as fallback
+  final List<TocItem> _TocItemFallback = [];
   Set<String> _activeAnchors = {};
 
   final List<TocItem> _flatToc = [];
@@ -168,13 +170,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         return;
       }
 
-      // Get spine items (true reading order)
-      final spineItems = manifest.spine;
-
       setState(() {
         _book = book;
         _manifest = manifest;
-        _spineItems = spineItems;
+        _spineItems = manifest.spine;
         _currentSpineItemIndex = book.currentChapterIndex;
         _initialProgressToRestore = book.chapterScrollPosition;
       });
@@ -212,6 +211,26 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     for (final item in _manifest!.toc) {
       processItem(item);
+    }
+
+    TocItem toc = TocItem()
+      ..label = _book!.title
+      ..href = (Href()
+        ..path = ''
+        ..anchor = 'top')
+      ..id = -1;
+    _TocItemFallback.clear();
+    for (final spineItem in _spineItems) {
+      final anchors = _spineToAnchorsMap[spineItem.href] ?? [];
+      _TocItemFallback.add(toc);
+      if (anchors.isNotEmpty) {
+        final lastHref = Href()
+          ..path = spineItem.href
+          ..anchor = anchors.last;
+        toc = _hrefToTocIndexMap[lastHref] != null
+            ? _flatToc[_hrefToTocIndexMap[lastHref]!]
+            : toc;
+      }
     }
   }
 
@@ -707,6 +726,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         })
         .whereType<TocItem>()
         .toSet();
+    if (activeItems.isEmpty && _TocItemFallback.isNotEmpty) {
+      activeItems.add(_TocItemFallback[_currentSpineItemIndex]);
+    }
     return activeItems;
   }
 
@@ -778,7 +800,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final activeItems = _resolveActiveItems();
     final activateTocTitle = activeItems.isNotEmpty
         ? activeItems.last.label
-        : '';
+        : _TocItemFallback[_currentSpineItemIndex].label;
 
     return Stack(
       children: [
@@ -845,9 +867,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   ),
                   Expanded(
                     child: Text(
-                      _spineItems.isEmpty
-                          ? '${AppLocalizations.of(context)?.loading}...'
-                          : activateTocTitle,
+                      _spineItems.isEmpty ? _book!.title : activateTocTitle,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontFamily: AppTheme.fontFamilyContent,
