@@ -1086,6 +1086,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           onTapUp: (details) {
             _handleTapZone(details.globalPosition.dx);
           },
+          onHorizontalDragEnd: (details) {
+            if (_isAnimating) return;
+            final velocity = details.primaryVelocity ?? 0;
+
+            if (velocity < -200) {
+              _performPageTurn(true);
+            } else if (velocity > 200) {
+              _performPageTurn(false);
+            }
+          },
           onLongPressStart: (details) async {
             const padding = 16.0;
 
