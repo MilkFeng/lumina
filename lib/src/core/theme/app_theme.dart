@@ -33,9 +33,10 @@ class AppTheme {
   );
 
   static const List<String> _defaultFallback = [
-    'SourceHanSerifContent',
-    'Noto Serif SC',
-    'Songti SC',
+    "Songti SC",
+    "STSong",
+    "Noto Serif CJK SC",
+    "Source Han Serif SC",
     'SimSun',
     'serif',
   ];

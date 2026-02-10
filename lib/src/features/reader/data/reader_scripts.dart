@@ -108,6 +108,10 @@ html, body {
   
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+
+  font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
+  line-height: 1.6;
+  text-align: justify;
 }
 
 /* CRITICAL: Disable all scrolling vertically - horizontal only */
@@ -178,6 +182,10 @@ a {
   pointer-events: none !important;
   text-decoration: none !important;
   cursor: default !important;
+}
+
+p {
+  margin-bottom: 1.0em;
 }
 
 p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
