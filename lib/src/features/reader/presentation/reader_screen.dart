@@ -10,6 +10,7 @@ import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../library/domain/book_manifest.dart';
+import './image_viewer.dart';
 import '../../library/data/repositories/shelf_book_repository_provider.dart';
 import '../../library/data/repositories/book_manifest_repository_provider.dart';
 import '../data/services/epub_stream_service_provider.dart';
@@ -43,9 +44,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   InAppWebViewController? _webViewController;
 
   late final AnimationController _animController;
-  late final AnimationController _imageOpacityController;
   late Animation<Offset> _slideAnimation;
-  late Animation<double> _imageOpacityAnimation;
   Uint8List? _screenshotData;
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
@@ -54,11 +53,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   bool _showControls = false;
   int _currentSpineItemIndex = 0;
   List<SpineItem> _spineItems = [];
-
-  // Image viewer state
-  String? _zoomedImageUrl;
-  Uint8List? _zoomedImageData;
-  bool _loadingZoomedImage = false;
 
   // TOC Synchronization: Pre-calculated lookup maps
   final Map<String, List<String>> _spineToAnchorsMap = {};
@@ -92,17 +86,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       vsync: this,
       duration: const Duration(milliseconds: 240),
     );
-    _imageOpacityController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
     ).animate(_animController);
-    _imageOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _imageOpacityController, curve: Curves.easeIn),
-    );
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -116,7 +103,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _longPressTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _animController.dispose();
-    _imageOpacityController.dispose();
     super.dispose();
   }
 
@@ -613,22 +599,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       );
     }
 
-    return PopScope(
-      canPop: _zoomedImageData == null && !_loadingZoomedImage,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          return;
-        }
-        _closeImageViewer();
-      },
-      child: Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        drawer: RepaintBoundary(child: _buildTocDrawer()),
-        body: Container(
-          color: Theme.of(context).colorScheme.surface,
-          child: RepaintBoundary(child: _buildReaderBody()),
-        ),
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      drawer: RepaintBoundary(child: _buildTocDrawer()),
+      body: Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: RepaintBoundary(child: _buildReaderBody()),
       ),
     );
   }
@@ -724,66 +701,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   /// Handle image long-press event from WebView
-  Future<void> _handleImageLongPress(String imageUrl) async {
+  void _handleImageLongPress(String imageUrl) {
     if (_book == null) return;
 
-    // Provide haptic feedback
-    HapticFeedback.mediumImpact();
-
-    setState(() {
-      _zoomedImageUrl = imageUrl;
-      _loadingZoomedImage = true;
-      _zoomedImageData = null;
-    });
-
-    try {
-      // Parse the image URL and fetch the image data
-      final uri = WebUri(imageUrl);
-
-      // Use the existing WebView handler to fetch the image
-      final response = await _webViewHandler.handleRequest(
-        epubPath: _book!.filePath!,
-        fileHash: widget.fileHash,
-        requestUrl: uri,
-      );
-
-      if (response != null && response.data != null) {
-        setState(() {
-          _zoomedImageData = response.data;
-          _loadingZoomedImage = false;
-        });
-        // Trigger fade-in animation
-        _imageOpacityController.reset();
-        _imageOpacityController.forward();
-      } else {
-        // Failed to load image
-        setState(() {
-          _zoomedImageUrl = null;
-          _loadingZoomedImage = false;
-        });
-        if (mounted) {
-          ToastService.showError('Failed to load image');
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading zoomed image: $e');
-      setState(() {
-        _zoomedImageUrl = null;
-        _loadingZoomedImage = false;
-      });
-      if (mounted) {
-        ToastService.showError('Error loading image');
-      }
-    }
-  }
-
-  /// Close the image viewer
-  void _closeImageViewer() {
-    setState(() {
-      _zoomedImageUrl = null;
-      _zoomedImageData = null;
-      _loadingZoomedImage = false;
-    });
+    ImageViewer.handleImageLongPress(
+      context,
+      imageUrl: imageUrl,
+      webViewHandler: _webViewHandler,
+      epubPath: _book!.filePath!,
+      fileHash: widget.fileHash,
+    );
   }
 
   /// STEP 4.4: Build reader body with WebView interception
@@ -1002,58 +929,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             ),
           ),
         ),
-
-        if (_zoomedImageUrl != null && !_loadingZoomedImage)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _closeImageViewer,
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.9),
-                child: Stack(
-                  children: [
-                    // Image viewer
-                    if (_zoomedImageData != null)
-                      Positioned.fill(
-                        child: FadeTransition(
-                          opacity: _imageOpacityAnimation,
-                          child: InteractiveViewer(
-                            minScale: 0.5,
-                            maxScale: 4.0,
-                            boundaryMargin: const EdgeInsets.all(0),
-                            constrained: true,
-                            child: Center(
-                              child: Image.memory(
-                                _zoomedImageData!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                    // Close button
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: SafeArea(
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.close_outlined,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(color: Colors.black, blurRadius: 10),
-                            ],
-                            size: 32,
-                          ),
-                          onPressed: _closeImageViewer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
