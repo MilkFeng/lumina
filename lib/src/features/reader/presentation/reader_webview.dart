@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -260,15 +261,30 @@ class ReaderWebViewState extends State<ReaderWebView> {
   }
 
   Future<ui.Image?> takeScreenshot() async {
-    final BuildContext? context = _repaintKey.currentContext;
-    if (context == null) return null;
+    if (Platform.isAndroid) {
+      // for Android
+      final BuildContext? context = _repaintKey.currentContext;
+      if (context == null) return null;
 
-    final RenderRepaintBoundary? boundary =
-        context.findRenderObject() as RenderRepaintBoundary?;
+      final RenderRepaintBoundary? boundary =
+          context.findRenderObject() as RenderRepaintBoundary?;
 
-    if (boundary == null) return null;
-    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-    return image;
+      if (boundary == null) return null;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      return image;
+    } else {
+      // for iOS, use WebView screenshot method
+      final screenshotData = await _controller?.takeScreenshot(
+        screenshotConfiguration: ScreenshotConfiguration(
+          compressFormat: CompressFormat.JPEG,
+          quality: 70,
+        ),
+      );
+      if (screenshotData == null) return null;
+      final codec = await ui.instantiateImageCodec(screenshotData);
+      final frame = await codec.getNextFrame();
+      return frame.image;
+    }
   }
 
   Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
