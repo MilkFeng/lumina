@@ -4,7 +4,7 @@ String colorToHex(Color color) {
   return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
 }
 
-String generateSkeletonStyle(Color backgroundColor, Color defaultTextColor) {
+String generateSkeletonStyle(Color backgroundColor, Color? defaultTextColor) {
   return '''
 /* Full viewport, no margins */
 html, body {
@@ -14,7 +14,7 @@ html, body {
   height: 100vh;
   overflow: hidden;
   background-color: ${colorToHex(backgroundColor)} !important;
-  color: ${colorToHex(defaultTextColor)} !important;
+  ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
 }
 
 /* Container for iframes */
@@ -59,7 +59,7 @@ iframe {
 }
 
 /// Skeleton HTML containing 3 iframes for prev/curr/next chapters
-String generateSkeletonHtml(Color backgroundColor, Color defaultTextColor) {
+String generateSkeletonHtml(Color backgroundColor, Color? defaultTextColor) {
   return '''
 <!DOCTYPE html>
 <html>
@@ -85,7 +85,7 @@ String generateSkeletonHtml(Color backgroundColor, Color defaultTextColor) {
 String generatePaginationCss(
   double viewWidth,
   double viewHeight,
-  Color defaultTextColor,
+  Color? defaultTextColor,
 ) {
   final safeWidth = viewWidth.floor();
   final safeHeight = viewHeight.floor();
@@ -180,8 +180,14 @@ figure {
 
 a {
   pointer-events: none !important;
-  text-decoration: none !important;
   cursor: default !important;
+}
+
+a:visited {
+  color: currentColor !important;
+  text-decoration: inherit !important;
+  border-bottom: inherit !important;
+  opacity: 1 !important;
 }
 
 p {
@@ -189,7 +195,7 @@ p {
 }
 
 p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
-  color: ${colorToHex(defaultTextColor)};
+  ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
 }
 ''';
 }
@@ -198,7 +204,7 @@ p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
 String generateControllerJs(
   double viewWidth,
   double viewHeight,
-  Color defaultTextColor,
+  Color? defaultTextColor,
 ) {
   final safeWidth = viewWidth.floor();
 

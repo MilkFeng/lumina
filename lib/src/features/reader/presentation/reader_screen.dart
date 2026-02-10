@@ -1,11 +1,9 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -14,7 +12,6 @@ import './reader_webview.dart';
 import './control_panel.dart';
 import '../data/services/epub_stream_service_provider.dart';
 import 'epub_webview_handler.dart';
-import '../data/reader_scripts.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -40,7 +37,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   late final AnimationController _animController;
   late Animation<Offset> _slideAnimation;
-  Uint8List? _screenshotData;
+  ui.Image? _screenshotData;
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
   bool _isWebViewLoading = true;
@@ -54,7 +51,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   double? _initialProgressToRestore;
 
   bool _updatingTheme = false;
-  bool _shouldShowLoadingScreen = true;
 
   double _webviewWidth = 0;
   double _webviewHeight = 0;
@@ -70,41 +66,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _bookSession = BookSession(fileHash: widget.fileHash);
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 240),
+      duration: const Duration(milliseconds: 180),
     );
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
     ).animate(_animController);
-    _shouldShowLoadingScreen = true;
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         _loadBook();
-      }
-      final route = ModalRoute.of(context);
-      if (route != null) {
-        void handler(status) {
-          if (status == AnimationStatus.completed) {
-            route.animation?.removeStatusListener(handler);
-            setState(() {
-              _shouldShowLoadingScreen = false;
-            });
-          }
-        }
-
-        if (route.animation != null &&
-            route.animation!.status != AnimationStatus.completed) {
-          route.animation?.addStatusListener(handler);
-        } else {
-          setState(() {
-            _shouldShowLoadingScreen = false;
-          });
-        }
-      } else {
-        setState(() {
-          _shouldShowLoadingScreen = false;
-        });
       }
     });
   }
@@ -409,15 +380,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
 
     _isAnimating = true;
-    Uint8List? screenshot;
+    ui.Image? screenshot;
     try {
-      screenshot = await _webViewKey.currentState!.takeScreenshot(
-        screenshotConfiguration: ScreenshotConfiguration(
-          compressFormat: CompressFormat.JPEG,
-          quality: 80,
-        ),
-      );
-    } catch (_) {
+      screenshot = await _webViewKey.currentState!.takeScreenshot();
+    } catch (e) {
+      debugPrint("Error taking screenshot: $e");
       screenshot = null;
     }
 
@@ -435,9 +402,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _isAnimating = false;
       return;
     }
-
-    // preload the image
-    await precacheImage(MemoryImage(screenshot), context);
 
     setState(() {
       _isForwardAnimation = isNext;
@@ -495,7 +459,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (!_bookSession.isLoaded || _shouldShowLoadingScreen) {
+    if (!_bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: Center(),
@@ -505,10 +469,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      drawer: RepaintBoundary(child: _buildTocDrawer()),
+      drawer: _buildTocDrawer(),
       body: Container(
         color: Theme.of(context).colorScheme.surface,
-        child: RepaintBoundary(child: _buildReaderBody()),
+        child: _buildReaderBody(),
       ),
     );
   }
@@ -550,20 +514,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _updatingTheme = true;
     });
 
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final sketelonCss = generateSkeletonStyle(
-      colorScheme.surface,
-      colorScheme.onSurface,
+    await _webViewKey.currentState?.updateTheme(
+      Theme.of(context).colorScheme.surface,
+      Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).colorScheme.onSurface
+          : null,
     );
-
-    final iframeCss = generatePaginationCss(
-      _webviewWidth,
-      _webviewHeight,
-      colorScheme.onSurface,
-    );
-
-    await _webViewKey.currentState?.replaceStyles(sketelonCss, iframeCss);
 
     setState(() {
       _updatingTheme = false;
@@ -625,26 +581,59 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   Widget _buildRenderer() {
     return Positioned.fill(
-      child: Stack(
-        children: [
-          if (_screenshotData != null && _isAnimating && !_isForwardAnimation)
-            Positioned.fill(child: _buildScreenshotContainer(_screenshotData!)),
-          Positioned.fill(
-            child: SlideTransition(
-              position: _isAnimating && !_isForwardAnimation
-                  ? _slideAnimation
-                  : const AlwaysStoppedAnimation(Offset.zero),
-              child: _buildWebViewStack(),
-            ),
-          ),
-          if (_screenshotData != null && _isAnimating && _isForwardAnimation)
-            Positioned.fill(
-              child: SlideTransition(
-                position: _slideAnimation,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapUp: (details) {
+          _handleTapZone(details.globalPosition.dx);
+        },
+        onHorizontalDragEnd: (details) {
+          if (_isAnimating) return;
+          final velocity = details.primaryVelocity ?? 0;
+
+          if (velocity < -200) {
+            _performPageTurn(true);
+          } else if (velocity > 200) {
+            _performPageTurn(false);
+          }
+        },
+        onLongPressStart: (details) async {
+          const padding = 16.0;
+
+          final localX = details.localPosition.dx - padding;
+          final localY = details.localPosition.dy - padding;
+
+          if (localX < 0 ||
+              localY < 0 ||
+              localX > _webviewWidth ||
+              localY > _webviewHeight) {
+            return;
+          }
+
+          await _webViewKey.currentState?.checkElementAt(localX, localY);
+        },
+        child: Stack(
+          children: [
+            if (_screenshotData != null && _isAnimating && !_isForwardAnimation)
+              Positioned.fill(
                 child: _buildScreenshotContainer(_screenshotData!),
               ),
+            Positioned.fill(
+              child: SlideTransition(
+                position: _isAnimating && !_isForwardAnimation
+                    ? _slideAnimation
+                    : const AlwaysStoppedAnimation(Offset.zero),
+                child: _buildWebViewStack(),
+              ),
             ),
-        ],
+            if (_screenshotData != null && _isAnimating && _isForwardAnimation)
+              Positioned.fill(
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildScreenshotContainer(_screenshotData!),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -667,40 +656,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         bottom: true,
         left: true,
         right: true,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (details) {
-            _handleTapZone(details.globalPosition.dx);
-          },
-          onHorizontalDragEnd: (details) {
-            if (_isAnimating) return;
-            final velocity = details.primaryVelocity ?? 0;
-
-            if (velocity < -200) {
-              _performPageTurn(true);
-            } else if (velocity > 200) {
-              _performPageTurn(false);
-            }
-          },
-          onLongPressStart: (details) async {
-            const padding = 16.0;
-
-            final localX = details.localPosition.dx - padding;
-            final localY = details.localPosition.dy - padding;
-
-            if (localX < 0 ||
-                localY < 0 ||
-                localX > _webviewWidth ||
-                localY > _webviewHeight) {
-              return;
-            }
-
-            await _webViewKey.currentState?.checkElementAt(localX, localY);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(alignment: AlignmentGeometry.center, child: child),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(alignment: AlignmentGeometry.center, child: child),
         ),
       ),
     );
@@ -725,7 +683,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             width: viewWidth,
             height: viewHeight,
             surfaceColor: maskColor,
-            onSurfaceColor: Theme.of(context).colorScheme.onSurface,
+            onSurfaceColor: Theme.of(context).brightness == Brightness.dark
+                ? Theme.of(context).colorScheme.onSurface
+                : null,
             isLoading: _isWebViewLoading || _updatingTheme,
             callbacks: ReaderWebViewCallbacks(
               onInitialized: () async {
@@ -787,14 +747,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
-  Widget _buildScreenshotContainer(Uint8List screenshot) {
-    return _buildContentWrapper(
-      Image.memory(
-        screenshot,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        excludeFromSemantics: true,
-      ),
-    );
+  Widget _buildScreenshotContainer(ui.Image screenshot) {
+    return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }
 }

@@ -1,12 +1,31 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import './book_session.dart';
 import './epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
+
+final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
+  disableContextMenu: true,
+  disableLongPressContextMenuOnLinks: true,
+  selectionGranularity: SelectionGranularity.CHARACTER,
+  transparentBackground: true,
+  allowFileAccessFromFileURLs: true,
+  allowUniversalAccessFromFileURLs: true,
+  useShouldInterceptRequest: true,
+  useOnLoadResource: false,
+  useShouldOverrideUrlLoading: true,
+  javaScriptEnabled: true,
+  disableHorizontalScroll: true,
+  disableVerticalScroll: true,
+  supportZoom: false,
+  useHybridComposition: false,
+  resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
+);
 
 /// Callbacks for WebView events
 class ReaderWebViewCallbacks {
@@ -44,7 +63,7 @@ class ReaderWebView extends StatefulWidget {
   final double width;
   final double height;
   final Color surfaceColor;
-  final Color onSurfaceColor;
+  final Color? onSurfaceColor;
   final bool isLoading;
   final VoidCallback? onWebViewCreated;
 
@@ -68,6 +87,8 @@ class ReaderWebView extends StatefulWidget {
 
 class ReaderWebViewState extends State<ReaderWebView> {
   final GlobalKey _webViewKey = GlobalKey();
+  final GlobalKey _repaintKey = GlobalKey();
+
   InAppWebViewController? _controller;
 
   InAppWebViewController? get controller => _controller;
@@ -76,64 +97,67 @@ class ReaderWebViewState extends State<ReaderWebView> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        InAppWebView(
-          key: _webViewKey,
-          initialData: InAppWebViewInitialData(
-            data: generateSkeletonHtml(
-              widget.surfaceColor,
-              widget.onSurfaceColor,
-            ),
-            baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
-          ),
-          initialSettings: EpubWebViewHandler.defaultSettings,
-          onLongPressHitTestResult: (controller, hitTestResult) {
-            if (hitTestResult.type ==
-                InAppWebViewHitTestResultType.IMAGE_TYPE) {
-              final imageUrl = hitTestResult.extra;
-              if (imageUrl != null && imageUrl.isNotEmpty) {
-                widget.callbacks.onImageLongPress(imageUrl);
-              }
-            }
-          },
-          shouldInterceptRequest: (controller, request) async {
-            return await widget.webViewHandler.handleRequest(
-              epubPath: widget.bookSession.book!.filePath!,
-              fileHash: widget.fileHash,
-              requestUrl: request.url,
-            );
-          },
-          onLoadResourceWithCustomScheme: (controller, request) async {
-            return await widget.webViewHandler.handleRequestWithCustomScheme(
-              epubPath: widget.bookSession.book!.filePath!,
-              fileHash: widget.fileHash,
-              requestUrl: request.url,
-            );
-          },
-          shouldOverrideUrlLoading: (controller, navigationAction) async {
-            final uri = navigationAction.request.url!;
-            if (uri.scheme == 'data') {
-              return NavigationActionPolicy.ALLOW;
-            }
-            if (EpubWebViewHandler.isEpubRequest(uri)) {
-              return NavigationActionPolicy.ALLOW;
-            }
-            return NavigationActionPolicy.CANCEL;
-          },
-          onWebViewCreated: (controller) {
-            _controller = controller;
-            _setupJavaScriptHandlers(controller);
-            widget.onWebViewCreated?.call();
-          },
-          onLoadStop: (controller, url) async {
-            await controller.evaluateJavascript(
-              source: generateControllerJs(
-                widget.width,
-                widget.height,
+        RepaintBoundary(
+          key: _repaintKey,
+          child: InAppWebView(
+            key: _webViewKey,
+            initialData: InAppWebViewInitialData(
+              data: generateSkeletonHtml(
+                widget.surfaceColor,
                 widget.onSurfaceColor,
               ),
-            );
-            widget.callbacks.onInitialized();
-          },
+              baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
+            ),
+            initialSettings: defaultSettings,
+            onLongPressHitTestResult: (controller, hitTestResult) {
+              if (hitTestResult.type ==
+                  InAppWebViewHitTestResultType.IMAGE_TYPE) {
+                final imageUrl = hitTestResult.extra;
+                if (imageUrl != null && imageUrl.isNotEmpty) {
+                  widget.callbacks.onImageLongPress(imageUrl);
+                }
+              }
+            },
+            shouldInterceptRequest: (controller, request) async {
+              return await widget.webViewHandler.handleRequest(
+                epubPath: widget.bookSession.book!.filePath!,
+                fileHash: widget.fileHash,
+                requestUrl: request.url,
+              );
+            },
+            onLoadResourceWithCustomScheme: (controller, request) async {
+              return await widget.webViewHandler.handleRequestWithCustomScheme(
+                epubPath: widget.bookSession.book!.filePath!,
+                fileHash: widget.fileHash,
+                requestUrl: request.url,
+              );
+            },
+            shouldOverrideUrlLoading: (controller, navigationAction) async {
+              final uri = navigationAction.request.url!;
+              if (uri.scheme == 'data') {
+                return NavigationActionPolicy.ALLOW;
+              }
+              if (EpubWebViewHandler.isEpubRequest(uri)) {
+                return NavigationActionPolicy.ALLOW;
+              }
+              return NavigationActionPolicy.CANCEL;
+            },
+            onWebViewCreated: (controller) {
+              _controller = controller;
+              _setupJavaScriptHandlers(controller);
+              widget.onWebViewCreated?.call();
+            },
+            onLoadStop: (controller, url) async {
+              await controller.evaluateJavascript(
+                source: generateControllerJs(
+                  widget.width,
+                  widget.height,
+                  widget.onSurfaceColor,
+                ),
+              );
+              widget.callbacks.onInitialized();
+            },
+          ),
         ),
         Positioned.fill(
           child: IgnorePointer(
@@ -235,12 +259,28 @@ class ReaderWebViewState extends State<ReaderWebView> {
     await _controller?.evaluateJavascript(source: source);
   }
 
-  Future<Uint8List?> takeScreenshot({
-    ScreenshotConfiguration? screenshotConfiguration,
-  }) async {
-    return await _controller?.takeScreenshot(
-      screenshotConfiguration: screenshotConfiguration,
+  Future<ui.Image?> takeScreenshot() async {
+    final BuildContext? context = _repaintKey.currentContext;
+    if (context == null) return null;
+
+    final RenderRepaintBoundary? boundary =
+        context.findRenderObject() as RenderRepaintBoundary?;
+
+    if (boundary == null) return null;
+    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+    return image;
+  }
+
+  Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
+    final sketelonCss = generateSkeletonStyle(surfaceColor, onSurfaceColor);
+
+    final iframeCss = generatePaginationCss(
+      widget.width,
+      widget.height,
+      onSurfaceColor,
     );
+
+    await replaceStyles(sketelonCss, iframeCss);
   }
 
   // JavaScript wrapper methods

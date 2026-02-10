@@ -148,22 +148,4 @@ class EpubWebViewHandler {
         requestUrl.host == virtualDomain &&
         requestUrl.path.startsWith('/book/');
   }
-
-  static final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
-    disableContextMenu: true,
-    disableLongPressContextMenuOnLinks: true,
-    selectionGranularity: SelectionGranularity.CHARACTER,
-    transparentBackground: true,
-    allowFileAccessFromFileURLs: true,
-    allowUniversalAccessFromFileURLs: true,
-    useShouldInterceptRequest: true,
-    useOnLoadResource: false,
-    useShouldOverrideUrlLoading: true,
-    javaScriptEnabled: true,
-    disableHorizontalScroll: true,
-    disableVerticalScroll: true,
-    supportZoom: false,
-    useHybridComposition: false,
-    resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
-  );
 }
