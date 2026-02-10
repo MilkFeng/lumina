@@ -108,6 +108,10 @@ html, body {
   
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+
+  font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
+  line-height: 1.6;
+  text-align: justify;
 }
 
 /* CRITICAL: Disable all scrolling vertically - horizontal only */
@@ -178,6 +182,10 @@ a {
   pointer-events: none !important;
   text-decoration: none !important;
   cursor: default !important;
+}
+
+p {
+  margin-bottom: 1.0em;
 }
 
 p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
@@ -279,6 +287,20 @@ function calculateScrollLeft(iframe, pageIndex) {
   return scrollLeft;
 }
 
+function convertToColumnBreak(value) {
+  switch (value) {
+    case 'page':
+    case 'right':
+    case 'left':
+      return 'always';
+    case 'avoid':
+      return 'avoid';
+    case 'auto':
+    default:
+      return 'auto';
+  }
+}
+
 function polyfillCss(doc) {
   for (var i = 0; i < doc.styleSheets.length; i++) {
     var sheet = doc.styleSheets[i];
@@ -291,24 +313,20 @@ function polyfillCss(doc) {
         if (rule.type === 1) {
           var style = rule.style;
           
-          if (style.breakBefore && style.breakBefore !== 'auto') {
-            style.breakBefore = 'column';
-            style.webkitColumnBreakBefore = 'always';
+          if (style.breakBefore) {
+            style.webkitColumnBreakBefore = convertToColumnBreak(style.breakBefore);
           }
           
-          if (style.pageBreakBefore && style.pageBreakBefore !== 'auto') {
-            style.webkitColumnBreakBefore = 'always';
-            style.breakBefore = 'column';
+          if (style.pageBreakBefore) {
+            style.webkitColumnBreakBefore = convertToColumnBreak(style.pageBreakBefore);
           }
 
           if (style.breakAfter && style.breakAfter !== 'auto') {
-            style.breakAfter = 'column';
-            style.webkitColumnBreakAfter = 'always';
+            style.webkitColumnBreakAfter = convertToColumnBreak(style.breakAfter);
           }
 
           if (style.pageBreakAfter && style.pageBreakAfter !== 'auto') {
-            style.webkitColumnBreakAfter = 'always';
-            style.breakAfter = 'column';
+            style.webkitColumnBreakAfter = convertToColumnBreak(style.pageBreakAfter);
           }
         }
       }
