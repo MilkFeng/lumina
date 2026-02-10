@@ -144,21 +144,24 @@ class _ControlPanelState extends State<ControlPanel> {
                       GestureDetector(
                         onLongPressStart: widget.currentSpineItemIndex > 0
                             ? (_) {
-                                HapticFeedback.selectionClick();
                                 if (widget.currentPageInChapter == 0 &&
                                     widget.currentSpineItemIndex > 0) {
+                                  HapticFeedback.selectionClick();
                                   widget.onPreviousChapter();
-                                } else {
+                                } else if (widget.currentPageInChapter > 0) {
+                                  HapticFeedback.selectionClick();
                                   widget.onFirstPage();
                                 }
                                 _longPressTimer = Timer.periodic(
                                   const Duration(milliseconds: 500),
                                   (timer) {
-                                    HapticFeedback.selectionClick();
                                     if (widget.currentPageInChapter == 0 &&
                                         widget.currentSpineItemIndex > 0) {
+                                      HapticFeedback.selectionClick();
                                       widget.onPreviousChapter();
-                                    } else {
+                                    } else if (widget.currentPageInChapter >
+                                        0) {
+                                      HapticFeedback.selectionClick();
                                       widget.onFirstPage();
                                     }
                                   },
@@ -202,17 +205,17 @@ class _ControlPanelState extends State<ControlPanel> {
                             widget.currentSpineItemIndex <
                                 widget.totalSpineItems - 1
                             ? (_) {
-                                HapticFeedback.selectionClick();
                                 if (widget.currentSpineItemIndex <
                                     widget.totalSpineItems - 1) {
+                                  HapticFeedback.selectionClick();
                                   widget.onNextChapter();
                                 }
                                 _longPressTimer = Timer.periodic(
                                   const Duration(milliseconds: 500),
                                   (timer) {
-                                    HapticFeedback.selectionClick();
                                     if (widget.currentSpineItemIndex <
                                         widget.totalSpineItems - 1) {
+                                      HapticFeedback.selectionClick();
                                       widget.onNextChapter();
                                     }
                                   },
