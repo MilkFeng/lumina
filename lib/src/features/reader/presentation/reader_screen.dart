@@ -76,7 +76,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       end: Offset.zero,
     ).animate(_animController);
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         _loadBook();
       }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
@@ -57,12 +56,8 @@ class EpubStreamService {
     // Optional: allow passing path explicitly for one-off reads (slower fallback)
     String? epubPath,
   }) async {
-    // Fallback: If no session is open or a different path is requested,
-    // perform a "slow" one-off read using Isolate.run (Dart 2.19+)
-    if (_worker == null || (epubPath != null && epubPath != _currentBookPath)) {
-      final path = epubPath ?? _currentBookPath;
-      if (path == null) return left('Book not opened and no path provided');
-      return _oneOffRead(path, targetFilePath);
+    if (epubPath != null && epubPath != _currentBookPath) {
+      await openBook(epubPath);
     }
 
     try {
@@ -81,33 +76,6 @@ class EpubStreamService {
     _worker?.dispose();
     _worker = null;
     _currentBookPath = null;
-  }
-
-  /// Fallback for one-off reads without a session
-  Future<Either<String, Uint8List>> _oneOffRead(
-    String path,
-    String targetPath,
-  ) async {
-    try {
-      return await Isolate.run(() {
-        final file = File(path);
-        if (!file.existsSync()) return left('EPUB file not found');
-
-        final inputStream = InputFileStream(path);
-        // verify: false speeds up parsing significantly
-        final archive = ZipDecoder().decodeStream(inputStream, verify: false);
-        final archiveFile = archive.findFile(targetPath);
-
-        if (archiveFile == null) return left('File not found');
-
-        final content = archiveFile.content as List<int>;
-        // Explicitly close stream
-        inputStream.close();
-        return right(Uint8List.fromList(content));
-      });
-    } catch (e) {
-      return left('One-off read failed: $e');
-    }
   }
 
   /// Get MIME type (Helper method, unchanged logic but optimized structure)
@@ -146,12 +114,13 @@ class _EpubWorker {
   final SendPort _sendPort;
   final ReceivePort _receivePort;
 
-  // Map to track pending requests: RequestID -> Completer
-  final _pendingRequests = <int, Completer<dynamic>>{};
+  final _pendingRequests = <int, Completer<Uint8List?>>{};
+  final _loadCompleters = <int, Completer<void>>{};
   int _nextRequestId = 0;
 
   _EpubWorker._(this._isolate, this._sendPort, this._receivePort) {
     _receivePort.listen(_handleResponse);
+    _isolate.addOnExitListener(_receivePort.sendPort, response: 'EXIT');
   }
 
   static Future<_EpubWorker> spawn() async {
@@ -177,7 +146,7 @@ class _EpubWorker {
   Future<void> loadBook(String path) {
     final completer = Completer<void>();
     final id = _nextRequestId++;
-    _pendingRequests[id] = completer;
+    _loadCompleters[id] = completer;
     _sendPort.send(_LoadMessage(id, path));
     return completer.future;
   }
@@ -191,13 +160,33 @@ class _EpubWorker {
   }
 
   void _handleResponse(dynamic message) {
+    if (message == 'EXIT') {
+      for (var c in _pendingRequests.values) {
+        c.completeError('Worker died');
+      }
+      for (var c in _loadCompleters.values) {
+        c.completeError('Worker died');
+      }
+      _pendingRequests.clear();
+      _loadCompleters.clear();
+      return;
+    }
+
     if (message is _ResponseMessage) {
-      final completer = _pendingRequests.remove(message.requestId);
-      if (completer != null) {
+      if (message.isLoadResponse) {
+        final completer = _loadCompleters.remove(message.requestId);
         if (message.error != null) {
-          completer.completeError(message.error!);
+          completer?.completeError(message.error!);
         } else {
-          completer.complete(message.data);
+          completer?.complete();
+        }
+      } else {
+        final completer = _pendingRequests.remove(message.requestId);
+        if (message.error != null) {
+          completer?.completeError(message.error!);
+        } else {
+          final data = message.transferableData?.materialize().asUint8List();
+          completer?.complete(data);
         }
       }
     }
@@ -205,7 +194,7 @@ class _EpubWorker {
 
   void dispose() {
     _sendPort.send('shutdown');
-    _isolate.kill();
+    _isolate.kill(priority: Isolate.immediate);
     _receivePort.close();
   }
 }
@@ -226,50 +215,32 @@ class _RequestMessage {
 
 class _ResponseMessage {
   final int requestId;
-  final Uint8List? data;
+  final TransferableTypedData? transferableData;
   final String? error;
-  _ResponseMessage(this.requestId, this.data, {this.error});
+  final bool isLoadResponse;
+
+  _ResponseMessage.data(this.requestId, this.transferableData)
+    : error = null,
+      isLoadResponse = false;
+
+  _ResponseMessage.loadSuccess(this.requestId)
+    : transferableData = null,
+      error = null,
+      isLoadResponse = true;
+
+  _ResponseMessage.error(
+    this.requestId,
+    this.error, {
+    this.isLoadResponse = false,
+  }) : transferableData = null;
 }
 
 // --- Isolate Entry Point ---
-
 void _workerEntryPoint(SendPort mainSendPort) {
   final commandPort = ReceivePort();
 
   // 1. Send our command port back to the main thread
   mainSendPort.send(commandPort.sendPort);
-
-  // Warm up the ZIP decoder by performing a dummy decode (JIT compilation)
-  try {
-    final dummyZipBytes = Uint8List.fromList([
-      0x50,
-      0x4B,
-      0x05,
-      0x06,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-    ]);
-    ZipDecoder().decodeBytes(dummyZipBytes, verify: false);
-    debugPrint("Background Worker: Code warmed up (JIT compiled).");
-  } catch (e) {
-    debugPrint("Background Worker: Warm-up failed: $e");
-  }
 
   // 2. Open EPUB and Cache Headers (The expensive part, done once!)
   InputFileStream? inputStream;
@@ -292,10 +263,14 @@ void _workerEntryPoint(SendPort mainSendPort) {
         inputStream = InputFileStream(message.path);
         archive = ZipDecoder().decodeStream(inputStream!, verify: false);
 
-        responsePort!.send(_ResponseMessage(message.id, null));
+        responsePort!.send(_ResponseMessage.loadSuccess(message.id));
       } catch (e) {
         responsePort!.send(
-          _ResponseMessage(message.id, null, error: 'Failed to load book: $e'),
+          _ResponseMessage.error(
+            message.id,
+            'Failed to load book: $e',
+            isLoadResponse: true,
+          ),
         );
       }
     } else if (message is _RequestMessage) {
@@ -303,7 +278,7 @@ void _workerEntryPoint(SendPort mainSendPort) {
 
       if (archive == null) {
         responsePort!.send(
-          _ResponseMessage(message.id, null, error: 'No book loaded'),
+          _ResponseMessage.error(message.id, 'No book loaded'),
         );
         return;
       }
@@ -311,16 +286,13 @@ void _workerEntryPoint(SendPort mainSendPort) {
       try {
         final file = archive!.findFile(message.path);
         if (file != null) {
-          final content = file.content as List<int>;
-          final bytes = Uint8List.fromList(content);
-          responsePort!.send(_ResponseMessage(message.id, bytes));
+          final transferable = TransferableTypedData.fromList([file.content]);
+          responsePort!.send(_ResponseMessage.data(message.id, transferable));
         } else {
-          responsePort!.send(_ResponseMessage(message.id, null));
+          responsePort!.send(_ResponseMessage.data(message.id, null));
         }
       } catch (e) {
-        responsePort!.send(
-          _ResponseMessage(message.id, null, error: e.toString()),
-        );
+        responsePort!.send(_ResponseMessage.error(message.id, e.toString()));
       }
     }
   });
