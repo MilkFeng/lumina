@@ -571,37 +571,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     return Stack(
       children: [
-        Positioned.fill(
-          child: Stack(
-            children: [
-              if (_screenshotData != null &&
-                  _isAnimating &&
-                  !_isForwardAnimation)
-                Positioned.fill(
-                  child: _buildScreenshotContainer(_screenshotData!),
-                ),
-              Positioned.fill(
-                child: SlideTransition(
-                  position: _isAnimating && !_isForwardAnimation
-                      ? _slideAnimation
-                      : const AlwaysStoppedAnimation(Offset.zero),
-                  child: _buildWebViewStack(),
-                ),
-              ),
-              if (_screenshotData != null &&
-                  _isAnimating &&
-                  _isForwardAnimation)
-                Positioned.fill(
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: _buildScreenshotContainer(_screenshotData!),
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        // Control Panel
+        _buildRenderer(),
         ControlPanel(
           showControls: _showControls,
           title: _bookSession.spine.isEmpty
@@ -627,7 +597,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
-  Widget _buildWebViewStack() {
+  Widget _buildRenderer() {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          if (_screenshotData != null && _isAnimating && !_isForwardAnimation)
+            Positioned.fill(child: _buildScreenshotContainer(_screenshotData!)),
+          Positioned.fill(
+            child: SlideTransition(
+              position: _isAnimating && !_isForwardAnimation
+                  ? _slideAnimation
+                  : const AlwaysStoppedAnimation(Offset.zero),
+              child: _buildWebViewStack(),
+            ),
+          ),
+          if (_screenshotData != null && _isAnimating && _isForwardAnimation)
+            Positioned.fill(
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: _buildScreenshotContainer(_screenshotData!),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContentWrapper(Widget child) {
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
@@ -677,117 +673,101 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final viewWidth = constraints.maxWidth;
-                final viewHeight = constraints.maxHeight;
-                final maskColor = Theme.of(context).colorScheme.surface;
-
-                _webviewWidth = viewWidth;
-                _webviewHeight = viewHeight;
-
-                return ReaderWebView(
-                  key: _webViewKey,
-                  bookSession: _bookSession,
-                  webViewHandler: _webViewHandler,
-                  fileHash: widget.fileHash,
-                  width: viewWidth,
-                  height: viewHeight,
-                  surfaceColor: maskColor,
-                  onSurfaceColor: Theme.of(context).colorScheme.onSurface,
-                  isLoading: _isWebViewLoading || _updatingTheme,
-                  callbacks: ReaderWebViewCallbacks(
-                    onInitialized: () async {
-                      await _loadCarousel();
-                    },
-                    onPageCountReady: (totalPages) async {
-                      setState(() {
-                        _totalPagesInChapter = totalPages;
-                        if (_currentPageInChapter >= _totalPagesInChapter) {
-                          _currentPageInChapter = _totalPagesInChapter - 1;
-                        }
-                      });
-                      if (_initialProgressToRestore != null) {
-                        final ratio = _initialProgressToRestore ?? 0.0;
-                        _initialProgressToRestore = null;
-                        await _webViewKey.currentState?.restoreScrollPosition(
-                          ratio,
-                        );
-                      }
-                    },
-                    onPageChanged: (pageIndex) {
-                      setState(() {
-                        _currentPageInChapter = pageIndex;
-                      });
-                      _saveProgress();
-                    },
-                    onTapLeft: () {
-                      if (_showControls) {
-                        _toggleControls();
-                        return;
-                      }
-                      _performPageTurn(false);
-                    },
-                    onTapRight: () {
-                      if (_showControls) {
-                        _toggleControls();
-                        return;
-                      }
-                      _performPageTurn(true);
-                    },
-                    onTapCenter: () {
-                      _toggleControls();
-                    },
-                    onReveal: (scrollPosition) {
-                      if (mounted) {
-                        setState(() {
-                          _isWebViewLoading = false;
-                        });
-                      }
-                      _saveProgress();
-                    },
-                    onRenderComplete: () async {
-                      _saveProgress();
-                    },
-                    onScrollAnchors: _handleScrollAnchors,
-                    onImageLongPress: _handleImageLongPress,
-                  ),
-                );
-              },
-            ),
+            child: Container(alignment: AlignmentGeometry.center, child: child),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildScreenshotContainer(Uint8List screenshot) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-          ),
-        ],
+  Widget _buildWebViewStack() {
+    return _buildContentWrapper(
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final viewWidth = constraints.maxWidth;
+          final viewHeight = constraints.maxHeight;
+          final maskColor = Theme.of(context).colorScheme.surface;
+
+          _webviewWidth = viewWidth;
+          _webviewHeight = viewHeight;
+
+          return ReaderWebView(
+            key: _webViewKey,
+            bookSession: _bookSession,
+            webViewHandler: _webViewHandler,
+            fileHash: widget.fileHash,
+            width: viewWidth,
+            height: viewHeight,
+            surfaceColor: maskColor,
+            onSurfaceColor: Theme.of(context).colorScheme.onSurface,
+            isLoading: _isWebViewLoading || _updatingTheme,
+            callbacks: ReaderWebViewCallbacks(
+              onInitialized: () async {
+                await _loadCarousel();
+              },
+              onPageCountReady: (totalPages) async {
+                setState(() {
+                  _totalPagesInChapter = totalPages;
+                  if (_currentPageInChapter >= _totalPagesInChapter) {
+                    _currentPageInChapter = _totalPagesInChapter - 1;
+                  }
+                });
+                if (_initialProgressToRestore != null) {
+                  final ratio = _initialProgressToRestore ?? 0.0;
+                  _initialProgressToRestore = null;
+                  await _webViewKey.currentState?.restoreScrollPosition(ratio);
+                }
+              },
+              onPageChanged: (pageIndex) {
+                setState(() {
+                  _currentPageInChapter = pageIndex;
+                });
+                _saveProgress();
+              },
+              onTapLeft: () {
+                if (_showControls) {
+                  _toggleControls();
+                  return;
+                }
+                _performPageTurn(false);
+              },
+              onTapRight: () {
+                if (_showControls) {
+                  _toggleControls();
+                  return;
+                }
+                _performPageTurn(true);
+              },
+              onTapCenter: () {
+                _toggleControls();
+              },
+              onReveal: (scrollPosition) {
+                if (mounted) {
+                  setState(() {
+                    _isWebViewLoading = false;
+                  });
+                }
+                _saveProgress();
+              },
+              onRenderComplete: () async {
+                _saveProgress();
+              },
+              onScrollAnchors: _handleScrollAnchors,
+              onImageLongPress: _handleImageLongPress,
+            ),
+          );
+        },
       ),
-      child: SafeArea(
-        top: true,
-        bottom: true,
-        left: true,
-        right: true,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Image.memory(
-            screenshot,
-            fit: BoxFit.cover,
-            gaplessPlayback: true,
-            excludeFromSemantics: true,
-          ),
-        ),
+    );
+  }
+
+  Widget _buildScreenshotContainer(Uint8List screenshot) {
+    return _buildContentWrapper(
+      Image.memory(
+        screenshot,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        excludeFromSemantics: true,
       ),
     );
   }
