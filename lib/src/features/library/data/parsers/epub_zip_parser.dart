@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:archive/archive_io.dart';
-import 'package:fast_gbk/fast_gbk.dart';
 import 'package:xml/xml.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/book_manifest.dart';
@@ -67,11 +66,7 @@ class EpubZipParser {
     try {
       decodedString = utf8.decode(bytes);
     } catch (e) {
-      try {
-        decodedString = gbk.decode(bytes);
-      } catch (e) {
-        throw FormatException('cannot decode string');
-      }
+      throw FormatException('cannot decode string as UTF-8: $e');
     }
     return decodedString;
   }

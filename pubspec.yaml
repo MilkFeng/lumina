@@ -34,7 +34,6 @@ dependencies:
   dio: ^5.9.1
   webdav_client: ^1.2.2
   convert: ^3.1.2
-  fast_gbk: ^1.0.0
 
   # Storage
   shared_preferences: ^2.5.4
