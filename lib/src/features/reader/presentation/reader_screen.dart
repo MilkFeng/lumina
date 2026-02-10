@@ -54,6 +54,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   double? _initialProgressToRestore;
 
   bool _updatingTheme = false;
+  bool _shouldShowLoadingScreen = true;
 
   double _webviewWidth = 0;
   double _webviewHeight = 0;
@@ -75,11 +76,35 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       begin: Offset.zero,
       end: Offset.zero,
     ).animate(_animController);
+    _shouldShowLoadingScreen = true;
     WidgetsBinding.instance.addObserver(this);
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         _loadBook();
+      }
+      final route = ModalRoute.of(context);
+      if (route != null) {
+        void handler(status) {
+          if (status == AnimationStatus.completed) {
+            route.animation?.removeStatusListener(handler);
+            setState(() {
+              _shouldShowLoadingScreen = false;
+            });
+          }
+        }
+
+        if (route.animation != null &&
+            route.animation!.status != AnimationStatus.completed) {
+          route.animation?.addStatusListener(handler);
+        } else {
+          setState(() {
+            _shouldShowLoadingScreen = false;
+          });
+        }
+      } else {
+        setState(() {
+          _shouldShowLoadingScreen = false;
+        });
       }
     });
   }
@@ -470,7 +495,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (!_bookSession.isLoaded) {
+    if (!_bookSession.isLoaded || _shouldShowLoadingScreen) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: Center(),
