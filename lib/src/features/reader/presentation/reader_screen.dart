@@ -18,7 +18,6 @@ import '../data/reader_scripts.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// Reader Screen V2 - Stream-from-Zip Architecture
 /// Reads EPUB directly from compressed file without extraction
 class ReaderScreen extends ConsumerStatefulWidget {
   final String fileHash; // Changed from bookId to fileHash
@@ -46,10 +45,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   late final AnimationController _animController;
   late final AnimationController _imageOpacityController;
   late Animation<Offset> _slideAnimation;
-  late Animation<Offset> _slideAnimation2;
   late Animation<double> _imageOpacityAnimation;
   Uint8List? _screenshotData;
-  Uint8List? _screenshotData2;
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
   bool _isWebViewLoading = true;
@@ -100,10 +97,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       duration: const Duration(milliseconds: 300),
     );
     _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: Offset.zero,
-    ).animate(_animController);
-    _slideAnimation2 = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
     ).animate(_animController);
@@ -559,10 +552,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     setState(() {
       _isForwardAnimation = isNext;
+      _screenshotData = screenshot;
 
       if (isNext) {
-        _screenshotData2 = screenshot;
-        _slideAnimation2 =
+        _slideAnimation =
             Tween<Offset>(
               begin: Offset.zero,
               end: const Offset(-1.0, 0.0),
@@ -573,7 +566,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               ),
             );
       } else {
-        _screenshotData = screenshot;
         _slideAnimation =
             Tween<Offset>(
               begin: const Offset(-1.0, 0.0),
@@ -605,7 +597,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       if (mounted) {
         setState(() {
           _screenshotData = null;
-          _screenshotData2 = null;
         });
       }
       _animController.reset();
@@ -807,7 +798,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         Positioned.fill(
           child: Stack(
             children: [
-              if (_screenshotData != null)
+              if (_screenshotData != null &&
+                  _isAnimating &&
+                  !_isForwardAnimation)
                 Positioned.fill(
                   child: _buildScreenshotContainer(_screenshotData!),
                 ),
@@ -819,11 +812,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   child: _buildWebViewStack(),
                 ),
               ),
-              if (_screenshotData2 != null)
+              if (_screenshotData != null &&
+                  _isAnimating &&
+                  _isForwardAnimation)
                 Positioned.fill(
                   child: SlideTransition(
-                    position: _slideAnimation2,
-                    child: _buildScreenshotContainer(_screenshotData2!),
+                    position: _slideAnimation,
+                    child: _buildScreenshotContainer(_screenshotData!),
                   ),
                 ),
             ],
