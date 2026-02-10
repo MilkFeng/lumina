@@ -6,12 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
 import './book_session.dart';
 import './reader_webview.dart';
+import './control_panel.dart';
 import '../data/services/epub_stream_service_provider.dart';
 import 'epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
@@ -30,8 +30,6 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
-  Timer? _longPressTimer;
-
   // Services
   late final EpubWebViewHandler _webViewHandler;
   late final BookSession _bookSession;
@@ -87,7 +85,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   @override
   void dispose() {
-    _longPressTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _animController.dispose();
     super.dispose();
@@ -604,185 +601,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           ),
         ),
 
-        // Top Bar
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          top: _showControls ? 0 : -100,
-          left: 0,
-          right: 0,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 300),
-            opacity: _showControls ? 1.0 : 0.0,
-            child: Container(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top,
-                left: 8,
-                right: 16,
-                bottom: 16,
-              ),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_outlined),
-                    onPressed: () {
-                      _saveProgress();
-                      context.pop();
-                    },
-                  ),
-                  Expanded(
-                    child: Text(
-                      _bookSession.spine.isEmpty
-                          ? _bookSession.book!.title
-                          : activateTocTitle,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontFamily: AppTheme.fontFamilyContent,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // Bottom Bar
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          bottom: _showControls ? 0 : -100,
-          left: 0,
-          right: 0,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 300),
-            opacity: _showControls ? 1.0 : 0.0,
-            child: Container(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 16,
-              ),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.list_outlined),
-                    onPressed: _openDrawer,
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        onLongPressStart: _currentSpineItemIndex > 0
-                            ? (_) {
-                                HapticFeedback.selectionClick();
-                                _previousSpineItemFirstPage();
-                                _longPressTimer = Timer.periodic(
-                                  const Duration(milliseconds: 800),
-                                  (timer) {
-                                    HapticFeedback.selectionClick();
-                                    _previousSpineItemFirstPage();
-                                  },
-                                );
-                              }
-                            : null,
-                        onLongPressEnd: (_) {
-                          _longPressTimer?.cancel();
-                        },
-                        onLongPressCancel: () {
-                          _longPressTimer?.cancel();
-                        },
-                        child: IconButton(
-                          icon: const Icon(Icons.chevron_left_outlined),
-                          onPressed:
-                              (_currentSpineItemIndex > 0 ||
-                                  _currentPageInChapter > 0)
-                              ? () => _performPageTurn(false)
-                              : null,
-                          onLongPress: null,
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _bookSession.spine.isEmpty
-                                ? '0/0'
-                                : '${_currentSpineItemIndex + 1}/${_bookSession.spine.length}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          if (_totalPagesInChapter > 1)
-                            Text(
-                              'Page ${_currentPageInChapter + 1}/$_totalPagesInChapter',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                        ],
-                      ),
-
-                      GestureDetector(
-                        onLongPressStart:
-                            _currentSpineItemIndex <
-                                _bookSession.spine.length - 1
-                            ? (_) {
-                                HapticFeedback.selectionClick();
-                                _nextSpineItem();
-                                _longPressTimer = Timer.periodic(
-                                  const Duration(milliseconds: 800),
-                                  (timer) {
-                                    HapticFeedback.selectionClick();
-                                    _nextSpineItem();
-                                  },
-                                );
-                              }
-                            : null,
-                        onLongPressEnd: (_) {
-                          _longPressTimer?.cancel();
-                        },
-                        onLongPressCancel: () {
-                          _longPressTimer?.cancel();
-                        },
-                        child: IconButton(
-                          icon: const Icon(Icons.chevron_right_outlined),
-                          onPressed:
-                              (_currentSpineItemIndex <
-                                      _bookSession.spine.length - 1 ||
-                                  _currentPageInChapter <
-                                      _totalPagesInChapter - 1)
-                              ? () => _performPageTurn(true)
-                              : null,
-                          onLongPress: null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-          ),
+        // Control Panel
+        ControlPanel(
+          showControls: _showControls,
+          title: _bookSession.spine.isEmpty
+              ? _bookSession.book!.title
+              : activateTocTitle,
+          currentSpineItemIndex: _currentSpineItemIndex,
+          totalSpineItems: _bookSession.spine.length,
+          currentPageInChapter: _currentPageInChapter,
+          totalPagesInChapter: _totalPagesInChapter,
+          onBack: () {
+            _saveProgress();
+            context.pop();
+          },
+          onOpenDrawer: _openDrawer,
+          onPreviousPage: () => _performPageTurn(false),
+          onFirstPage: () => _goToPage(0),
+          onNextPage: () => _performPageTurn(true),
+          onLastPage: () => _goToPage(_totalPagesInChapter - 1),
+          onPreviousChapter: _previousSpineItemFirstPage,
+          onNextChapter: _nextSpineItem,
         ),
       ],
     );
