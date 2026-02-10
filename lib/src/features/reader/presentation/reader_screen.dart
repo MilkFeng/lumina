@@ -1,11 +1,9 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -40,7 +38,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   late final AnimationController _animController;
   late Animation<Offset> _slideAnimation;
-  Uint8List? _screenshotData;
+  ui.Image? _screenshotData;
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
   bool _isWebViewLoading = true;
@@ -69,7 +67,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _bookSession = BookSession(fileHash: widget.fileHash);
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 240),
+      duration: const Duration(milliseconds: 180),
     );
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
@@ -383,15 +381,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
 
     _isAnimating = true;
-    Uint8List? screenshot;
+    ui.Image? screenshot;
     try {
-      screenshot = await _webViewKey.currentState!.takeScreenshot(
-        screenshotConfiguration: ScreenshotConfiguration(
-          compressFormat: CompressFormat.JPEG,
-          quality: 80,
-        ),
-      );
-    } catch (_) {
+      screenshot = await _webViewKey.currentState!.takeScreenshot();
+    } catch (e) {
+      debugPrint("Error taking screenshot: $e");
       screenshot = null;
     }
 
@@ -409,9 +403,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _isAnimating = false;
       return;
     }
-
-    // preload the image
-    await precacheImage(MemoryImage(screenshot), context);
 
     setState(() {
       _isForwardAnimation = isNext;
@@ -479,10 +470,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      drawer: RepaintBoundary(child: _buildTocDrawer()),
+      drawer: _buildTocDrawer(),
       body: Container(
         color: Theme.of(context).colorScheme.surface,
-        child: RepaintBoundary(child: _buildReaderBody()),
+        child: _buildReaderBody(),
       ),
     );
   }
@@ -599,26 +590,59 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   Widget _buildRenderer() {
     return Positioned.fill(
-      child: Stack(
-        children: [
-          if (_screenshotData != null && _isAnimating && !_isForwardAnimation)
-            Positioned.fill(child: _buildScreenshotContainer(_screenshotData!)),
-          Positioned.fill(
-            child: SlideTransition(
-              position: _isAnimating && !_isForwardAnimation
-                  ? _slideAnimation
-                  : const AlwaysStoppedAnimation(Offset.zero),
-              child: _buildWebViewStack(),
-            ),
-          ),
-          if (_screenshotData != null && _isAnimating && _isForwardAnimation)
-            Positioned.fill(
-              child: SlideTransition(
-                position: _slideAnimation,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapUp: (details) {
+          _handleTapZone(details.globalPosition.dx);
+        },
+        onHorizontalDragEnd: (details) {
+          if (_isAnimating) return;
+          final velocity = details.primaryVelocity ?? 0;
+
+          if (velocity < -200) {
+            _performPageTurn(true);
+          } else if (velocity > 200) {
+            _performPageTurn(false);
+          }
+        },
+        onLongPressStart: (details) async {
+          const padding = 16.0;
+
+          final localX = details.localPosition.dx - padding;
+          final localY = details.localPosition.dy - padding;
+
+          if (localX < 0 ||
+              localY < 0 ||
+              localX > _webviewWidth ||
+              localY > _webviewHeight) {
+            return;
+          }
+
+          await _webViewKey.currentState?.checkElementAt(localX, localY);
+        },
+        child: Stack(
+          children: [
+            if (_screenshotData != null && _isAnimating && !_isForwardAnimation)
+              Positioned.fill(
                 child: _buildScreenshotContainer(_screenshotData!),
               ),
+            Positioned.fill(
+              child: SlideTransition(
+                position: _isAnimating && !_isForwardAnimation
+                    ? _slideAnimation
+                    : const AlwaysStoppedAnimation(Offset.zero),
+                child: _buildWebViewStack(),
+              ),
             ),
-        ],
+            if (_screenshotData != null && _isAnimating && _isForwardAnimation)
+              Positioned.fill(
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildScreenshotContainer(_screenshotData!),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -641,40 +665,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         bottom: true,
         left: true,
         right: true,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (details) {
-            _handleTapZone(details.globalPosition.dx);
-          },
-          onHorizontalDragEnd: (details) {
-            if (_isAnimating) return;
-            final velocity = details.primaryVelocity ?? 0;
-
-            if (velocity < -200) {
-              _performPageTurn(true);
-            } else if (velocity > 200) {
-              _performPageTurn(false);
-            }
-          },
-          onLongPressStart: (details) async {
-            const padding = 16.0;
-
-            final localX = details.localPosition.dx - padding;
-            final localY = details.localPosition.dy - padding;
-
-            if (localX < 0 ||
-                localY < 0 ||
-                localX > _webviewWidth ||
-                localY > _webviewHeight) {
-              return;
-            }
-
-            await _webViewKey.currentState?.checkElementAt(localX, localY);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(alignment: AlignmentGeometry.center, child: child),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(alignment: AlignmentGeometry.center, child: child),
         ),
       ),
     );
@@ -761,14 +754,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
-  Widget _buildScreenshotContainer(Uint8List screenshot) {
-    return _buildContentWrapper(
-      Image.memory(
-        screenshot,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        excludeFromSemantics: true,
-      ),
-    );
+  Widget _buildScreenshotContainer(ui.Image screenshot) {
+    return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }
 }
