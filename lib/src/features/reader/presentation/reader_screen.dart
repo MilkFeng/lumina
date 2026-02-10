@@ -12,7 +12,6 @@ import './reader_webview.dart';
 import './control_panel.dart';
 import '../data/services/epub_stream_service_provider.dart';
 import 'epub_webview_handler.dart';
-import '../data/reader_scripts.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -515,20 +514,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _updatingTheme = true;
     });
 
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final sketelonCss = generateSkeletonStyle(
-      colorScheme.surface,
-      colorScheme.onSurface,
+    await _webViewKey.currentState?.updateTheme(
+      Theme.of(context).colorScheme.surface,
+      Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).colorScheme.onSurface
+          : null,
     );
-
-    final iframeCss = generatePaginationCss(
-      _webviewWidth,
-      _webviewHeight,
-      colorScheme.onSurface,
-    );
-
-    await _webViewKey.currentState?.replaceStyles(sketelonCss, iframeCss);
 
     setState(() {
       _updatingTheme = false;

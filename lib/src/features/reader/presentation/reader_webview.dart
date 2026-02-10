@@ -271,6 +271,18 @@ class ReaderWebViewState extends State<ReaderWebView> {
     return image;
   }
 
+  Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
+    final sketelonCss = generateSkeletonStyle(surfaceColor, onSurfaceColor);
+
+    final iframeCss = generatePaginationCss(
+      widget.width,
+      widget.height,
+      onSurfaceColor,
+    );
+
+    await replaceStyles(sketelonCss, iframeCss);
+  }
+
   // JavaScript wrapper methods
   Future<void> jumpToLastPageOfFrame(String frame) async {
     await evaluateJavascript("jumpToLastPageOfFrame('$frame')");
