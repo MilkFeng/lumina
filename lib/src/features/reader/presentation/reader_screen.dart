@@ -692,7 +692,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             width: viewWidth,
             height: viewHeight,
             surfaceColor: maskColor,
-            onSurfaceColor: Theme.of(context).colorScheme.onSurface,
+            onSurfaceColor: Theme.of(context).brightness == Brightness.dark
+                ? Theme.of(context).colorScheme.onSurface
+                : null,
             isLoading: _isWebViewLoading || _updatingTheme,
             callbacks: ReaderWebViewCallbacks(
               onInitialized: () async {

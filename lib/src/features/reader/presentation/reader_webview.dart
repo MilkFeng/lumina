@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -64,7 +63,7 @@ class ReaderWebView extends StatefulWidget {
   final double width;
   final double height;
   final Color surfaceColor;
-  final Color onSurfaceColor;
+  final Color? onSurfaceColor;
   final bool isLoading;
   final VoidCallback? onWebViewCreated;
 

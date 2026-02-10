@@ -71,7 +71,7 @@ class _ImageViewerState extends State<ImageViewer>
     super.initState();
     _opacityController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 100),
     );
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _opacityController, curve: Curves.easeIn),
@@ -148,7 +148,10 @@ class _ImageViewerState extends State<ImageViewer>
                     minScale: 0.5,
                     maxScale: 4.0,
                     child: Center(
-                      child: Image.memory(_imageData!, fit: BoxFit.contain),
+                      child: Container(
+                        color: Colors.white,
+                        child: Image.memory(_imageData!, fit: BoxFit.contain),
+                      ),
                     ),
                   ),
                 ),
@@ -159,7 +162,12 @@ class _ImageViewerState extends State<ImageViewer>
               top: MediaQuery.of(context).padding.top + 16,
               right: 16,
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                icon: const Icon(
+                  Icons.close_outlined,
+                  color: Colors.white,
+                  size: 32,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 12)],
+                ),
                 onPressed: widget.onClose,
               ),
             ),
