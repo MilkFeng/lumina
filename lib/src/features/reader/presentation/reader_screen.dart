@@ -11,6 +11,7 @@ import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
 import './book_session.dart';
+import './reader_webview.dart';
 import '../data/services/epub_stream_service_provider.dart';
 import 'epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
@@ -29,8 +30,6 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
-  final GlobalKey _webViewKey = GlobalKey();
-
   Timer? _longPressTimer;
 
   // Services
@@ -38,7 +37,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   late final BookSession _bookSession;
 
   // State
-  InAppWebViewController? _webViewController;
+  final GlobalKey<ReaderWebViewState> _webViewKey =
+      GlobalKey<ReaderWebViewState>();
 
   late final AnimationController _animController;
   late Animation<Offset> _slideAnimation;
@@ -208,11 +208,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
-    await _webViewController?.evaluateJavascript(
-      source: "jumpToLastPageOfFrame('prev')",
-    );
+    await _webViewKey.currentState?.jumpToLastPageOfFrame('prev');
 
-    await _webViewController?.evaluateJavascript(source: "cycleFrames('prev')");
+    await _webViewKey.currentState?.cycleFrames('prev');
 
     setState(() {
       _currentSpineItemIndex--;
@@ -228,11 +226,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
-    await _webViewController?.evaluateJavascript(
-      source: "jumpToPageFor('prev', 0)",
-    );
+    await _webViewKey.currentState?.jumpToPageFor('prev', 0);
 
-    await _webViewController?.evaluateJavascript(source: "cycleFrames('prev')");
+    await _webViewKey.currentState?.cycleFrames('prev');
 
     setState(() {
       _currentSpineItemIndex--;
@@ -250,11 +246,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       return;
     }
 
-    await _webViewController?.evaluateJavascript(
-      source: "jumpToPageFor('next', 0)",
-    );
+    await _webViewKey.currentState?.jumpToPageFor('next', 0);
 
-    await _webViewController?.evaluateJavascript(source: "cycleFrames('next')");
+    await _webViewKey.currentState?.cycleFrames('next');
     setState(() {
       _currentSpineItemIndex++;
       _currentPageInChapter = 0;
@@ -272,9 +266,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       // End anchors come from TOC, not spine
       final url = _getSpineItemUrl(nextIndex);
       final nextSpinePath = _bookSession.spine[nextIndex].href;
-      await _webViewController?.evaluateJavascript(
-        source:
-            "loadFrame('next', '$url', ${_getAnchorsForSpine(nextSpinePath)})",
+      await _webViewKey.currentState?.loadFrame(
+        'next',
+        url,
+        _getAnchorsForSpine(nextSpinePath),
       );
     }
   }
@@ -285,15 +280,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       final url = _getSpineItemUrl(prevIndex);
       // Note: SpineItem.href is a String, not an Href object with anchor
       final prevSpinePath = _bookSession.spine[prevIndex].href;
-      await _webViewController?.evaluateJavascript(
-        source:
-            "loadFrame('prev', '$url', ${_getAnchorsForSpine(prevSpinePath)})",
+      await _webViewKey.currentState?.loadFrame(
+        'prev',
+        url,
+        _getAnchorsForSpine(prevSpinePath),
       );
     }
   }
 
   Future<void> _loadCarousel([String anchor = 'top']) async {
-    if (_bookSession.spine.isEmpty || _webViewController == null) return;
+    if (_bookSession.spine.isEmpty || _webViewKey.currentState == null) return;
     if (mounted) {
       setState(() {
         _isWebViewLoading = true;
@@ -311,18 +307,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final currUrl = _getSpineItemUrl(currIndex, anchor);
     final currentSpinePath = _bookSession.spine[currIndex].href;
     // Note: End anchors come from TOC mapping, not spine directly
-    await _webViewController?.evaluateJavascript(
-      source:
-          "loadFrame('curr', '$currUrl', ${_getAnchorsForSpine(currentSpinePath)})",
+    await _webViewKey.currentState?.loadFrame(
+      'curr',
+      currUrl,
+      _getAnchorsForSpine(currentSpinePath),
     );
 
     // Load previous chapter if exists
     if (prevIndex != null) {
       final prevUrl = _getSpineItemUrl(prevIndex);
       final prevSpinePath = _bookSession.spine[prevIndex].href;
-      await _webViewController?.evaluateJavascript(
-        source:
-            "loadFrame('prev', '$prevUrl', ${_getAnchorsForSpine(prevSpinePath)})",
+      await _webViewKey.currentState?.loadFrame(
+        'prev',
+        prevUrl,
+        _getAnchorsForSpine(prevSpinePath),
       );
     }
 
@@ -330,9 +328,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (nextIndex != null) {
       final nextUrl = _getSpineItemUrl(nextIndex);
       final nextSpinePath = _bookSession.spine[nextIndex].href;
-      await _webViewController?.evaluateJavascript(
-        source:
-            "loadFrame('next', '$nextUrl', ${_getAnchorsForSpine(nextSpinePath)})",
+      await _webViewKey.currentState?.loadFrame(
+        'next',
+        nextUrl,
+        _getAnchorsForSpine(nextSpinePath),
       );
     }
   }
@@ -348,9 +347,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _currentPageInChapter = pageIndex;
     });
 
-    await _webViewController?.evaluateJavascript(
-      source: 'jumpToPage($pageIndex)',
-    );
+    await _webViewKey.currentState?.jumpToPage(pageIndex);
     _saveProgress();
   }
 
@@ -373,7 +370,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> _performPageTurn(bool isNext) async {
-    if (_isAnimating || _webViewController == null) return;
+    if (_isAnimating || _webViewKey.currentState == null) return;
 
     if (isNext) {
       if (_currentPageInChapter >= _totalPagesInChapter - 1 &&
@@ -391,7 +388,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _isAnimating = true;
     Uint8List? screenshot;
     try {
-      screenshot = await _webViewController!.takeScreenshot(
+      screenshot = await _webViewKey.currentState!.takeScreenshot(
         screenshotConfiguration: ScreenshotConfiguration(
           compressFormat: CompressFormat.JPEG,
           quality: 80,
@@ -524,7 +521,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> _updateWebViewTheme() async {
-    if (_webViewController == null) return;
+    if (_webViewKey.currentState == null) return;
 
     setState(() {
       _updatingTheme = true;
@@ -543,9 +540,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       colorScheme.onSurface,
     );
 
-    await _webViewController?.evaluateJavascript(
-      source: "replaceStyles(`$sketelonCss`, `$iframeCss`);",
-    );
+    await _webViewKey.currentState?.replaceStyles(sketelonCss, iframeCss);
 
     setState(() {
       _updatingTheme = false;
@@ -839,9 +834,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               return;
             }
 
-            await _webViewController?.evaluateJavascript(
-              source: "checkElementAt($localX, $localY);",
-            );
+            await _webViewKey.currentState?.checkElementAt(localX, localY);
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -854,197 +847,72 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 _webviewWidth = viewWidth;
                 _webviewHeight = viewHeight;
 
-                return Stack(
-                  children: [
-                    InAppWebView(
-                      key: _webViewKey,
-                      initialData: InAppWebViewInitialData(
-                        data: generateSkeletonHtml(
-                          Theme.of(context).colorScheme.surface,
-                          Theme.of(context).colorScheme.onSurface,
-                        ),
-                        baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
-                      ),
-                      initialSettings: EpubWebViewHandler.defaultSettings,
-                      onLongPressHitTestResult: (controller, hitTestResult) {
-                        if (hitTestResult.type ==
-                            InAppWebViewHitTestResultType.IMAGE_TYPE) {
-                          final imageUrl = hitTestResult.extra;
-                          if (imageUrl != null && imageUrl.isNotEmpty) {
-                            _handleImageLongPress(imageUrl);
-                          }
+                return ReaderWebView(
+                  key: _webViewKey,
+                  bookSession: _bookSession,
+                  webViewHandler: _webViewHandler,
+                  fileHash: widget.fileHash,
+                  width: viewWidth,
+                  height: viewHeight,
+                  surfaceColor: maskColor,
+                  onSurfaceColor: Theme.of(context).colorScheme.onSurface,
+                  isLoading: _isWebViewLoading || _updatingTheme,
+                  callbacks: ReaderWebViewCallbacks(
+                    onInitialized: () async {
+                      await _loadCarousel();
+                    },
+                    onPageCountReady: (totalPages) async {
+                      setState(() {
+                        _totalPagesInChapter = totalPages;
+                        if (_currentPageInChapter >= _totalPagesInChapter) {
+                          _currentPageInChapter = _totalPagesInChapter - 1;
                         }
-                      },
-                      shouldInterceptRequest: (controller, request) async {
-                        return await _webViewHandler.handleRequest(
-                          epubPath: _bookSession.book!.filePath!,
-                          fileHash: widget.fileHash,
-                          requestUrl: request.url,
+                      });
+                      if (_initialProgressToRestore != null) {
+                        final ratio = _initialProgressToRestore ?? 0.0;
+                        _initialProgressToRestore = null;
+                        await _webViewKey.currentState?.restoreScrollPosition(
+                          ratio,
                         );
-                      },
-                      onLoadResourceWithCustomScheme:
-                          (controller, request) async {
-                            return await _webViewHandler
-                                .handleRequestWithCustomScheme(
-                                  epubPath: _bookSession.book!.filePath!,
-                                  fileHash: widget.fileHash,
-                                  requestUrl: request.url,
-                                );
-                          },
-                      shouldOverrideUrlLoading:
-                          (controller, navigationAction) async {
-                            final uri = navigationAction.request.url!;
-                            if (uri.scheme == 'data') {
-                              return NavigationActionPolicy.ALLOW;
-                            }
-                            if (EpubWebViewHandler.isEpubRequest(uri)) {
-                              return NavigationActionPolicy.ALLOW;
-                            }
-                            return NavigationActionPolicy.CANCEL;
-                          },
-                      onWebViewCreated: (controller) {
-                        _webViewController = controller;
-
-                        // JavaScript handlers
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onPageCountReady',
-                          callback: (args) async {
-                            if (args.isNotEmpty && args[0] is int) {
-                              setState(() {
-                                _totalPagesInChapter = args[0] as int;
-                                if (_currentPageInChapter >=
-                                    _totalPagesInChapter) {
-                                  _currentPageInChapter =
-                                      _totalPagesInChapter - 1;
-                                }
-                              });
-                              if (_initialProgressToRestore != null) {
-                                final ratio = _initialProgressToRestore ?? 0.0;
-                                _initialProgressToRestore = null;
-                                await _webViewController?.evaluateJavascript(
-                                  source: 'restoreScrollPosition($ratio)',
-                                );
-                              }
-                            }
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onGoToPage',
-                          callback: (args) {
-                            if (args.isNotEmpty && args[0] is int) {
-                              setState(() {
-                                _currentPageInChapter = args[0] as int;
-                              });
-                              _saveProgress();
-                            }
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onTapLeft',
-                          callback: (args) {
-                            if (_showControls) {
-                              _toggleControls();
-                              return;
-                            }
-                            _performPageTurn(false);
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onTapRight',
-                          callback: (args) {
-                            if (_showControls) {
-                              _toggleControls();
-                              return;
-                            }
-                            _performPageTurn(true);
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onTapCenter',
-                          callback: (args) {
-                            _toggleControls();
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onReveal',
-                          callback: (args) async {
-                            if (mounted) {
-                              setState(() {
-                                _isWebViewLoading = false;
-                              });
-                            }
-                            _saveProgress();
-                            debugPrint('WebView: RenderComplete');
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onRenderComplete',
-                          callback: (args) async {
-                            await Future.delayed(
-                              const Duration(milliseconds: 50),
-                            );
-                            await _webViewController?.evaluateJavascript(
-                              source: "reveal();",
-                            );
-                            _saveProgress();
-                            debugPrint('WebView: RenderComplete');
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onScrollAnchors',
-                          callback: (args) {
-                            if (args.isEmpty) return;
-                            final List<String> anchors = List<String>.from(
-                              args[0] as List,
-                            );
-                            _handleScrollAnchors(anchors);
-                          },
-                        );
-
-                        controller.addJavaScriptHandler(
-                          handlerName: 'onImageLongPress',
-                          callback: (args) {
-                            if (args.isNotEmpty && args[0] is String) {
-                              final imageUrl = args[0] as String;
-                              _handleImageLongPress(imageUrl);
-                            }
-                          },
-                        );
-                      },
-                      onLoadStop: (controller, url) async {
-                        await controller.evaluateJavascript(
-                          source: generateControllerJs(
-                            viewWidth,
-                            viewHeight,
-                            Theme.of(context).colorScheme.onSurface,
-                          ),
-                        );
-                        if (_bookSession.manifest != null) {
-                          await _loadCarousel();
-                        }
-                      },
-                    ),
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        ignoring: !_isWebViewLoading && !_updatingTheme,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 180),
-                          curve: Curves.easeOut,
-                          opacity: _isWebViewLoading || _updatingTheme
-                              ? 1.0
-                              : 0.0,
-                          child: Container(color: maskColor),
-                        ),
-                      ),
-                    ),
-                  ],
+                      }
+                    },
+                    onPageChanged: (pageIndex) {
+                      setState(() {
+                        _currentPageInChapter = pageIndex;
+                      });
+                      _saveProgress();
+                    },
+                    onTapLeft: () {
+                      if (_showControls) {
+                        _toggleControls();
+                        return;
+                      }
+                      _performPageTurn(false);
+                    },
+                    onTapRight: () {
+                      if (_showControls) {
+                        _toggleControls();
+                        return;
+                      }
+                      _performPageTurn(true);
+                    },
+                    onTapCenter: () {
+                      _toggleControls();
+                    },
+                    onReveal: (scrollPosition) {
+                      if (mounted) {
+                        setState(() {
+                          _isWebViewLoading = false;
+                        });
+                      }
+                      _saveProgress();
+                    },
+                    onRenderComplete: () async {
+                      _saveProgress();
+                    },
+                    onScrollAnchors: _handleScrollAnchors,
+                    onImageLongPress: _handleImageLongPress,
+                  ),
                 );
               },
             ),
