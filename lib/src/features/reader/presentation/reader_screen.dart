@@ -67,7 +67,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   final Map<String, List<String>> _spineToAnchorsMap = {};
 
   // Use previous spine item's last toc item as fallback
-  final List<TocItem> _TocItemFallback = [];
+  final List<TocItem> _tocItemFallback = [];
   Set<String> _activeAnchors = {};
 
   final List<TocItem> _flatToc = [];
@@ -219,10 +219,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         ..path = ''
         ..anchor = 'top')
       ..id = -1;
-    _TocItemFallback.clear();
+    _tocItemFallback.clear();
     for (final spineItem in _spineItems) {
       final anchors = _spineToAnchorsMap[spineItem.href] ?? [];
-      _TocItemFallback.add(toc);
+      _tocItemFallback.add(toc);
       if (anchors.isNotEmpty) {
         final lastHref = Href()
           ..path = spineItem.href
@@ -726,8 +726,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         })
         .whereType<TocItem>()
         .toSet();
-    if (activeItems.isEmpty && _TocItemFallback.isNotEmpty) {
-      activeItems.add(_TocItemFallback[_currentSpineItemIndex]);
+    if (activeItems.isEmpty && _tocItemFallback.isNotEmpty) {
+      activeItems.add(_tocItemFallback[_currentSpineItemIndex]);
     }
     return activeItems;
   }
@@ -800,7 +800,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final activeItems = _resolveActiveItems();
     final activateTocTitle = activeItems.isNotEmpty
         ? activeItems.last.label
-        : _TocItemFallback[_currentSpineItemIndex].label;
+        : _tocItemFallback[_currentSpineItemIndex].label;
 
     return Stack(
       children: [
