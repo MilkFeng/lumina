@@ -8,6 +8,24 @@ import './book_session.dart';
 import './epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
 
+final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
+  disableContextMenu: true,
+  disableLongPressContextMenuOnLinks: true,
+  selectionGranularity: SelectionGranularity.CHARACTER,
+  transparentBackground: true,
+  allowFileAccessFromFileURLs: true,
+  allowUniversalAccessFromFileURLs: true,
+  useShouldInterceptRequest: true,
+  useOnLoadResource: false,
+  useShouldOverrideUrlLoading: true,
+  javaScriptEnabled: true,
+  disableHorizontalScroll: true,
+  disableVerticalScroll: true,
+  supportZoom: false,
+  useHybridComposition: false,
+  resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
+);
+
 /// Callbacks for WebView events
 class ReaderWebViewCallbacks {
   final Function() onInitialized;
@@ -85,7 +103,7 @@ class ReaderWebViewState extends State<ReaderWebView> {
             ),
             baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
           ),
-          initialSettings: EpubWebViewHandler.defaultSettings,
+          initialSettings: defaultSettings,
           onLongPressHitTestResult: (controller, hitTestResult) {
             if (hitTestResult.type ==
                 InAppWebViewHitTestResultType.IMAGE_TYPE) {
