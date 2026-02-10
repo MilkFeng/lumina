@@ -156,9 +156,9 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Internationalization support (Chinese/English)
 - [x] Avoid duplicate page turns when two NCX navigation points are on the same page
 - [x] Long press images to view full-size
-- [ ] Optimize initial loading lag when opening the first book
+- [x] Simple swipe page turning mode
+- [x] Optimize initial loading lag when opening the first book
 - [ ] Edit book metadata (cover, title, author, etc.)
-- [ ] Swipe page turning mode
 - [ ] Reading settings (font size, line spacing, background color, etc.)
 
 ## 🙏 Acknowledgements
