@@ -85,7 +85,7 @@ class ReaderRenderer extends StatefulWidget {
   final Future<void> Function() onInitialized;
   final Future<void> Function(int totalPages) onPageCountReady;
   final ValueChanged<int> onPageChanged;
-  final VoidCallback onRenderComplete;
+  final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final ValueChanged<String> onImageLongPress;
 
@@ -103,7 +103,7 @@ class ReaderRenderer extends StatefulWidget {
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onRenderComplete,
+    required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
   });
@@ -378,7 +378,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
               onTapCenter: () {
                 widget.onToggleControls();
               },
-              onRenderComplete: widget.onRenderComplete,
+              onRendererInitialized: widget.onRendererInitialized,
               onScrollAnchors: widget.onScrollAnchors,
               onImageLongPress: widget.onImageLongPress,
             ),

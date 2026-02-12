@@ -92,7 +92,7 @@ class ReaderWebViewCallbacks {
   final VoidCallback onTapLeft;
   final VoidCallback onTapRight;
   final VoidCallback onTapCenter;
-  final VoidCallback onRenderComplete;
+  final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl) onImageLongPress;
 
@@ -103,7 +103,7 @@ class ReaderWebViewCallbacks {
     required this.onTapLeft,
     required this.onTapRight,
     required this.onTapCenter,
-    required this.onRenderComplete,
+    required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
   });
@@ -311,11 +311,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onRenderComplete',
+      handlerName: 'onRendererInitialized',
       callback: (args) async {
         await Future.delayed(const Duration(milliseconds: 100));
-        widget.callbacks.onRenderComplete();
-        debugPrint('WebView: RenderComplete');
+        widget.callbacks.onRendererInitialized();
+        debugPrint('WebView: Renderer Initialized');
       },
     );
 

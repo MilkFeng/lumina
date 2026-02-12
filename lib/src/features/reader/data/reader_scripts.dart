@@ -458,7 +458,7 @@ function onFrameLoad(iframe) {
       if (iframe.id === 'frame-curr') {
         window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
         window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
-        window.flutter_inappwebview.callHandler('onRenderComplete');
+        window.flutter_inappwebview.callHandler('onRendererInitialized');
       }
     });
   });

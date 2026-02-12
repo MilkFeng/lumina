@@ -395,12 +395,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 });
                 _saveProgress();
               },
-              onRenderComplete: () async {
-                if (mounted) {
-                  setState(() {
-                    _isWebViewLoading = false;
-                  });
-                }
+              onRendererInitialized: () async {
+                setState(() {
+                  _isWebViewLoading = false;
+                });
                 _saveProgress();
               },
               onScrollAnchors: _handleScrollAnchors,
