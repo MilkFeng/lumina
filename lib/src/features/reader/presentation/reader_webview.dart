@@ -281,7 +281,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onGoToPage',
+      handlerName: 'onPageChanged',
       callback: (args) {
         if (args.isNotEmpty && args[0] is int) {
           widget.callbacks.onPageChanged(args[0] as int);
