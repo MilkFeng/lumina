@@ -14,6 +14,8 @@ import '../data/reader_scripts.dart';
 class ReaderWebViewController {
   _ReaderWebViewState? _webViewState;
 
+  bool get isAttached => _webViewState != null;
+
   void _setWebViewState(_ReaderWebViewState? state) {
     _webViewState = state;
   }
