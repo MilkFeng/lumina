@@ -152,6 +152,10 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (!widget.canPerformPageTurn(isNext)) return;
 
     _isAnimating = true;
+
+    _screenshotData?.dispose();
+    _screenshotData = null;
+
     ui.Image? screenshot;
     try {
       screenshot = await _webViewController.takeScreenshot();
@@ -173,7 +177,6 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
     setState(() {
       _isForwardAnimation = isNext;
-      _screenshotData?.dispose();
       _screenshotData = screenshot;
 
       if (isNext) {
@@ -283,7 +286,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
         onLongPressStart: _handleLongPressStart,
         child: Stack(
           children: [
-            if (_screenshotData != null && _isAnimating && !_isForwardAnimation)
+            if (_isAnimating && !_isForwardAnimation)
               Positioned.fill(
                 child: _buildScreenshotContainer(_screenshotData!),
               ),
@@ -295,7 +298,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
                 child: _buildWebView(),
               ),
             ),
-            if (_screenshotData != null && _isAnimating && _isForwardAnimation)
+            if (_isAnimating && _isForwardAnimation)
               Positioned.fill(
                 child: SlideTransition(
                   position: _slideAnimation,
@@ -389,7 +392,12 @@ class _ReaderRendererState extends State<ReaderRenderer>
     );
   }
 
-  Widget _buildScreenshotContainer(ui.Image screenshot) {
+  Widget _buildScreenshotContainer(ui.Image? screenshot) {
+    if (screenshot == null) {
+      return _buildContentWrapper(
+        Container(color: Theme.of(context).colorScheme.surface),
+      );
+    }
     return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }
 }
