@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-import './book_session.dart';
-import './epub_webview_handler.dart';
+import '../data/book_session.dart';
+import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
 
 /// Controller for ReaderWebView that provides methods to control the WebView

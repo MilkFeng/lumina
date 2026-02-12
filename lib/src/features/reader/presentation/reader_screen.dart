@@ -6,11 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
-import './book_session.dart';
+import '../data/book_session.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
 import '../data/services/epub_stream_service_provider.dart';
-import 'epub_webview_handler.dart';
+import '../data/epub_webview_handler.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 

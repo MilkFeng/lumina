@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import './book_session.dart';
-import './epub_webview_handler.dart';
+import '../data/book_session.dart';
+import '../data/epub_webview_handler.dart';
 import './reader_webview.dart';
 
 class ReaderRendererController {
