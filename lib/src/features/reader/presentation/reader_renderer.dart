@@ -173,6 +173,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
     setState(() {
       _isForwardAnimation = isNext;
+      _screenshotData?.dispose();
       _screenshotData = screenshot;
 
       if (isNext) {
