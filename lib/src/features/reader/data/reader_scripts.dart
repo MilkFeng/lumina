@@ -629,12 +629,6 @@ function replaceStyles(skeletonCss, iframeCss) {
   PAGINATION_CSS = iframeCss;
 }
 
-function reveal() {
-  requestAnimationFrame(() => {
-    window.flutter_inappwebview.callHandler('onReveal');
-  });
-}
-
 function checkElementAt(x, y) {
   const iframe = document.getElementById('frame-curr');
   if (!iframe || !iframe.contentDocument) return;

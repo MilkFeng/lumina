@@ -85,7 +85,6 @@ class ReaderRenderer extends StatefulWidget {
   final Future<void> Function() onInitialized;
   final Future<void> Function(int totalPages) onPageCountReady;
   final ValueChanged<int> onPageChanged;
-  final VoidCallback onReveal;
   final VoidCallback onRenderComplete;
   final ValueChanged<List<String>> onScrollAnchors;
   final ValueChanged<String> onImageLongPress;
@@ -104,7 +103,6 @@ class ReaderRenderer extends StatefulWidget {
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onReveal,
     required this.onRenderComplete,
     required this.onScrollAnchors,
     required this.onImageLongPress,
@@ -223,7 +221,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
-  void _handleTapZone(double globalDx) {
+  void _handleTapZone(TapUpDetails details) {
+    final globalDx = details.globalPosition.dx;
+
     final width = MediaQuery.of(context).size.width;
     if (width <= 0) return;
 
@@ -245,18 +245,29 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
+  Future<void> _handleHorizontalDragEnd(DragEndDetails details) async {
+    if (_isAnimating) return;
+    final velocity = details.primaryVelocity ?? 0;
+
+    if (velocity < -200) {
+      performPageTurn(true);
+    } else if (velocity > 200) {
+      performPageTurn(false);
+    }
+  }
+
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
+    EdgeInsets safePaddings = MediaQuery.paddingOf(context);
+    double topPadding = safePaddings.top;
+    double leftPadding = safePaddings.left;
+
     const padding = 16.0;
 
-    final localX = details.localPosition.dx - padding;
-    final localY = details.localPosition.dy - padding;
+    var localX = details.localPosition.dx - padding - leftPadding;
+    var localY = details.localPosition.dy - padding - topPadding;
 
-    if (localX < 0 ||
-        localY < 0 ||
-        localX > _webviewWidth ||
-        localY > _webviewHeight) {
-      return;
-    }
+    localX = localX.clamp(0, _webviewWidth);
+    localY = localY.clamp(0, _webviewHeight);
 
     await _webViewController.checkElementAt(localX, localY);
   }
@@ -266,19 +277,8 @@ class _ReaderRendererState extends State<ReaderRenderer>
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapUp: (details) {
-          _handleTapZone(details.globalPosition.dx);
-        },
-        onHorizontalDragEnd: (details) {
-          if (_isAnimating) return;
-          final velocity = details.primaryVelocity ?? 0;
-
-          if (velocity < -200) {
-            performPageTurn(true);
-          } else if (velocity > 200) {
-            performPageTurn(false);
-          }
-        },
+        onTapUp: _handleTapZone,
+        onHorizontalDragEnd: _handleHorizontalDragEnd,
         onLongPressStart: _handleLongPressStart,
         child: Stack(
           children: [
@@ -291,7 +291,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
                 position: _isAnimating && !_isForwardAnimation
                     ? _slideAnimation
                     : const AlwaysStoppedAnimation(Offset.zero),
-                child: _buildWebViewStack(),
+                child: _buildWebView(),
               ),
             ),
             if (_screenshotData != null && _isAnimating && _isForwardAnimation)
@@ -321,10 +321,6 @@ class _ReaderRendererState extends State<ReaderRenderer>
         color: Theme.of(context).colorScheme.surface,
       ),
       child: SafeArea(
-        top: true,
-        bottom: true,
-        left: true,
-        right: true,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Container(alignment: AlignmentGeometry.center, child: child),
@@ -333,7 +329,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     );
   }
 
-  Widget _buildWebViewStack() {
+  Widget _buildWebView() {
     return _buildContentWrapper(
       LayoutBuilder(
         builder: (context, constraints) {
@@ -382,7 +378,6 @@ class _ReaderRendererState extends State<ReaderRenderer>
               onTapCenter: () {
                 widget.onToggleControls();
               },
-              onReveal: widget.onReveal,
               onRenderComplete: widget.onRenderComplete,
               onScrollAnchors: widget.onScrollAnchors,
               onImageLongPress: widget.onImageLongPress,

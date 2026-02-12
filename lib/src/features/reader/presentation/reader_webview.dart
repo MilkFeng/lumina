@@ -95,7 +95,6 @@ class ReaderWebViewCallbacks {
   final VoidCallback onRenderComplete;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl) onImageLongPress;
-  final VoidCallback onReveal;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -107,7 +106,6 @@ class ReaderWebViewCallbacks {
     required this.onRenderComplete,
     required this.onScrollAnchors,
     required this.onImageLongPress,
-    required this.onReveal,
   });
 }
 
@@ -313,18 +311,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onReveal',
-      callback: (args) async {
-        widget.callbacks.onReveal();
-      },
-    );
-
-    controller.addJavaScriptHandler(
       handlerName: 'onRenderComplete',
       callback: (args) async {
+        await Future.delayed(const Duration(milliseconds: 100));
         widget.callbacks.onRenderComplete();
-        await Future.delayed(const Duration(milliseconds: 50));
-        await _controller?.evaluateJavascript(source: "reveal();");
         debugPrint('WebView: RenderComplete');
       },
     );
