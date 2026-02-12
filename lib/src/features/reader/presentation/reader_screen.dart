@@ -33,8 +33,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   // State
   final ReaderWebViewController _webViewController = ReaderWebViewController();
-  final GlobalKey<ReaderWebViewState> _webViewKey =
-      GlobalKey<ReaderWebViewState>();
+  final GlobalKey _webViewKey = GlobalKey();
 
   late final AnimationController _animController;
   late Animation<Offset> _slideAnimation;
@@ -383,7 +382,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _isAnimating = true;
     ui.Image? screenshot;
     try {
-      screenshot = await _webViewKey.currentState!.takeScreenshot();
+      screenshot = await _webViewController.takeScreenshot();
     } catch (e) {
       debugPrint("Error taking screenshot: $e");
       screenshot = null;
@@ -513,7 +512,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _updatingTheme = true;
     });
 
-    await _webViewKey.currentState?.updateTheme(
+    await _webViewController.updateTheme(
       Theme.of(context).colorScheme.surface,
       Theme.of(context).brightness == Brightness.dark
           ? Theme.of(context).colorScheme.onSurface

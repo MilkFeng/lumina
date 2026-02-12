@@ -12,47 +12,55 @@ import '../data/reader_scripts.dart';
 
 /// Controller for ReaderWebView that provides methods to control the WebView
 class ReaderWebViewController {
-  InAppWebViewController? _webViewController;
+  ReaderWebViewState? _webViewState;
 
-  void _setWebViewController(InAppWebViewController? controller) {
-    _webViewController = controller;
+  void _setWebViewState(ReaderWebViewState? state) {
+    _webViewState = state;
   }
 
   Future<void> evaluateJavascript(String source) async {
-    await _webViewController?.evaluateJavascript(source: source);
+    await _webViewState?.evaluateJavascript(source);
   }
 
   // JavaScript wrapper methods
   Future<void> jumpToLastPageOfFrame(String frame) async {
-    await evaluateJavascript("jumpToLastPageOfFrame('$frame')");
+    await _webViewState?.jumpToLastPageOfFrame(frame);
   }
 
   Future<void> cycleFrames(String direction) async {
-    await evaluateJavascript("cycleFrames('$direction')");
+    await _webViewState?.cycleFrames(direction);
   }
 
   Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
+    await _webViewState?.jumpToPageFor(frame, pageIndex);
   }
 
   Future<void> loadFrame(String frame, String url, String anchors) async {
-    await evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
+    await _webViewState?.loadFrame(frame, url, anchors);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
-    await evaluateJavascript('jumpToPage($pageIndex)');
+    await _webViewState?.jumpToPage(pageIndex);
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
-    await evaluateJavascript('restoreScrollPosition($ratio)');
+    await _webViewState?.restoreScrollPosition(ratio);
   }
 
   Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
+    await _webViewState?.replaceStyles(skeletonCss, iframeCss);
   }
 
   Future<void> checkElementAt(double x, double y) async {
-    await evaluateJavascript("checkElementAt($x, $y)");
+    await _webViewState?.checkElementAt(x, y);
+  }
+
+  Future<ui.Image?> takeScreenshot() async {
+    return await _webViewState?.takeScreenshot();
+  }
+
+  Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
+    await _webViewState?.updateTheme(surfaceColor, onSurfaceColor);
   }
 }
 
@@ -140,6 +148,55 @@ class ReaderWebViewState extends State<ReaderWebView> {
   InAppWebViewController? _controller;
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller._setWebViewState(this);
+  }
+
+  @override
+  void dispose() {
+    widget.controller._setWebViewState(null);
+    super.dispose();
+  }
+
+  // JavaScript methods
+  Future<void> evaluateJavascript(String source) async {
+    await _controller?.evaluateJavascript(source: source);
+  }
+
+  Future<void> jumpToLastPageOfFrame(String frame) async {
+    await evaluateJavascript("jumpToLastPageOfFrame('$frame')");
+  }
+
+  Future<void> cycleFrames(String direction) async {
+    await evaluateJavascript("cycleFrames('$direction')");
+  }
+
+  Future<void> jumpToPageFor(String frame, int pageIndex) async {
+    await evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
+  }
+
+  Future<void> loadFrame(String frame, String url, String anchors) async {
+    await evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
+  }
+
+  Future<void> jumpToPage(int pageIndex) async {
+    await evaluateJavascript('jumpToPage($pageIndex)');
+  }
+
+  Future<void> restoreScrollPosition(double ratio) async {
+    await evaluateJavascript('restoreScrollPosition($ratio)');
+  }
+
+  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
+    await evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
+  }
+
+  Future<void> checkElementAt(double x, double y) async {
+    await evaluateJavascript("checkElementAt($x, $y)");
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
@@ -189,7 +246,6 @@ class ReaderWebViewState extends State<ReaderWebView> {
             },
             onWebViewCreated: (controller) {
               _controller = controller;
-              widget.controller._setWebViewController(controller);
               _setupJavaScriptHandlers(controller);
               widget.onWebViewCreated?.call();
             },
