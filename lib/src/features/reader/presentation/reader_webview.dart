@@ -1,13 +1,70 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-import './book_session.dart';
-import './epub_webview_handler.dart';
+import '../data/book_session.dart';
+import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
+
+/// Controller for ReaderWebView that provides methods to control the WebView
+class ReaderWebViewController {
+  _ReaderWebViewState? _webViewState;
+
+  bool get isAttached => _webViewState != null;
+
+  void _attachState(_ReaderWebViewState? state) {
+    _webViewState = state;
+  }
+
+  Future<void> evaluateJavascript(String source) async {
+    await _webViewState?.evaluateJavascript(source);
+  }
+
+  // JavaScript wrapper methods
+  Future<void> jumpToLastPageOfFrame(String frame) async {
+    await _webViewState?.jumpToLastPageOfFrame(frame);
+  }
+
+  Future<void> cycleFrames(String direction) async {
+    await _webViewState?.cycleFrames(direction);
+  }
+
+  Future<void> jumpToPageFor(String frame, int pageIndex) async {
+    await _webViewState?.jumpToPageFor(frame, pageIndex);
+  }
+
+  Future<void> loadFrame(String frame, String url, String anchors) async {
+    await _webViewState?.loadFrame(frame, url, anchors);
+  }
+
+  Future<void> jumpToPage(int pageIndex) async {
+    await _webViewState?.jumpToPage(pageIndex);
+  }
+
+  Future<void> restoreScrollPosition(double ratio) async {
+    await _webViewState?.restoreScrollPosition(ratio);
+  }
+
+  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
+    await _webViewState?.replaceStyles(skeletonCss, iframeCss);
+  }
+
+  Future<void> checkElementAt(double x, double y) async {
+    await _webViewState?.checkElementAt(x, y);
+  }
+
+  Future<ui.Image?> takeScreenshot() async {
+    return await _webViewState?.takeScreenshot();
+  }
+
+  Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
+    await _webViewState?.updateTheme(surfaceColor, onSurfaceColor);
+  }
+}
 
 final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
   disableContextMenu: true,
@@ -35,10 +92,9 @@ class ReaderWebViewCallbacks {
   final VoidCallback onTapLeft;
   final VoidCallback onTapRight;
   final VoidCallback onTapCenter;
-  final VoidCallback onRenderComplete;
+  final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl) onImageLongPress;
-  final Function(double? scrollPosition) onReveal;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -47,10 +103,9 @@ class ReaderWebViewCallbacks {
     required this.onTapLeft,
     required this.onTapRight,
     required this.onTapCenter,
-    required this.onRenderComplete,
+    required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
-    required this.onReveal,
   });
 }
 
@@ -65,6 +120,7 @@ class ReaderWebView extends StatefulWidget {
   final Color surfaceColor;
   final Color? onSurfaceColor;
   final bool isLoading;
+  final ReaderWebViewController controller;
   final VoidCallback? onWebViewCreated;
 
   const ReaderWebView({
@@ -78,20 +134,61 @@ class ReaderWebView extends StatefulWidget {
     required this.surfaceColor,
     required this.onSurfaceColor,
     required this.isLoading,
+    required this.controller,
     this.onWebViewCreated,
   });
 
   @override
-  State<ReaderWebView> createState() => ReaderWebViewState();
+  State<ReaderWebView> createState() => _ReaderWebViewState();
 }
 
-class ReaderWebViewState extends State<ReaderWebView> {
-  final GlobalKey _webViewKey = GlobalKey();
+class _ReaderWebViewState extends State<ReaderWebView> {
   final GlobalKey _repaintKey = GlobalKey();
 
   InAppWebViewController? _controller;
 
-  InAppWebViewController? get controller => _controller;
+  @override
+  void initState() {
+    super.initState();
+    widget.controller._attachState(this);
+  }
+
+  // JavaScript methods
+  Future<void> evaluateJavascript(String source) async {
+    await _controller?.evaluateJavascript(source: source);
+  }
+
+  Future<void> jumpToLastPageOfFrame(String frame) async {
+    await evaluateJavascript("jumpToLastPageOfFrame('$frame')");
+  }
+
+  Future<void> cycleFrames(String direction) async {
+    await evaluateJavascript("cycleFrames('$direction')");
+  }
+
+  Future<void> jumpToPageFor(String frame, int pageIndex) async {
+    await evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
+  }
+
+  Future<void> loadFrame(String frame, String url, String anchors) async {
+    await evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
+  }
+
+  Future<void> jumpToPage(int pageIndex) async {
+    await evaluateJavascript('jumpToPage($pageIndex)');
+  }
+
+  Future<void> restoreScrollPosition(double ratio) async {
+    await evaluateJavascript('restoreScrollPosition($ratio)');
+  }
+
+  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
+    await evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
+  }
+
+  Future<void> checkElementAt(double x, double y) async {
+    await evaluateJavascript("checkElementAt($x, $y)");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +197,6 @@ class ReaderWebViewState extends State<ReaderWebView> {
         RepaintBoundary(
           key: _repaintKey,
           child: InAppWebView(
-            key: _webViewKey,
             initialData: InAppWebViewInitialData(
               data: generateSkeletonHtml(
                 widget.surfaceColor,
@@ -185,7 +281,7 @@ class ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onGoToPage',
+      handlerName: 'onPageChanged',
       callback: (args) {
         if (args.isNotEmpty && args[0] is int) {
           widget.callbacks.onPageChanged(args[0] as int);
@@ -215,23 +311,11 @@ class ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onReveal',
+      handlerName: 'onRendererInitialized',
       callback: (args) async {
-        double? scrollPosition;
-        if (args.isNotEmpty && args[0] is num) {
-          scrollPosition = (args[0] as num).toDouble();
-        }
-        widget.callbacks.onReveal(scrollPosition);
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onRenderComplete',
-      callback: (args) async {
-        await Future.delayed(const Duration(milliseconds: 50));
-        await _controller?.evaluateJavascript(source: "reveal();");
-        widget.callbacks.onRenderComplete();
-        debugPrint('WebView: RenderComplete');
+        await Future.delayed(const Duration(milliseconds: 100));
+        widget.callbacks.onRendererInitialized();
+        debugPrint('WebView: Renderer Initialized');
       },
     );
 
@@ -255,20 +339,31 @@ class ReaderWebViewState extends State<ReaderWebView> {
     );
   }
 
-  Future<void> evaluateJavascript(String source) async {
-    await _controller?.evaluateJavascript(source: source);
-  }
-
   Future<ui.Image?> takeScreenshot() async {
-    final BuildContext? context = _repaintKey.currentContext;
-    if (context == null) return null;
+    if (Platform.isAndroid) {
+      // for Android
+      final BuildContext? context = _repaintKey.currentContext;
+      if (context == null) return null;
 
-    final RenderRepaintBoundary? boundary =
-        context.findRenderObject() as RenderRepaintBoundary?;
+      final RenderRepaintBoundary? boundary =
+          context.findRenderObject() as RenderRepaintBoundary?;
 
-    if (boundary == null) return null;
-    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-    return image;
+      if (boundary == null) return null;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      return image;
+    } else {
+      // for iOS, use WebView screenshot method
+      final screenshotData = await _controller?.takeScreenshot(
+        screenshotConfiguration: ScreenshotConfiguration(
+          compressFormat: CompressFormat.JPEG,
+          quality: 70,
+        ),
+      );
+      if (screenshotData == null) return null;
+      final codec = await ui.instantiateImageCodec(screenshotData);
+      final frame = await codec.getNextFrame();
+      return frame.image;
+    }
   }
 
   Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
@@ -280,39 +375,6 @@ class ReaderWebViewState extends State<ReaderWebView> {
       onSurfaceColor,
     );
 
-    await replaceStyles(sketelonCss, iframeCss);
-  }
-
-  // JavaScript wrapper methods
-  Future<void> jumpToLastPageOfFrame(String frame) async {
-    await evaluateJavascript("jumpToLastPageOfFrame('$frame')");
-  }
-
-  Future<void> cycleFrames(String direction) async {
-    await evaluateJavascript("cycleFrames('$direction')");
-  }
-
-  Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
-  }
-
-  Future<void> loadFrame(String frame, String url, String anchors) async {
-    await evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
-  }
-
-  Future<void> jumpToPage(int pageIndex) async {
-    await evaluateJavascript('jumpToPage($pageIndex)');
-  }
-
-  Future<void> restoreScrollPosition(double ratio) async {
-    await evaluateJavascript('restoreScrollPosition($ratio)');
-  }
-
-  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
-  }
-
-  Future<void> checkElementAt(double x, double y) async {
-    await evaluateJavascript("checkElementAt($x, $y)");
+    await widget.controller.replaceStyles(sketelonCss, iframeCss);
   }
 }

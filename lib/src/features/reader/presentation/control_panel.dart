@@ -98,7 +98,6 @@ class _ControlPanelState extends State<ControlPanel> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 48),
                 ],
               ),
             ),

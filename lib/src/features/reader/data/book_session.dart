@@ -136,10 +136,8 @@ class BookSession {
   }
 
   /// Get anchors for a spine path as JSON array string
-  String getAnchorsForSpine(String spinePath) {
-    final anchors = _spineToAnchorsMap[spinePath] ?? [];
-    final jsonAnchors = anchors.map((a) => '"$a"').join(',');
-    return '[$jsonAnchors]';
+  List<String> getAnchorsForSpine(String spinePath) {
+    return _spineToAnchorsMap[spinePath] ?? [];
   }
 
   /// Update active anchors based on scroll position

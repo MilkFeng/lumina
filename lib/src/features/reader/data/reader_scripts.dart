@@ -456,9 +456,12 @@ function onFrameLoad(iframe) {
       }
 
       if (iframe.id === 'frame-curr') {
+        // Notify Flutter of page count and current page
         window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-        window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
-        window.flutter_inappwebview.callHandler('onRenderComplete');
+        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+
+        // Notify that renderer is initialized
+        window.flutter_inappwebview.callHandler('onRendererInitialized');
       }
     });
   });
@@ -477,6 +480,7 @@ function jumpToPage(pageIndex) {
   iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
 
   requestAnimationFrame(() => {
+    window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
     detectActiveAnchor(iframe);
   });
 }
@@ -485,11 +489,14 @@ function jumpToPageFor(slot, pageIndex) {
   const id = 'frame-' + slot;
   const iframe = document.getElementById(id);
   if (!iframe || !iframe.contentWindow) return;
-  
+
   const scrollLeft = calculateScrollLeft(iframe, pageIndex);
   iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
 
   requestAnimationFrame(() => {
+    if (iframe.id === 'frame-curr') {
+      window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+    }
     detectActiveAnchor(iframe);
   });
 }
@@ -503,22 +510,30 @@ function restoreScrollPosition(ratio) {
   const pageIndex = Math.round(ratio * pageCount);
 
   jumpToPage(pageIndex);
-  window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
 }
 
-function updatePageCount(iframeId, direction) {
+function calculateCurrentPageIndex() {
+  const iframe = document.getElementById('frame-curr');
+  if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return 0;
+
+  const scrollLeft = iframe.contentDocument.body.scrollLeft;
+  const viewportWidth = getWidth(iframe);
+  const pageIndex = Math.round((scrollLeft + 128) / (viewportWidth + 128));
+  return pageIndex;
+}
+
+// Update page state (page index and page count) and notify Flutter if current frame
+function updatePageState(iframeId, direction) {
   const iframe = document.getElementById(iframeId);
   if (!iframe || !iframe.contentWindow) return;
-  
+
   const pageCount = calculatePageCount(iframe);
   framePages[iframeId] = pageCount;
-  
+
   // If this is the current frame, notify Flutter
   if (iframeId === 'frame-curr') {
     window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-    if (direction === 'prev') {
-      window.flutter_inappwebview.callHandler('onGoToPage', pageCount - 1);
-    }
+    window.flutter_inappwebview.callHandler('onPageChanged', calculateCurrentPageIndex());
   }
 }
 
@@ -528,7 +543,7 @@ function cycleFrames(direction) {
   const elPrev = document.getElementById('frame-prev');
   const elCurr = document.getElementById('frame-curr');
   const elNext = document.getElementById('frame-next');
-  
+
   if (!elPrev || !elCurr || !elNext) return;
 
   if (direction === 'next') {
@@ -567,19 +582,19 @@ function cycleFrames(direction) {
     // Old Prev (Hidden, but loaded) -> Becomes New Curr
     // Old Curr -> Becomes New Next
     // Old Next -> Becomes New Prev (Recycled)
-    
+
     elNext.id = 'frame-temp';
-    
+
     elPrev.id = 'frame-curr';
     elPrev.style.zIndex = '2';
     elPrev.style.opacity = '1';
     elPrev.style.pointerEvents = 'auto';
-    
+
     elCurr.id = 'frame-next';
     elCurr.style.zIndex = '1';
     elCurr.style.opacity = '0';
     elCurr.style.pointerEvents = 'none';
-    
+
     const recycled = document.getElementById('frame-temp');
     recycled.id = 'frame-prev';
     recycled.style.zIndex = '1';
@@ -594,12 +609,14 @@ function cycleFrames(direction) {
     tocAnchors['frame-prev'] = tempAnchors;
   }
 
-  updatePageCount('frame-curr', direction);
-  updatePageCount('frame-prev', direction);
-  updatePageCount('frame-next', direction);
-  detectActiveAnchor(elPrev);
-  detectActiveAnchor(elCurr);
-  detectActiveAnchor(elNext);
+  requestAnimationFrame(() => {
+    updatePageState('frame-curr', direction);
+    updatePageState('frame-prev', direction);
+    updatePageState('frame-next', direction);
+    detectActiveAnchor(elPrev);
+    detectActiveAnchor(elCurr);
+    detectActiveAnchor(elNext);
+  });
 }
 
 // Helper to scroll the PREV frame to the last page immediately
@@ -627,12 +644,6 @@ function replaceStyles(skeletonCss, iframeCss) {
   }
 
   PAGINATION_CSS = iframeCss;
-}
-
-function reveal() {
-  requestAnimationFrame(() => {
-    window.flutter_inappwebview.callHandler('onReveal');
-  });
 }
 
 function checkElementAt(x, y) {

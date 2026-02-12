@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-import 'epub_webview_handler.dart';
+import '../data/epub_webview_handler.dart';
 import '../../../core/services/toast_service.dart';
 
 /// A full-screen image viewer with zoom capabilities

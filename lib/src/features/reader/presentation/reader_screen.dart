@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,11 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
-import './book_session.dart';
-import './reader_webview.dart';
+import '../data/book_session.dart';
+import './reader_renderer.dart';
 import './control_panel.dart';
 import '../data/services/epub_stream_service_provider.dart';
-import 'epub_webview_handler.dart';
+import '../data/epub_webview_handler.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -26,22 +25,15 @@ class ReaderScreen extends ConsumerStatefulWidget {
 }
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen>
-    with WidgetsBindingObserver, TickerProviderStateMixin {
-  // Services
+    with WidgetsBindingObserver {
   late final EpubWebViewHandler _webViewHandler;
   late final BookSession _bookSession;
+  final ReaderRendererController _rendererController =
+      ReaderRendererController();
 
   // State
-  final GlobalKey<ReaderWebViewState> _webViewKey =
-      GlobalKey<ReaderWebViewState>();
-
-  late final AnimationController _animController;
-  late Animation<Offset> _slideAnimation;
-  ui.Image? _screenshotData;
-  bool _isAnimating = false;
-  bool _isForwardAnimation = true;
   bool _isWebViewLoading = true;
-
+  bool _updatingTheme = false;
   bool _showControls = false;
   int _currentSpineItemIndex = 0;
 
@@ -49,11 +41,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   int _currentPageInChapter = 0;
   int _totalPagesInChapter = 1;
   double? _initialProgressToRestore;
-
-  bool _updatingTheme = false;
-
-  double _webviewWidth = 0;
-  double _webviewHeight = 0;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -64,14 +51,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       streamService: ref.read(epubStreamServiceProvider),
     );
     _bookSession = BookSession(fileHash: widget.fileHash);
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: Offset.zero,
-    ).animate(_animController);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
@@ -83,7 +62,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _animController.dispose();
     super.dispose();
   }
 
@@ -146,28 +124,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     });
   }
 
-  void _handleTapZone(double globalDx) {
-    final width = MediaQuery.of(context).size.width;
-    if (width <= 0) return;
-
-    final ratio = globalDx / width;
-    if (ratio < 0.2) {
-      if (_showControls) {
-        _toggleControls();
-        return;
-      }
-      _performPageTurn(false);
-    } else if (ratio > 0.8) {
-      if (_showControls) {
-        _toggleControls();
-        return;
-      }
-      _performPageTurn(true);
-    } else {
-      _toggleControls();
-    }
-  }
-
   void _openDrawer() {
     _scaffoldKey.currentState?.openDrawer();
   }
@@ -185,7 +141,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _saveProgress();
   }
 
-  String _getAnchorsForSpine(String spinePath) {
+  List<String> _getAnchorsForSpine(String spinePath) {
     return _bookSession.getAnchorsForSpine(spinePath);
   }
 
@@ -202,9 +158,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
-    await _webViewKey.currentState?.jumpToLastPageOfFrame('prev');
 
-    await _webViewKey.currentState?.cycleFrames('prev');
+    await _rendererController.jumpToPreviousChapterLastPage();
 
     setState(() {
       _currentSpineItemIndex--;
@@ -220,9 +175,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
-    await _webViewKey.currentState?.jumpToPageFor('prev', 0);
 
-    await _webViewKey.currentState?.cycleFrames('prev');
+    await _rendererController.jumpToPreviousChapterFirstPage();
 
     setState(() {
       _currentSpineItemIndex--;
@@ -240,9 +194,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       return;
     }
 
-    await _webViewKey.currentState?.jumpToPageFor('next', 0);
+    await _rendererController.jumpToNextChapter();
 
-    await _webViewKey.currentState?.cycleFrames('next');
     setState(() {
       _currentSpineItemIndex++;
       _currentPageInChapter = 0;
@@ -260,8 +213,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       // End anchors come from TOC, not spine
       final url = _getSpineItemUrl(nextIndex);
       final nextSpinePath = _bookSession.spine[nextIndex].href;
-      await _webViewKey.currentState?.loadFrame(
-        'next',
+
+      await _rendererController.preloadNextChapter(
         url,
         _getAnchorsForSpine(nextSpinePath),
       );
@@ -274,8 +227,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       final url = _getSpineItemUrl(prevIndex);
       // Note: SpineItem.href is a String, not an Href object with anchor
       final prevSpinePath = _bookSession.spine[prevIndex].href;
-      await _webViewKey.currentState?.loadFrame(
-        'prev',
+      await _rendererController.preloadPreviousChapter(
         url,
         _getAnchorsForSpine(prevSpinePath),
       );
@@ -283,7 +235,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> _loadCarousel([String anchor = 'top']) async {
-    if (_bookSession.spine.isEmpty || _webViewKey.currentState == null) return;
+    if (_bookSession.spine.isEmpty) return;
     if (mounted) {
       setState(() {
         _isWebViewLoading = true;
@@ -301,8 +253,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final currUrl = _getSpineItemUrl(currIndex, anchor);
     final currentSpinePath = _bookSession.spine[currIndex].href;
     // Note: End anchors come from TOC mapping, not spine directly
-    await _webViewKey.currentState?.loadFrame(
-      'curr',
+    await _rendererController.preloadCurrentChapter(
       currUrl,
       _getAnchorsForSpine(currentSpinePath),
     );
@@ -311,8 +262,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (prevIndex != null) {
       final prevUrl = _getSpineItemUrl(prevIndex);
       final prevSpinePath = _bookSession.spine[prevIndex].href;
-      await _webViewKey.currentState?.loadFrame(
-        'prev',
+      await _rendererController.preloadPreviousChapter(
         prevUrl,
         _getAnchorsForSpine(prevSpinePath),
       );
@@ -322,8 +272,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (nextIndex != null) {
       final nextUrl = _getSpineItemUrl(nextIndex);
       final nextSpinePath = _bookSession.spine[nextIndex].href;
-      await _webViewKey.currentState?.loadFrame(
-        'next',
+      await _rendererController.preloadNextChapter(
         nextUrl,
         _getAnchorsForSpine(nextSpinePath),
       );
@@ -341,7 +290,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _currentPageInChapter = pageIndex;
     });
 
-    await _webViewKey.currentState?.jumpToPage(pageIndex);
+    await _rendererController.jumpToPage(pageIndex);
     _saveProgress();
   }
 
@@ -363,97 +312,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _saveProgress();
   }
 
-  Future<void> _performPageTurn(bool isNext) async {
-    if (_isAnimating || _webViewKey.currentState == null) return;
-
+  bool _canPerformPageTurn(bool isNext) {
     if (isNext) {
       if (_currentPageInChapter >= _totalPagesInChapter - 1 &&
           _currentSpineItemIndex >= _bookSession.spine.length - 1) {
         ToastService.showError(AppLocalizations.of(context)!.lastPageOfBook);
-        return;
+        return false;
       }
     } else {
       if (_currentPageInChapter <= 0 && _currentSpineItemIndex <= 0) {
         ToastService.showError(AppLocalizations.of(context)!.firstPageOfBook);
-        return;
+        return false;
       }
     }
+    return true;
+  }
 
-    _isAnimating = true;
-    ui.Image? screenshot;
-    try {
-      screenshot = await _webViewKey.currentState!.takeScreenshot();
-    } catch (e) {
-      debugPrint("Error taking screenshot: $e");
-      screenshot = null;
-    }
-
-    if (screenshot == null) {
-      _isAnimating = false;
-      if (isNext) {
-        await _nextPage();
-      } else {
-        await _previousPage();
-      }
-      return;
-    }
-
-    if (!mounted) {
-      _isAnimating = false;
-      return;
-    }
-
-    setState(() {
-      _isForwardAnimation = isNext;
-      _screenshotData = screenshot;
-
-      if (isNext) {
-        _slideAnimation =
-            Tween<Offset>(
-              begin: Offset.zero,
-              end: const Offset(-1.0, 0.0),
-            ).animate(
-              CurvedAnimation(
-                parent: _animController,
-                curve: Curves.easeInCubic,
-              ),
-            );
-      } else {
-        _slideAnimation =
-            Tween<Offset>(
-              begin: const Offset(-1.0, 0.0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(
-                parent: _animController,
-                curve: Curves.easeInCubic,
-              ),
-            );
-      }
-    });
-
-    _animController.reset();
+  Future<void> _handlePageTurn(bool isNext) async {
     if (isNext) {
       await _nextPage();
     } else {
       await _previousPage();
-    }
-
-    if (!mounted) {
-      _isAnimating = false;
-      return;
-    }
-
-    try {
-      await _animController.forward();
-    } finally {
-      if (mounted) {
-        setState(() {
-          _screenshotData = null;
-        });
-      }
-      _animController.reset();
-      _isAnimating = false;
     }
   }
 
@@ -466,24 +345,91 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       );
     }
 
+    final activeItems = _resolveActiveItems();
+    final activateTocTitle = activeItems.isNotEmpty
+        ? activeItems.last.label
+        : _bookSession.book!.title;
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      drawer: _buildTocDrawer(),
+      drawer: TocDrawer(
+        book: _bookSession.book!,
+        toc: _bookSession.toc,
+        activeTocItems: activeItems,
+        onTocItemSelected: _navigateToTocItem,
+      ),
       body: Container(
         color: Theme.of(context).colorScheme.surface,
-        child: _buildReaderBody(),
-      ),
-    );
-  }
+        child: Stack(
+          children: [
+            ReaderRenderer(
+              controller: _rendererController,
+              bookSession: _bookSession,
+              webViewHandler: _webViewHandler,
+              fileHash: widget.fileHash,
+              showControls: _showControls,
+              isLoading: _isWebViewLoading || _updatingTheme,
+              canPerformPageTurn: _canPerformPageTurn,
+              onPerformPageTurn: _handlePageTurn,
+              onToggleControls: _toggleControls,
+              onInitialized: () async {
+                await _loadCarousel();
+              },
+              onPageCountReady: (totalPages) async {
+                setState(() {
+                  _totalPagesInChapter = totalPages;
+                  if (_currentPageInChapter >= _totalPagesInChapter) {
+                    _currentPageInChapter = _totalPagesInChapter - 1;
+                  }
+                });
+                if (_initialProgressToRestore != null) {
+                  final ratio = _initialProgressToRestore ?? 0.0;
+                  _initialProgressToRestore = null;
+                  await _rendererController.restoreScrollPosition(ratio);
+                }
+              },
+              onPageChanged: (pageIndex) {
+                setState(() {
+                  _currentPageInChapter = pageIndex;
+                });
+                _saveProgress();
+              },
+              onRendererInitialized: () async {
+                setState(() {
+                  _isWebViewLoading = false;
+                });
+                _saveProgress();
+              },
+              onScrollAnchors: _handleScrollAnchors,
+              onImageLongPress: _handleImageLongPress,
+            ),
 
-  /// Build TOC drawer
-  Widget _buildTocDrawer() {
-    return TocDrawer(
-      book: _bookSession.book!,
-      toc: _bookSession.toc,
-      activeTocItems: _resolveActiveItems(),
-      onTocItemSelected: _navigateToTocItem,
+            ControlPanel(
+              showControls: _showControls,
+              title: _bookSession.spine.isEmpty
+                  ? _bookSession.book!.title
+                  : activateTocTitle,
+              currentSpineItemIndex: _currentSpineItemIndex,
+              totalSpineItems: _bookSession.spine.length,
+              currentPageInChapter: _currentPageInChapter,
+              totalPagesInChapter: _totalPagesInChapter,
+              onBack: () {
+                _saveProgress();
+                context.pop();
+              },
+              onOpenDrawer: _openDrawer,
+              onPreviousPage: () =>
+                  _rendererController.performPreviousPageTurn(),
+              onFirstPage: () => _goToPage(0),
+              onNextPage: () => _rendererController.performNextPageTurn(),
+              onLastPage: () => _goToPage(_totalPagesInChapter - 1),
+              onPreviousChapter: _previousSpineItemFirstPage,
+              onNextChapter: _nextSpineItem,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -508,13 +454,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> _updateWebViewTheme() async {
-    if (_webViewKey.currentState == null) return;
-
     setState(() {
       _updatingTheme = true;
     });
 
-    await _webViewKey.currentState?.updateTheme(
+    await _rendererController.updateTheme(
       Theme.of(context).colorScheme.surface,
       Theme.of(context).brightness == Brightness.dark
           ? Theme.of(context).colorScheme.onSurface
@@ -542,212 +486,5 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       epubPath: _bookSession.book!.filePath!,
       fileHash: widget.fileHash,
     );
-  }
-
-  /// Build reader body with WebView interception
-  Widget _buildReaderBody() {
-    final activeItems = _resolveActiveItems();
-    final activateTocTitle = activeItems.isNotEmpty
-        ? activeItems.last.label
-        : _bookSession.book!.title;
-
-    return Stack(
-      children: [
-        _buildRenderer(),
-        ControlPanel(
-          showControls: _showControls,
-          title: _bookSession.spine.isEmpty
-              ? _bookSession.book!.title
-              : activateTocTitle,
-          currentSpineItemIndex: _currentSpineItemIndex,
-          totalSpineItems: _bookSession.spine.length,
-          currentPageInChapter: _currentPageInChapter,
-          totalPagesInChapter: _totalPagesInChapter,
-          onBack: () {
-            _saveProgress();
-            context.pop();
-          },
-          onOpenDrawer: _openDrawer,
-          onPreviousPage: () => _performPageTurn(false),
-          onFirstPage: () => _goToPage(0),
-          onNextPage: () => _performPageTurn(true),
-          onLastPage: () => _goToPage(_totalPagesInChapter - 1),
-          onPreviousChapter: _previousSpineItemFirstPage,
-          onNextChapter: _nextSpineItem,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRenderer() {
-    return Positioned.fill(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapUp: (details) {
-          _handleTapZone(details.globalPosition.dx);
-        },
-        onHorizontalDragEnd: (details) {
-          if (_isAnimating) return;
-          final velocity = details.primaryVelocity ?? 0;
-
-          if (velocity < -200) {
-            _performPageTurn(true);
-          } else if (velocity > 200) {
-            _performPageTurn(false);
-          }
-        },
-        onLongPressStart: (details) async {
-          const padding = 16.0;
-
-          final localX = details.localPosition.dx - padding;
-          final localY = details.localPosition.dy - padding;
-
-          if (localX < 0 ||
-              localY < 0 ||
-              localX > _webviewWidth ||
-              localY > _webviewHeight) {
-            return;
-          }
-
-          await _webViewKey.currentState?.checkElementAt(localX, localY);
-        },
-        child: Stack(
-          children: [
-            if (_screenshotData != null && _isAnimating && !_isForwardAnimation)
-              Positioned.fill(
-                child: _buildScreenshotContainer(_screenshotData!),
-              ),
-            Positioned.fill(
-              child: SlideTransition(
-                position: _isAnimating && !_isForwardAnimation
-                    ? _slideAnimation
-                    : const AlwaysStoppedAnimation(Offset.zero),
-                child: _buildWebViewStack(),
-              ),
-            ),
-            if (_screenshotData != null && _isAnimating && _isForwardAnimation)
-              Positioned.fill(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildScreenshotContainer(_screenshotData!),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContentWrapper(Widget child) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-          ),
-        ],
-        color: Theme.of(context).colorScheme.surface,
-      ),
-      child: SafeArea(
-        top: true,
-        bottom: true,
-        left: true,
-        right: true,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Container(alignment: AlignmentGeometry.center, child: child),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWebViewStack() {
-    return _buildContentWrapper(
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final viewWidth = constraints.maxWidth;
-          final viewHeight = constraints.maxHeight;
-          final maskColor = Theme.of(context).colorScheme.surface;
-
-          _webviewWidth = viewWidth;
-          _webviewHeight = viewHeight;
-
-          return ReaderWebView(
-            key: _webViewKey,
-            bookSession: _bookSession,
-            webViewHandler: _webViewHandler,
-            fileHash: widget.fileHash,
-            width: viewWidth,
-            height: viewHeight,
-            surfaceColor: maskColor,
-            onSurfaceColor: Theme.of(context).brightness == Brightness.dark
-                ? Theme.of(context).colorScheme.onSurface
-                : null,
-            isLoading: _isWebViewLoading || _updatingTheme,
-            callbacks: ReaderWebViewCallbacks(
-              onInitialized: () async {
-                await _loadCarousel();
-              },
-              onPageCountReady: (totalPages) async {
-                setState(() {
-                  _totalPagesInChapter = totalPages;
-                  if (_currentPageInChapter >= _totalPagesInChapter) {
-                    _currentPageInChapter = _totalPagesInChapter - 1;
-                  }
-                });
-                if (_initialProgressToRestore != null) {
-                  final ratio = _initialProgressToRestore ?? 0.0;
-                  _initialProgressToRestore = null;
-                  await _webViewKey.currentState?.restoreScrollPosition(ratio);
-                }
-              },
-              onPageChanged: (pageIndex) {
-                setState(() {
-                  _currentPageInChapter = pageIndex;
-                });
-                _saveProgress();
-              },
-              onTapLeft: () {
-                if (_showControls) {
-                  _toggleControls();
-                  return;
-                }
-                _performPageTurn(false);
-              },
-              onTapRight: () {
-                if (_showControls) {
-                  _toggleControls();
-                  return;
-                }
-                _performPageTurn(true);
-              },
-              onTapCenter: () {
-                _toggleControls();
-              },
-              onReveal: (scrollPosition) {
-                if (mounted) {
-                  setState(() {
-                    _isWebViewLoading = false;
-                  });
-                }
-                _saveProgress();
-              },
-              onRenderComplete: () async {
-                _saveProgress();
-              },
-              onScrollAnchors: _handleScrollAnchors,
-              onImageLongPress: _handleImageLongPress,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildScreenshotContainer(ui.Image screenshot) {
-    return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }
 }

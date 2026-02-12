@@ -237,16 +237,6 @@ class _TocDrawerState extends State<TocDrawer> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          // If it has children, tapping anywhere could toggle expand,
-          // OR separate tap logic (tap text to go, tap icon to expand).
-          // Here mimicking ExpansionTile: Tap whole row to toggle if has children, else go.
-          /* Strategy: 
-             - If Leaf: Select & Close
-             - If Parent: Toggle Expansion (Classic Tree View behavior)
-             
-             Note: If you want parents to be selectable too, you need a separate 
-             expand button on the right.
-          */
           if (row.hasChildren) {
             _toggleExpansion(item);
           } else {
