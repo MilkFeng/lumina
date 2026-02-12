@@ -16,7 +16,7 @@ class ReaderWebViewController {
 
   bool get isAttached => _webViewState != null;
 
-  void _setWebViewState(_ReaderWebViewState? state) {
+  void _attachState(_ReaderWebViewState? state) {
     _webViewState = state;
   }
 
@@ -152,13 +152,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   @override
   void initState() {
     super.initState();
-    widget.controller._setWebViewState(this);
-  }
-
-  @override
-  void dispose() {
-    widget.controller._setWebViewState(null);
-    super.dispose();
+    widget.controller._attachState(this);
   }
 
   // JavaScript methods

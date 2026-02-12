@@ -7,10 +7,12 @@ import './epub_webview_handler.dart';
 import './reader_webview.dart';
 
 class ReaderRendererController {
-  final ReaderWebViewController _webViewController = ReaderWebViewController();
   _ReaderRendererState? _rendererState;
 
-  ReaderWebViewController get webViewController => _webViewController;
+  bool get isAttached => _rendererState != null;
+
+  ReaderWebViewController? get webViewController =>
+      _rendererState?._webViewController;
 
   void _attachState(_ReaderRendererState? state) {
     _rendererState = state;
@@ -25,56 +27,48 @@ class ReaderRendererController {
   }
 
   Future<void> jumpToPage(int pageIndex) async {
-    await _webViewController.jumpToPage(pageIndex);
+    await webViewController?.jumpToPage(pageIndex);
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
-    await _webViewController.restoreScrollPosition(ratio);
+    await webViewController?.restoreScrollPosition(ratio);
   }
 
-  Future<void> checkElementAt(double x, double y) async {
-    await _webViewController.checkElementAt(x, y);
-  }
-
-  Future<void> jumpToPreviousChapter() async {
-    await _webViewController.jumpToLastPageOfFrame('prev');
-    await _webViewController.cycleFrames('prev');
+  Future<void> jumpToPreviousChapterLastPage() async {
+    await webViewController?.jumpToLastPageOfFrame('prev');
+    await webViewController?.cycleFrames('prev');
   }
 
   Future<void> jumpToPreviousChapterFirstPage() async {
-    await _webViewController.jumpToPageFor('prev', 0);
-    await _webViewController.cycleFrames('prev');
+    await webViewController?.jumpToPageFor('prev', 0);
+    await webViewController?.cycleFrames('prev');
   }
 
   Future<void> jumpToNextChapter() async {
-    await _webViewController.jumpToPageFor('next', 0);
-    await _webViewController.cycleFrames('next');
+    await webViewController?.jumpToPageFor('next', 0);
+    await webViewController?.cycleFrames('next');
   }
 
   Future<void> preloadCurrentChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await _webViewController.loadFrame('curr', url, anchorsJson);
+    await webViewController?.loadFrame('curr', url, anchorsJson);
   }
 
   Future<void> preloadNextChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await _webViewController.loadFrame('next', url, anchorsJson);
+    await webViewController?.loadFrame('next', url, anchorsJson);
   }
 
   Future<void> preloadPreviousChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await _webViewController.loadFrame('prev', url, anchorsJson);
-  }
-
-  Future<ui.Image?> takeScreenshot() async {
-    return _webViewController.takeScreenshot();
+    await webViewController?.loadFrame('prev', url, anchorsJson);
   }
 
   Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
-    await _webViewController.updateTheme(surfaceColor, onSurfaceColor);
+    await webViewController?.updateTheme(surfaceColor, onSurfaceColor);
   }
 }
 
@@ -123,6 +117,7 @@ class ReaderRenderer extends StatefulWidget {
 class _ReaderRendererState extends State<ReaderRenderer>
     with TickerProviderStateMixin {
   final GlobalKey _webViewKey = GlobalKey();
+  final ReaderWebViewController _webViewController = ReaderWebViewController();
 
   late final AnimationController _animController;
   late Animation<Offset> _slideAnimation;
@@ -161,7 +156,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     _isAnimating = true;
     ui.Image? screenshot;
     try {
-      screenshot = await widget.controller.takeScreenshot();
+      screenshot = await _webViewController.takeScreenshot();
     } catch (e) {
       debugPrint('Error taking screenshot: $e');
       screenshot = null;
@@ -263,7 +258,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
       return;
     }
 
-    await widget.controller.checkElementAt(localX, localY);
+    await _webViewController.checkElementAt(localX, localY);
   }
 
   @override
@@ -361,7 +356,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
                 ? Theme.of(context).colorScheme.onSurface
                 : null,
             isLoading: widget.isLoading,
-            controller: widget.controller.webViewController,
+            controller: _webViewController,
             callbacks: ReaderWebViewCallbacks(
               onInitialized: () async {
                 await widget.onInitialized();

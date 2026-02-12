@@ -159,7 +159,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       return;
     }
 
-    await _rendererController.jumpToPreviousChapter();
+    await _rendererController.jumpToPreviousChapterLastPage();
 
     setState(() {
       _currentSpineItemIndex--;
