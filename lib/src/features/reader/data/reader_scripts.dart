@@ -458,7 +458,7 @@ function onFrameLoad(iframe) {
       if (iframe.id === 'frame-curr') {
         // Notify Flutter of page count and current page
         window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-        window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
+        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
 
         // Notify that renderer is initialized
         window.flutter_inappwebview.callHandler('onRendererInitialized');
@@ -480,6 +480,7 @@ function jumpToPage(pageIndex) {
   iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
 
   requestAnimationFrame(() => {
+    window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
     detectActiveAnchor(iframe);
   });
 }
@@ -493,6 +494,9 @@ function jumpToPageFor(slot, pageIndex) {
   iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
 
   requestAnimationFrame(() => {
+    if (iframe.id === 'frame-curr') {
+      window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+    }
     detectActiveAnchor(iframe);
   });
 }
@@ -506,7 +510,6 @@ function restoreScrollPosition(ratio) {
   const pageIndex = Math.round(ratio * pageCount);
 
   jumpToPage(pageIndex);
-  window.flutter_inappwebview.callHandler('onGoToPage', pageIndex);
 }
 
 function calculateCurrentPageIndex() {
@@ -606,12 +609,14 @@ function cycleFrames(direction) {
     tocAnchors['frame-prev'] = tempAnchors;
   }
 
-  updatePageState('frame-curr', direction);
-  updatePageState('frame-prev', direction);
-  updatePageState('frame-next', direction);
-  detectActiveAnchor(elPrev);
-  detectActiveAnchor(elCurr);
-  detectActiveAnchor(elNext);
+  requestAnimationFrame(() => {
+    updatePageState('frame-curr', direction);
+    updatePageState('frame-prev', direction);
+    updatePageState('frame-next', direction);
+    detectActiveAnchor(elPrev);
+    detectActiveAnchor(elCurr);
+    detectActiveAnchor(elNext);
+  });
 }
 
 // Helper to scroll the PREV frame to the last page immediately
