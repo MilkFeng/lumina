@@ -727,7 +727,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               onTapCenter: () {
                 _toggleControls();
               },
-              onReveal: (scrollPosition) {
+              onReveal: () {
                 if (mounted) {
                   setState(() {
                     _isWebViewLoading = false;
