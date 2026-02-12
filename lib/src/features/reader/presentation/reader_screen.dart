@@ -32,6 +32,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   late final BookSession _bookSession;
 
   // State
+  final ReaderWebViewController _webViewController = ReaderWebViewController();
   final GlobalKey<ReaderWebViewState> _webViewKey =
       GlobalKey<ReaderWebViewState>();
 
@@ -202,9 +203,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
-    await _webViewKey.currentState?.jumpToLastPageOfFrame('prev');
+    await _webViewController.jumpToLastPageOfFrame('prev');
 
-    await _webViewKey.currentState?.cycleFrames('prev');
+    await _webViewController.cycleFrames('prev');
 
     setState(() {
       _currentSpineItemIndex--;
@@ -220,9 +221,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
       return;
     }
-    await _webViewKey.currentState?.jumpToPageFor('prev', 0);
+    await _webViewController.jumpToPageFor('prev', 0);
 
-    await _webViewKey.currentState?.cycleFrames('prev');
+    await _webViewController.cycleFrames('prev');
 
     setState(() {
       _currentSpineItemIndex--;
@@ -240,9 +241,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       return;
     }
 
-    await _webViewKey.currentState?.jumpToPageFor('next', 0);
+    await _webViewController.jumpToPageFor('next', 0);
 
-    await _webViewKey.currentState?.cycleFrames('next');
+    await _webViewController.cycleFrames('next');
     setState(() {
       _currentSpineItemIndex++;
       _currentPageInChapter = 0;
@@ -260,7 +261,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       // End anchors come from TOC, not spine
       final url = _getSpineItemUrl(nextIndex);
       final nextSpinePath = _bookSession.spine[nextIndex].href;
-      await _webViewKey.currentState?.loadFrame(
+      await _webViewController.loadFrame(
         'next',
         url,
         _getAnchorsForSpine(nextSpinePath),
@@ -274,7 +275,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       final url = _getSpineItemUrl(prevIndex);
       // Note: SpineItem.href is a String, not an Href object with anchor
       final prevSpinePath = _bookSession.spine[prevIndex].href;
-      await _webViewKey.currentState?.loadFrame(
+      await _webViewController.loadFrame(
         'prev',
         url,
         _getAnchorsForSpine(prevSpinePath),
@@ -283,7 +284,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> _loadCarousel([String anchor = 'top']) async {
-    if (_bookSession.spine.isEmpty || _webViewKey.currentState == null) return;
+    if (_bookSession.spine.isEmpty) return;
     if (mounted) {
       setState(() {
         _isWebViewLoading = true;
@@ -301,7 +302,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final currUrl = _getSpineItemUrl(currIndex, anchor);
     final currentSpinePath = _bookSession.spine[currIndex].href;
     // Note: End anchors come from TOC mapping, not spine directly
-    await _webViewKey.currentState?.loadFrame(
+    await _webViewController.loadFrame(
       'curr',
       currUrl,
       _getAnchorsForSpine(currentSpinePath),
@@ -311,7 +312,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (prevIndex != null) {
       final prevUrl = _getSpineItemUrl(prevIndex);
       final prevSpinePath = _bookSession.spine[prevIndex].href;
-      await _webViewKey.currentState?.loadFrame(
+      await _webViewController.loadFrame(
         'prev',
         prevUrl,
         _getAnchorsForSpine(prevSpinePath),
@@ -322,7 +323,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (nextIndex != null) {
       final nextUrl = _getSpineItemUrl(nextIndex);
       final nextSpinePath = _bookSession.spine[nextIndex].href;
-      await _webViewKey.currentState?.loadFrame(
+      await _webViewController.loadFrame(
         'next',
         nextUrl,
         _getAnchorsForSpine(nextSpinePath),
@@ -341,7 +342,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _currentPageInChapter = pageIndex;
     });
 
-    await _webViewKey.currentState?.jumpToPage(pageIndex);
+    await _webViewController.jumpToPage(pageIndex);
     _saveProgress();
   }
 
@@ -364,7 +365,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> _performPageTurn(bool isNext) async {
-    if (_isAnimating || _webViewKey.currentState == null) return;
+    if (_isAnimating) return;
 
     if (isNext) {
       if (_currentPageInChapter >= _totalPagesInChapter - 1 &&
@@ -508,8 +509,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   Future<void> _updateWebViewTheme() async {
-    if (_webViewKey.currentState == null) return;
-
     setState(() {
       _updatingTheme = true;
     });
@@ -609,7 +608,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             return;
           }
 
-          await _webViewKey.currentState?.checkElementAt(localX, localY);
+          await _webViewController.checkElementAt(localX, localY);
         },
         child: Stack(
           children: [
@@ -687,6 +686,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 ? Theme.of(context).colorScheme.onSurface
                 : null,
             isLoading: _isWebViewLoading || _updatingTheme,
+            controller: _webViewController,
             callbacks: ReaderWebViewCallbacks(
               onInitialized: () async {
                 await _loadCarousel();
@@ -701,7 +701,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 if (_initialProgressToRestore != null) {
                   final ratio = _initialProgressToRestore ?? 0.0;
                   _initialProgressToRestore = null;
-                  await _webViewKey.currentState?.restoreScrollPosition(ratio);
+                  await _webViewController.restoreScrollPosition(ratio);
                 }
               },
               onPageChanged: (pageIndex) {
