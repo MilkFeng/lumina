@@ -12,9 +12,9 @@ import '../data/reader_scripts.dart';
 
 /// Controller for ReaderWebView that provides methods to control the WebView
 class ReaderWebViewController {
-  ReaderWebViewState? _webViewState;
+  _ReaderWebViewState? _webViewState;
 
-  void _setWebViewState(ReaderWebViewState? state) {
+  void _setWebViewState(_ReaderWebViewState? state) {
     _webViewState = state;
   }
 
@@ -139,10 +139,10 @@ class ReaderWebView extends StatefulWidget {
   });
 
   @override
-  State<ReaderWebView> createState() => ReaderWebViewState();
+  State<ReaderWebView> createState() => _ReaderWebViewState();
 }
 
-class ReaderWebViewState extends State<ReaderWebView> {
+class _ReaderWebViewState extends State<ReaderWebView> {
   final GlobalKey _repaintKey = GlobalKey();
 
   InAppWebViewController? _controller;
