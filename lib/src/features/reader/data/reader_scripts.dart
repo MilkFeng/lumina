@@ -21,15 +21,12 @@ html, body {
   ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
 }
 
-body {
-  padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px !important;
-}
-
 /* Container for iframes */
 #frame-container {
   position: relative;
-  width: 100%;
-  height: 100%;
+  padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px !important;
+  width: calc(100% - ${padding.left + padding.right}px) !important;
+  height: calc(100% - ${padding.top + padding.bottom}px) !important;
   overflow: hidden;
 }
 
