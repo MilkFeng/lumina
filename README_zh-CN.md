@@ -61,11 +61,12 @@
 
 ## 🚀 快速开始
 
-Android 用户：前往 [Releases 页面](https://github.com/MilkFeng/lumina/releases) 下载最新版本的 `.apk` 安装包
+前往 [Releases 页面](https://github.com/MilkFeng/lumina/releases) 下载最新版本。
 
-iOS 用户：目前 Lumina 尚未上架 App Store，iOS 用户暂时需要通过以下方式安装：
-- 自行编译源代码（需要 macOS 和 Xcode）
-- 等待后续 App Store 版本发布
+- **Android 用户**：下载 `.apk` 文件直接安装。
+- **iOS 用户**：下载 `.ipa` 文件，并使用 **侧载工具** 进行安装。
+    - **推荐工具**：[AltStore](https://altstore.io/) (推荐)、[Sideloadly](https://sideloadly.io/) 或 [TrollStore](https://github.com/opa334/TrollStore) (仅限特定系统版本)。
+    - *注意：使用免费 Apple ID 进行侧载时，通常每 7 天需要刷新一次签名。*
 
 ### 开始使用
 

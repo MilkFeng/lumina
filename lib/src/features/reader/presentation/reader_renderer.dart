@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
 import '../data/book_session.dart';
@@ -68,7 +70,11 @@ class ReaderRendererController {
   }
 
   Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
-    await webViewController?.updateTheme(surfaceColor, onSurfaceColor);
+    await webViewController?.updateTheme(
+      surfaceColor,
+      onSurfaceColor,
+      _rendererState!.padding,
+    );
   }
 }
 
@@ -114,6 +120,10 @@ class ReaderRenderer extends StatefulWidget {
 
 class _ReaderRendererState extends State<ReaderRenderer>
     with TickerProviderStateMixin {
+  static const MethodChannel _nativePageTurnChannel = MethodChannel(
+    'lumina/reader_page_turn',
+  );
+
   final GlobalKey _webViewKey = GlobalKey();
   final ReaderWebViewController _webViewController = ReaderWebViewController();
 
@@ -123,8 +133,22 @@ class _ReaderRendererState extends State<ReaderRenderer>
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
 
-  double _webviewWidth = 0;
-  double _webviewHeight = 0;
+  EdgeInsets get padding {
+    var safePaddings = MediaQuery.paddingOf(context);
+    double topPadding = safePaddings.top;
+    double leftPadding = safePaddings.left;
+    double rightPadding = safePaddings.right;
+    double bottomPadding = safePaddings.bottom;
+
+    const padding = 16.0;
+
+    return EdgeInsets.fromLTRB(
+      padding + leftPadding,
+      padding + topPadding,
+      padding + rightPadding,
+      padding + bottomPadding,
+    );
+  }
 
   @override
   void initState() {
@@ -142,6 +166,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
   @override
   void dispose() {
+    _screenshotData?.dispose();
     widget.controller._attachState(null);
     _animController.dispose();
     super.dispose();
@@ -151,6 +176,23 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (_isAnimating) return;
     if (!widget.canPerformPageTurn(isNext)) return;
 
+    if (Platform.isAndroid) {
+      await _performAndroidPageTurn(isNext);
+      return;
+    }
+
+    _isAnimating = true;
+
+    try {
+      await _prepareNativePageTurn();
+      await widget.onPerformPageTurn(isNext);
+      await _animateNativePageTurn(isNext);
+    } finally {
+      _isAnimating = false;
+    }
+  }
+
+  Future<void> _performAndroidPageTurn(bool isNext) async {
     _isAnimating = true;
 
     _screenshotData?.dispose();
@@ -225,6 +267,30 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
+  Future<void> _prepareNativePageTurn() async {
+    if (!Platform.isIOS) return;
+    try {
+      await _nativePageTurnChannel.invokeMethod<void>('preparePageTurn');
+    } on MissingPluginException {
+      // no-op for configurations without iOS native channel
+    } catch (e) {
+      debugPrint('preparePageTurn failed: $e');
+    }
+  }
+
+  Future<void> _animateNativePageTurn(bool isNext) async {
+    if (!Platform.isIOS) return;
+    try {
+      await _nativePageTurnChannel.invokeMethod<void>('animatePageTurn', {
+        'isNext': isNext,
+      });
+    } on MissingPluginException {
+      // no-op for configurations without iOS native channel
+    } catch (e) {
+      debugPrint('animatePageTurn failed: $e');
+    }
+  }
+
   void _handleTapZone(TapUpDetails details) {
     final globalDx = details.globalPosition.dx;
 
@@ -261,19 +327,10 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
-    EdgeInsets safePaddings = MediaQuery.paddingOf(context);
-    double topPadding = safePaddings.top;
-    double leftPadding = safePaddings.left;
-
-    const padding = 16.0;
-
-    var localX = details.localPosition.dx - padding - leftPadding;
-    var localY = details.localPosition.dy - padding - topPadding;
-
-    localX = localX.clamp(0, _webviewWidth);
-    localY = localY.clamp(0, _webviewHeight);
-
-    await _webViewController.checkElementAt(localX, localY);
+    await _webViewController.checkElementAt(
+      details.localPosition.dx,
+      details.localPosition.dy,
+    );
   }
 
   @override
@@ -284,29 +341,31 @@ class _ReaderRendererState extends State<ReaderRenderer>
         onTapUp: _handleTapZone,
         onHorizontalDragEnd: _handleHorizontalDragEnd,
         onLongPressStart: _handleLongPressStart,
-        child: Stack(
-          children: [
-            if (_isAnimating && !_isForwardAnimation)
-              Positioned.fill(
-                child: _buildScreenshotContainer(_screenshotData!),
-              ),
-            Positioned.fill(
-              child: SlideTransition(
-                position: _isAnimating && !_isForwardAnimation
-                    ? _slideAnimation
-                    : const AlwaysStoppedAnimation(Offset.zero),
-                child: _buildWebView(),
-              ),
-            ),
-            if (_isAnimating && _isForwardAnimation)
-              Positioned.fill(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildScreenshotContainer(_screenshotData!),
-                ),
-              ),
-          ],
-        ),
+        child: Platform.isAndroid
+            ? Stack(
+                children: [
+                  if (_isAnimating && !_isForwardAnimation)
+                    Positioned.fill(
+                      child: _buildScreenshotContainer(_screenshotData!),
+                    ),
+                  Positioned.fill(
+                    child: SlideTransition(
+                      position: _isAnimating && !_isForwardAnimation
+                          ? _slideAnimation
+                          : const AlwaysStoppedAnimation(Offset.zero),
+                      child: _buildWebView(),
+                    ),
+                  ),
+                  if (_isAnimating && _isForwardAnimation)
+                    Positioned.fill(
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildScreenshotContainer(_screenshotData!),
+                      ),
+                    ),
+                ],
+              )
+            : _buildWebView(),
       ),
     );
   }
@@ -324,12 +383,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
         ],
         color: Theme.of(context).colorScheme.surface,
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Container(alignment: AlignmentGeometry.center, child: child),
-        ),
-      ),
+      child: Container(alignment: AlignmentGeometry.center, child: child),
     );
   }
 
@@ -337,24 +391,16 @@ class _ReaderRendererState extends State<ReaderRenderer>
     return _buildContentWrapper(
       LayoutBuilder(
         builder: (context, constraints) {
-          final viewWidth = constraints.maxWidth;
-          final viewHeight = constraints.maxHeight;
-          final maskColor = Theme.of(context).colorScheme.surface;
-
-          _webviewWidth = viewWidth;
-          _webviewHeight = viewHeight;
-
           return ReaderWebView(
             key: _webViewKey,
             bookSession: widget.bookSession,
             webViewHandler: widget.webViewHandler,
             fileHash: widget.fileHash,
-            width: viewWidth,
-            height: viewHeight,
-            surfaceColor: maskColor,
+            surfaceColor: Theme.of(context).colorScheme.surface,
             onSurfaceColor: Theme.of(context).brightness == Brightness.dark
                 ? Theme.of(context).colorScheme.onSurface
                 : null,
+            padding: padding,
             isLoading: widget.isLoading,
             controller: _webViewController,
             callbacks: ReaderWebViewCallbacks(
