@@ -119,8 +119,6 @@ class ReaderWebView extends StatefulWidget {
   final EpubWebViewHandler webViewHandler;
   final String fileHash;
   final ReaderWebViewCallbacks callbacks;
-  final double width;
-  final double height;
   final Color surfaceColor;
   final Color? onSurfaceColor;
   final EdgeInsets padding;
@@ -134,8 +132,6 @@ class ReaderWebView extends StatefulWidget {
     required this.webViewHandler,
     required this.fileHash,
     required this.callbacks,
-    required this.width,
-    required this.height,
     required this.padding,
     required this.surfaceColor,
     required this.onSurfaceColor,
@@ -251,10 +247,12 @@ class _ReaderWebViewState extends State<ReaderWebView> {
               widget.onWebViewCreated?.call();
             },
             onLoadStop: (controller, url) async {
+              final width = MediaQuery.of(context).size.width;
+              final height = MediaQuery.of(context).size.height;
               await controller.evaluateJavascript(
                 source: generateControllerJs(
-                  widget.width - widget.padding.horizontal,
-                  widget.height - widget.padding.vertical,
+                  width - widget.padding.horizontal,
+                  height - widget.padding.vertical,
                   widget.onSurfaceColor,
                   widget.padding.top,
                   widget.padding.left,
@@ -380,27 +378,26 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     Color? onSurfaceColor,
     EdgeInsets padding,
   ) async {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
     final sketelonCss = generateSkeletonStyle(
       surfaceColor,
       onSurfaceColor,
       padding,
     );
 
-    final iframeCss = generatePaginationCss(
-      widget.width,
-      widget.height,
-      onSurfaceColor,
-    );
-
-    await widget.controller.replaceStyles(sketelonCss, iframeCss);
+    final iframeCss = generatePaginationCss(width, height, onSurfaceColor);
 
     final js = generateControllerJs(
-      widget.width - padding.horizontal,
-      widget.height - padding.vertical,
+      width - padding.horizontal,
+      height - padding.vertical,
       onSurfaceColor,
       padding.top,
       padding.left,
     );
+
     await widget.controller.evaluateJavascript(js);
+    await widget.controller.replaceStyles(sketelonCss, iframeCss);
   }
 }

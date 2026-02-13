@@ -391,18 +391,12 @@ class _ReaderRendererState extends State<ReaderRenderer>
     return _buildContentWrapper(
       LayoutBuilder(
         builder: (context, constraints) {
-          final viewWidth = constraints.maxWidth;
-          final viewHeight = constraints.maxHeight;
-          final maskColor = Theme.of(context).colorScheme.surface;
-
           return ReaderWebView(
             key: _webViewKey,
             bookSession: widget.bookSession,
             webViewHandler: widget.webViewHandler,
             fileHash: widget.fileHash,
-            width: viewWidth,
-            height: viewHeight,
-            surfaceColor: maskColor,
+            surfaceColor: Theme.of(context).colorScheme.surface,
             onSurfaceColor: Theme.of(context).brightness == Brightness.dark
                 ? Theme.of(context).colorScheme.onSurface
                 : null,
