@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
 import '../data/book_session.dart';
@@ -114,6 +116,10 @@ class ReaderRenderer extends StatefulWidget {
 
 class _ReaderRendererState extends State<ReaderRenderer>
     with TickerProviderStateMixin {
+  static const MethodChannel _nativePageTurnChannel = MethodChannel(
+    'lumina/reader_page_turn',
+  );
+
   final GlobalKey _webViewKey = GlobalKey();
   final ReaderWebViewController _webViewController = ReaderWebViewController();
 
@@ -142,6 +148,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
   @override
   void dispose() {
+    _screenshotData?.dispose();
     widget.controller._attachState(null);
     _animController.dispose();
     super.dispose();
@@ -151,6 +158,23 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (_isAnimating) return;
     if (!widget.canPerformPageTurn(isNext)) return;
 
+    if (Platform.isAndroid) {
+      await _performAndroidPageTurn(isNext);
+      return;
+    }
+
+    _isAnimating = true;
+
+    try {
+      await _prepareNativePageTurn();
+      await widget.onPerformPageTurn(isNext);
+      await _animateNativePageTurn(isNext);
+    } finally {
+      _isAnimating = false;
+    }
+  }
+
+  Future<void> _performAndroidPageTurn(bool isNext) async {
     _isAnimating = true;
 
     _screenshotData?.dispose();
@@ -225,6 +249,30 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
+  Future<void> _prepareNativePageTurn() async {
+    if (!Platform.isIOS) return;
+    try {
+      await _nativePageTurnChannel.invokeMethod<void>('preparePageTurn');
+    } on MissingPluginException {
+      // no-op for configurations without iOS native channel
+    } catch (e) {
+      debugPrint('preparePageTurn failed: $e');
+    }
+  }
+
+  Future<void> _animateNativePageTurn(bool isNext) async {
+    if (!Platform.isIOS) return;
+    try {
+      await _nativePageTurnChannel.invokeMethod<void>('animatePageTurn', {
+        'isNext': isNext,
+      });
+    } on MissingPluginException {
+      // no-op for configurations without iOS native channel
+    } catch (e) {
+      debugPrint('animatePageTurn failed: $e');
+    }
+  }
+
   void _handleTapZone(TapUpDetails details) {
     final globalDx = details.globalPosition.dx;
 
@@ -284,29 +332,31 @@ class _ReaderRendererState extends State<ReaderRenderer>
         onTapUp: _handleTapZone,
         onHorizontalDragEnd: _handleHorizontalDragEnd,
         onLongPressStart: _handleLongPressStart,
-        child: Stack(
-          children: [
-            if (_isAnimating && !_isForwardAnimation)
-              Positioned.fill(
-                child: _buildScreenshotContainer(_screenshotData!),
-              ),
-            Positioned.fill(
-              child: SlideTransition(
-                position: _isAnimating && !_isForwardAnimation
-                    ? _slideAnimation
-                    : const AlwaysStoppedAnimation(Offset.zero),
-                child: _buildWebView(),
-              ),
-            ),
-            if (_isAnimating && _isForwardAnimation)
-              Positioned.fill(
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildScreenshotContainer(_screenshotData!),
-                ),
-              ),
-          ],
-        ),
+        child: Platform.isAndroid
+            ? Stack(
+                children: [
+                  if (_isAnimating && !_isForwardAnimation)
+                    Positioned.fill(
+                      child: _buildScreenshotContainer(_screenshotData!),
+                    ),
+                  Positioned.fill(
+                    child: SlideTransition(
+                      position: _isAnimating && !_isForwardAnimation
+                          ? _slideAnimation
+                          : const AlwaysStoppedAnimation(Offset.zero),
+                      child: _buildWebView(),
+                    ),
+                  ),
+                  if (_isAnimating && _isForwardAnimation)
+                    Positioned.fill(
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildScreenshotContainer(_screenshotData!),
+                      ),
+                    ),
+                ],
+              )
+            : _buildWebView(),
       ),
     );
   }
