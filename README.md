@@ -61,11 +61,12 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
 
 ## 🚀 Quick Start
 
-Android Users: Visit the [Releases page](https://github.com/MilkFeng/lumina/releases) to download the latest `.apk` installation package
+Visit the [Releases page](https://github.com/MilkFeng/lumina/releases) to download the latest version.
 
-iOS Users: Lumina is not yet available on the App Store. iOS users currently need to install via:
-- Build from source code (requires macOS and Xcode)
-- Wait for future App Store release
+- **Android Users**: Download the `.apk` file and install it directly.
+- **iOS Users**: Download the `.ipa` file and install it via **sideloading**.
+    - **Recommended Tools**: [AltStore](https://altstore.io/) (Recommended), [Sideloadly](https://sideloadly.io/), or [TrollStore](https://github.com/opa334/TrollStore) (for supported iOS versions).
+    - *Note: If using a free Apple ID, you will typically need to refresh the app signature every 7 days.*
 
 ### Getting Started
 

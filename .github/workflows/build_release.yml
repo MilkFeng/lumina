@@ -1,4 +1,4 @@
-name: Build APKs & AAB
+name: Build And Release App
 
 on:
   push:
@@ -10,10 +10,10 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build APKs & AAB
+  build-android:
+    name: Build Android APKs & AAB
     runs-on: ubuntu-latest
-
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +28,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.38.9'
           cache: true
 
       - name: Decode Keystore
@@ -52,7 +51,7 @@ jobs:
           NEW_NAME="lumina-${{ github.ref_name }}-bundle-release.aab"
           
           mv build/app/outputs/bundle/release/app-release.aab build/outputs/$NEW_NAME
-          echo "Moved AAB to build/outputs/$NEW_NAME"
+          echo "Generated $NEW_NAME"
 
       - name: Build Universal APK
         run: |
@@ -61,7 +60,7 @@ jobs:
           NEW_NAME="lumina-${{ github.ref_name }}-universal-release.apk"
           
           mv build/app/outputs/flutter-apk/app-release.apk build/outputs/$NEW_NAME
-          echo "Moved Universal APK to build/outputs/$NEW_NAME"
+          echo "Generated $NEW_NAME"
 
       - name: Build Split APKs
         run: |
@@ -75,14 +74,69 @@ jobs:
             NEW_NAME="lumina-${{ github.ref_name }}-$abi-release.apk"
             
             mv "$file" "${{ github.workspace }}/build/outputs/$NEW_NAME"
-            echo "Renamed $file to $NEW_NAME"
+            echo "Generated $NEW_NAME"
           done
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-artifacts
+          path: build/outputs/*
+
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build IPA (Unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package into IPA
+        run: |
+          mkdir Payload
+          mv build/ios/iphoneos/Runner.app Payload/
+          zip -r lumina-ios-unsigned.ipa Payload
+          echo "Generated lumina-ios-unsigned.ipa"
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-artifacts
+          path: lumina-ios-unsigned.ipa
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-ios, build-android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Download iOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-artifacts
+          path: artifacts
+          
+      - name: Download Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-artifacts
+          path: artifacts
 
       - name: Release to GitHub
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            build/outputs/*
+          files: artifacts/*
           generate_release_notes: true
           prerelease: false
