@@ -70,7 +70,11 @@ class ReaderRendererController {
   }
 
   Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
-    await webViewController?.updateTheme(surfaceColor, onSurfaceColor);
+    await webViewController?.updateTheme(
+      surfaceColor,
+      onSurfaceColor,
+      _rendererState!.padding,
+    );
   }
 }
 
@@ -129,8 +133,22 @@ class _ReaderRendererState extends State<ReaderRenderer>
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
 
-  double _webviewWidth = 0;
-  double _webviewHeight = 0;
+  EdgeInsets get padding {
+    var safePaddings = MediaQuery.paddingOf(context);
+    double topPadding = safePaddings.top;
+    double leftPadding = safePaddings.left;
+    double rightPadding = safePaddings.right;
+    double bottomPadding = safePaddings.bottom;
+
+    const padding = 16.0;
+
+    return EdgeInsets.fromLTRB(
+      padding + leftPadding,
+      padding + topPadding,
+      padding + rightPadding,
+      padding + bottomPadding,
+    );
+  }
 
   @override
   void initState() {
@@ -309,19 +327,10 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
-    EdgeInsets safePaddings = MediaQuery.paddingOf(context);
-    double topPadding = safePaddings.top;
-    double leftPadding = safePaddings.left;
-
-    const padding = 16.0;
-
-    var localX = details.localPosition.dx - padding - leftPadding;
-    var localY = details.localPosition.dy - padding - topPadding;
-
-    localX = localX.clamp(0, _webviewWidth);
-    localY = localY.clamp(0, _webviewHeight);
-
-    await _webViewController.checkElementAt(localX, localY);
+    await _webViewController.checkElementAt(
+      details.localPosition.dx,
+      details.localPosition.dy,
+    );
   }
 
   @override
@@ -374,12 +383,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
         ],
         color: Theme.of(context).colorScheme.surface,
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Container(alignment: AlignmentGeometry.center, child: child),
-        ),
-      ),
+      child: Container(alignment: AlignmentGeometry.center, child: child),
     );
   }
 
@@ -390,9 +394,6 @@ class _ReaderRendererState extends State<ReaderRenderer>
           final viewWidth = constraints.maxWidth;
           final viewHeight = constraints.maxHeight;
           final maskColor = Theme.of(context).colorScheme.surface;
-
-          _webviewWidth = viewWidth;
-          _webviewHeight = viewHeight;
 
           return ReaderWebView(
             key: _webViewKey,
@@ -405,6 +406,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
             onSurfaceColor: Theme.of(context).brightness == Brightness.dark
                 ? Theme.of(context).colorScheme.onSurface
                 : null,
+            padding: padding,
             isLoading: widget.isLoading,
             controller: _webViewController,
             callbacks: ReaderWebViewCallbacks(

@@ -61,8 +61,12 @@ class ReaderWebViewController {
     return await _webViewState?.takeScreenshot();
   }
 
-  Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
-    await _webViewState?.updateTheme(surfaceColor, onSurfaceColor);
+  Future<void> updateTheme(
+    Color surfaceColor,
+    Color? onSurfaceColor,
+    EdgeInsets padding,
+  ) async {
+    await _webViewState?.updateTheme(surfaceColor, onSurfaceColor, padding);
   }
 }
 
@@ -119,6 +123,7 @@ class ReaderWebView extends StatefulWidget {
   final double height;
   final Color surfaceColor;
   final Color? onSurfaceColor;
+  final EdgeInsets padding;
   final bool isLoading;
   final ReaderWebViewController controller;
   final VoidCallback? onWebViewCreated;
@@ -131,6 +136,7 @@ class ReaderWebView extends StatefulWidget {
     required this.callbacks,
     required this.width,
     required this.height,
+    required this.padding,
     required this.surfaceColor,
     required this.onSurfaceColor,
     required this.isLoading,
@@ -201,6 +207,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
               data: generateSkeletonHtml(
                 widget.surfaceColor,
                 widget.onSurfaceColor,
+                widget.padding,
               ),
               baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
             ),
@@ -246,9 +253,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
             onLoadStop: (controller, url) async {
               await controller.evaluateJavascript(
                 source: generateControllerJs(
-                  widget.width,
-                  widget.height,
+                  widget.width - widget.padding.horizontal,
+                  widget.height - widget.padding.vertical,
                   widget.onSurfaceColor,
+                  widget.padding.top,
+                  widget.padding.left,
                 ),
               );
               widget.callbacks.onInitialized();
@@ -366,8 +375,16 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
-  Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
-    final sketelonCss = generateSkeletonStyle(surfaceColor, onSurfaceColor);
+  Future<void> updateTheme(
+    Color surfaceColor,
+    Color? onSurfaceColor,
+    EdgeInsets padding,
+  ) async {
+    final sketelonCss = generateSkeletonStyle(
+      surfaceColor,
+      onSurfaceColor,
+      padding,
+    );
 
     final iframeCss = generatePaginationCss(
       widget.width,
@@ -376,5 +393,14 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     await widget.controller.replaceStyles(sketelonCss, iframeCss);
+
+    final js = generateControllerJs(
+      widget.width - padding.horizontal,
+      widget.height - padding.vertical,
+      onSurfaceColor,
+      padding.top,
+      padding.left,
+    );
+    await widget.controller.evaluateJavascript(js);
   }
 }

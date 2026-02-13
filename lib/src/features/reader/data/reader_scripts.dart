@@ -1,10 +1,14 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
 
 String colorToHex(Color color) {
   return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
 }
 
-String generateSkeletonStyle(Color backgroundColor, Color? defaultTextColor) {
+String generateSkeletonStyle(
+  Color backgroundColor,
+  Color? defaultTextColor,
+  EdgeInsets padding,
+) {
   return '''
 /* Full viewport, no margins */
 html, body {
@@ -15,6 +19,10 @@ html, body {
   overflow: hidden;
   background-color: ${colorToHex(backgroundColor)} !important;
   ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
+}
+
+body {
+  padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px !important;
 }
 
 /* Container for iframes */
@@ -59,7 +67,11 @@ iframe {
 }
 
 /// Skeleton HTML containing 3 iframes for prev/curr/next chapters
-String generateSkeletonHtml(Color backgroundColor, Color? defaultTextColor) {
+String generateSkeletonHtml(
+  Color backgroundColor,
+  Color? defaultTextColor,
+  EdgeInsets padding,
+) {
   return '''
 <!DOCTYPE html>
 <html>
@@ -67,7 +79,7 @@ String generateSkeletonHtml(Color backgroundColor, Color? defaultTextColor) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style id="skeleton-style">
-    ${generateSkeletonStyle(backgroundColor, defaultTextColor)}
+    ${generateSkeletonStyle(backgroundColor, defaultTextColor, padding)}
   </style>
 </head>
 <body>
@@ -205,6 +217,8 @@ String generateControllerJs(
   double viewWidth,
   double viewHeight,
   Color? defaultTextColor,
+  double paddingTop,
+  double paddingLeft,
 ) {
   final safeWidth = viewWidth.floor();
 
@@ -647,6 +661,9 @@ function replaceStyles(skeletonCss, iframeCss) {
 }
 
 function checkElementAt(x, y) {
+  x = x - $paddingLeft;
+  y = y - $paddingTop;
+
   const iframe = document.getElementById('frame-curr');
   if (!iframe || !iframe.contentDocument) return;
 
