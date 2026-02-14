@@ -4,12 +4,7 @@ String colorToHex(Color color) {
   return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
 }
 
-String generateSkeletonStyle(
-  Color backgroundColor,
-  Color? defaultTextColor,
-  EdgeInsets padding,
-) {
-  return '''
+const _skeletonCss = '''
 /* Full viewport, no margins */
 html, body {
   margin: 0;
@@ -17,17 +12,16 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: ${colorToHex(backgroundColor)} !important;
-  ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
+  background-color: var(--background-color, #FFFFFF) !important;
 }
 
 /* Container for iframes */
 #frame-container {
   position: absolute;
-  top: ${padding.top}px;
-  left: ${padding.left}px;
-  right: ${padding.right}px;
-  bottom: ${padding.bottom}px;
+  top: var(--padding-top, 0px);
+  left: var(--padding-left, 0px);
+  right: var(--padding-right, 0px);
+  bottom: var(--padding-bottom, 0px);
   overflow: hidden;
 }
 
@@ -62,217 +56,10 @@ iframe {
   pointer-events: none;
 }
 ''';
-}
-
-/// Skeleton HTML containing 3 iframes for prev/curr/next chapters
-String generateSkeletonHtml(
-  double viewWidth,
-  double viewHeight,
-  Color backgroundColor,
-  Color? defaultTextColor,
-  EdgeInsets padding,
-) {
-  return '''
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <style id="skeleton-style">
-    ${generateSkeletonStyle(backgroundColor, defaultTextColor, padding)}
-  </style>
-  <script id="skeleton-script-0">
-    ${generateControllerJs(viewWidth, viewHeight, defaultTextColor, padding.top, padding.left)}
-  </script>
-  <script id="skeleton-const-script">
-    let PAGINATION_CSS = `${generatePaginationCss(viewWidth, viewHeight, defaultTextColor)}`;
-    
-    let LAST_SCRIPT_ID = 'skeleton-script-0';
-
-    function replaceController(newJs) {
-      const scriptEl = document.getElementById(LAST_SCRIPT_ID);
-      if (scriptEl) {
-        scriptEl.innerHTML = '';
-        document.head.removeChild(scriptEl);
-      }
-      LAST_SCRIPT_ID = 'skeleton-script-' + Date.now();
-      const newScript = document.createElement('script');
-      newScript.id = LAST_SCRIPT_ID;
-      newScript.innerHTML = newJs;
-      document.head.appendChild(newScript);
-    }
-
-    function replaceStyles(skeletonCss, iframeCss) {
-      const styleEl = document.getElementById('skeleton-style');
-      if (styleEl) {
-        styleEl.innerHTML = skeletonCss;
-      }
-      const iframes = document.getElementsByTagName('iframe');
-      for (let i = 0; i < iframes.length; i++) {
-        const iframe = iframes[i];
-        if (iframe && iframe.contentDocument) {
-          const scrollLeft = iframe.contentDocument.body.scrollLeft;
-
-          const doc = iframe.contentDocument;
-          const style = doc.getElementById('injected-pagination-style');
-          if (style) {
-            style.innerHTML = iframeCss;
-          }
-
-          // Restore scroll position after style change
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
-            }, 200);
-          });
-        }
-      }
-
-      PAGINATION_CSS = iframeCss;
-    }
-  </script>
-</head>
-<body>
-  <div id="frame-container">
-    <iframe id="frame-prev" scrolling="no"></iframe>
-    <iframe id="frame-curr" scrolling="no"></iframe>
-    <iframe id="frame-next" scrolling="no"></iframe>
-  </div>
-</body>
-</html>
-''';
-}
-
-/// CSS to inject into each iframe for horizontal pagination
-String generatePaginationCss(
-  double viewWidth,
-  double viewHeight,
-  Color? defaultTextColor,
-) {
-  final safeWidth = viewWidth.floor();
-  final safeHeight = viewHeight.floor();
-
-  return '''
-/* Reset and base styles */
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: ${safeWidth}px !important;
-  height: ${safeHeight}px !important;
-  background-color: transparent !important;
-  touch-action: none !important;
-  overflow-y: hidden !important;
-
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-
-  font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
-  line-height: 1.6;
-  text-align: justify;
-}
-
-/* CRITICAL: Disable all scrolling vertically - horizontal only */
-html {
-  overflow-y: hidden !important;
-  overflow-x: scroll !important;
-}
-
-body {
-  overflow-y: hidden !important;
-  overflow-x: scroll !important;
-}
-
-/* Horizontal columnization for pagination */
-body {
-  column-width: ${safeWidth}px !important;
-  column-gap: 128px !important;
-  column-fill: auto !important;
-  height: ${safeHeight}px !important;
-}
-
-/* Fit within viewport */
-body * {
-  max-width: ${safeWidth - 5}px !important;
-
-  orphans: 2;
-  widows: 2;
-}
-
-/* Hide scrollbars completely */
-::-webkit-scrollbar, 
-::-webkit-scrollbar:horizontal, 
-::-webkit-scrollbar:vertical {
-  -webkit-appearance: none !important;
-  background-color: transparent !important;
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-}
-
-body::-webkit-scrollbar, 
-body::-webkit-scrollbar:horizontal, 
-body::-webkit-scrollbar:vertical {
-  -webkit-appearance: none !important;
-  background-color: transparent !important;
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-}
-
-img, svg, video {
-  max-height: ${safeHeight - 5}px !important;
-  object-fit: contain;
-  height: auto !important;
-
-  break-inside: avoid;
-  page-break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-}
-
-figure {
-  margin: 0;
-  padding: 0;
-  break-inside: avoid;
-}
-
-a {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-a:visited {
-  color: currentColor !important;
-  text-decoration: inherit !important;
-  border-bottom: inherit !important;
-  opacity: 1 !important;
-}
-
-p {
-  margin-bottom: 1.0em;
-}
-
-p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
-  ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
-}
-''';
-}
 
 /// JavaScript controller for managing the iframe carousel
-String generateControllerJs(
-  double viewWidth,
-  double viewHeight,
-  Color? defaultTextColor,
-  double paddingTop,
-  double paddingLeft,
-) {
-  final safeWidth = viewWidth.floor();
-
-  return '''
+const _controllerJS =
+    '''
 // Global state
 // framePages stores the page count for each DOM ID
 let framePages = {
@@ -288,7 +75,7 @@ let tocAnchors = {
 };
 
 function getWidth(iframe) {
-  return $safeWidth;
+  return SAFE_WIDTH;
 }
 
 // Load a chapter into a specific iframe slot
@@ -472,12 +259,28 @@ function onFrameLoad(iframe) {
   if (!iframe || !iframe.contentDocument) return;
   
   const doc = iframe.contentDocument;
+
+  // Inject CSS variables for theming
+  // Using skeleton-variable-style content to ensure variables are available before pagination CSS
+  const existingStyle = document.getElementById('skeleton-variable-style');
+  if (existingStyle) {
+    const style = existingStyle.cloneNode(true);
+    style.id = 'injected-variable-style';
+    doc.head.appendChild(style);
+  }
   
   // Inject CSS
   const style = doc.createElement('style');
   style.id = 'injected-pagination-style';
-  style.innerHTML = PAGINATION_CSS;
+  style.innerHTML = `$_paginationCss`;
   doc.head.appendChild(style);
+
+  // Update body class list
+  if (DEFAULT_TEXT_COLOR) {
+    doc.body.classList.add('override-color');
+  } else {
+    doc.body.classList.remove('override-color');
+  }
 
   // Polyfill for break-before if not supported
   polyfillCss(doc);
@@ -675,8 +478,8 @@ function jumpToLastPageOfFrame(slot) {
 }
 
 function checkElementAt(x, y) {
-  x = x - $paddingLeft;
-  y = y - $paddingTop;
+  x = x - PADDING.left;
+  y = y - PADDING.top;
 
   const iframe = document.getElementById('frame-curr');
   if (!iframe || !iframe.contentDocument) return;
@@ -702,5 +505,236 @@ function checkElementAt(x, y) {
     el = el.parentElement;
   }
 }
+''';
+
+String _generateVariableStyle(
+  double viewWidth,
+  double viewHeight,
+  Color backgroundColor,
+  Color? defaultTextColor,
+  EdgeInsets padding,
+) {
+  final safeWidth = viewWidth.floor();
+  final safeHeight = viewHeight.floor();
+
+  return '''
+    :root {
+      --background-color: ${colorToHex(backgroundColor)};
+      ${defaultTextColor != null ? '--default-text-color: ${colorToHex(defaultTextColor)};' : ''}
+      --safe-width: ${safeWidth}px;
+      --safe-height: ${safeHeight}px;
+      --padding-top: ${padding.top}px;
+      --padding-left: ${padding.left}px;
+      --padding-right: ${padding.right}px;
+      --padding-bottom: ${padding.bottom}px;
+    }
   ''';
 }
+
+/// Skeleton HTML containing 3 iframes for prev/curr/next chapters
+String generateSkeletonHtml(
+  double viewWidth,
+  double viewHeight,
+  Color backgroundColor,
+  Color? defaultTextColor,
+  EdgeInsets padding,
+) {
+  final safeWidth = viewWidth.floor();
+
+  final variableStyle = _generateVariableStyle(
+    viewWidth,
+    viewHeight,
+    backgroundColor,
+    defaultTextColor,
+    padding,
+  );
+
+  return '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style id="skeleton-style">
+    $_skeletonCss
+  </style>
+  <style id="skeleton-variable-style">
+    $variableStyle
+  </style>
+  <script id="skeleton-script">
+    $_controllerJS
+  </script>
+  <script id="skeleton-variable-script">
+    let SAFE_WIDTH = $safeWidth;
+    let PADDING = { top: ${padding.top}, left: ${padding.left}, right: ${padding.right}, bottom: ${padding.bottom} };
+
+    let BACKGROUND_COLOR = '${colorToHex(backgroundColor)}';
+    let DEFAULT_TEXT_COLOR = ${defaultTextColor != null ? "'${colorToHex(defaultTextColor)}'" : 'null'};
+
+    function updateCSSVariables(root, body) {
+      root.style.setProperty('--safe-width', SAFE_WIDTH + 'px');
+      root.style.setProperty('--padding-top', PADDING.top + 'px');
+      root.style.setProperty('--padding-left', PADDING.left + 'px');
+      root.style.setProperty('--padding-right', PADDING.right + 'px');
+      root.style.setProperty('--padding-bottom', PADDING.bottom + 'px');
+      root.style.setProperty('--background-color', BACKGROUND_COLOR);
+      if (DEFAULT_TEXT_COLOR) {
+        body.classList.add('override-color');
+        root.style.setProperty('--default-text-color', DEFAULT_TEXT_COLOR);
+      } else {
+        body.classList.remove('override-color');
+        root.style.removeProperty('--default-text-color');
+      }
+    }
+
+    function updateTheme(viewWidth, viewHeight, paddingTop, paddingLeft, paddingRight, paddingBottom, backgroundColor, defaultTextColor) {
+      // Update JS variables
+      SAFE_WIDTH = Math.floor(viewWidth);
+      PADDING = { top: paddingTop, left: paddingLeft, right: paddingRight, bottom: paddingBottom };
+      BACKGROUND_COLOR = backgroundColor;
+      DEFAULT_TEXT_COLOR = defaultTextColor;
+
+      // Update CSS variables
+      updateCSSVariables(document.documentElement, document.body);
+
+      // Update CSS variables inside iframes
+      const iframes = document.getElementsByTagName('iframe');
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        if (iframe && iframe.contentDocument) {
+          const doc = iframe.contentDocument;
+          const scrollLeft = doc.body.scrollLeft;
+          updateCSSVariables(doc.documentElement, doc.body);
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+            }, 200);
+          });
+        }
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="frame-container">
+    <iframe id="frame-prev" scrolling="no"></iframe>
+    <iframe id="frame-curr" scrolling="no"></iframe>
+    <iframe id="frame-next" scrolling="no"></iframe>
+  </div>
+</body>
+</html>
+''';
+}
+
+/// CSS to inject into each iframe for horizontal pagination
+
+const _paginationCss = '''
+/* Reset and base styles */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: var(--safe-width) !important;
+  height: var(--safe-height) !important;
+  background-color: transparent !important;
+  touch-action: none !important;
+  overflow-y: hidden !important;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+
+  font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
+  line-height: 1.6;
+  text-align: justify;
+}
+
+/* CRITICAL: Disable all scrolling vertically - horizontal only */
+html {
+  overflow-y: hidden !important;
+  overflow-x: scroll !important;
+}
+
+body {
+  overflow-y: hidden !important;
+  overflow-x: scroll !important;
+}
+
+/* Horizontal columnization for pagination */
+body {
+  column-width: var(--safe-width) !important;
+  column-gap: 128px !important;
+  column-fill: auto !important;
+  height: var(--safe-height) !important;
+}
+
+/* Fit within viewport */
+body * {
+  max-width: var(--safe-width) !important;
+
+  orphans: 2;
+  widows: 2;
+}
+
+/* Hide scrollbars completely */
+::-webkit-scrollbar, 
+::-webkit-scrollbar:horizontal, 
+::-webkit-scrollbar:vertical {
+  -webkit-appearance: none !important;
+  background-color: transparent !important;
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+body::-webkit-scrollbar, 
+body::-webkit-scrollbar:horizontal, 
+body::-webkit-scrollbar:vertical {
+  -webkit-appearance: none !important;
+  background-color: transparent !important;
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+img, svg, video {
+  max-height: var(--safe-height) !important;
+  object-fit: contain;
+  height: auto !important;
+
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+figure {
+  margin: 0;
+  padding: 0;
+  break-inside: avoid;
+}
+
+a {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+a:visited {
+  color: currentColor !important;
+  text-decoration: inherit !important;
+  border-bottom: inherit !important;
+  opacity: 1 !important;
+}
+
+p {
+  margin-bottom: 1.0em;
+}
+
+body.override-color {
+  p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
+    color: var(--default-text-color) !important;
+  }
+}
+''';

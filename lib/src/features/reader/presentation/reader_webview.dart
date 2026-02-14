@@ -20,10 +20,6 @@ class ReaderWebViewController {
     _webViewState = state;
   }
 
-  Future<void> evaluateJavascript(String source) async {
-    await _webViewState?._evaluateJavascript(source);
-  }
-
   // JavaScript wrapper methods
   Future<void> jumpToLastPageOfFrame(String frame) async {
     await _webViewState?._jumpToLastPageOfFrame(frame);
@@ -47,14 +43,6 @@ class ReaderWebViewController {
 
   Future<void> restoreScrollPosition(double ratio) async {
     await _webViewState?._restoreScrollPosition(ratio);
-  }
-
-  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await _webViewState?._replaceStyles(skeletonCss, iframeCss);
-  }
-
-  Future<void> replaceController(String newJs) async {
-    await _webViewState?._replaceController(newJs);
   }
 
   Future<void> checkElementAt(double x, double y) async {
@@ -180,14 +168,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   Future<void> _restoreScrollPosition(double ratio) async {
     await _evaluateJavascript('restoreScrollPosition($ratio)');
-  }
-
-  Future<void> _replaceStyles(String skeletonCss, String iframeCss) async {
-    await _evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
-  }
-
-  Future<void> _replaceController(String newJs) async {
-    await _evaluateJavascript("replaceController(`$newJs`)");
   }
 
   Future<void> _checkElementAt(double x, double y) async {
@@ -356,23 +336,16 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - padding.horizontal;
     final height = MediaQuery.of(context).size.height - padding.vertical;
 
-    final sketelonCss = generateSkeletonStyle(
-      surfaceColor,
-      onSurfaceColor,
-      padding,
+    await _evaluateJavascript(
+      """updateTheme(
+        $width,
+        $height,
+        ${padding.top},
+        ${padding.left},
+        ${padding.right},
+        ${padding.bottom},
+        '${colorToHex(surfaceColor)}',
+        ${onSurfaceColor != null ? "'${colorToHex(onSurfaceColor)}'" : 'null'})""",
     );
-
-    final iframeCss = generatePaginationCss(width, height, onSurfaceColor);
-
-    final js = generateControllerJs(
-      width,
-      height,
-      onSurfaceColor,
-      padding.top,
-      padding.left,
-    );
-
-    await widget.controller.replaceStyles(sketelonCss, iframeCss);
-    await widget.controller.replaceController(js);
   }
 }
