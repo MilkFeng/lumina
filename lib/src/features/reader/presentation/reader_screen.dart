@@ -476,12 +476,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   /// Handle image long-press event from WebView
-  void _handleImageLongPress(String imageUrl) {
+  void _handleImageLongPress(String imageUrl, Rect rect) {
     if (!_bookSession.isLoaded) return;
 
     ImageViewer.handleImageLongPress(
       context,
       imageUrl: imageUrl,
+      rect: rect,
       webViewHandler: _webViewHandler,
       epubPath: _bookSession.book!.filePath!,
       fileHash: widget.fileHash,

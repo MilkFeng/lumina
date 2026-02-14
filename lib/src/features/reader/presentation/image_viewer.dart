@@ -5,13 +5,13 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../data/epub_webview_handler.dart';
 import '../../../core/services/toast_service.dart';
 
-/// A full-screen image viewer with zoom capabilities
 class ImageViewer extends StatefulWidget {
   final String imageUrl;
   final EpubWebViewHandler webViewHandler;
   final String epubPath;
   final String fileHash;
   final VoidCallback onClose;
+  final Rect sourceRect;
 
   const ImageViewer({
     super.key,
@@ -20,25 +20,25 @@ class ImageViewer extends StatefulWidget {
     required this.epubPath,
     required this.fileHash,
     required this.onClose,
+    required this.sourceRect,
   });
 
   @override
   State<ImageViewer> createState() => _ImageViewerState();
 
-  /// Static method to handle image long-press event
   static void handleImageLongPress(
     BuildContext context, {
     required String imageUrl,
+    required Rect rect,
     required EpubWebViewHandler webViewHandler,
     required String epubPath,
     required String fileHash,
   }) {
-    // Provide haptic feedback
-    HapticFeedback.mediumImpact();
+    HapticFeedback.lightImpact();
 
-    // Show the image viewer as an overlay
     Navigator.of(context).push(
       PageRouteBuilder(
+        settings: const RouteSettings(name: 'ImageViewer'),
         opaque: false,
         barrierDismissible: true,
         barrierColor: Colors.transparent,
@@ -49,10 +49,11 @@ class ImageViewer extends StatefulWidget {
             epubPath: epubPath,
             fileHash: fileHash,
             onClose: () => Navigator.of(context).pop(),
+            sourceRect: rect,
           );
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
+          return child;
         },
       ),
     );
@@ -61,36 +62,70 @@ class ImageViewer extends StatefulWidget {
 
 class _ImageViewerState extends State<ImageViewer>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _opacityController;
-  late Animation<double> _opacityAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _curve;
+
   Uint8List? _imageData;
+  double? _imageAspectRatio;
   bool _isLoading = true;
+  bool _isClosing = false;
+
+  final TransformationController _transformController =
+      TransformationController();
+  Rect? _dynamicCloseRect;
 
   @override
   void initState() {
     super.initState();
-    _opacityController = AnimationController(
+
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 180),
     );
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _opacityController, curve: Curves.easeIn),
-    );
+
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart);
+    _controller.forward();
+
     _loadImage();
   }
 
   @override
   void dispose() {
-    _opacityController.dispose();
+    _controller.dispose();
+    _transformController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleClose() async {
+    if (_isClosing) return;
+
+    final Size screenSize = MediaQuery.of(context).size;
+    final Matrix4 matrix = _transformController.value;
+    final double scale = matrix.getMaxScaleOnAxis();
+    final translation = matrix.getTranslation();
+
+    setState(() {
+      _isClosing = true;
+      _dynamicCloseRect = Rect.fromLTWH(
+        translation.x,
+        translation.y,
+        screenSize.width * scale,
+        screenSize.height * scale,
+      );
+      _transformController.value = Matrix4.identity();
+    });
+
+    await _controller.reverse();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    if (mounted) {
+      widget.onClose();
+    }
   }
 
   Future<void> _loadImage() async {
     try {
-      // Parse the image URL and fetch the image data
       final uri = WebUri(widget.imageUrl);
-
-      // Use the WebView handler to fetch the image
       final response = await widget.webViewHandler.handleRequest(
         epubPath: widget.epubPath,
         fileHash: widget.fileHash,
@@ -98,82 +133,150 @@ class _ImageViewerState extends State<ImageViewer>
       );
 
       if (response != null && response.data != null) {
-        setState(() {
-          _imageData = response.data;
-          _isLoading = false;
-        });
-        // Trigger fade-in animation
-        _opacityController.reset();
-        _opacityController.forward();
+        final bytes = response.data!;
+
+        final image = await decodeImageFromList(bytes);
+        final aspectRatio = image.width / image.height;
+        image.dispose();
+
+        if (mounted) {
+          setState(() {
+            _imageData = bytes;
+            _imageAspectRatio = aspectRatio;
+            _isLoading = false;
+          });
+        }
       } else {
-        // Failed to load image
         if (mounted) {
           ToastService.showError('Failed to load image');
-          widget.onClose();
+          await _handleClose();
         }
       }
     } catch (e) {
       debugPrint('Error loading zoomed image: $e');
       if (mounted) {
         ToastService.showError('Error loading image');
-        widget.onClose();
+        await _handleClose();
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return GestureDetector(
-        onTap: widget.onClose,
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.9),
-          child: const Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
+    final Size screenSize = MediaQuery.of(context).size;
+    final Rect fullscreenRect = Rect.fromLTWH(
+      0,
+      0,
+      screenSize.width,
+      screenSize.height,
+    );
+    final Rect targetEndRect = _dynamicCloseRect ?? fullscreenRect;
 
-    return GestureDetector(
-      onTap: widget.onClose,
-      child: Container(
-        color: Colors.black.withValues(alpha: 0.9),
-        child: Stack(
-          children: [
-            // Image viewer
-            if (_imageData != null)
-              Positioned.fill(
-                child: FadeTransition(
-                  opacity: _opacityAnimation,
-                  child: InteractiveViewer(
-                    minScale: 0.5,
-                    maxScale: 4.0,
-                    child: Center(
-                      child: Container(
-                        color: Colors.white,
-                        child: Image.memory(_imageData!, fit: BoxFit.contain),
-                      ),
-                    ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleClose();
+      },
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final double t = _curve.value;
+          final Rect currentRect = Rect.lerp(
+            widget.sourceRect,
+            targetEndRect,
+            t,
+          )!;
+
+          final bool isExpanded = t == 1.0;
+          final bool canZoom = isExpanded && !_isLoading && _imageData != null;
+
+          final double bgOpacity = 0.9 * t;
+
+          return Stack(
+            children: [
+              GestureDetector(
+                onTap: _handleClose,
+                child: Container(
+                  color: Colors.black.withValues(alpha: bgOpacity),
+                ),
+              ),
+
+              Positioned.fromRect(
+                rect: currentRect,
+                child: GestureDetector(
+                  onTap: _handleClose,
+                  child: Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: const BoxDecoration(color: Colors.transparent),
+                    child: canZoom
+                        ? _buildInteractiveViewer()
+                        : Opacity(
+                            opacity: bgOpacity,
+                            child: _buildStaticImage(),
+                          ),
                   ),
                 ),
               ),
-
-            // Close button
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              right: 16,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.close_outlined,
-                  color: Colors.white,
-                  size: 32,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 12)],
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 16,
+                right: 16,
+                child: Opacity(
+                  opacity: t,
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.close_outlined,
+                      color: Colors.white,
+                      size: 32,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 12)],
+                    ),
+                    onPressed: _handleClose,
+                  ),
                 ),
-                onPressed: widget.onClose,
               ),
-            ),
-          ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Builds the common image widget.
+  Widget _buildImageView(Uint8List imageData, double t) {
+    if (_imageAspectRatio == null) {
+      return const SizedBox();
+    }
+    return Center(
+      child: AspectRatio(
+        aspectRatio: _imageAspectRatio!,
+        child: Container(
+          color: Colors.white.withValues(alpha: t),
+          child: Image.memory(
+            imageData,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: double.infinity,
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInteractiveViewer() {
+    return InteractiveViewer(
+      transformationController: _transformController,
+      minScale: 0.5,
+      maxScale: 4.0,
+      child: Center(child: _buildImageView(_imageData!, _controller.value)),
+    );
+  }
+
+  Widget _buildStaticImage() {
+    if (_isLoading) {
+      return const SizedBox();
+    }
+    return SizedBox.expand(
+      child: _buildImageView(_imageData!, _controller.value),
     );
   }
 }

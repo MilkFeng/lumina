@@ -658,7 +658,15 @@ function checkElementAt(x, y) {
 
   while (el && el !== doc.body) {
     if (el.tagName.toLowerCase() === 'img') {
-      window.flutter_inappwebview.callHandler('onImageLongPress', el.src);
+      let rect = el.getBoundingClientRect();
+      let iframeRect = iframe.getBoundingClientRect();
+      rect = {
+        left: rect.left + iframeRect.left,
+        top: rect.top + iframeRect.top,
+        width: rect.width,
+        height: rect.height
+      };
+      window.flutter_inappwebview.callHandler('onImageLongPress', el.src, rect.left, rect.top, rect.width, rect.height);
       return;
     }
     el = el.parentElement;

@@ -93,7 +93,7 @@ class ReaderRenderer extends StatefulWidget {
   final ValueChanged<int> onPageChanged;
   final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
-  final ValueChanged<String> onImageLongPress;
+  final Function(String imageUrl, Rect rect) onImageLongPress;
 
   const ReaderRenderer({
     super.key,

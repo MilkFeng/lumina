@@ -95,7 +95,7 @@ class ReaderWebViewCallbacks {
   final Function(int pageIndex) onPageChanged;
   final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
-  final Function(String imageUrl) onImageLongPress;
+  final Function(String imageUrl, Rect rect) onImageLongPress;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -203,15 +203,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                 baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
               ),
               initialSettings: defaultSettings,
-              onLongPressHitTestResult: (controller, hitTestResult) {
-                if (hitTestResult.type ==
-                    InAppWebViewHitTestResultType.IMAGE_TYPE) {
-                  final imageUrl = hitTestResult.extra;
-                  if (imageUrl != null && imageUrl.isNotEmpty) {
-                    widget.callbacks.onImageLongPress(imageUrl);
-                  }
-                }
-              },
               shouldInterceptRequest: (controller, request) async {
                 return await widget.webViewHandler.handleRequest(
                   epubPath: widget.bookSession.book!.filePath!,
@@ -314,9 +305,15 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     controller.addJavaScriptHandler(
       handlerName: 'onImageLongPress',
       callback: (args) {
-        if (args.isNotEmpty && args[0] is String) {
+        if (args.length >= 5 && args[0] is String) {
           final imageUrl = args[0] as String;
-          widget.callbacks.onImageLongPress(imageUrl);
+          final rect = Rect.fromLTWH(
+            (args[1] as num).toDouble(),
+            (args[2] as num).toDouble(),
+            (args[3] as num).toDouble(),
+            (args[4] as num).toDouble(),
+          );
+          widget.callbacks.onImageLongPress(imageUrl, rect);
         }
       },
     );
