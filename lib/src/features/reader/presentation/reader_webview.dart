@@ -21,44 +21,44 @@ class ReaderWebViewController {
   }
 
   Future<void> evaluateJavascript(String source) async {
-    await _webViewState?.evaluateJavascript(source);
+    await _webViewState?._evaluateJavascript(source);
   }
 
   // JavaScript wrapper methods
   Future<void> jumpToLastPageOfFrame(String frame) async {
-    await _webViewState?.jumpToLastPageOfFrame(frame);
+    await _webViewState?._jumpToLastPageOfFrame(frame);
   }
 
   Future<void> cycleFrames(String direction) async {
-    await _webViewState?.cycleFrames(direction);
+    await _webViewState?._cycleFrames(direction);
   }
 
   Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await _webViewState?.jumpToPageFor(frame, pageIndex);
+    await _webViewState?._jumpToPageFor(frame, pageIndex);
   }
 
   Future<void> loadFrame(String frame, String url, String anchors) async {
-    await _webViewState?.loadFrame(frame, url, anchors);
+    await _webViewState?._loadFrame(frame, url, anchors);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
-    await _webViewState?.jumpToPage(pageIndex);
+    await _webViewState?._jumpToPage(pageIndex);
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
-    await _webViewState?.restoreScrollPosition(ratio);
+    await _webViewState?._restoreScrollPosition(ratio);
   }
 
   Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await _webViewState?.replaceStyles(skeletonCss, iframeCss);
+    await _webViewState?._replaceStyles(skeletonCss, iframeCss);
   }
 
   Future<void> checkElementAt(double x, double y) async {
-    await _webViewState?.checkElementAt(x, y);
+    await _webViewState?._checkElementAt(x, y);
   }
 
   Future<ui.Image?> takeScreenshot() async {
-    return await _webViewState?.takeScreenshot();
+    return await _webViewState?._takeScreenshot();
   }
 
   Future<void> updateTheme(
@@ -66,7 +66,7 @@ class ReaderWebViewController {
     Color? onSurfaceColor,
     EdgeInsets padding,
   ) async {
-    await _webViewState?.updateTheme(surfaceColor, onSurfaceColor, padding);
+    await _webViewState?._updateTheme(surfaceColor, onSurfaceColor, padding);
   }
 }
 
@@ -93,20 +93,14 @@ class ReaderWebViewCallbacks {
   final Function() onInitialized;
   final Function(int totalPages) onPageCountReady;
   final Function(int pageIndex) onPageChanged;
-  final VoidCallback onTapLeft;
-  final VoidCallback onTapRight;
-  final VoidCallback onTapCenter;
   final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
-  final Function(String imageUrl) onImageLongPress;
+  final Function(String imageUrl, Rect rect) onImageLongPress;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onTapLeft,
-    required this.onTapRight,
-    required this.onTapCenter,
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
@@ -156,40 +150,40 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   // JavaScript methods
-  Future<void> evaluateJavascript(String source) async {
+  Future<void> _evaluateJavascript(String source) async {
     await _controller?.evaluateJavascript(source: source);
   }
 
-  Future<void> jumpToLastPageOfFrame(String frame) async {
-    await evaluateJavascript("jumpToLastPageOfFrame('$frame')");
+  Future<void> _jumpToLastPageOfFrame(String frame) async {
+    await _evaluateJavascript("jumpToLastPageOfFrame('$frame')");
   }
 
-  Future<void> cycleFrames(String direction) async {
-    await evaluateJavascript("cycleFrames('$direction')");
+  Future<void> _cycleFrames(String direction) async {
+    await _evaluateJavascript("cycleFrames('$direction')");
   }
 
-  Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
+  Future<void> _jumpToPageFor(String frame, int pageIndex) async {
+    await _evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
   }
 
-  Future<void> loadFrame(String frame, String url, String anchors) async {
-    await evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
+  Future<void> _loadFrame(String frame, String url, String anchors) async {
+    await _evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
   }
 
-  Future<void> jumpToPage(int pageIndex) async {
-    await evaluateJavascript('jumpToPage($pageIndex)');
+  Future<void> _jumpToPage(int pageIndex) async {
+    await _evaluateJavascript('jumpToPage($pageIndex)');
   }
 
-  Future<void> restoreScrollPosition(double ratio) async {
-    await evaluateJavascript('restoreScrollPosition($ratio)');
+  Future<void> _restoreScrollPosition(double ratio) async {
+    await _evaluateJavascript('restoreScrollPosition($ratio)');
   }
 
-  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
+  Future<void> _replaceStyles(String skeletonCss, String iframeCss) async {
+    await _evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
   }
 
-  Future<void> checkElementAt(double x, double y) async {
-    await evaluateJavascript("checkElementAt($x, $y)");
+  Future<void> _checkElementAt(double x, double y) async {
+    await _evaluateJavascript("checkElementAt($x, $y)");
   }
 
   @override
@@ -198,68 +192,62 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       children: [
         RepaintBoundary(
           key: _repaintKey,
-          child: InAppWebView(
-            initialData: InAppWebViewInitialData(
-              data: generateSkeletonHtml(
-                widget.surfaceColor,
-                widget.onSurfaceColor,
-                widget.padding,
-              ),
-              baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
-            ),
-            initialSettings: defaultSettings,
-            onLongPressHitTestResult: (controller, hitTestResult) {
-              if (hitTestResult.type ==
-                  InAppWebViewHitTestResultType.IMAGE_TYPE) {
-                final imageUrl = hitTestResult.extra;
-                if (imageUrl != null && imageUrl.isNotEmpty) {
-                  widget.callbacks.onImageLongPress(imageUrl);
-                }
-              }
-            },
-            shouldInterceptRequest: (controller, request) async {
-              return await widget.webViewHandler.handleRequest(
-                epubPath: widget.bookSession.book!.filePath!,
-                fileHash: widget.fileHash,
-                requestUrl: request.url,
-              );
-            },
-            onLoadResourceWithCustomScheme: (controller, request) async {
-              return await widget.webViewHandler.handleRequestWithCustomScheme(
-                epubPath: widget.bookSession.book!.filePath!,
-                fileHash: widget.fileHash,
-                requestUrl: request.url,
-              );
-            },
-            shouldOverrideUrlLoading: (controller, navigationAction) async {
-              final uri = navigationAction.request.url!;
-              if (uri.scheme == 'data') {
-                return NavigationActionPolicy.ALLOW;
-              }
-              if (EpubWebViewHandler.isEpubRequest(uri)) {
-                return NavigationActionPolicy.ALLOW;
-              }
-              return NavigationActionPolicy.CANCEL;
-            },
-            onWebViewCreated: (controller) {
-              _controller = controller;
-              _setupJavaScriptHandlers(controller);
-              widget.onWebViewCreated?.call();
-            },
-            onLoadStop: (controller, url) async {
-              final width = MediaQuery.of(context).size.width;
-              final height = MediaQuery.of(context).size.height;
-              await controller.evaluateJavascript(
-                source: generateControllerJs(
-                  width - widget.padding.horizontal,
-                  height - widget.padding.vertical,
+          child: AbsorbPointer(
+            child: InAppWebView(
+              initialData: InAppWebViewInitialData(
+                data: generateSkeletonHtml(
+                  widget.surfaceColor,
                   widget.onSurfaceColor,
-                  widget.padding.top,
-                  widget.padding.left,
+                  widget.padding,
                 ),
-              );
-              widget.callbacks.onInitialized();
-            },
+                baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
+              ),
+              initialSettings: defaultSettings,
+              shouldInterceptRequest: (controller, request) async {
+                return await widget.webViewHandler.handleRequest(
+                  epubPath: widget.bookSession.book!.filePath!,
+                  fileHash: widget.fileHash,
+                  requestUrl: request.url,
+                );
+              },
+              onLoadResourceWithCustomScheme: (controller, request) async {
+                return await widget.webViewHandler
+                    .handleRequestWithCustomScheme(
+                      epubPath: widget.bookSession.book!.filePath!,
+                      fileHash: widget.fileHash,
+                      requestUrl: request.url,
+                    );
+              },
+              shouldOverrideUrlLoading: (controller, navigationAction) async {
+                final uri = navigationAction.request.url!;
+                if (uri.scheme == 'data') {
+                  return NavigationActionPolicy.ALLOW;
+                }
+                if (EpubWebViewHandler.isEpubRequest(uri)) {
+                  return NavigationActionPolicy.ALLOW;
+                }
+                return NavigationActionPolicy.CANCEL;
+              },
+              onWebViewCreated: (controller) {
+                _controller = controller;
+                _setupJavaScriptHandlers(controller);
+                widget.onWebViewCreated?.call();
+              },
+              onLoadStop: (controller, url) async {
+                final width = MediaQuery.of(context).size.width;
+                final height = MediaQuery.of(context).size.height;
+                await controller.evaluateJavascript(
+                  source: generateControllerJs(
+                    width - widget.padding.horizontal,
+                    height - widget.padding.vertical,
+                    widget.onSurfaceColor,
+                    widget.padding.top,
+                    widget.padding.left,
+                  ),
+                );
+                widget.callbacks.onInitialized();
+              },
+            ),
           ),
         ),
         Positioned.fill(
@@ -297,27 +285,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onTapLeft',
-      callback: (args) {
-        widget.callbacks.onTapLeft();
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onTapRight',
-      callback: (args) {
-        widget.callbacks.onTapRight();
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onTapCenter',
-      callback: (args) {
-        widget.callbacks.onTapCenter();
-      },
-    );
-
-    controller.addJavaScriptHandler(
       handlerName: 'onRendererInitialized',
       callback: (args) async {
         await Future.delayed(const Duration(milliseconds: 100));
@@ -338,15 +305,21 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     controller.addJavaScriptHandler(
       handlerName: 'onImageLongPress',
       callback: (args) {
-        if (args.isNotEmpty && args[0] is String) {
+        if (args.length >= 5 && args[0] is String) {
           final imageUrl = args[0] as String;
-          widget.callbacks.onImageLongPress(imageUrl);
+          final rect = Rect.fromLTWH(
+            (args[1] as num).toDouble(),
+            (args[2] as num).toDouble(),
+            (args[3] as num).toDouble(),
+            (args[4] as num).toDouble(),
+          );
+          widget.callbacks.onImageLongPress(imageUrl, rect);
         }
       },
     );
   }
 
-  Future<ui.Image?> takeScreenshot() async {
+  Future<ui.Image?> _takeScreenshot() async {
     if (Platform.isAndroid) {
       // for Android
       final BuildContext? context = _repaintKey.currentContext;
@@ -373,7 +346,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
-  Future<void> updateTheme(
+  Future<void> _updateTheme(
     Color surfaceColor,
     Color? onSurfaceColor,
     EdgeInsets padding,

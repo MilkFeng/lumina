@@ -21,11 +21,11 @@ class ReaderRendererController {
   }
 
   Future<void> performPreviousPageTurn() async {
-    await _rendererState?.performPageTurn(false);
+    await _rendererState?._performPageTurn(false);
   }
 
   Future<void> performNextPageTurn() async {
-    await _rendererState?.performPageTurn(true);
+    await _rendererState?._performPageTurn(true);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
@@ -93,7 +93,7 @@ class ReaderRenderer extends StatefulWidget {
   final ValueChanged<int> onPageChanged;
   final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
-  final ValueChanged<String> onImageLongPress;
+  final Function(String imageUrl, Rect rect) onImageLongPress;
 
   const ReaderRenderer({
     super.key,
@@ -172,7 +172,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     super.dispose();
   }
 
-  Future<void> performPageTurn(bool isNext) async {
+  Future<void> _performPageTurn(bool isNext) async {
     if (_isAnimating) return;
     if (!widget.canPerformPageTurn(isNext)) return;
 
@@ -303,13 +303,13 @@ class _ReaderRendererState extends State<ReaderRenderer>
         widget.onToggleControls();
         return;
       }
-      performPageTurn(false);
+      _performPageTurn(false);
     } else if (ratio > 0.8) {
       if (widget.showControls) {
         widget.onToggleControls();
         return;
       }
-      performPageTurn(true);
+      _performPageTurn(true);
     } else {
       widget.onToggleControls();
     }
@@ -320,9 +320,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
     final velocity = details.primaryVelocity ?? 0;
 
     if (velocity < -200) {
-      performPageTurn(true);
+      _performPageTurn(true);
     } else if (velocity > 200) {
-      performPageTurn(false);
+      _performPageTurn(false);
     }
   }
 
@@ -389,51 +389,30 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
   Widget _buildWebView() {
     return _buildContentWrapper(
-      LayoutBuilder(
-        builder: (context, constraints) {
-          return ReaderWebView(
-            key: _webViewKey,
-            bookSession: widget.bookSession,
-            webViewHandler: widget.webViewHandler,
-            fileHash: widget.fileHash,
-            surfaceColor: Theme.of(context).colorScheme.surface,
-            onSurfaceColor: Theme.of(context).brightness == Brightness.dark
-                ? Theme.of(context).colorScheme.onSurface
-                : null,
-            padding: padding,
-            isLoading: widget.isLoading,
-            controller: _webViewController,
-            callbacks: ReaderWebViewCallbacks(
-              onInitialized: () async {
-                await widget.onInitialized();
-              },
-              onPageCountReady: (totalPages) async {
-                await widget.onPageCountReady(totalPages);
-              },
-              onPageChanged: widget.onPageChanged,
-              onTapLeft: () {
-                if (widget.showControls) {
-                  widget.onToggleControls();
-                  return;
-                }
-                performPageTurn(false);
-              },
-              onTapRight: () {
-                if (widget.showControls) {
-                  widget.onToggleControls();
-                  return;
-                }
-                performPageTurn(true);
-              },
-              onTapCenter: () {
-                widget.onToggleControls();
-              },
-              onRendererInitialized: widget.onRendererInitialized,
-              onScrollAnchors: widget.onScrollAnchors,
-              onImageLongPress: widget.onImageLongPress,
-            ),
-          );
-        },
+      ReaderWebView(
+        key: _webViewKey,
+        bookSession: widget.bookSession,
+        webViewHandler: widget.webViewHandler,
+        fileHash: widget.fileHash,
+        surfaceColor: Theme.of(context).colorScheme.surface,
+        onSurfaceColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.onSurface
+            : null,
+        padding: padding,
+        isLoading: widget.isLoading,
+        controller: _webViewController,
+        callbacks: ReaderWebViewCallbacks(
+          onInitialized: () async {
+            await widget.onInitialized();
+          },
+          onPageCountReady: (totalPages) async {
+            await widget.onPageCountReady(totalPages);
+          },
+          onPageChanged: widget.onPageChanged,
+          onRendererInitialized: widget.onRendererInitialized,
+          onScrollAnchors: widget.onScrollAnchors,
+          onImageLongPress: widget.onImageLongPress,
+        ),
       ),
     );
   }

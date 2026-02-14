@@ -21,15 +21,13 @@ html, body {
   ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
 }
 
-body {
-  padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px !important;
-}
-
 /* Container for iframes */
 #frame-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: ${padding.top}px;
+  left: ${padding.left}px;
+  right: ${padding.right}px;
+  bottom: ${padding.bottom}px;
   overflow: hidden;
 }
 
@@ -433,20 +431,6 @@ function onFrameLoad(iframe) {
 
   // Polyfill for break-before if not supported
   polyfillCss(doc);
-  
-  // Inject click handler with 3-zone tap logic
-  doc.body.onclick = function(e) {
-    const clickX = e.clientX;
-    const width = window.innerWidth || 1;
-    const ratio = clickX / width;
-    if (ratio < 0.2) {
-      window.flutter_inappwebview.callHandler('onTapLeft');
-    } else if (ratio > 0.8) {
-      window.flutter_inappwebview.callHandler('onTapRight');
-    } else {
-      window.flutter_inappwebview.callHandler('onTapCenter');
-    }
-  };
 
   const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
 
@@ -674,7 +658,15 @@ function checkElementAt(x, y) {
 
   while (el && el !== doc.body) {
     if (el.tagName.toLowerCase() === 'img') {
-      window.flutter_inappwebview.callHandler('onImageLongPress', el.src);
+      let rect = el.getBoundingClientRect();
+      let iframeRect = iframe.getBoundingClientRect();
+      rect = {
+        left: rect.left + iframeRect.left,
+        top: rect.top + iframeRect.top,
+        width: rect.width,
+        height: rect.height
+      };
+      window.flutter_inappwebview.callHandler('onImageLongPress', el.src, rect.left, rect.top, rect.width, rect.height);
       return;
     }
     el = el.parentElement;
