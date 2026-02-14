@@ -23,10 +23,11 @@ html, body {
 
 /* Container for iframes */
 #frame-container {
-  position: relative;
-  padding: ${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px !important;
-  width: calc(100% - ${padding.left + padding.right}px) !important;
-  height: calc(100% - ${padding.top + padding.bottom}px) !important;
+  position: absolute;
+  top: ${padding.top}px;
+  left: ${padding.left}px;
+  right: ${padding.right}px;
+  bottom: ${padding.bottom}px;
   overflow: hidden;
 }
 
@@ -430,20 +431,6 @@ function onFrameLoad(iframe) {
 
   // Polyfill for break-before if not supported
   polyfillCss(doc);
-  
-  // Inject click handler with 3-zone tap logic
-  doc.body.onclick = function(e) {
-    const clickX = e.clientX;
-    const width = window.innerWidth || 1;
-    const ratio = clickX / width;
-    if (ratio < 0.2) {
-      window.flutter_inappwebview.callHandler('onTapLeft');
-    } else if (ratio > 0.8) {
-      window.flutter_inappwebview.callHandler('onTapRight');
-    } else {
-      window.flutter_inappwebview.callHandler('onTapCenter');
-    }
-  };
 
   const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
 

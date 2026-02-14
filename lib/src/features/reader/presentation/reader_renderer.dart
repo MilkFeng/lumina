@@ -389,51 +389,30 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
   Widget _buildWebView() {
     return _buildContentWrapper(
-      LayoutBuilder(
-        builder: (context, constraints) {
-          return ReaderWebView(
-            key: _webViewKey,
-            bookSession: widget.bookSession,
-            webViewHandler: widget.webViewHandler,
-            fileHash: widget.fileHash,
-            surfaceColor: Theme.of(context).colorScheme.surface,
-            onSurfaceColor: Theme.of(context).brightness == Brightness.dark
-                ? Theme.of(context).colorScheme.onSurface
-                : null,
-            padding: padding,
-            isLoading: widget.isLoading,
-            controller: _webViewController,
-            callbacks: ReaderWebViewCallbacks(
-              onInitialized: () async {
-                await widget.onInitialized();
-              },
-              onPageCountReady: (totalPages) async {
-                await widget.onPageCountReady(totalPages);
-              },
-              onPageChanged: widget.onPageChanged,
-              onTapLeft: () {
-                if (widget.showControls) {
-                  widget.onToggleControls();
-                  return;
-                }
-                performPageTurn(false);
-              },
-              onTapRight: () {
-                if (widget.showControls) {
-                  widget.onToggleControls();
-                  return;
-                }
-                performPageTurn(true);
-              },
-              onTapCenter: () {
-                widget.onToggleControls();
-              },
-              onRendererInitialized: widget.onRendererInitialized,
-              onScrollAnchors: widget.onScrollAnchors,
-              onImageLongPress: widget.onImageLongPress,
-            ),
-          );
-        },
+      ReaderWebView(
+        key: _webViewKey,
+        bookSession: widget.bookSession,
+        webViewHandler: widget.webViewHandler,
+        fileHash: widget.fileHash,
+        surfaceColor: Theme.of(context).colorScheme.surface,
+        onSurfaceColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.onSurface
+            : null,
+        padding: padding,
+        isLoading: widget.isLoading,
+        controller: _webViewController,
+        callbacks: ReaderWebViewCallbacks(
+          onInitialized: () async {
+            await widget.onInitialized();
+          },
+          onPageCountReady: (totalPages) async {
+            await widget.onPageCountReady(totalPages);
+          },
+          onPageChanged: widget.onPageChanged,
+          onRendererInitialized: widget.onRendererInitialized,
+          onScrollAnchors: widget.onScrollAnchors,
+          onImageLongPress: widget.onImageLongPress,
+        ),
       ),
     );
   }

@@ -93,9 +93,6 @@ class ReaderWebViewCallbacks {
   final Function() onInitialized;
   final Function(int totalPages) onPageCountReady;
   final Function(int pageIndex) onPageChanged;
-  final VoidCallback onTapLeft;
-  final VoidCallback onTapRight;
-  final VoidCallback onTapCenter;
   final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl) onImageLongPress;
@@ -104,9 +101,6 @@ class ReaderWebViewCallbacks {
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onTapLeft,
-    required this.onTapRight,
-    required this.onTapCenter,
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
@@ -198,68 +192,71 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       children: [
         RepaintBoundary(
           key: _repaintKey,
-          child: InAppWebView(
-            initialData: InAppWebViewInitialData(
-              data: generateSkeletonHtml(
-                widget.surfaceColor,
-                widget.onSurfaceColor,
-                widget.padding,
-              ),
-              baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
-            ),
-            initialSettings: defaultSettings,
-            onLongPressHitTestResult: (controller, hitTestResult) {
-              if (hitTestResult.type ==
-                  InAppWebViewHitTestResultType.IMAGE_TYPE) {
-                final imageUrl = hitTestResult.extra;
-                if (imageUrl != null && imageUrl.isNotEmpty) {
-                  widget.callbacks.onImageLongPress(imageUrl);
-                }
-              }
-            },
-            shouldInterceptRequest: (controller, request) async {
-              return await widget.webViewHandler.handleRequest(
-                epubPath: widget.bookSession.book!.filePath!,
-                fileHash: widget.fileHash,
-                requestUrl: request.url,
-              );
-            },
-            onLoadResourceWithCustomScheme: (controller, request) async {
-              return await widget.webViewHandler.handleRequestWithCustomScheme(
-                epubPath: widget.bookSession.book!.filePath!,
-                fileHash: widget.fileHash,
-                requestUrl: request.url,
-              );
-            },
-            shouldOverrideUrlLoading: (controller, navigationAction) async {
-              final uri = navigationAction.request.url!;
-              if (uri.scheme == 'data') {
-                return NavigationActionPolicy.ALLOW;
-              }
-              if (EpubWebViewHandler.isEpubRequest(uri)) {
-                return NavigationActionPolicy.ALLOW;
-              }
-              return NavigationActionPolicy.CANCEL;
-            },
-            onWebViewCreated: (controller) {
-              _controller = controller;
-              _setupJavaScriptHandlers(controller);
-              widget.onWebViewCreated?.call();
-            },
-            onLoadStop: (controller, url) async {
-              final width = MediaQuery.of(context).size.width;
-              final height = MediaQuery.of(context).size.height;
-              await controller.evaluateJavascript(
-                source: generateControllerJs(
-                  width - widget.padding.horizontal,
-                  height - widget.padding.vertical,
+          child: AbsorbPointer(
+            child: InAppWebView(
+              initialData: InAppWebViewInitialData(
+                data: generateSkeletonHtml(
+                  widget.surfaceColor,
                   widget.onSurfaceColor,
-                  widget.padding.top,
-                  widget.padding.left,
+                  widget.padding,
                 ),
-              );
-              widget.callbacks.onInitialized();
-            },
+                baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
+              ),
+              initialSettings: defaultSettings,
+              onLongPressHitTestResult: (controller, hitTestResult) {
+                if (hitTestResult.type ==
+                    InAppWebViewHitTestResultType.IMAGE_TYPE) {
+                  final imageUrl = hitTestResult.extra;
+                  if (imageUrl != null && imageUrl.isNotEmpty) {
+                    widget.callbacks.onImageLongPress(imageUrl);
+                  }
+                }
+              },
+              shouldInterceptRequest: (controller, request) async {
+                return await widget.webViewHandler.handleRequest(
+                  epubPath: widget.bookSession.book!.filePath!,
+                  fileHash: widget.fileHash,
+                  requestUrl: request.url,
+                );
+              },
+              onLoadResourceWithCustomScheme: (controller, request) async {
+                return await widget.webViewHandler
+                    .handleRequestWithCustomScheme(
+                      epubPath: widget.bookSession.book!.filePath!,
+                      fileHash: widget.fileHash,
+                      requestUrl: request.url,
+                    );
+              },
+              shouldOverrideUrlLoading: (controller, navigationAction) async {
+                final uri = navigationAction.request.url!;
+                if (uri.scheme == 'data') {
+                  return NavigationActionPolicy.ALLOW;
+                }
+                if (EpubWebViewHandler.isEpubRequest(uri)) {
+                  return NavigationActionPolicy.ALLOW;
+                }
+                return NavigationActionPolicy.CANCEL;
+              },
+              onWebViewCreated: (controller) {
+                _controller = controller;
+                _setupJavaScriptHandlers(controller);
+                widget.onWebViewCreated?.call();
+              },
+              onLoadStop: (controller, url) async {
+                final width = MediaQuery.of(context).size.width;
+                final height = MediaQuery.of(context).size.height;
+                await controller.evaluateJavascript(
+                  source: generateControllerJs(
+                    width - widget.padding.horizontal,
+                    height - widget.padding.vertical,
+                    widget.onSurfaceColor,
+                    widget.padding.top,
+                    widget.padding.left,
+                  ),
+                );
+                widget.callbacks.onInitialized();
+              },
+            ),
           ),
         ),
         Positioned.fill(
@@ -293,27 +290,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         if (args.isNotEmpty && args[0] is int) {
           widget.callbacks.onPageChanged(args[0] as int);
         }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onTapLeft',
-      callback: (args) {
-        widget.callbacks.onTapLeft();
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onTapRight',
-      callback: (args) {
-        widget.callbacks.onTapRight();
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onTapCenter',
-      callback: (args) {
-        widget.callbacks.onTapCenter();
       },
     );
 
