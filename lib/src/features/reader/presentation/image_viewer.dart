@@ -84,7 +84,6 @@ class _ImageViewerState extends State<ImageViewer>
     );
 
     _curve = CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart);
-    _controller.forward();
 
     _loadImage();
   }
@@ -140,12 +139,19 @@ class _ImageViewerState extends State<ImageViewer>
         image.dispose();
 
         if (mounted) {
+          await precacheImage(MemoryImage(bytes), context);
+        }
+
+        if (mounted) {
           setState(() {
             _imageData = bytes;
             _imageAspectRatio = aspectRatio;
             _isLoading = false;
           });
         }
+
+        await Future.delayed(const Duration(milliseconds: 10));
+        _controller.forward();
       } else {
         if (mounted) {
           ToastService.showError('Failed to load image');
@@ -195,45 +201,30 @@ class _ImageViewerState extends State<ImageViewer>
 
           return Stack(
             children: [
-              GestureDetector(
-                onTap: _handleClose,
-                child: Container(
-                  color: Colors.black.withValues(alpha: bgOpacity),
-                ),
-              ),
-
-              Positioned.fromRect(
-                rect: currentRect,
-                child: GestureDetector(
+              if (_imageData != null)
+                GestureDetector(
                   onTap: _handleClose,
                   child: Container(
-                    clipBehavior: Clip.antiAlias,
-                    decoration: const BoxDecoration(color: Colors.transparent),
-                    child: canZoom
-                        ? _buildInteractiveViewer()
-                        : Opacity(
-                            opacity: bgOpacity,
-                            child: _buildStaticImage(),
-                          ),
+                    color: Colors.black.withValues(alpha: bgOpacity),
                   ),
                 ),
-              ),
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 16,
-                right: 16,
-                child: Opacity(
-                  opacity: t,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.close_outlined,
-                      color: Colors.white,
-                      size: 32,
-                      shadows: [Shadow(color: Colors.black54, blurRadius: 12)],
+
+              if (_imageData != null)
+                Positioned.fromRect(
+                  rect: currentRect,
+                  child: GestureDetector(
+                    onTap: _handleClose,
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: const BoxDecoration(
+                        color: Colors.transparent,
+                      ),
+                      child: canZoom
+                          ? _buildInteractiveViewer()
+                          : Opacity(opacity: t, child: _buildStaticImage()),
                     ),
-                    onPressed: _handleClose,
                   ),
                 ),
-              ),
             ],
           );
         },
