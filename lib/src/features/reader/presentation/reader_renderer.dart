@@ -21,11 +21,11 @@ class ReaderRendererController {
   }
 
   Future<void> performPreviousPageTurn() async {
-    await _rendererState?.performPageTurn(false);
+    await _rendererState?._performPageTurn(false);
   }
 
   Future<void> performNextPageTurn() async {
-    await _rendererState?.performPageTurn(true);
+    await _rendererState?._performPageTurn(true);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
@@ -172,7 +172,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     super.dispose();
   }
 
-  Future<void> performPageTurn(bool isNext) async {
+  Future<void> _performPageTurn(bool isNext) async {
     if (_isAnimating) return;
     if (!widget.canPerformPageTurn(isNext)) return;
 
@@ -303,13 +303,13 @@ class _ReaderRendererState extends State<ReaderRenderer>
         widget.onToggleControls();
         return;
       }
-      performPageTurn(false);
+      _performPageTurn(false);
     } else if (ratio > 0.8) {
       if (widget.showControls) {
         widget.onToggleControls();
         return;
       }
-      performPageTurn(true);
+      _performPageTurn(true);
     } else {
       widget.onToggleControls();
     }
@@ -320,9 +320,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
     final velocity = details.primaryVelocity ?? 0;
 
     if (velocity < -200) {
-      performPageTurn(true);
+      _performPageTurn(true);
     } else if (velocity > 200) {
-      performPageTurn(false);
+      _performPageTurn(false);
     }
   }
 

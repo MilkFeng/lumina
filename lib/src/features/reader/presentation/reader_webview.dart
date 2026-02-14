@@ -21,44 +21,44 @@ class ReaderWebViewController {
   }
 
   Future<void> evaluateJavascript(String source) async {
-    await _webViewState?.evaluateJavascript(source);
+    await _webViewState?._evaluateJavascript(source);
   }
 
   // JavaScript wrapper methods
   Future<void> jumpToLastPageOfFrame(String frame) async {
-    await _webViewState?.jumpToLastPageOfFrame(frame);
+    await _webViewState?._jumpToLastPageOfFrame(frame);
   }
 
   Future<void> cycleFrames(String direction) async {
-    await _webViewState?.cycleFrames(direction);
+    await _webViewState?._cycleFrames(direction);
   }
 
   Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await _webViewState?.jumpToPageFor(frame, pageIndex);
+    await _webViewState?._jumpToPageFor(frame, pageIndex);
   }
 
   Future<void> loadFrame(String frame, String url, String anchors) async {
-    await _webViewState?.loadFrame(frame, url, anchors);
+    await _webViewState?._loadFrame(frame, url, anchors);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
-    await _webViewState?.jumpToPage(pageIndex);
+    await _webViewState?._jumpToPage(pageIndex);
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
-    await _webViewState?.restoreScrollPosition(ratio);
+    await _webViewState?._restoreScrollPosition(ratio);
   }
 
   Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await _webViewState?.replaceStyles(skeletonCss, iframeCss);
+    await _webViewState?._replaceStyles(skeletonCss, iframeCss);
   }
 
   Future<void> checkElementAt(double x, double y) async {
-    await _webViewState?.checkElementAt(x, y);
+    await _webViewState?._checkElementAt(x, y);
   }
 
   Future<ui.Image?> takeScreenshot() async {
-    return await _webViewState?.takeScreenshot();
+    return await _webViewState?._takeScreenshot();
   }
 
   Future<void> updateTheme(
@@ -66,7 +66,7 @@ class ReaderWebViewController {
     Color? onSurfaceColor,
     EdgeInsets padding,
   ) async {
-    await _webViewState?.updateTheme(surfaceColor, onSurfaceColor, padding);
+    await _webViewState?._updateTheme(surfaceColor, onSurfaceColor, padding);
   }
 }
 
@@ -150,40 +150,40 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   // JavaScript methods
-  Future<void> evaluateJavascript(String source) async {
+  Future<void> _evaluateJavascript(String source) async {
     await _controller?.evaluateJavascript(source: source);
   }
 
-  Future<void> jumpToLastPageOfFrame(String frame) async {
-    await evaluateJavascript("jumpToLastPageOfFrame('$frame')");
+  Future<void> _jumpToLastPageOfFrame(String frame) async {
+    await _evaluateJavascript("jumpToLastPageOfFrame('$frame')");
   }
 
-  Future<void> cycleFrames(String direction) async {
-    await evaluateJavascript("cycleFrames('$direction')");
+  Future<void> _cycleFrames(String direction) async {
+    await _evaluateJavascript("cycleFrames('$direction')");
   }
 
-  Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
+  Future<void> _jumpToPageFor(String frame, int pageIndex) async {
+    await _evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
   }
 
-  Future<void> loadFrame(String frame, String url, String anchors) async {
-    await evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
+  Future<void> _loadFrame(String frame, String url, String anchors) async {
+    await _evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
   }
 
-  Future<void> jumpToPage(int pageIndex) async {
-    await evaluateJavascript('jumpToPage($pageIndex)');
+  Future<void> _jumpToPage(int pageIndex) async {
+    await _evaluateJavascript('jumpToPage($pageIndex)');
   }
 
-  Future<void> restoreScrollPosition(double ratio) async {
-    await evaluateJavascript('restoreScrollPosition($ratio)');
+  Future<void> _restoreScrollPosition(double ratio) async {
+    await _evaluateJavascript('restoreScrollPosition($ratio)');
   }
 
-  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
+  Future<void> _replaceStyles(String skeletonCss, String iframeCss) async {
+    await _evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
   }
 
-  Future<void> checkElementAt(double x, double y) async {
-    await evaluateJavascript("checkElementAt($x, $y)");
+  Future<void> _checkElementAt(double x, double y) async {
+    await _evaluateJavascript("checkElementAt($x, $y)");
   }
 
   @override
@@ -322,7 +322,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
   }
 
-  Future<ui.Image?> takeScreenshot() async {
+  Future<ui.Image?> _takeScreenshot() async {
     if (Platform.isAndroid) {
       // for Android
       final BuildContext? context = _repaintKey.currentContext;
@@ -349,7 +349,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
-  Future<void> updateTheme(
+  Future<void> _updateTheme(
     Color surfaceColor,
     Color? onSurfaceColor,
     EdgeInsets padding,
