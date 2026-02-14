@@ -53,6 +53,10 @@ class ReaderWebViewController {
     await _webViewState?._replaceStyles(skeletonCss, iframeCss);
   }
 
+  Future<void> replaceController(String newJs) async {
+    await _webViewState?._replaceController(newJs);
+  }
+
   Future<void> checkElementAt(double x, double y) async {
     await _webViewState?._checkElementAt(x, y);
   }
@@ -182,12 +186,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     await _evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
   }
 
+  Future<void> _replaceController(String newJs) async {
+    await _evaluateJavascript("replaceController(`$newJs`)");
+  }
+
   Future<void> _checkElementAt(double x, double y) async {
     await _evaluateJavascript("checkElementAt($x, $y)");
   }
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width - widget.padding.horizontal;
+    final height = MediaQuery.of(context).size.height - widget.padding.vertical;
+
     return Stack(
       children: [
         RepaintBoundary(
@@ -196,6 +207,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
             child: InAppWebView(
               initialData: InAppWebViewInitialData(
                 data: generateSkeletonHtml(
+                  width,
+                  height,
                   widget.surfaceColor,
                   widget.onSurfaceColor,
                   widget.padding,
@@ -234,17 +247,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                 widget.onWebViewCreated?.call();
               },
               onLoadStop: (controller, url) async {
-                final width = MediaQuery.of(context).size.width;
-                final height = MediaQuery.of(context).size.height;
-                await controller.evaluateJavascript(
-                  source: generateControllerJs(
-                    width - widget.padding.horizontal,
-                    height - widget.padding.vertical,
-                    widget.onSurfaceColor,
-                    widget.padding.top,
-                    widget.padding.left,
-                  ),
-                );
                 widget.callbacks.onInitialized();
               },
             ),
@@ -351,8 +353,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     Color? onSurfaceColor,
     EdgeInsets padding,
   ) async {
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width - padding.horizontal;
+    final height = MediaQuery.of(context).size.height - padding.vertical;
 
     final sketelonCss = generateSkeletonStyle(
       surfaceColor,
@@ -363,14 +365,14 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final iframeCss = generatePaginationCss(width, height, onSurfaceColor);
 
     final js = generateControllerJs(
-      width - padding.horizontal,
-      height - padding.vertical,
+      width,
+      height,
       onSurfaceColor,
       padding.top,
       padding.left,
     );
 
-    await widget.controller.evaluateJavascript(js);
     await widget.controller.replaceStyles(sketelonCss, iframeCss);
+    await widget.controller.replaceController(js);
   }
 }

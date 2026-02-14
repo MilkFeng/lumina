@@ -66,6 +66,8 @@ iframe {
 
 /// Skeleton HTML containing 3 iframes for prev/curr/next chapters
 String generateSkeletonHtml(
+  double viewWidth,
+  double viewHeight,
   Color backgroundColor,
   Color? defaultTextColor,
   EdgeInsets padding,
@@ -79,6 +81,56 @@ String generateSkeletonHtml(
   <style id="skeleton-style">
     ${generateSkeletonStyle(backgroundColor, defaultTextColor, padding)}
   </style>
+  <script id="skeleton-script-0">
+    ${generateControllerJs(viewWidth, viewHeight, defaultTextColor, padding.top, padding.left)}
+  </script>
+  <script id="skeleton-const-script">
+    let PAGINATION_CSS = `${generatePaginationCss(viewWidth, viewHeight, defaultTextColor)}`;
+    
+    let LAST_SCRIPT_ID = 'skeleton-script-0';
+
+    function replaceController(newJs) {
+      const scriptEl = document.getElementById(LAST_SCRIPT_ID);
+      if (scriptEl) {
+        scriptEl.innerHTML = '';
+        document.head.removeChild(scriptEl);
+      }
+      LAST_SCRIPT_ID = 'skeleton-script-' + Date.now();
+      const newScript = document.createElement('script');
+      newScript.id = LAST_SCRIPT_ID;
+      newScript.innerHTML = newJs;
+      document.head.appendChild(newScript);
+    }
+
+    function replaceStyles(skeletonCss, iframeCss) {
+      const styleEl = document.getElementById('skeleton-style');
+      if (styleEl) {
+        styleEl.innerHTML = skeletonCss;
+      }
+      const iframes = document.getElementsByTagName('iframe');
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        if (iframe && iframe.contentDocument) {
+          const scrollLeft = iframe.contentDocument.body.scrollLeft;
+
+          const doc = iframe.contentDocument;
+          const style = doc.getElementById('injected-pagination-style');
+          if (style) {
+            style.innerHTML = iframeCss;
+          }
+
+          // Restore scroll position after style change
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+            }, 200);
+          });
+        }
+      }
+
+      PAGINATION_CSS = iframeCss;
+    }
+  </script>
 </head>
 <body>
   <div id="frame-container">
@@ -238,8 +290,6 @@ let tocAnchors = {
 function getWidth(iframe) {
   return $safeWidth;
 }
-
-let PAGINATION_CSS = `${generatePaginationCss(viewWidth, viewHeight, defaultTextColor)}`;
 
 // Load a chapter into a specific iframe slot
 function loadFrame(slot, url, anchors) {
@@ -622,26 +672,6 @@ function cycleFrames(direction) {
 function jumpToLastPageOfFrame(slot) {
   const pageCount = framePages['frame-' + slot];
   jumpToPageFor(slot, pageCount - 1);
-}
-
-function replaceStyles(skeletonCss, iframeCss) {
-  const styleEl = document.getElementById('skeleton-style');
-  if (styleEl) {
-    styleEl.innerHTML = skeletonCss;
-  }
-  const iframes = document.getElementsByTagName('iframe');
-  for (let i = 0; i < iframes.length; i++) {
-    const iframe = iframes[i];
-    if (iframe && iframe.contentDocument) {
-      const doc = iframe.contentDocument;
-      const style = doc.getElementById('injected-pagination-style');
-      if (style) {
-        style.innerHTML = iframeCss;
-      }
-    }
-  }
-
-  PAGINATION_CSS = iframeCss;
 }
 
 function checkElementAt(x, y) {
