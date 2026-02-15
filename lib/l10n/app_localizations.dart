@@ -961,6 +961,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long press previous/next button to jump to previous/next chapter'**
   String get tipLongPressNextTrack;
+
+  /// Tip for long pressing image to view original
+  ///
+  /// In en, this message translates to:
+  /// **'Long press on image to view original'**
+  String get longPressToViewImage;
 }
 
 class _AppLocalizationsDelegate

@@ -477,4 +477,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tipLongPressNextTrack => '长按上/下一页按钮跳到上/下一章节';
+
+  @override
+  String get longPressToViewImage => '长按图片查看原图';
 }

@@ -809,5 +809,10 @@
   "tipLongPressNextTrack": "Long press previous/next button to jump to previous/next chapter",
   "@tipLongPressNextTrack": {
     "description": "Tip for long pressing previous/next button"
+  },
+
+  "longPressToViewImage": "Long press on image to view original",
+  "@longPressToViewImage": {
+    "description": "Tip for long pressing image to view original"
   }
 }
