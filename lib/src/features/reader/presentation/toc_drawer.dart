@@ -25,6 +25,7 @@ class TocDrawer extends StatefulWidget {
   final List<TocItem> toc;
   final Set<TocItem> activeTocItems;
   final Function(TocItem) onTocItemSelected;
+  final Function() onCoverTap;
 
   const TocDrawer({
     super.key,
@@ -32,6 +33,7 @@ class TocDrawer extends StatefulWidget {
     required this.toc,
     required this.activeTocItems,
     required this.onTocItemSelected,
+    required this.onCoverTap,
   });
 
   @override
@@ -308,60 +310,66 @@ class _TocDrawerState extends State<TocDrawer> {
           ),
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Book Cover
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: SizedBox(
-              width: 60,
-              height: 90,
-              child: BookCover(relativePath: '${widget.book.coverPath}'),
+      child: GestureDetector(
+        onTap: () {
+          widget.onCoverTap();
+          Navigator.of(context).pop();
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Book Cover
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                width: 60,
+                height: 90,
+                child: BookCover(relativePath: '${widget.book.coverPath}'),
+              ),
             ),
-          ),
 
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
 
-          // Book Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.book.title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w400,
-                    fontFamily: AppTheme.fontFamilyContent,
+            // Book Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.book.title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w400,
+                      fontFamily: AppTheme.fontFamilyContent,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.book.author,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    fontWeight: FontWeight.w400,
-                    fontFamily: AppTheme.fontFamilyContent,
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.book.author,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontWeight: FontWeight.w400,
+                      fontFamily: AppTheme.fontFamilyContent,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  AppLocalizations.of(
-                    context,
-                  )!.chaptersCount(widget.book.totalChapters),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    fontSize: 11,
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    )!.chaptersCount(widget.book.totalChapters),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontSize: 11,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -358,6 +358,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         toc: _bookSession.toc,
         activeTocItems: activeItems,
         onTocItemSelected: _navigateToTocItem,
+        onCoverTap: _navigateToFirstTocItemFirstPage,
       ),
       body: Container(
         color: Theme.of(context).colorScheme.surface,
@@ -451,6 +452,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         "Warning: Chapter with href ${targetHref.path} not found in spine.",
       );
     }
+  }
+
+  Future<void> _navigateToFirstTocItemFirstPage() async {
+    _navigateToSpineItem(0, 'top');
   }
 
   Future<void> _updateWebViewTheme() async {
