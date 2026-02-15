@@ -461,8 +461,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 128),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 180.0,
           childAspectRatio: 0.55,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
@@ -589,12 +589,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     String? newName;
 
     if (result == createGroupResult) {
+      if (!context.mounted) return;
       final name = await _promptForGroupName(context);
       if (!context.mounted) return;
       if (name != null && name.trim().isNotEmpty) {
         final groupId = await ref
             .read(bookshelfNotifierProvider.notifier)
             .createGroup(name);
+        if (!context.mounted) return;
 
         if (groupId == null) {
           if (state is AsyncError) {

@@ -20,10 +20,6 @@ class ReaderWebViewController {
     _webViewState = state;
   }
 
-  Future<void> evaluateJavascript(String source) async {
-    await _webViewState?._evaluateJavascript(source);
-  }
-
   // JavaScript wrapper methods
   Future<void> jumpToLastPageOfFrame(String frame) async {
     await _webViewState?._jumpToLastPageOfFrame(frame);
@@ -47,10 +43,6 @@ class ReaderWebViewController {
 
   Future<void> restoreScrollPosition(double ratio) async {
     await _webViewState?._restoreScrollPosition(ratio);
-  }
-
-  Future<void> replaceStyles(String skeletonCss, String iframeCss) async {
-    await _webViewState?._replaceStyles(skeletonCss, iframeCss);
   }
 
   Future<void> checkElementAt(double x, double y) async {
@@ -155,39 +147,42 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   Future<void> _jumpToLastPageOfFrame(String frame) async {
-    await _evaluateJavascript("jumpToLastPageOfFrame('$frame')");
+    await _evaluateJavascript("window.reader.jumpToLastPageOfFrame('$frame')");
   }
 
   Future<void> _cycleFrames(String direction) async {
-    await _evaluateJavascript("cycleFrames('$direction')");
+    await _evaluateJavascript("window.reader.cycleFrames('$direction')");
   }
 
   Future<void> _jumpToPageFor(String frame, int pageIndex) async {
-    await _evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
+    await _evaluateJavascript(
+      "window.reader.jumpToPageFor('$frame', $pageIndex)",
+    );
   }
 
   Future<void> _loadFrame(String frame, String url, String anchors) async {
-    await _evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
+    await _evaluateJavascript(
+      "window.reader.loadFrame('$frame', '$url', $anchors)",
+    );
   }
 
   Future<void> _jumpToPage(int pageIndex) async {
-    await _evaluateJavascript('jumpToPage($pageIndex)');
+    await _evaluateJavascript('window.reader.jumpToPage($pageIndex)');
   }
 
   Future<void> _restoreScrollPosition(double ratio) async {
-    await _evaluateJavascript('restoreScrollPosition($ratio)');
-  }
-
-  Future<void> _replaceStyles(String skeletonCss, String iframeCss) async {
-    await _evaluateJavascript("replaceStyles(`$skeletonCss`, `$iframeCss`)");
+    await _evaluateJavascript('window.reader.restoreScrollPosition($ratio)');
   }
 
   Future<void> _checkElementAt(double x, double y) async {
-    await _evaluateJavascript("checkElementAt($x, $y)");
+    await _evaluateJavascript("window.reader.checkElementAt($x, $y)");
   }
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width - widget.padding.horizontal;
+    final height = MediaQuery.of(context).size.height - widget.padding.vertical;
+
     return Stack(
       children: [
         RepaintBoundary(
@@ -196,6 +191,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
             child: InAppWebView(
               initialData: InAppWebViewInitialData(
                 data: generateSkeletonHtml(
+                  width,
+                  height,
                   widget.surfaceColor,
                   widget.onSurfaceColor,
                   widget.padding,
@@ -234,17 +231,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                 widget.onWebViewCreated?.call();
               },
               onLoadStop: (controller, url) async {
-                final width = MediaQuery.of(context).size.width;
-                final height = MediaQuery.of(context).size.height;
-                await controller.evaluateJavascript(
-                  source: generateControllerJs(
-                    width - widget.padding.horizontal,
-                    height - widget.padding.vertical,
-                    widget.onSurfaceColor,
-                    widget.padding.top,
-                    widget.padding.left,
-                  ),
-                );
                 widget.callbacks.onInitialized();
               },
             ),
@@ -351,26 +337,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     Color? onSurfaceColor,
     EdgeInsets padding,
   ) async {
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width - padding.horizontal;
+    final height = MediaQuery.of(context).size.height - padding.vertical;
 
-    final sketelonCss = generateSkeletonStyle(
-      surfaceColor,
-      onSurfaceColor,
-      padding,
+    await _evaluateJavascript(
+      """window.reader.updateTheme(
+        $width,
+        $height,
+        ${padding.top},
+        ${padding.left},
+        ${padding.right},
+        ${padding.bottom},
+        '${colorToHex(surfaceColor)}',
+        ${onSurfaceColor != null ? "'${colorToHex(onSurfaceColor)}'" : 'null'})""",
     );
-
-    final iframeCss = generatePaginationCss(width, height, onSurfaceColor);
-
-    final js = generateControllerJs(
-      width - padding.horizontal,
-      height - padding.vertical,
-      onSurfaceColor,
-      padding.top,
-      padding.left,
-    );
-
-    await widget.controller.evaluateJavascript(js);
-    await widget.controller.replaceStyles(sketelonCss, iframeCss);
   }
 }

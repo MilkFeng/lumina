@@ -480,4 +480,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tipLongPressNextTrack =>
       'Long press previous/next button to jump to previous/next chapter';
+
+  @override
+  String get longPressToViewImage => 'Long press on image to view original';
 }

@@ -1,15 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 String colorToHex(Color color) {
-  return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+  final argb = color.toARGB32();
+  return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
 }
 
-String generateSkeletonStyle(
-  Color backgroundColor,
-  Color? defaultTextColor,
-  EdgeInsets padding,
-) {
-  return '''
+const _skeletonCss = '''
 /* Full viewport, no margins */
 html, body {
   margin: 0;
@@ -17,17 +15,16 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: ${colorToHex(backgroundColor)} !important;
-  ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
+  background-color: var(--background-color, #FFFFFF) !important;
 }
 
 /* Container for iframes */
 #frame-container {
   position: absolute;
-  top: ${padding.top}px;
-  left: ${padding.left}px;
-  right: ${padding.right}px;
-  bottom: ${padding.bottom}px;
+  top: var(--padding-top, 0px);
+  left: var(--padding-left, 0px);
+  right: var(--padding-right, 0px);
+  bottom: var(--padding-bottom, 0px);
   overflow: hidden;
 }
 
@@ -62,14 +59,824 @@ iframe {
   pointer-events: none;
 }
 ''';
+
+/// JavaScript controller for managing the iframe carousel
+const _controllerJS =
+    '''
+class Rect {
+  constructor(x, y, width, height) {
+    this.x = Number(x) || 0;
+    this.y = Number(y) || 0;
+    this.width = Math.max(0, Number(width) || 0);
+    this.height = Math.max(0, Number(height) || 0);
+  }
+
+  contains(point) {
+    if (!point) return false;
+    return (
+      point.x >= this.x &&
+      point.x <= this.x + this.width &&
+      point.y >= this.y &&
+      point.y <= this.y + this.height
+    );
+  }
+
+  intersects(other) {
+    if (!other) return false;
+    return !(
+      other.x > this.x + this.width ||
+      other.x + other.width < this.x ||
+      other.y > this.y + this.height ||
+      other.y + other.height < this.y
+    );
+  }
 }
 
-/// Skeleton HTML containing 3 iframes for prev/curr/next chapters
-String generateSkeletonHtml(
+class QuadTree {
+  constructor(boundary, capacity = 4) {
+    this.boundary = boundary;
+    this.capacity = Math.max(1, Number(capacity) || 4);
+    this.items = [];
+    this.divided = false;
+    this.northwest = null;
+    this.northeast = null;
+    this.southwest = null;
+    this.southeast = null;
+  }
+
+  _toRect(rawRect) {
+    if (!rawRect) return null;
+    return new Rect(rawRect.x, rawRect.y, rawRect.width, rawRect.height);
+  }
+
+  _subdivide() {
+    const x = this.boundary.x;
+    const y = this.boundary.y;
+    const w = this.boundary.width / 2;
+    const h = this.boundary.height / 2;
+
+    this.northwest = new QuadTree(new Rect(x, y, w, h), this.capacity);
+    this.northeast = new QuadTree(new Rect(x + w, y, w, h), this.capacity);
+    this.southwest = new QuadTree(new Rect(x, y + h, w, h), this.capacity);
+    this.southeast = new QuadTree(new Rect(x + w, y + h, w, h), this.capacity);
+    this.divided = true;
+  }
+
+  insert(item) {
+    if (!item || !item.rect) return false;
+
+    const rect = this._toRect(item.rect);
+    if (!rect || !this.boundary.intersects(rect)) return false;
+
+    if (!this.divided && this.items.length < this.capacity) {
+      this.items.push(item);
+      return true;
+    }
+
+    if (!this.divided) {
+      this._subdivide();
+      const existing = this.items;
+      this.items = [];
+      for (let i = 0; i < existing.length; i++) {
+        this._insertIntoChildren(existing[i]);
+      }
+    }
+
+    return this._insertIntoChildren(item);
+  }
+
+  _insertIntoChildren(item) {
+    let inserted = false;
+    if (this.northwest.insert(item)) inserted = true;
+    if (this.northeast.insert(item)) inserted = true;
+    if (this.southwest.insert(item)) inserted = true;
+    if (this.southeast.insert(item)) inserted = true;
+    return inserted;
+  }
+
+  query(range, found = []) {
+    if (!range || !this.boundary.intersects(range)) return found;
+
+    for (let i = 0; i < this.items.length; i++) {
+      const item = this.items[i];
+      const rect = this._toRect(item.rect);
+      if (rect && range.intersects(rect)) {
+        found.push(item);
+      }
+    }
+
+    if (this.divided) {
+      this.northwest.query(range, found);
+      this.northeast.query(range, found);
+      this.southwest.query(range, found);
+      this.southeast.query(range, found);
+    }
+
+    return found;
+  }
+}
+
+class EpubReader {
+  constructor() {
+    this.state = {
+      frames: { prev: 0, curr: 0, next: 0 },
+      anchors: { prev: [], curr: [], next: [] },
+      quadTree: null,
+      config: {
+        safeWidth: 0,
+        safeHeight: 0,
+        padding: { top: 0, left: 0, right: 0, bottom: 0 },
+        theme: {
+          backgroundColor: '#FFFFFF',
+          defaultTextColor: null,
+          paginationCss: `$_paginationCss`,
+          variableCss: '',
+        }
+      }
+    };
+
+    this._resizeDebounceTimer = null;
+    this._onResize = () => {
+      if (this._resizeDebounceTimer) {
+        clearTimeout(this._resizeDebounceTimer);
+      }
+      this._resizeDebounceTimer = setTimeout(() => {
+        this._buildInteractionMap();
+      }, 120);
+    };
+  }
+
+  init(config = {}) {
+    const padding = config.padding || {};
+    const theme = config.theme || {};
+
+    this.state.config.safeWidth = Math.floor(config.safeWidth ?? 0);
+    this.state.config.safeHeight = Math.floor(config.safeHeight ?? 0);
+    this.state.config.padding = {
+      top: Number(padding.top ?? 0),
+      left: Number(padding.left ?? 0),
+      right: Number(padding.right ?? 0),
+      bottom: Number(padding.bottom ?? 0)
+    };
+    this.state.config.theme = {
+      backgroundColor: theme.backgroundColor ?? '#FFFFFF',
+      defaultTextColor: theme.defaultTextColor ?? null,
+      paginationCss: theme.paginationCss ?? `$_paginationCss`,
+      variableCss: theme.variableCss ?? '',
+    };
+
+    this._updateCSSVariables(document, 'skeleton-variable-style');
+    window.removeEventListener('resize', this._onResize);
+    window.addEventListener('resize', this._onResize, { passive: true });
+  }
+
+  _frameElement(slotOrId) {
+    const id = slotOrId.startsWith('frame-') ? slotOrId : `frame-` + slotOrId;
+    return document.getElementById(id);
+  }
+
+  _slotFromFrameId(frameId) {
+    return frameId ? frameId.replace('frame-', '') : '';
+  }
+
+  _getWidth() {
+    return this.state.config.safeWidth;
+  }
+
+  _waitForAllResources(doc) {
+    const imagesReady = Promise.all(Array.from(doc.images).map((img) => {
+      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      return new Promise((resolve) => {
+        img.onload = img.onerror = resolve;
+      });
+    }));
+
+    const fontsReady = doc.fonts.ready;
+
+    return Promise.all([
+      imagesReady,
+      fontsReady,
+    ]);
+  }
+
+  _calculatePageCount(iframe) {
+    if (!iframe || !iframe.contentDocument) return 0;
+
+    const scrollWidth = iframe.contentDocument.body.scrollWidth;
+    const viewportWidth = this._getWidth();
+    const pageCount = Math.round((scrollWidth + 128) / (viewportWidth + 128));
+    return pageCount;
+  }
+
+  _calculateScrollLeft(pageIndex) {
+    const viewportWidth = this._getWidth();
+    const scrollLeft = pageIndex * viewportWidth + (pageIndex * 128);
+    return scrollLeft;
+  }
+
+  _convertToColumnBreak(value) {
+    switch (value) {
+      case 'page':
+      case 'right':
+      case 'left':
+        return 'always';
+      case 'avoid':
+        return 'avoid';
+      case 'auto':
+      default:
+        return 'auto';
+    }
+  }
+
+  _polyfillCss(doc) {
+    for (let i = 0; i < doc.styleSheets.length; i++) {
+      const sheet = doc.styleSheets[i];
+      try {
+        const rules = sheet.cssRules || sheet.rules;
+        if (!rules) continue;
+
+        for (let j = 0; j < rules.length; j++) {
+          const rule = rules[j];
+          if (rule.type === 1) {
+            const style = rule.style;
+
+            if (style.breakBefore) {
+              style.webkitColumnBreakBefore = this._convertToColumnBreak(style.breakBefore);
+            }
+
+            if (style.pageBreakBefore) {
+              style.webkitColumnBreakBefore = this._convertToColumnBreak(style.pageBreakBefore);
+            }
+
+            if (style.breakAfter && style.breakAfter !== 'auto') {
+              style.webkitColumnBreakAfter = this._convertToColumnBreak(style.breakAfter);
+            }
+
+            if (style.pageBreakAfter && style.pageBreakAfter !== 'auto') {
+              style.webkitColumnBreakAfter = this._convertToColumnBreak(style.pageBreakAfter);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Access to stylesheet blocked: ' + e);
+      }
+    }
+  }
+
+  _detectActiveAnchor(iframe) {
+    if (!iframe || !iframe.contentDocument) return;
+    if (iframe.id !== 'frame-curr') return;
+
+    const anchors = this.state.anchors.curr;
+    if (!anchors || anchors.length === 0) {
+      return;
+    }
+
+    const doc = iframe.contentDocument;
+    const activeAnchors = [];
+    let lastPassedAnchor = 'top';
+    const threshold = 50;
+
+    for (let i = 0; i < anchors.length; i++) {
+      const anchorId = anchors[i];
+      if (anchorId === 'top') {
+        if (doc.body.scrollLeft < threshold) {
+          activeAnchors.push('top');
+        }
+        continue;
+      }
+
+      const element = doc.getElementById(anchorId);
+
+      if (element) {
+        const rect = element.getBoundingClientRect();
+
+        if (rect.left < threshold && rect.right > threshold) {
+          activeAnchors.push(anchorId);
+        }
+
+        if (rect.left < threshold) {
+          lastPassedAnchor = anchorId;
+        }
+      }
+    }
+
+    if (activeAnchors.length === 0 && lastPassedAnchor) {
+      activeAnchors.push(lastPassedAnchor);
+    }
+    window.flutter_inappwebview.callHandler('onScrollAnchors', activeAnchors);
+  }
+
+  _calculatePageIndexOfAnchor(iframe, anchorId) {
+    if (!iframe || !iframe.contentDocument) return 0;
+    const doc = iframe.contentDocument;
+    const element = doc.getElementById(anchorId);
+    if (!element) return 0;
+
+    const viewportWidth = this._getWidth();
+    const elementRect = element.getBoundingClientRect();
+    const bodyRect = doc.body.getBoundingClientRect();
+    const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width / 5);
+
+    const pageIndex = Math.round((absoluteLeft + 128) / (viewportWidth + 128));
+    return pageIndex;
+  }
+
+  _extractTargetIdFromHref(href) {
+    if (!href || typeof href !== 'string') return null;
+    const hashIndex = href.indexOf('#');
+    if (hashIndex < 0 || hashIndex >= href.length - 1) return null;
+    try {
+      return decodeURIComponent(href.substring(hashIndex + 1));
+    } catch (_) {
+      return href.substring(hashIndex + 1);
+    }
+  }
+
+  _extractFootnoteHtml(targetId) {
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentDocument) return '';
+
+    const doc = iframe.contentDocument;
+    if (!targetId) return '';
+
+    const sanitizedId = String(targetId).replace(/^#/, '');
+    if (!sanitizedId) return '';
+
+    const footnoteEl = doc.getElementById(sanitizedId);
+    if (!footnoteEl) return '';
+
+    const container = footnoteEl.closest('li, aside, section, div, p') || footnoteEl;
+    return container && container.outerHTML ? container.outerHTML : '';
+  }
+
+  _buildInteractionMap() {
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentDocument) {
+      this.state.quadTree = null;
+      return;
+    }
+
+    const doc = iframe.contentDocument;
+
+    requestAnimationFrame(() => {
+      const body = doc.body;
+      if (!body) {
+        this.state.quadTree = null;
+        return;
+      }
+
+      const width = Math.max(1, body.scrollWidth);
+      const height = Math.max(1, body.scrollHeight);
+      const quadTree = new QuadTree(new Rect(0, 0, width, height), 4);
+
+      const images = doc.querySelectorAll('img, image');
+      const bodyRect = body.getBoundingClientRect();
+
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        if (!img) continue;
+
+        const rect = img.getBoundingClientRect();
+        if (!rect || rect.width < 10 || rect.height < 10) continue;
+
+        const docX = rect.left + body.scrollLeft - bodyRect.left;
+        const docY = rect.top + body.scrollTop - bodyRect.top;
+
+        let src = img.currentSrc || img.src || img.getAttribute('xlink:href') || '';
+
+        // to absolute URL
+        const link = doc.createElement('a');
+        link.href = src;
+        src = link.href;
+
+        quadTree.insert({
+          type: 'image',
+          rect: {
+            x: docX,
+            y: docY,
+            width: rect.width,
+            height: rect.height,
+          },
+          data: src,
+        });
+      }
+
+      this.state.quadTree = quadTree;
+    });
+  }
+
+  _onFrameLoad(iframe) {
+    if (!iframe || !iframe.contentDocument) return;
+
+    const doc = iframe.contentDocument;
+
+    const variableStyle = doc.createElement('style');
+    variableStyle.id = 'injected-variable-style';
+    variableStyle.innerHTML = this.state.config.theme.variableCss;
+    doc.head.appendChild(variableStyle);
+
+    const style = doc.createElement('style');
+    style.id = 'injected-pagination-style';
+    style.innerHTML = this.state.config.theme.paginationCss;
+    doc.head.appendChild(style);
+
+    if (this.state.config.theme.defaultTextColor) {
+      doc.body.classList.add('override-color');
+    } else {
+      doc.body.classList.remove('override-color');
+    }
+
+    this._polyfillCss(doc);
+
+    const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
+
+    Promise.race([
+      this._waitForAllResources(doc),
+      timeout
+    ]).then(() => {
+      if (!iframe.contentWindow) return;
+
+      requestAnimationFrame(() => {
+        const pageCount = this._calculatePageCount(iframe);
+        const slot = this._slotFromFrameId(iframe.id);
+        this.state.frames[slot] = pageCount;
+
+        let pageIndex = 0;
+        const url = iframe.src;
+        if (url && url.includes('#')) {
+          const anchor = url.split('#')[1];
+          pageIndex = this._calculatePageIndexOfAnchor(iframe, anchor);
+          const scrollLeft = this._calculateScrollLeft(pageIndex);
+          doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+        }
+
+        if (iframe.id === 'frame-curr') {
+          window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
+          window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+          window.flutter_inappwebview.callHandler('onRendererInitialized');
+        }
+
+        this._buildInteractionMap();
+      });
+    });
+
+    requestAnimationFrame(() => {
+      this._detectActiveAnchor(iframe);
+    });
+  }
+
+  loadFrame(slot, url, anchors) {
+    const iframe = this._frameElement(slot);
+    if (!iframe) return;
+
+    this.state.anchors[slot] = anchors || [];
+    iframe.onload = null;
+
+    if (iframe.src == null || iframe.src === '' || iframe.src === 'about:blank') {
+      iframe.onload = () => {
+        this._onFrameLoad(iframe);
+      };
+      iframe.src = url;
+    } else {
+      const currentUrl = new URL(iframe.src);
+      const newUrl = new URL(url);
+      if (currentUrl.origin === newUrl.origin && currentUrl.pathname === newUrl.pathname) {
+        iframe.onload = () => {
+          this._onFrameLoad(iframe);
+        };
+        iframe.src = url;
+        this._onFrameLoad(iframe);
+      } else {
+        iframe.onload = () => {
+          this._onFrameLoad(iframe);
+        };
+        iframe.src = url;
+      }
+    }
+  }
+
+  jumpToPage(pageIndex) {
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentWindow) return;
+
+    const scrollLeft = this._calculateScrollLeft(pageIndex);
+    iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+
+    requestAnimationFrame(() => {
+      window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+      this._detectActiveAnchor(iframe);
+    });
+  }
+
+  jumpToPageFor(slot, pageIndex) {
+    const iframe = this._frameElement(slot);
+    if (!iframe || !iframe.contentWindow) return;
+
+    const scrollLeft = this._calculateScrollLeft(pageIndex);
+    iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+
+    requestAnimationFrame(() => {
+      if (iframe.id === 'frame-curr') {
+        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+      }
+      this._detectActiveAnchor(iframe);
+    });
+  }
+
+  restoreScrollPosition(ratio) {
+    const pageCount = this.state.frames.curr;
+    const pageIndex = Math.round(ratio * pageCount);
+
+    this.jumpToPage(pageIndex);
+  }
+
+  _calculateCurrentPageIndex() {
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return 0;
+
+    const scrollLeft = iframe.contentDocument.body.scrollLeft;
+    const viewportWidth = this._getWidth();
+    const pageIndex = Math.round((scrollLeft + 128) / (viewportWidth + 128));
+    return pageIndex;
+  }
+
+  _updatePageState(iframeId) {
+    const iframe = this._frameElement(iframeId);
+    if (!iframe || !iframe.contentWindow) return;
+
+    const pageCount = this._calculatePageCount(iframe);
+    const slot = this._slotFromFrameId(iframeId);
+    this.state.frames[slot] = pageCount;
+
+    if (iframeId === 'frame-curr') {
+      window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
+      window.flutter_inappwebview.callHandler('onPageChanged', this._calculateCurrentPageIndex());
+    }
+  }
+
+  cycleFrames(direction) {
+    const elPrev = this._frameElement('prev');
+    const elCurr = this._frameElement('curr');
+    const elNext = this._frameElement('next');
+
+    if (!elPrev || !elCurr || !elNext) return;
+
+    if (direction === 'next') {
+      elPrev.id = 'frame-temp';
+
+      elNext.id = 'frame-curr';
+      elNext.style.zIndex = '2';
+      elNext.style.opacity = '1';
+      elNext.style.pointerEvents = 'auto';
+
+      elCurr.id = 'frame-prev';
+      elCurr.style.zIndex = '1';
+      elCurr.style.opacity = '0';
+      elCurr.style.pointerEvents = 'none';
+
+      const recycled = document.getElementById('frame-temp');
+      recycled.id = 'frame-next';
+      recycled.style.zIndex = '1';
+      recycled.style.opacity = '0';
+      recycled.style.pointerEvents = 'none';
+      recycled.src = 'about:blank';
+
+      const tempAnchors = this.state.anchors.prev;
+      this.state.anchors.prev = this.state.anchors.curr;
+      this.state.anchors.curr = this.state.anchors.next;
+      this.state.anchors.next = tempAnchors;
+    } else if (direction === 'prev') {
+      elNext.id = 'frame-temp';
+
+      elPrev.id = 'frame-curr';
+      elPrev.style.zIndex = '2';
+      elPrev.style.opacity = '1';
+      elPrev.style.pointerEvents = 'auto';
+
+      elCurr.id = 'frame-next';
+      elCurr.style.zIndex = '1';
+      elCurr.style.opacity = '0';
+      elCurr.style.pointerEvents = 'none';
+
+      const recycled = document.getElementById('frame-temp');
+      recycled.id = 'frame-prev';
+      recycled.style.zIndex = '1';
+      recycled.style.opacity = '0';
+      recycled.style.pointerEvents = 'none';
+      recycled.src = 'about:blank';
+
+      const tempAnchors = this.state.anchors.next;
+      this.state.anchors.next = this.state.anchors.curr;
+      this.state.anchors.curr = this.state.anchors.prev;
+      this.state.anchors.prev = tempAnchors;
+    }
+
+    requestAnimationFrame(() => {
+      this._updatePageState('frame-curr');
+      this._updatePageState('frame-prev');
+      this._updatePageState('frame-next');
+      this._detectActiveAnchor(elPrev);
+      this._detectActiveAnchor(elCurr);
+      this._detectActiveAnchor(elNext);
+      this._buildInteractionMap();
+    });
+  }
+
+  jumpToLastPageOfFrame(slot) {
+    const pageCount = this.state.frames[slot] ?? 0;
+    this.jumpToPageFor(slot, pageCount - 1);
+  }
+
+  _updateCSSVariables(doc, styleId = 'injected-variable-style') {
+    const root = doc.documentElement;
+    const body = doc.body;
+
+    root.style.setProperty('--safe-width', this.state.config.safeWidth + 'px');
+    root.style.setProperty('--safe-height', this.state.config.safeHeight + 'px');
+    root.style.setProperty('--padding-top', this.state.config.padding.top + 'px');
+    root.style.setProperty('--padding-left', this.state.config.padding.left + 'px');
+    root.style.setProperty('--padding-right', this.state.config.padding.right + 'px');
+    root.style.setProperty('--padding-bottom', this.state.config.padding.bottom + 'px');
+    root.style.setProperty('--background-color', this.state.config.theme.backgroundColor);
+    if (this.state.config.theme.defaultTextColor) {
+      body.classList.add('override-color');
+      root.style.setProperty('--default-text-color', this.state.config.theme.defaultTextColor);
+    } else {
+      body.classList.remove('override-color');
+      root.style.removeProperty('--default-text-color');
+    }
+
+    const existingStyle = doc.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.innerHTML = this.state.config.theme.variableCss;
+    }
+  }
+
+  _generateVariableStyle() {
+    const safeWidthItem = '--safe-width: ' + this.state.config.safeWidth + 'px;';
+    const safeHeightItem = '--safe-height: ' + this.state.config.safeHeight + 'px;';
+    const paddingTopItem = '--padding-top: ' + this.state.config.padding.top + 'px;';
+    const paddingLeftItem = '--padding-left: ' + this.state.config.padding.left + 'px;';
+    const paddingRightItem = '--padding-right: ' + this.state.config.padding.right + 'px;';
+    const paddingBottomItem = '--padding-bottom: ' + this.state.config.padding.bottom + 'px;';
+    const backgroundColorItem = '--background-color: ' + this.state.config.theme.backgroundColor + ';';
+    let defaultTextColorItem = '';
+    if (this.state.config.theme.defaultTextColor) {
+      defaultTextColorItem = '--default-text-color: ' + this.state.config.theme.defaultTextColor + ';';
+    }
+    return ':root {' + safeWidthItem + safeHeightItem + paddingTopItem + paddingLeftItem + paddingRightItem + paddingBottomItem + backgroundColorItem + defaultTextColorItem + '}';
+  }
+
+  updateTheme(viewWidth, viewHeight, paddingTop, paddingLeft, paddingRight, paddingBottom, backgroundColor, defaultTextColor) {
+    this.state.config.safeWidth = Math.floor(viewWidth);
+    this.state.config.safeHeight = Math.floor(viewHeight);
+    this.state.config.padding = {
+      top: paddingTop,
+      left: paddingLeft,
+      right: paddingRight,
+      bottom: paddingBottom,
+    };
+    this.state.config.theme.backgroundColor = backgroundColor;
+    this.state.config.theme.defaultTextColor = defaultTextColor;
+    this.state.config.theme.variableCss = this._generateVariableStyle();
+
+    this._updateCSSVariables(document, 'skeleton-variable-style');
+
+    const iframes = document.getElementsByTagName('iframe');
+    for (let i = 0; i < iframes.length; i++) {
+      const iframe = iframes[i];
+      if (iframe && iframe.contentDocument) {
+        const doc = iframe.contentDocument;
+        const scrollLeft = doc.body.scrollLeft;
+        this._updateCSSVariables(doc, 'injected-variable-style');
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+          }, 200);
+        });
+      }
+    }
+
+    setTimeout(() => {
+      this._buildInteractionMap();
+    }, 220);
+  }
+
+  checkElementAt(x, y) {
+    const relX = x - this.state.config.padding.left;
+    const relY = y - this.state.config.padding.top;
+
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentDocument || !this.state.quadTree) return;
+
+    const doc = iframe.contentDocument;
+    const body = doc.body;
+    if (!body) return;
+
+    const docX = relX + body.scrollLeft;
+    const docY = relY + body.scrollTop;
+
+    const radius = 5;
+    const queryRect = new Rect(docX - radius, docY - radius, radius * 2, radius * 2);
+    const candidates = this.state.quadTree.query(queryRect, []);
+
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      const candidate = candidates[i];
+      if (!candidate || !candidate.rect) continue;
+
+      const rect = new Rect(
+        candidate.rect.x,
+        candidate.rect.y,
+        candidate.rect.width,
+        candidate.rect.height,
+      );
+
+      if (!rect.contains({ x: docX, y: docY })) continue;
+
+      const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
+      const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
+
+      if (candidate.type === 'image') {
+        window.flutter_inappwebview.callHandler(
+          'onImageLongPress',
+          candidate.data,
+          absoluteLeft,
+          absoluteTop,
+          rect.width,
+          rect.height,
+        );
+        return;
+      }
+    }
+  }
+}
+
+window.reader = new EpubReader();
+''';
+
+String _generateVariableStyle(
+  double viewWidth,
+  double viewHeight,
   Color backgroundColor,
   Color? defaultTextColor,
   EdgeInsets padding,
 ) {
+  final safeWidth = viewWidth.floor();
+  final safeHeight = viewHeight.floor();
+
+  return '''
+    :root {
+      --background-color: ${colorToHex(backgroundColor)};
+      ${defaultTextColor != null ? '--default-text-color: ${colorToHex(defaultTextColor)};' : ''}
+      --safe-width: ${safeWidth}px;
+      --safe-height: ${safeHeight}px;
+      --padding-top: ${padding.top}px;
+      --padding-left: ${padding.left}px;
+      --padding-right: ${padding.right}px;
+      --padding-bottom: ${padding.bottom}px;
+    }
+  ''';
+}
+
+/// Skeleton HTML containing 3 iframes for prev/curr/next chapters
+String generateSkeletonHtml(
+  double viewWidth,
+  double viewHeight,
+  Color backgroundColor,
+  Color? defaultTextColor,
+  EdgeInsets padding,
+) {
+  final safeWidth = viewWidth.floor();
+  final safeHeight = viewHeight.floor();
+
+  final variableStyle = _generateVariableStyle(
+    viewWidth,
+    viewHeight,
+    backgroundColor,
+    defaultTextColor,
+    padding,
+  );
+
+  final initialConfigJson = jsonEncode({
+    'safeWidth': safeWidth,
+    'safeHeight': safeHeight,
+    'padding': {
+      'top': padding.top,
+      'left': padding.left,
+      'right': padding.right,
+      'bottom': padding.bottom,
+    },
+    'theme': {
+      'backgroundColor': colorToHex(backgroundColor),
+      'defaultTextColor': defaultTextColor != null
+          ? colorToHex(defaultTextColor)
+          : null,
+      'paginationCss': _paginationCss,
+      'variableCss': variableStyle,
+    },
+  });
+
   return '''
 <!DOCTYPE html>
 <html>
@@ -77,8 +884,20 @@ String generateSkeletonHtml(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style id="skeleton-style">
-    ${generateSkeletonStyle(backgroundColor, defaultTextColor, padding)}
+    $_skeletonCss
   </style>
+  <style id="skeleton-variable-style">
+    $variableStyle
+  </style>
+  <script id="skeleton-script">
+    $_controllerJS
+  </script>
+  <script id="skeleton-variable-script">
+    const initialConfig = $initialConfigJson;
+    window.addEventListener('DOMContentLoaded', () => {
+      window.reader.init(initialConfig);
+    });
+  </script>
 </head>
 <body>
   <div id="frame-container">
@@ -92,21 +911,14 @@ String generateSkeletonHtml(
 }
 
 /// CSS to inject into each iframe for horizontal pagination
-String generatePaginationCss(
-  double viewWidth,
-  double viewHeight,
-  Color? defaultTextColor,
-) {
-  final safeWidth = viewWidth.floor();
-  final safeHeight = viewHeight.floor();
 
-  return '''
+const _paginationCss = '''
 /* Reset and base styles */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
-  width: ${safeWidth}px !important;
-  height: ${safeHeight}px !important;
+  width: var(--safe-width) !important;
+  height: var(--safe-height) !important;
   background-color: transparent !important;
   touch-action: none !important;
   overflow-y: hidden !important;
@@ -137,15 +949,15 @@ body {
 
 /* Horizontal columnization for pagination */
 body {
-  column-width: ${safeWidth}px !important;
+  column-width: var(--safe-width) !important;
   column-gap: 128px !important;
   column-fill: auto !important;
-  height: ${safeHeight}px !important;
+  height: var(--safe-height) !important;
 }
 
 /* Fit within viewport */
 body * {
-  max-width: ${safeWidth - 5}px !important;
+  max-width: var(--safe-width) !important;
 
   orphans: 2;
   widows: 2;
@@ -173,7 +985,7 @@ body::-webkit-scrollbar:vertical {
 }
 
 img, svg, video {
-  max-height: ${safeHeight - 5}px !important;
+  max-height: var(--safe-height) !important;
   object-fit: contain;
   height: auto !important;
 
@@ -200,477 +1012,9 @@ a:visited {
   opacity: 1 !important;
 }
 
-p {
-  margin-bottom: 1.0em;
-}
-
-p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
-  ${defaultTextColor != null ? 'color: ${colorToHex(defaultTextColor)} !important;' : ''}
+body.override-color {
+  p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
+    color: var(--default-text-color) !important;
+  }
 }
 ''';
-}
-
-/// JavaScript controller for managing the iframe carousel
-String generateControllerJs(
-  double viewWidth,
-  double viewHeight,
-  Color? defaultTextColor,
-  double paddingTop,
-  double paddingLeft,
-) {
-  final safeWidth = viewWidth.floor();
-
-  return '''
-// Global state
-// framePages stores the page count for each DOM ID
-let framePages = {
-  'frame-prev': 0,
-  'frame-curr': 0,
-  'frame-next': 0
-};
-
-let tocAnchors = {
-  'frame-prev': [],
-  'frame-curr': [],
-  'frame-next': []
-};
-
-function getWidth(iframe) {
-  return $safeWidth;
-}
-
-let PAGINATION_CSS = `${generatePaginationCss(viewWidth, viewHeight, defaultTextColor)}`;
-
-// Load a chapter into a specific iframe slot
-function loadFrame(slot, url, anchors) {
-  const iframe = document.getElementById('frame-' + slot);
-  if (!iframe) return;
-
-  tocAnchors['frame-' + slot] = anchors || [];
-
-  iframe.onload = null;
-  
-  if (iframe.src == null || iframe.src === '' || iframe.src === 'about:blank') {
-    iframe.onload = function() {
-      onFrameLoad(iframe);
-    };
-    iframe.src = url;
-  } else {
-    const currentUrl = new URL(iframe.src);
-    const newUrl = new URL(url);
-    if (currentUrl.origin === newUrl.origin && currentUrl.pathname === newUrl.pathname) {
-      iframe.onload = function() {
-        onFrameLoad(iframe);
-      };
-      iframe.src = url;
-      onFrameLoad(iframe);
-    } else {
-      iframe.onload = function() {
-        onFrameLoad(iframe);
-      };
-      iframe.src = url;
-    }
-  }
-}
-
-function waitForAllResources() {
-  const imagesReady = Promise.all(Array.from(document.images).map(img => {
-    if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = img.onerror = resolve;
-    });
-  }));
-
-  const fontsReady = document.fonts.ready;
-
-  return Promise.all([
-    imagesReady,
-    fontsReady,
-  ]);
-}
-
-function calculatePageCount(iframe) {
-  if (!iframe || !iframe.contentDocument) return;
-
-  const scrollWidth = iframe.contentDocument.body.scrollWidth;
-  const viewportWidth = getWidth(iframe);
-  const pageCount = Math.round((scrollWidth + 128) / (viewportWidth + 128));
-  return pageCount;
-}
-
-function calculateScrollLeft(iframe, pageIndex) {
-  if (!iframe || !iframe.contentDocument) return;
-  const viewportWidth = getWidth(iframe);
-  const scrollLeft = pageIndex * viewportWidth + (pageIndex * 128);
-  return scrollLeft;
-}
-
-function convertToColumnBreak(value) {
-  switch (value) {
-    case 'page':
-    case 'right':
-    case 'left':
-      return 'always';
-    case 'avoid':
-      return 'avoid';
-    case 'auto':
-    default:
-      return 'auto';
-  }
-}
-
-function polyfillCss(doc) {
-  for (var i = 0; i < doc.styleSheets.length; i++) {
-    var sheet = doc.styleSheets[i];
-    try {
-      var rules = sheet.cssRules || sheet.rules;
-      if (!rules) continue;
-
-      for (var j = 0; j < rules.length; j++) {
-        var rule = rules[j];
-        if (rule.type === 1) {
-          var style = rule.style;
-          
-          if (style.breakBefore) {
-            style.webkitColumnBreakBefore = convertToColumnBreak(style.breakBefore);
-          }
-          
-          if (style.pageBreakBefore) {
-            style.webkitColumnBreakBefore = convertToColumnBreak(style.pageBreakBefore);
-          }
-
-          if (style.breakAfter && style.breakAfter !== 'auto') {
-            style.webkitColumnBreakAfter = convertToColumnBreak(style.breakAfter);
-          }
-
-          if (style.pageBreakAfter && style.pageBreakAfter !== 'auto') {
-            style.webkitColumnBreakAfter = convertToColumnBreak(style.pageBreakAfter);
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Access to stylesheet blocked: ' + e);
-    }
-  }
-}
-
-// Detect the "last passed anchor" algorithm
-function detectActiveAnchor(iframe) {
-  if (!iframe || !iframe.contentDocument) return;
-  if (iframe.id !== 'frame-curr') return; // Only track anchors in the current frame
-
-  let anchors = tocAnchors['frame-curr'];
-  if (!anchors || anchors.length === 0) {
-    return;
-  }
-  
-  const doc = iframe.contentDocument;
-  let activeAnchors = [];
-  let lastPassedAnchor = 'top';
-  const threshold = 50; // Left threshold in pixels for horizontal scrolling
-  
-  // Iterate through anchors to find the last one that has passed the threshold
-  for (let i = 0; i < anchors.length; i++) {
-    const anchorId = anchors[i];
-    if (anchorId === 'top') {
-      if (doc.body.scrollLeft < threshold) {
-        activeAnchors.push('top');
-      }
-      continue;
-    }
-
-    const element = doc.getElementById(anchorId);
-    
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      
-      // If this anchor has scrolled past the left edge (left < 50px from viewport left)
-      if (rect.left < threshold && rect.right > threshold) {
-        activeAnchors.push(anchorId);
-        // Continue to find potentially later anchors
-      }
-
-      if (rect.left < threshold) {
-        lastPassedAnchor = anchorId;
-      }
-    }
-  }
-
-  if (activeAnchors.length === 0 && lastPassedAnchor) {
-    activeAnchors.push(lastPassedAnchor);
-  }  
-  window.flutter_inappwebview.callHandler('onScrollAnchors', activeAnchors);
-}
-
-function calculatePageIndexOfAnchor(iframe, anchorId) {
-  if (!iframe || !iframe.contentDocument) return 0;
-  const doc = iframe.contentDocument;
-  const element = doc.getElementById(anchorId);
-  if (!element) return 0;
-
-  const viewportWidth = getWidth(iframe);
-  const elementRect = element.getBoundingClientRect();
-  const bodyRect = doc.body.getBoundingClientRect();
-  const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width /5);
-
-  const pageIndex = Math.round((absoluteLeft + 128) / (viewportWidth + 128));
-  return pageIndex;
-}
-
-// Called when an iframe finishes loading
-function onFrameLoad(iframe) {
-  if (!iframe || !iframe.contentDocument) return;
-  
-  const doc = iframe.contentDocument;
-  
-  // Inject CSS
-  const style = doc.createElement('style');
-  style.id = 'injected-pagination-style';
-  style.innerHTML = PAGINATION_CSS;
-  doc.head.appendChild(style);
-
-  // Polyfill for break-before if not supported
-  polyfillCss(doc);
-
-  const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
-
-  Promise.race([
-    waitForAllResources(), 
-    timeout
-  ]).then(() => {
-    if (!iframe.contentWindow) return;
-
-    requestAnimationFrame(() => {
-      const pageCount = calculatePageCount(iframe);
-      framePages[iframe.id] = pageCount;
-
-      let pageIndex = 0;
-      const url = iframe.src;
-      if (url && url.includes('#')) {
-        const anchor = url.split('#')[1];
-        pageIndex = calculatePageIndexOfAnchor(iframe, anchor);
-        const scrollLeft = calculateScrollLeft(iframe, pageIndex);
-        doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
-      }
-
-      if (iframe.id === 'frame-curr') {
-        // Notify Flutter of page count and current page
-        window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-
-        // Notify that renderer is initialized
-        window.flutter_inappwebview.callHandler('onRendererInitialized');
-      }
-    });
-  });
-
-  requestAnimationFrame(() => {
-    detectActiveAnchor(iframe);
-  });
-}
-
-// Jump to a specific page in the current frame
-function jumpToPage(pageIndex) {
-  const iframe = document.getElementById('frame-curr');
-  if (!iframe || !iframe.contentWindow) return;
-
-  const scrollLeft = calculateScrollLeft(iframe, pageIndex);
-  iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
-
-  requestAnimationFrame(() => {
-    window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-    detectActiveAnchor(iframe);
-  });
-}
-
-function jumpToPageFor(slot, pageIndex) {
-  const id = 'frame-' + slot;
-  const iframe = document.getElementById(id);
-  if (!iframe || !iframe.contentWindow) return;
-
-  const scrollLeft = calculateScrollLeft(iframe, pageIndex);
-  iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
-
-  requestAnimationFrame(() => {
-    if (iframe.id === 'frame-curr') {
-      window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-    }
-    detectActiveAnchor(iframe);
-  });
-}
-
-// Restore scroll position using ratio and snap to column boundaries
-function restoreScrollPosition(ratio) {
-  const iframe = document.getElementById('frame-curr');
-  if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
-
-  const pageCount = framePages['frame-curr'];
-  const pageIndex = Math.round(ratio * pageCount);
-
-  jumpToPage(pageIndex);
-}
-
-function calculateCurrentPageIndex() {
-  const iframe = document.getElementById('frame-curr');
-  if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return 0;
-
-  const scrollLeft = iframe.contentDocument.body.scrollLeft;
-  const viewportWidth = getWidth(iframe);
-  const pageIndex = Math.round((scrollLeft + 128) / (viewportWidth + 128));
-  return pageIndex;
-}
-
-// Update page state (page index and page count) and notify Flutter if current frame
-function updatePageState(iframeId, direction) {
-  const iframe = document.getElementById(iframeId);
-  if (!iframe || !iframe.contentWindow) return;
-
-  const pageCount = calculatePageCount(iframe);
-  framePages[iframeId] = pageCount;
-
-  // If this is the current frame, notify Flutter
-  if (iframeId === 'frame-curr') {
-    window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-    window.flutter_inappwebview.callHandler('onPageChanged', calculateCurrentPageIndex());
-  }
-}
-
-// Cycle the frames logically to avoid reloading
-// direction: 'next' or 'prev'
-function cycleFrames(direction) {
-  const elPrev = document.getElementById('frame-prev');
-  const elCurr = document.getElementById('frame-curr');
-  const elNext = document.getElementById('frame-next');
-
-  if (!elPrev || !elCurr || !elNext) return;
-
-  if (direction === 'next') {
-    // Logic: 
-    // Old Next (Visible) -> Becomes New Curr
-    // Old Curr -> Becomes New Prev
-    // Old Prev -> Becomes New Next (Recycled for future load)
-    
-    elPrev.id = 'frame-temp'; // Prevent ID collision
-    
-    elNext.id = 'frame-curr';
-    elNext.style.zIndex = '2';
-    elNext.style.opacity = '1';
-    elNext.style.pointerEvents = 'auto';
-    
-    elCurr.id = 'frame-prev';
-    elCurr.style.zIndex = '1';
-    elCurr.style.opacity = '0';
-    elCurr.style.pointerEvents = 'none';
-    
-    // The recycled frame
-    const recycled = document.getElementById('frame-temp');
-    recycled.id = 'frame-next';
-    recycled.style.zIndex = '1';
-    recycled.style.opacity = '0';
-    recycled.style.pointerEvents = 'none';
-    recycled.src = 'about:blank'; // Clear it
-
-    // cycle anchors
-    const tempAnchors = tocAnchors['frame-prev'];
-    tocAnchors['frame-prev'] = tocAnchors['frame-curr'];
-    tocAnchors['frame-curr'] = tocAnchors['frame-next'];
-    tocAnchors['frame-next'] = tempAnchors;
-  } else if (direction === 'prev') {
-    // Logic:
-    // Old Prev (Hidden, but loaded) -> Becomes New Curr
-    // Old Curr -> Becomes New Next
-    // Old Next -> Becomes New Prev (Recycled)
-
-    elNext.id = 'frame-temp';
-
-    elPrev.id = 'frame-curr';
-    elPrev.style.zIndex = '2';
-    elPrev.style.opacity = '1';
-    elPrev.style.pointerEvents = 'auto';
-
-    elCurr.id = 'frame-next';
-    elCurr.style.zIndex = '1';
-    elCurr.style.opacity = '0';
-    elCurr.style.pointerEvents = 'none';
-
-    const recycled = document.getElementById('frame-temp');
-    recycled.id = 'frame-prev';
-    recycled.style.zIndex = '1';
-    recycled.style.opacity = '0';
-    recycled.style.pointerEvents = 'none';
-    recycled.src = 'about:blank';
-
-    // cycle anchors
-    const tempAnchors = tocAnchors['frame-next'];
-    tocAnchors['frame-next'] = tocAnchors['frame-curr'];
-    tocAnchors['frame-curr'] = tocAnchors['frame-prev'];
-    tocAnchors['frame-prev'] = tempAnchors;
-  }
-
-  requestAnimationFrame(() => {
-    updatePageState('frame-curr', direction);
-    updatePageState('frame-prev', direction);
-    updatePageState('frame-next', direction);
-    detectActiveAnchor(elPrev);
-    detectActiveAnchor(elCurr);
-    detectActiveAnchor(elNext);
-  });
-}
-
-// Helper to scroll the PREV frame to the last page immediately
-// (Used before sliding back to it, or after cycling back)
-function jumpToLastPageOfFrame(slot) {
-  const pageCount = framePages['frame-' + slot];
-  jumpToPageFor(slot, pageCount - 1);
-}
-
-function replaceStyles(skeletonCss, iframeCss) {
-  const styleEl = document.getElementById('skeleton-style');
-  if (styleEl) {
-    styleEl.innerHTML = skeletonCss;
-  }
-  const iframes = document.getElementsByTagName('iframe');
-  for (let i = 0; i < iframes.length; i++) {
-    const iframe = iframes[i];
-    if (iframe && iframe.contentDocument) {
-      const doc = iframe.contentDocument;
-      const style = doc.getElementById('injected-pagination-style');
-      if (style) {
-        style.innerHTML = iframeCss;
-      }
-    }
-  }
-
-  PAGINATION_CSS = iframeCss;
-}
-
-function checkElementAt(x, y) {
-  x = x - $paddingLeft;
-  y = y - $paddingTop;
-
-  const iframe = document.getElementById('frame-curr');
-  if (!iframe || !iframe.contentDocument) return;
-
-  const doc = iframe.contentDocument;
-
-  let el = doc.elementFromPoint(x, y);
-  if (!el) return;
-
-  while (el && el !== doc.body) {
-    if (el.tagName.toLowerCase() === 'img') {
-      let rect = el.getBoundingClientRect();
-      let iframeRect = iframe.getBoundingClientRect();
-      rect = {
-        left: rect.left + iframeRect.left,
-        top: rect.top + iframeRect.top,
-        width: rect.width,
-        height: rect.height
-      };
-      window.flutter_inappwebview.callHandler('onImageLongPress', el.src, rect.left, rect.top, rect.width, rect.height);
-      return;
-    }
-    el = el.parentElement;
-  }
-}
-  ''';
-}

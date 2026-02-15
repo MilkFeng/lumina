@@ -91,8 +91,15 @@ class _AboutScreenState extends State<AboutScreen> {
                 icon: Icons.keyboard_double_arrow_right_outlined,
                 tip: l10n.tipLongPressNextTrack,
               ),
+              _buildTipTile(
+                context,
+                icon: Icons.image_outlined,
+                tip: l10n.longPressToViewImage,
+              ),
             ],
           ),
+
+          const SizedBox(height: 128),
         ],
       ),
     );

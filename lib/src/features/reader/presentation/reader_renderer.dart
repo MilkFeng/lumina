@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
@@ -132,6 +133,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
   ui.Image? _screenshotData;
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
+  int _androidPageTurnToken = 0;
 
   EdgeInsets get padding {
     var safePaddings = MediaQuery.paddingOf(context);
@@ -173,7 +175,6 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   Future<void> _performPageTurn(bool isNext) async {
-    if (_isAnimating) return;
     if (!widget.canPerformPageTurn(isNext)) return;
 
     if (Platform.isAndroid) {
@@ -186,17 +187,15 @@ class _ReaderRendererState extends State<ReaderRenderer>
     try {
       await _prepareNativePageTurn();
       await widget.onPerformPageTurn(isNext);
-      await _animateNativePageTurn(isNext);
+      unawaited(_animateNativePageTurn(isNext));
     } finally {
       _isAnimating = false;
     }
   }
 
   Future<void> _performAndroidPageTurn(bool isNext) async {
+    final int turnToken = ++_androidPageTurnToken;
     _isAnimating = true;
-
-    _screenshotData?.dispose();
-    _screenshotData = null;
 
     ui.Image? screenshot;
     try {
@@ -207,18 +206,33 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
 
     if (screenshot == null) {
-      _isAnimating = false;
+      _screenshotData?.dispose();
+      setState(() {
+        _screenshotData = null;
+      });
+      _animController.reset();
+
       await widget.onPerformPageTurn(isNext);
+      if (turnToken == _androidPageTurnToken) {
+        _isAnimating = false;
+      }
       return;
     }
 
-    if (!mounted) {
+    if (!mounted || turnToken != _androidPageTurnToken) {
+      screenshot.dispose();
       _isAnimating = false;
       return;
+    }
+
+    if (_animController.isAnimating) {
+      _animController.stop();
     }
 
     setState(() {
       _isForwardAnimation = isNext;
+
+      _screenshotData?.dispose();
       _screenshotData = screenshot;
 
       if (isNext) {
@@ -244,12 +258,12 @@ class _ReaderRendererState extends State<ReaderRenderer>
               ),
             );
       }
+      _animController.reset();
     });
 
-    _animController.reset();
     await widget.onPerformPageTurn(isNext);
 
-    if (!mounted) {
+    if (!mounted || turnToken != _androidPageTurnToken) {
       _isAnimating = false;
       return;
     }
@@ -257,13 +271,20 @@ class _ReaderRendererState extends State<ReaderRenderer>
     try {
       await _animController.forward();
     } finally {
-      if (mounted) {
-        setState(() {
+      if (turnToken == _androidPageTurnToken) {
+        final finishedScreenshot = _screenshotData;
+        if (mounted) {
+          setState(() {
+            _screenshotData = null;
+          });
+        } else {
           _screenshotData = null;
-        });
+        }
+        finishedScreenshot?.dispose();
+
+        _animController.reset();
+        _isAnimating = false;
       }
-      _animController.reset();
-      _isAnimating = false;
     }
   }
 
@@ -316,7 +337,6 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   Future<void> _handleHorizontalDragEnd(DragEndDetails details) async {
-    if (_isAnimating) return;
     final velocity = details.primaryVelocity ?? 0;
 
     if (velocity < -200) {

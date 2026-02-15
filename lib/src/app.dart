@@ -20,6 +20,7 @@ class LuminaReaderApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Lumina',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: _NoOverscrollBehavior(),
 
       // Localization
       locale: locale,
@@ -52,5 +53,16 @@ class LuminaReaderApp extends ConsumerWidget {
       // Navigation
       routerConfig: router,
     );
+  }
+}
+
+class _NoOverscrollBehavior extends ScrollBehavior {
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
   }
 }

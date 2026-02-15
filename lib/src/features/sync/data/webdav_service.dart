@@ -6,7 +6,7 @@ import 'package:webdav_client/webdav_client.dart' as webdav;
 import '../domain/failures/sync_failures.dart';
 
 /// Service for WebDAV operations with robust error handling
-/// All methods return SyncResult<T> for functional error handling
+/// All methods return `SyncResult<T>` for functional error handling
 class WebDavService {
   webdav.Client? _client;
   String? _remoteFolderPath;
@@ -17,7 +17,7 @@ class WebDavService {
   bool get isInitialized => _isInitialized;
 
   /// Initialize WebDAV client with credentials
-  /// Returns SyncResult<bool> instead of Either<String, bool>
+  /// Returns `SyncResult<bool>` instead of `Either<String, bool>`
   Future<SyncResult<bool>> initialize({
     required String serverUrl,
     required String username,
