@@ -461,8 +461,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 128),
       sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 180.0,
           childAspectRatio: 0.55,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
