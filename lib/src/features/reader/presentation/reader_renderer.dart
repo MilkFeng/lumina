@@ -197,10 +197,6 @@ class _ReaderRendererState extends State<ReaderRenderer>
     final int turnToken = ++_androidPageTurnToken;
     _isAnimating = true;
 
-    if (_animController.isAnimating) {
-      _animController.stop();
-    }
-
     ui.Image? screenshot;
     try {
       screenshot = await _webViewController.takeScreenshot();
@@ -227,6 +223,10 @@ class _ReaderRendererState extends State<ReaderRenderer>
       screenshot.dispose();
       _isAnimating = false;
       return;
+    }
+
+    if (_animController.isAnimating) {
+      _animController.stop();
     }
 
     setState(() {
