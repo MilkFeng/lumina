@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
@@ -186,7 +187,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     try {
       await _prepareNativePageTurn();
       await widget.onPerformPageTurn(isNext);
-      await _animateNativePageTurn(isNext);
+      unawaited(_animateNativePageTurn(isNext));
     } finally {
       _isAnimating = false;
     }
