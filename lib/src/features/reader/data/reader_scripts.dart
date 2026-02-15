@@ -67,6 +67,7 @@ class EpubReader {
     this.state = {
       frames: { prev: 0, curr: 0, next: 0 },
       anchors: { prev: [], curr: [], next: [] },
+      interactionZones: [],
       config: {
         safeWidth: 0,
         safeHeight: 0,
@@ -77,6 +78,16 @@ class EpubReader {
           paginationCss: `$_paginationCss`
         }
       }
+    };
+
+    this._resizeDebounceTimer = null;
+    this._onResize = () => {
+      if (this._resizeDebounceTimer) {
+        clearTimeout(this._resizeDebounceTimer);
+      }
+      this._resizeDebounceTimer = setTimeout(() => {
+        this._buildInteractionMap();
+      }, 120);
     };
   }
 
@@ -99,6 +110,8 @@ class EpubReader {
     };
 
     this._updateCSSVariables(document.documentElement, document.body);
+    window.removeEventListener('resize', this._onResize);
+    window.addEventListener('resize', this._onResize, { passive: true });
   }
 
   _frameElement(slotOrId) {
@@ -253,6 +266,80 @@ class EpubReader {
     return pageIndex;
   }
 
+  _extractTargetIdFromHref(href) {
+    if (!href || typeof href !== 'string') return null;
+    const hashIndex = href.indexOf('#');
+    if (hashIndex < 0 || hashIndex >= href.length - 1) return null;
+    try {
+      return decodeURIComponent(href.substring(hashIndex + 1));
+    } catch (_) {
+      return href.substring(hashIndex + 1);
+    }
+  }
+
+  _extractFootnoteHtml(targetId) {
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentDocument) return '';
+
+    const doc = iframe.contentDocument;
+    if (!targetId) return '';
+
+    const sanitizedId = String(targetId).replace(/^#/, '');
+    if (!sanitizedId) return '';
+
+    const footnoteEl = doc.getElementById(sanitizedId);
+    if (!footnoteEl) return '';
+
+    const container = footnoteEl.closest('li, aside, section, div, p') || footnoteEl;
+    return container && container.outerHTML ? container.outerHTML : '';
+  }
+
+  _buildInteractionMap() {
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentDocument) {
+      this.state.interactionZones = [];
+      return;
+    }
+
+    const doc = iframe.contentDocument;
+
+    requestAnimationFrame(() => {
+      const zones = [];
+
+      // img, image
+      const images = doc.querySelectorAll('img, image');
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        if (!img) continue;
+
+        const rect = img.getBoundingClientRect();
+        if (!rect || rect.width < 10 || rect.height < 10) continue;
+
+        let src = img.currentSrc || img.src || img.getAttribute('xlink:href') || '';
+
+        // to absolute URL
+        const link = doc.createElement('a');
+        link.href = src;
+        src = link.href;
+
+        zones.push({
+          type: 'image',
+          rect: {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height,
+          },
+          data: src,
+        });
+      }
+
+      this.state.interactionZones = zones;
+    });
+  }
+
   _onFrameLoad(iframe) {
     if (!iframe || !iframe.contentDocument) return;
 
@@ -305,6 +392,8 @@ class EpubReader {
           window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
           window.flutter_inappwebview.callHandler('onRendererInitialized');
         }
+
+        this._buildInteractionMap();
       });
     });
 
@@ -466,6 +555,7 @@ class EpubReader {
       this._detectActiveAnchor(elPrev);
       this._detectActiveAnchor(elCurr);
       this._detectActiveAnchor(elNext);
+      this._buildInteractionMap();
     });
   }
 
@@ -519,34 +609,47 @@ class EpubReader {
         });
       }
     }
+
+    setTimeout(() => {
+      this._buildInteractionMap();
+    }, 220);
   }
 
   checkElementAt(x, y) {
-    x = x - this.state.config.padding.left;
-    y = y - this.state.config.padding.top;
+    const relativeX = x - this.state.config.padding.left;
+    const relativeY = y - this.state.config.padding.top;
 
     const iframe = this._frameElement('curr');
-    if (!iframe || !iframe.contentDocument) return;
+    if (!iframe) return;
 
-    const doc = iframe.contentDocument;
+    const zones = this.state.interactionZones || [];
+    for (let i = zones.length - 1; i >= 0; i--) {
+      const zone = zones[i];
+      if (!zone || !zone.rect) continue;
 
-    let el = doc.elementFromPoint(x, y);
-    if (!el) return;
+      const rect = zone.rect;
+      const hit =
+        relativeX >= rect.left &&
+        relativeX <= rect.right &&
+        relativeY >= rect.top &&
+        relativeY <= rect.bottom;
 
-    while (el && el !== doc.body) {
-      if (el.tagName.toLowerCase() === 'img') {
-        let rect = el.getBoundingClientRect();
-        const iframeRect = iframe.getBoundingClientRect();
-        rect = {
-          left: rect.left + iframeRect.left,
-          top: rect.top + iframeRect.top,
-          width: rect.width,
-          height: rect.height
-        };
-        window.flutter_inappwebview.callHandler('onImageLongPress', el.src, rect.left, rect.top, rect.width, rect.height);
+      if (!hit) continue;
+
+      const absoluteLeft = rect.left + this.state.config.padding.left;
+      const absoluteTop = rect.top + this.state.config.padding.top;
+
+      if (zone.type === 'image') {
+        window.flutter_inappwebview.callHandler(
+          'onImageLongPress',
+          zone.data,
+          absoluteLeft,
+          absoluteTop,
+          rect.width,
+          rect.height,
+        );
         return;
       }
-      el = el.parentElement;
     }
   }
 }
