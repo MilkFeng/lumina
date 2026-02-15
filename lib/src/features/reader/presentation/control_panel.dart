@@ -51,6 +51,37 @@ class _ControlPanelState extends State<ControlPanel> {
     super.dispose();
   }
 
+  bool get _shouldHandleOnLongPressLeft {
+    return widget.currentSpineItemIndex > 0 || widget.currentPageInChapter > 0;
+  }
+
+  bool get _shouldHandleOnLongPressRight {
+    return widget.currentSpineItemIndex < widget.totalSpineItems - 1 ||
+        (widget.currentSpineItemIndex == widget.totalSpineItems - 1 &&
+            widget.currentPageInChapter < widget.totalPagesInChapter - 1);
+  }
+
+  void _handleLongPressLeft() {
+    if (widget.currentPageInChapter == 0 && widget.currentSpineItemIndex > 0) {
+      HapticFeedback.selectionClick();
+      widget.onPreviousChapter();
+    } else if (widget.currentPageInChapter > 0) {
+      HapticFeedback.selectionClick();
+      widget.onFirstPage();
+    }
+  }
+
+  void _handleLongPressRight() {
+    if (widget.currentSpineItemIndex < widget.totalSpineItems - 1) {
+      HapticFeedback.selectionClick();
+      widget.onNextChapter();
+    } else if (widget.currentSpineItemIndex == widget.totalSpineItems - 1 &&
+        widget.currentPageInChapter < widget.totalPagesInChapter - 1) {
+      HapticFeedback.selectionClick();
+      widget.onLastPage();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -141,28 +172,13 @@ class _ControlPanelState extends State<ControlPanel> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       GestureDetector(
-                        onLongPressStart: widget.currentSpineItemIndex > 0
+                        onLongPressStart: _shouldHandleOnLongPressLeft
                             ? (_) {
-                                if (widget.currentPageInChapter == 0 &&
-                                    widget.currentSpineItemIndex > 0) {
-                                  HapticFeedback.selectionClick();
-                                  widget.onPreviousChapter();
-                                } else if (widget.currentPageInChapter > 0) {
-                                  HapticFeedback.selectionClick();
-                                  widget.onFirstPage();
-                                }
+                                _handleLongPressLeft();
                                 _longPressTimer = Timer.periodic(
                                   const Duration(milliseconds: 500),
                                   (timer) {
-                                    if (widget.currentPageInChapter == 0 &&
-                                        widget.currentSpineItemIndex > 0) {
-                                      HapticFeedback.selectionClick();
-                                      widget.onPreviousChapter();
-                                    } else if (widget.currentPageInChapter >
-                                        0) {
-                                      HapticFeedback.selectionClick();
-                                      widget.onFirstPage();
-                                    }
+                                    _handleLongPressLeft();
                                   },
                                 );
                               }
@@ -200,23 +216,13 @@ class _ControlPanelState extends State<ControlPanel> {
                         ],
                       ),
                       GestureDetector(
-                        onLongPressStart:
-                            widget.currentSpineItemIndex <
-                                widget.totalSpineItems - 1
+                        onLongPressStart: _shouldHandleOnLongPressRight
                             ? (_) {
-                                if (widget.currentSpineItemIndex <
-                                    widget.totalSpineItems - 1) {
-                                  HapticFeedback.selectionClick();
-                                  widget.onNextChapter();
-                                }
+                                _handleLongPressRight();
                                 _longPressTimer = Timer.periodic(
                                   const Duration(milliseconds: 500),
                                   (timer) {
-                                    if (widget.currentSpineItemIndex <
-                                        widget.totalSpineItems - 1) {
-                                      HapticFeedback.selectionClick();
-                                      widget.onNextChapter();
-                                    }
+                                    _handleLongPressRight();
                                   },
                                 );
                               }
