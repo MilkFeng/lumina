@@ -31,6 +31,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   TabController? _tabController;
   bool _isUpdatingFromState = false;
   int _lastTabIndex = 0;
+  bool _isSelectingFiles = false;
 
   @override
   void dispose() {
@@ -126,25 +127,39 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           ref.read(bookshelfNotifierProvider.notifier).toggleSelectionMode();
         }
       },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: bookshelfState.when(
-          loading: () =>
-              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          error: (error, stack) => Center(
-            child: Text(
-              AppLocalizations.of(
-                context,
-              )!.errorLoadingLibrary(error.toString()),
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: bookshelfState.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              error: (error, stack) => Center(
+                child: Text(
+                  AppLocalizations.of(
+                    context,
+                  )!.errorLoadingLibrary(error.toString()),
+                ),
+              ),
+              data: (state) {
+                _initializeTabController(state);
+                _syncTabIndexWithState(state);
+                return _buildTabView(context, ref, state);
+              },
             ),
+            floatingActionButton: _buildFAB(context, ref),
           ),
-          data: (state) {
-            _initializeTabController(state);
-            _syncTabIndexWithState(state);
-            return _buildTabView(context, ref, state);
-          },
-        ),
-        floatingActionButton: _buildFAB(context, ref),
+          if (_isSelectingFiles)
+            Positioned.fill(
+              child: Container(
+                color: Theme.of(
+                  context,
+                ).colorScheme.scrim.withValues(alpha: 0.5),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -707,11 +722,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
   Future<void> _handleImportFiles(BuildContext context, WidgetRef ref) async {
     try {
+      setState(() {
+        _isSelectingFiles = true;
+      });
+
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['epub'],
         allowMultiple: true,
       );
+
+      setState(() {
+        _isSelectingFiles = false;
+      });
 
       if (result == null || result.files.isEmpty) {
         return;
