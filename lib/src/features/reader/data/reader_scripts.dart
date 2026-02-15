@@ -750,10 +750,6 @@ a:visited {
   opacity: 1 !important;
 }
 
-p {
-  margin-bottom: 1.0em;
-}
-
 body.override-color {
   p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
     color: var(--default-text-color) !important;
