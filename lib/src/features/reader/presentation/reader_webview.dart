@@ -147,31 +147,35 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   Future<void> _jumpToLastPageOfFrame(String frame) async {
-    await _evaluateJavascript("jumpToLastPageOfFrame('$frame')");
+    await _evaluateJavascript("window.reader.jumpToLastPageOfFrame('$frame')");
   }
 
   Future<void> _cycleFrames(String direction) async {
-    await _evaluateJavascript("cycleFrames('$direction')");
+    await _evaluateJavascript("window.reader.cycleFrames('$direction')");
   }
 
   Future<void> _jumpToPageFor(String frame, int pageIndex) async {
-    await _evaluateJavascript("jumpToPageFor('$frame', $pageIndex)");
+    await _evaluateJavascript(
+      "window.reader.jumpToPageFor('$frame', $pageIndex)",
+    );
   }
 
   Future<void> _loadFrame(String frame, String url, String anchors) async {
-    await _evaluateJavascript("loadFrame('$frame', '$url', $anchors)");
+    await _evaluateJavascript(
+      "window.reader.loadFrame('$frame', '$url', $anchors)",
+    );
   }
 
   Future<void> _jumpToPage(int pageIndex) async {
-    await _evaluateJavascript('jumpToPage($pageIndex)');
+    await _evaluateJavascript('window.reader.jumpToPage($pageIndex)');
   }
 
   Future<void> _restoreScrollPosition(double ratio) async {
-    await _evaluateJavascript('restoreScrollPosition($ratio)');
+    await _evaluateJavascript('window.reader.restoreScrollPosition($ratio)');
   }
 
   Future<void> _checkElementAt(double x, double y) async {
-    await _evaluateJavascript("checkElementAt($x, $y)");
+    await _evaluateJavascript("window.reader.checkElementAt($x, $y)");
   }
 
   @override
@@ -337,7 +341,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final height = MediaQuery.of(context).size.height - padding.vertical;
 
     await _evaluateJavascript(
-      """updateTheme(
+      """window.reader.updateTheme(
         $width,
         $height,
         ${padding.top},
