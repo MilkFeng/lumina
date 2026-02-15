@@ -6,54 +6,14 @@
     "description": "应用名称"
   },
   
-  "library": "书库",
-  "@library": {
-    "description": "书库标签"
-  },
-  
-  "bookshelf": "书架",
-  "@bookshelf": {
-    "description": "书架标签"
-  },
-  
   "settings": "设置",
   "@settings": {
     "description": "设置标签"
   },
   
-  "allBooks": "全部图书",
-  "@allBooks": {
-    "description": "全部图书书架名称"
-  },
-  
-  "reading": "在读",
-  "@reading": {
-    "description": "在读书架名称"
-  },
-  
-  "finished": "已读完",
-  "@finished": {
-    "description": "已读完书架名称"
-  },
-  
-  "toRead": "想读",
-  "@toRead": {
-    "description": "想读书架名称"
-  },
-  
-  "addBook": "添加图书",
-  "@addBook": {
-    "description": "添加图书按钮标签"
-  },
-  
-  "importBook": "导入图书",
+  "importBook": "导入书籍",
   "@importBook": {
-    "description": "导入图书操作"
-  },
-  
-  "deleteBook": "删除图书",
-  "@deleteBook": {
-    "description": "删除图书操作"
+    "description": "导入书籍操作"
   },
   
   "deleteBookConfirm": "确定要删除这本书吗？",
@@ -131,49 +91,9 @@
     "description": "语言设置标签"
   },
   
-  "english": "English",
-  "@english": {
-    "description": "英语选项"
-  },
-  
-  "chinese": "简体中文",
-  "@chinese": {
-    "description": "中文选项"
-  },
-  
   "theme": "主题",
   "@theme": {
     "description": "主题设置标签"
-  },
-  
-  "lightMode": "浅色模式",
-  "@lightMode": {
-    "description": "浅色模式选项"
-  },
-  
-  "darkMode": "深色模式",
-  "@darkMode": {
-    "description": "深色模式选项"
-  },
-  
-  "fontSize": "字体大小",
-  "@fontSize": {
-    "description": "字体大小设置标签"
-  },
-  
-  "lineHeight": "行高",
-  "@lineHeight": {
-    "description": "行高设置标签"
-  },
-  
-  "publisher": "出版社",
-  "@publisher": {
-    "description": "出版社标签"
-  },
-  
-  "readingTime": "阅读时长",
-  "@readingTime": {
-    "description": "阅读时长标签"
   },
   
   "lastRead": "最后阅读",
@@ -189,11 +109,6 @@
   "addYourFirstBook": "添加您的第一本书开始阅读",
   "@addYourFirstBook": {
     "description": "空书库提示"
-  },
-  
-  "searchBooks": "搜索书籍",
-  "@searchBooks": {
-    "description": "搜索书籍占位符"
   },
   
   "sortBy": "排序方式",

@@ -12,34 +12,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appName => 'Lumina';
 
   @override
-  String get library => 'Library';
-
-  @override
-  String get bookshelf => 'Bookshelf';
-
-  @override
   String get settings => 'Settings';
 
   @override
-  String get allBooks => 'All Books';
-
-  @override
-  String get reading => 'Reading';
-
-  @override
-  String get finished => 'Finished';
-
-  @override
-  String get toRead => 'To Read';
-
-  @override
-  String get addBook => 'Add Book';
-
-  @override
   String get importBook => 'Import Book';
-
-  @override
-  String get deleteBook => 'Delete Book';
 
   @override
   String get deleteBookConfirm => 'Are you sure you want to delete this book?';
@@ -84,36 +60,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
-  String get language => 'Language';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get chinese => 'Chinese';
-
-  @override
-  String get theme => 'Theme';
-
-  @override
-  String get lightMode => 'Light Mode';
-
-  @override
-  String get darkMode => 'Dark Mode';
-
-  @override
-  String get fontSize => 'Font Size';
-
-  @override
-  String get lineHeight => 'Line Height';
-
-  @override
-  String get publisher => 'Publisher';
-
-  @override
-  String get readingTime => 'Reading Time';
-
-  @override
   String get lastRead => 'Last Read';
 
   @override
@@ -121,9 +67,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addYourFirstBook => 'Add your first book to get started';
-
-  @override
-  String get searchBooks => 'Search books';
 
   @override
   String get sortBy => 'Sort by';
