@@ -62,12 +62,125 @@ iframe {
 /// JavaScript controller for managing the iframe carousel
 const _controllerJS =
     '''
+class Rect {
+  constructor(x, y, width, height) {
+    this.x = Number(x) || 0;
+    this.y = Number(y) || 0;
+    this.width = Math.max(0, Number(width) || 0);
+    this.height = Math.max(0, Number(height) || 0);
+  }
+
+  contains(point) {
+    if (!point) return false;
+    return (
+      point.x >= this.x &&
+      point.x <= this.x + this.width &&
+      point.y >= this.y &&
+      point.y <= this.y + this.height
+    );
+  }
+
+  intersects(other) {
+    if (!other) return false;
+    return !(
+      other.x > this.x + this.width ||
+      other.x + other.width < this.x ||
+      other.y > this.y + this.height ||
+      other.y + other.height < this.y
+    );
+  }
+}
+
+class QuadTree {
+  constructor(boundary, capacity = 4) {
+    this.boundary = boundary;
+    this.capacity = Math.max(1, Number(capacity) || 4);
+    this.items = [];
+    this.divided = false;
+    this.northwest = null;
+    this.northeast = null;
+    this.southwest = null;
+    this.southeast = null;
+  }
+
+  _toRect(rawRect) {
+    if (!rawRect) return null;
+    return new Rect(rawRect.x, rawRect.y, rawRect.width, rawRect.height);
+  }
+
+  _subdivide() {
+    const x = this.boundary.x;
+    const y = this.boundary.y;
+    const w = this.boundary.width / 2;
+    const h = this.boundary.height / 2;
+
+    this.northwest = new QuadTree(new Rect(x, y, w, h), this.capacity);
+    this.northeast = new QuadTree(new Rect(x + w, y, w, h), this.capacity);
+    this.southwest = new QuadTree(new Rect(x, y + h, w, h), this.capacity);
+    this.southeast = new QuadTree(new Rect(x + w, y + h, w, h), this.capacity);
+    this.divided = true;
+  }
+
+  insert(item) {
+    if (!item || !item.rect) return false;
+
+    const rect = this._toRect(item.rect);
+    if (!rect || !this.boundary.intersects(rect)) return false;
+
+    if (!this.divided && this.items.length < this.capacity) {
+      this.items.push(item);
+      return true;
+    }
+
+    if (!this.divided) {
+      this._subdivide();
+      const existing = this.items;
+      this.items = [];
+      for (let i = 0; i < existing.length; i++) {
+        this._insertIntoChildren(existing[i]);
+      }
+    }
+
+    return this._insertIntoChildren(item);
+  }
+
+  _insertIntoChildren(item) {
+    let inserted = false;
+    if (this.northwest.insert(item)) inserted = true;
+    if (this.northeast.insert(item)) inserted = true;
+    if (this.southwest.insert(item)) inserted = true;
+    if (this.southeast.insert(item)) inserted = true;
+    return inserted;
+  }
+
+  query(range, found = []) {
+    if (!range || !this.boundary.intersects(range)) return found;
+
+    for (let i = 0; i < this.items.length; i++) {
+      const item = this.items[i];
+      const rect = this._toRect(item.rect);
+      if (rect && range.intersects(rect)) {
+        found.push(item);
+      }
+    }
+
+    if (this.divided) {
+      this.northwest.query(range, found);
+      this.northeast.query(range, found);
+      this.southwest.query(range, found);
+      this.southeast.query(range, found);
+    }
+
+    return found;
+  }
+}
+
 class EpubReader {
   constructor() {
     this.state = {
       frames: { prev: 0, curr: 0, next: 0 },
       anchors: { prev: [], curr: [], next: [] },
-      interactionZones: [],
+      quadTree: null,
       config: {
         safeWidth: 0,
         safeHeight: 0,
@@ -297,23 +410,35 @@ class EpubReader {
   _buildInteractionMap() {
     const iframe = this._frameElement('curr');
     if (!iframe || !iframe.contentDocument) {
-      this.state.interactionZones = [];
+      this.state.quadTree = null;
       return;
     }
 
     const doc = iframe.contentDocument;
 
     requestAnimationFrame(() => {
-      const zones = [];
+      const body = doc.body;
+      if (!body) {
+        this.state.quadTree = null;
+        return;
+      }
 
-      // img, image
+      const width = Math.max(1, body.scrollWidth);
+      const height = Math.max(1, body.scrollHeight);
+      const quadTree = new QuadTree(new Rect(0, 0, width, height), 4);
+
       const images = doc.querySelectorAll('img, image');
+      const bodyRect = body.getBoundingClientRect();
+
       for (let i = 0; i < images.length; i++) {
         const img = images[i];
         if (!img) continue;
 
         const rect = img.getBoundingClientRect();
         if (!rect || rect.width < 10 || rect.height < 10) continue;
+
+        const docX = rect.left + body.scrollLeft - bodyRect.left;
+        const docY = rect.top + body.scrollTop - bodyRect.top;
 
         let src = img.currentSrc || img.src || img.getAttribute('xlink:href') || '';
 
@@ -322,13 +447,11 @@ class EpubReader {
         link.href = src;
         src = link.href;
 
-        zones.push({
+        quadTree.insert({
           type: 'image',
           rect: {
-            left: rect.left,
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
+            x: docX,
+            y: docY,
             width: rect.width,
             height: rect.height,
           },
@@ -336,7 +459,7 @@ class EpubReader {
         });
       }
 
-      this.state.interactionZones = zones;
+      this.state.quadTree = quadTree;
     });
   }
 
@@ -616,33 +739,43 @@ class EpubReader {
   }
 
   checkElementAt(x, y) {
-    const relativeX = x - this.state.config.padding.left;
-    const relativeY = y - this.state.config.padding.top;
+    const relX = x - this.state.config.padding.left;
+    const relY = y - this.state.config.padding.top;
 
     const iframe = this._frameElement('curr');
-    if (!iframe) return;
+    if (!iframe || !iframe.contentDocument || !this.state.quadTree) return;
 
-    const zones = this.state.interactionZones || [];
-    for (let i = zones.length - 1; i >= 0; i--) {
-      const zone = zones[i];
-      if (!zone || !zone.rect) continue;
+    const doc = iframe.contentDocument;
+    const body = doc.body;
+    if (!body) return;
 
-      const rect = zone.rect;
-      const hit =
-        relativeX >= rect.left &&
-        relativeX <= rect.right &&
-        relativeY >= rect.top &&
-        relativeY <= rect.bottom;
+    const docX = relX + body.scrollLeft;
+    const docY = relY + body.scrollTop;
 
-      if (!hit) continue;
+    const radius = 5;
+    const queryRect = new Rect(docX - radius, docY - radius, radius * 2, radius * 2);
+    const candidates = this.state.quadTree.query(queryRect, []);
 
-      const absoluteLeft = rect.left + this.state.config.padding.left;
-      const absoluteTop = rect.top + this.state.config.padding.top;
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      const candidate = candidates[i];
+      if (!candidate || !candidate.rect) continue;
 
-      if (zone.type === 'image') {
+      const rect = new Rect(
+        candidate.rect.x,
+        candidate.rect.y,
+        candidate.rect.width,
+        candidate.rect.height,
+      );
+
+      if (!rect.contains({ x: docX, y: docY })) continue;
+
+      const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
+      const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
+
+      if (candidate.type === 'image') {
         window.flutter_inappwebview.callHandler(
           'onImageLongPress',
-          zone.data,
+          candidate.data,
           absoluteLeft,
           absoluteTop,
           rect.width,
