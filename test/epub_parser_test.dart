@@ -375,6 +375,65 @@ void main() {
           containsAll(['Science Fiction', 'Space', 'Future']),
         );
       });
+
+      test('EPUB 3 with NAV document - should parse hierarchical TOC', () {
+        // Arrange
+        final epubBytes = _createEpubWithNav(
+          title: 'Book with NAV',
+          navEntries: [
+            (
+              'Part I',
+              null,
+              [
+                (
+                  'Chapter 1',
+                  'chapter1.xhtml',
+                  <(String, String, List<(String, String, List)>)>[],
+                ),
+              ],
+            ),
+            (
+              'Chapter 2',
+              'chapter2.xhtml',
+              <(String, String, List<(String, String, List)>)>[],
+            ),
+          ],
+        );
+
+        // Act
+        final result = parser.parseFromBytes(epubBytes);
+
+        // Assert
+        expect(result.isRight(), true);
+        final parseResult = result.getRight().toNullable()!;
+
+        expect(parseResult.toc, isNotEmpty);
+        expect(parseResult.toc.first.label, 'Part I');
+        expect(parseResult.toc.first.depth, 0);
+        expect(parseResult.toc.first.children, isNotEmpty);
+        expect(parseResult.toc.first.children.first.label, 'Chapter 1');
+        expect(parseResult.toc.first.children.first.depth, 1);
+        expect(parseResult.toc[1].label, 'Chapter 2');
+      });
+
+      test('EPUB with both NAV and NCX - should prioritize NAV', () {
+        // Arrange
+        final epubBytes = _createEpubWithNavAndNcx();
+
+        // Act
+        final result = parser.parseFromBytes(epubBytes);
+
+        // Assert
+        expect(result.isRight(), true);
+        final parseResult = result.getRight().toNullable()!;
+
+        expect(parseResult.toc, isNotEmpty);
+        expect(parseResult.toc.first.label, 'NAV TOC Entry');
+        expect(
+          parseResult.toc.any((item) => item.label.contains('NCX')),
+          false,
+        );
+      });
     });
   });
 }
@@ -854,6 +913,213 @@ Uint8List _createEpubWithSubjects({
   archive.addFile(
     ArchiveFile(
       'chapter1.xhtml',
+      chapterContent.length,
+      chapterContent.codeUnits,
+    ),
+  );
+
+  final zipEncoder = ZipEncoder();
+  return Uint8List.fromList(zipEncoder.encode(archive));
+}
+
+/// Create EPUB 3 with NAV TOC document
+Uint8List _createEpubWithNav({
+  required String title,
+  required List<(String, String?, List<(String, String, List)>)> navEntries,
+}) {
+  final archive = Archive();
+
+  final mimetype = 'application/epub+zip';
+  archive.addFile(ArchiveFile('mimetype', mimetype.length, mimetype.codeUnits));
+
+  final containerXml = '''<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>''';
+
+  archive.addFile(
+    ArchiveFile(
+      'META-INF/container.xml',
+      containerXml.length,
+      containerXml.codeUnits,
+    ),
+  );
+
+  final opfContent =
+      '''<?xml version="1.0"?>
+<package version="3.0" xmlns="http://www.idpf.org/2007/opf">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>$title</dc:title>
+    <dc:creator>Author</dc:creator>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch2" href="chapter2.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="ch1"/>
+    <itemref idref="ch2"/>
+  </spine>
+</package>''';
+
+  archive.addFile(
+    ArchiveFile('OEBPS/content.opf', opfContent.length, opfContent.codeUnits),
+  );
+
+  final navList = StringBuffer();
+  for (final entry in navEntries) {
+    navList.write('<li>');
+    if (entry.$2 != null) {
+      navList.write('<a href="${entry.$2}">${entry.$1}</a>');
+    } else {
+      navList.write('<span>${entry.$1}</span>');
+    }
+
+    if (entry.$3.isNotEmpty) {
+      navList.write('<ol>');
+      for (final child in entry.$3) {
+        navList.write('<li><a href="${child.$2}">${child.$1}</a></li>');
+      }
+      navList.write('</ol>');
+    }
+    navList.write('</li>');
+  }
+
+  final navContent =
+      '''<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <head><title>TOC</title></head>
+  <body>
+    <nav epub:type="toc" type="toc">
+      <ol>
+        $navList
+      </ol>
+    </nav>
+  </body>
+</html>''';
+
+  archive.addFile(
+    ArchiveFile('OEBPS/nav.xhtml', navContent.length, navContent.codeUnits),
+  );
+
+  final chapter1Content = '''<?xml version="1.0"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>Chapter 1</title></head>
+<body><h1>Chapter 1</h1></body>
+</html>''';
+
+  final chapter2Content = '''<?xml version="1.0"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>Chapter 2</title></head>
+<body><h1>Chapter 2</h1></body>
+</html>''';
+
+  archive.addFile(
+    ArchiveFile(
+      'OEBPS/chapter1.xhtml',
+      chapter1Content.length,
+      chapter1Content.codeUnits,
+    ),
+  );
+  archive.addFile(
+    ArchiveFile(
+      'OEBPS/chapter2.xhtml',
+      chapter2Content.length,
+      chapter2Content.codeUnits,
+    ),
+  );
+
+  final zipEncoder = ZipEncoder();
+  return Uint8List.fromList(zipEncoder.encode(archive));
+}
+
+/// Create EPUB containing both NAV and NCX TOCs, used to verify NAV priority.
+Uint8List _createEpubWithNavAndNcx() {
+  final archive = Archive();
+
+  final mimetype = 'application/epub+zip';
+  archive.addFile(ArchiveFile('mimetype', mimetype.length, mimetype.codeUnits));
+
+  final containerXml = '''<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles>
+    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+  </rootfiles>
+</container>''';
+
+  archive.addFile(
+    ArchiveFile(
+      'META-INF/container.xml',
+      containerXml.length,
+      containerXml.codeUnits,
+    ),
+  );
+
+  final opfContent = '''<?xml version="1.0"?>
+<package version="3.0" xmlns="http://www.idpf.org/2007/opf">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>NAV Priority Book</dc:title>
+    <dc:creator>Author</dc:creator>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="ch1" href="chapter1.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="ch1"/>
+  </spine>
+</package>''';
+
+  archive.addFile(
+    ArchiveFile('OEBPS/content.opf', opfContent.length, opfContent.codeUnits),
+  );
+
+  final navContent = '''<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+  <head><title>TOC</title></head>
+  <body>
+    <nav epub:type="toc" type="toc">
+      <ol>
+        <li><a href="chapter1.xhtml">NAV TOC Entry</a></li>
+      </ol>
+    </nav>
+  </body>
+</html>''';
+
+  final ncxContent = '''<?xml version="1.0"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+  <navMap>
+    <navPoint id="n1">
+      <navLabel><text>NCX TOC Entry</text></navLabel>
+      <content src="chapter1.xhtml"/>
+    </navPoint>
+  </navMap>
+</ncx>''';
+
+  final chapterContent = '''<?xml version="1.0"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>Chapter 1</title></head>
+<body><h1>Chapter 1</h1></body>
+</html>''';
+
+  archive.addFile(
+    ArchiveFile('OEBPS/nav.xhtml', navContent.length, navContent.codeUnits),
+  );
+  archive.addFile(
+    ArchiveFile('OEBPS/toc.ncx', ncxContent.length, ncxContent.codeUnits),
+  );
+  archive.addFile(
+    ArchiveFile(
+      'OEBPS/chapter1.xhtml',
       chapterContent.length,
       chapterContent.codeUnits,
     ),
