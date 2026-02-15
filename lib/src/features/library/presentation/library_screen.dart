@@ -589,12 +589,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     String? newName;
 
     if (result == createGroupResult) {
+      if (!context.mounted) return;
       final name = await _promptForGroupName(context);
       if (!context.mounted) return;
       if (name != null && name.trim().isNotEmpty) {
         final groupId = await ref
             .read(bookshelfNotifierProvider.notifier)
             .createGroup(name);
+        if (!context.mounted) return;
 
         if (groupId == null) {
           if (state is AsyncError) {

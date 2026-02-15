@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 String colorToHex(Color color) {
-  return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+  final argb = color.toARGB32();
+  return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
 }
 
 const _skeletonCss = '''

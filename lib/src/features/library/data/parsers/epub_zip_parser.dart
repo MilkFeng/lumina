@@ -207,20 +207,42 @@ class EpubZipParser {
         }
       }
 
-      // Step 2: Parse TOC structure (NCX or NAV)
-      final tocId = spineElement.getAttribute('toc');
+      // Step 2: Parse TOC structure (NAV first, then NCX)
       List<TocItem> toc = [];
 
-      if (tocId != null && manifestMap.containsKey(tocId)) {
-        final tocHref = manifestMap[tocId]!.$1;
-        final tocPath = opfDir.isEmpty
-            ? tocHref.path
-            : '$opfDir/${tocHref.path}';
-        final tocFile = archive.findFile(tocPath);
+      // EPUB 3 NAV document: manifest item with properties containing whole word "nav"
+      String? navPath;
+      for (final entry in manifestMap.entries) {
+        final properties = entry.value.$2;
+        if (_containsWholeWord(properties, 'nav')) {
+          final navHref = entry.value.$1;
+          navPath = opfDir.isEmpty ? navHref.path : '$opfDir/${navHref.path}';
+          break;
+        }
+      }
 
-        if (tocFile != null) {
-          final tocContent = _decodeString(tocFile.content as List<int>);
-          toc = _parseNcx(tocContent, manifestMap, opfDir, spineIndexMap);
+      if (navPath != null) {
+        final navFile = archive.findFile(navPath);
+        if (navFile != null) {
+          final navContent = _decodeString(navFile.content as List<int>);
+          toc = _parseNav(navContent, opfDir, spineIndexMap);
+        }
+      }
+
+      // EPUB 2 NCX fallback
+      if (toc.isEmpty) {
+        final tocId = spineElement.getAttribute('toc');
+        if (tocId != null && manifestMap.containsKey(tocId)) {
+          final tocHref = manifestMap[tocId]!.$1;
+          final tocPath = opfDir.isEmpty
+              ? tocHref.path
+              : '$opfDir/${tocHref.path}';
+          final tocFile = archive.findFile(tocPath);
+
+          if (tocFile != null) {
+            final tocContent = _decodeString(tocFile.content as List<int>);
+            toc = _parseNcx(tocContent, manifestMap, opfDir, spineIndexMap);
+          }
         }
       }
 
@@ -443,6 +465,125 @@ class EpubZipParser {
     }
 
     return chapters;
+  }
+
+  /// Parse EPUB 3 Navigation Document (XHTML nav)
+  /// Returns the hierarchical TOC from <nav epub:type="toc"> ... <ol>
+  static List<TocItem> _parseNav(
+    String content,
+    String opfDir,
+    Map<String, int> spineIndexMap,
+  ) {
+    try {
+      final doc = XmlDocument.parse(content);
+
+      final navElement = doc.findAllElements('nav').where((element) {
+        final epubType =
+            element.getAttribute(
+              'type',
+              namespace: 'http://www.idpf.org/2007/ops',
+            ) ??
+            element.getAttribute('epub:type') ??
+            element.getAttribute('type');
+        return _containsWholeWord(epubType, 'toc');
+      }).firstOrNull;
+
+      if (navElement == null) {
+        return [];
+      }
+
+      final rootOl = navElement.childElements
+          .where((element) => element.localName == 'ol')
+          .firstOrNull;
+
+      if (rootOl == null) {
+        return [];
+      }
+
+      return _parseNavListItems(
+        rootOl.findElements('li'),
+        0,
+        opfDir,
+        spineIndexMap,
+      );
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Parse nested NAV list items recursively
+  static List<TocItem> _parseNavListItems(
+    Iterable<XmlElement> listItems,
+    int depth,
+    String opfDir,
+    Map<String, int> spineIndexMap,
+  ) {
+    final chapters = <TocItem>[];
+
+    for (final listItem in listItems) {
+      final anchorOrSpan = listItem.childElements
+          .where(
+            (element) =>
+                element.localName == 'a' || element.localName == 'span',
+          )
+          .firstOrNull;
+
+      final label = anchorOrSpan?.innerText.trim().isNotEmpty == true
+          ? anchorOrSpan!.innerText.trim()
+          : 'Chapter';
+
+      final hrefValue = anchorOrSpan?.localName == 'a'
+          ? anchorOrSpan!.getAttribute('href')
+          : null;
+
+      Href? href;
+      int spineIdx = -1;
+      if (hrefValue != null && hrefValue.trim().isNotEmpty) {
+        final hrefStr = opfDir.isEmpty ? hrefValue : '$opfDir/$hrefValue';
+        href = _resolveHref(hrefStr);
+        if (href != null) {
+          final normalizedPath = _normalizePath(href.path);
+          spineIdx = spineIndexMap[normalizedPath] ?? -1;
+        }
+      }
+
+      final nestedOl = listItem.childElements
+          .where((element) => element.localName == 'ol')
+          .firstOrNull;
+
+      final children = nestedOl == null
+          ? <TocItem>[]
+          : _parseNavListItems(
+              nestedOl.findElements('li'),
+              depth + 1,
+              opfDir,
+              spineIndexMap,
+            );
+
+      chapters.add(
+        TocItem()
+          ..label = label
+          ..href =
+              href ??
+              (Href()
+                ..path = ''
+                ..anchor = 'top')
+          ..depth = depth
+          ..spineIndex = spineIdx
+          ..children = children,
+      );
+    }
+
+    return chapters;
+  }
+
+  static bool _containsWholeWord(String? value, String word) {
+    if (value == null || value.trim().isEmpty) return false;
+    final pattern = RegExp(
+      '\\b${RegExp.escape(word)}\\b',
+      caseSensitive: false,
+    );
+    return pattern.hasMatch(value);
   }
 
   /// Parse spine as flat TOC list (fallback when no NCX/NAV exists)
