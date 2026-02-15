@@ -189,7 +189,8 @@ class EpubReader {
         theme: {
           backgroundColor: '#FFFFFF',
           defaultTextColor: null,
-          paginationCss: `$_paginationCss`
+          paginationCss: `$_paginationCss`,
+          variableCss: '',
         }
       }
     };
@@ -220,10 +221,11 @@ class EpubReader {
     this.state.config.theme = {
       backgroundColor: theme.backgroundColor ?? '#FFFFFF',
       defaultTextColor: theme.defaultTextColor ?? null,
-      paginationCss: theme.paginationCss ?? `$_paginationCss`
+      paginationCss: theme.paginationCss ?? `$_paginationCss`,
+      variableCss: theme.variableCss ?? '',
     };
 
-    this._updateCSSVariables(document.documentElement, document.body);
+    this._updateCSSVariables(document, 'skeleton-variable-style');
     window.removeEventListener('resize', this._onResize);
     window.addEventListener('resize', this._onResize, { passive: true });
   }
@@ -469,12 +471,10 @@ class EpubReader {
 
     const doc = iframe.contentDocument;
 
-    const existingStyle = document.getElementById('skeleton-variable-style');
-    if (existingStyle) {
-      const style = existingStyle.cloneNode(true);
-      style.id = 'injected-variable-style';
-      doc.head.appendChild(style);
-    }
+    const variableStyle = doc.createElement('style');
+    variableStyle.id = 'injected-variable-style';
+    variableStyle.innerHTML = this.state.config.theme.variableCss;
+    doc.head.appendChild(variableStyle);
 
     const style = doc.createElement('style');
     style.id = 'injected-pagination-style';
@@ -688,7 +688,10 @@ class EpubReader {
     this.jumpToPageFor(slot, pageCount - 1);
   }
 
-  _updateCSSVariables(root, body) {
+  _updateCSSVariables(doc, styleId = 'injected-variable-style') {
+    const root = doc.documentElement;
+    const body = doc.body;
+
     root.style.setProperty('--safe-width', this.state.config.safeWidth + 'px');
     root.style.setProperty('--safe-height', this.state.config.safeHeight + 'px');
     root.style.setProperty('--padding-top', this.state.config.padding.top + 'px');
@@ -703,6 +706,26 @@ class EpubReader {
       body.classList.remove('override-color');
       root.style.removeProperty('--default-text-color');
     }
+
+    const existingStyle = doc.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.innerHTML = this.state.config.theme.variableCss;
+    }
+  }
+
+  _generateVariableStyle() {
+    const safeWidthItem = '--safe-width: ' + this.state.config.safeWidth + 'px;';
+    const safeHeightItem = '--safe-height: ' + this.state.config.safeHeight + 'px;';
+    const paddingTopItem = '--padding-top: ' + this.state.config.padding.top + 'px;';
+    const paddingLeftItem = '--padding-left: ' + this.state.config.padding.left + 'px;';
+    const paddingRightItem = '--padding-right: ' + this.state.config.padding.right + 'px;';
+    const paddingBottomItem = '--padding-bottom: ' + this.state.config.padding.bottom + 'px;';
+    const backgroundColorItem = '--background-color: ' + this.state.config.theme.backgroundColor + ';';
+    let defaultTextColorItem = '';
+    if (this.state.config.theme.defaultTextColor) {
+      defaultTextColorItem = '--default-text-color: ' + this.state.config.theme.defaultTextColor + ';';
+    }
+    return ':root {' + safeWidthItem + safeHeightItem + paddingTopItem + paddingLeftItem + paddingRightItem + paddingBottomItem + backgroundColorItem + defaultTextColorItem + '}';
   }
 
   updateTheme(viewWidth, viewHeight, paddingTop, paddingLeft, paddingRight, paddingBottom, backgroundColor, defaultTextColor) {
@@ -716,8 +739,9 @@ class EpubReader {
     };
     this.state.config.theme.backgroundColor = backgroundColor;
     this.state.config.theme.defaultTextColor = defaultTextColor;
+    this.state.config.theme.variableCss = this._generateVariableStyle();
 
-    this._updateCSSVariables(document.documentElement, document.body);
+    this._updateCSSVariables(document, 'skeleton-variable-style');
 
     const iframes = document.getElementsByTagName('iframe');
     for (let i = 0; i < iframes.length; i++) {
@@ -725,7 +749,7 @@ class EpubReader {
       if (iframe && iframe.contentDocument) {
         const doc = iframe.contentDocument;
         const scrollLeft = doc.body.scrollLeft;
-        this._updateCSSVariables(doc.documentElement, doc.body);
+        this._updateCSSVariables(doc, 'injected-variable-style');
         requestAnimationFrame(() => {
           setTimeout(() => {
             doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
@@ -826,6 +850,14 @@ String generateSkeletonHtml(
   final safeWidth = viewWidth.floor();
   final safeHeight = viewHeight.floor();
 
+  final variableStyle = _generateVariableStyle(
+    viewWidth,
+    viewHeight,
+    backgroundColor,
+    defaultTextColor,
+    padding,
+  );
+
   final initialConfigJson = jsonEncode({
     'safeWidth': safeWidth,
     'safeHeight': safeHeight,
@@ -841,16 +873,9 @@ String generateSkeletonHtml(
           ? colorToHex(defaultTextColor)
           : null,
       'paginationCss': _paginationCss,
+      'variableCss': variableStyle,
     },
   });
-
-  final variableStyle = _generateVariableStyle(
-    viewWidth,
-    viewHeight,
-    backgroundColor,
-    defaultTextColor,
-    padding,
-  );
 
   return '''
 <!DOCTYPE html>
