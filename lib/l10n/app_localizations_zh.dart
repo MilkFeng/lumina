@@ -144,6 +144,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get success => '成功';
 
   @override
+  String get failed => '失败';
+
+  @override
   String get loading => '加载中';
 
   @override
@@ -251,6 +254,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importing => '导入中……';
+
+  @override
+  String get importCompleted => '导入完成';
+
+  @override
+  String importingProgress(int success, int failed, int remaining) {
+    return '$success 成功，$failed 失败，$remaining 剩余';
+  }
 
   @override
   String successfullyImported(String title) {

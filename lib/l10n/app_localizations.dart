@@ -368,6 +368,12 @@ abstract class AppLocalizations {
   /// **'Success'**
   String get success;
 
+  /// Failed label
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get failed;
+
   /// Loading label
   ///
   /// In en, this message translates to:
@@ -577,6 +583,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Importing...'**
   String get importing;
+
+  /// Import completed message
+  ///
+  /// In en, this message translates to:
+  /// **'Import completed'**
+  String get importCompleted;
+
+  /// Importing progress details
+  ///
+  /// In en, this message translates to:
+  /// **'{success} success, {failed} failed, {remaining} remaining'**
+  String importingProgress(int success, int failed, int remaining);
 
   /// Successfully imported message
   ///

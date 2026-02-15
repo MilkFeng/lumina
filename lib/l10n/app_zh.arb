@@ -225,6 +225,11 @@
   "@success": {
     "description": "成功标签"
   },
+
+  "failed": "失败",
+  "@failed": {
+    "description": "失败标签"
+  },
   
   "loading": "加载中",
   "@loading": {
@@ -409,6 +414,27 @@
   "importing": "导入中……",
   "@importing": {
     "description": "导入进度消息"
+  },
+
+  "importCompleted": "导入完成",
+  "@importCompleted": {
+    "description": "导入完成消息"
+  },
+
+  "importingProgress": "{success} 成功，{failed} 失败，{remaining} 剩余",
+  "@importingProgress": {
+    "description": "导入进度消息",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
   },
   
   "successfullyImported": "成功导入“{title}”",

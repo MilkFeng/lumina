@@ -144,6 +144,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get success => 'Success';
 
   @override
+  String get failed => 'Failed';
+
+  @override
   String get loading => 'Loading';
 
   @override
@@ -251,6 +254,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importing => 'Importing...';
+
+  @override
+  String get importCompleted => 'Import completed';
+
+  @override
+  String importingProgress(int success, int failed, int remaining) {
+    return '$success success, $failed failed, $remaining remaining';
+  }
 
   @override
   String successfullyImported(String title) {

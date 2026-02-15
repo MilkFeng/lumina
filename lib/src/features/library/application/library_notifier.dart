@@ -7,6 +7,26 @@ import '../data/services/epub_import_service_provider.dart';
 
 part 'library_notifier.g.dart';
 
+enum ImportStatus { processing, success, failed }
+
+class ImportProgress {
+  final int totalCount;
+  final int currentCount;
+  final String currentFileName;
+  final ImportStatus status;
+  final String? errorMessage;
+  final ShelfBook? book;
+
+  ImportProgress({
+    required this.totalCount,
+    required this.currentCount,
+    required this.currentFileName,
+    required this.status,
+    this.errorMessage,
+    this.book,
+  });
+}
+
 /// State for library operations (updated for ShelfBook)
 sealed class LibraryState {}
 
@@ -71,29 +91,51 @@ class LibraryNotifier extends _$LibraryNotifier {
     }
   }
 
-  /// Import multiple books at once
-  Future<(int success, int failed, List<String> errors)> importMultipleBooks(
-    List<File> files,
-  ) async {
-    int successCount = 0;
-    int failedCount = 0;
-    final errors = <String>[];
+  /// Import a new book from file
+  Stream<ImportProgress> importMultipleBooks(List<File> files) async* {
+    final totalCount = files.length;
+
+    if (totalCount == 0) return;
 
     final importService = ref.read(epubImportServiceProvider);
+    int currentCount = 0;
 
     for (final file in files) {
+      currentCount++;
+      final fileName = file.path.split(Platform.pathSeparator).last;
+
+      // 1. Notify UI that we're starting to process this file
+      yield ImportProgress(
+        totalCount: totalCount,
+        currentCount: currentCount,
+        currentFileName: fileName,
+        status: ImportStatus.processing,
+      );
+
+      // 2. Import the book and wait for result
       final result = await importService.importBook(file);
 
-      result.fold((error) {
-        failedCount++;
-        errors.add('${file.path.split('/').last}: $error');
-      }, (_) => successCount++);
+      // 3. Notify UI of success or failure for this file
+      yield result.fold(
+        (errorMessage) => ImportProgress(
+          totalCount: totalCount,
+          currentCount: currentCount,
+          currentFileName: fileName,
+          status: ImportStatus.failed,
+          errorMessage: errorMessage,
+        ),
+        (book) => ImportProgress(
+          totalCount: totalCount,
+          currentCount: currentCount,
+          currentFileName: fileName,
+          status: ImportStatus.success,
+          book: book,
+        ),
+      );
     }
 
-    // Reload once after all imports
+    // 4. After all files are processed, refresh the book list
     await refresh();
-
-    return (successCount, failedCount, errors);
   }
 
   /// Refresh book list

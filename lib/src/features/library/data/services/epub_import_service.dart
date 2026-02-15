@@ -33,7 +33,7 @@ class EpubImportService {
   Future<Either<String, ShelfBook>> importBook(File file) async {
     try {
       // Step 1: Calculate SHA-256 hash
-      final hashResult = await _calculateFileHash(file);
+      final hashResult = await compute(_calculateFileHashInIsolate, file.path);
       if (hashResult.isLeft()) {
         return left(hashResult.getLeft().toNullable()!);
       }
@@ -153,7 +153,10 @@ class EpubImportService {
     }
 
     if (fileHash == null) {
-      final hashResult = await _calculateFileHash(epubFile);
+      final hashResult = await compute(
+        _calculateFileHashInIsolate,
+        epubFile.path,
+      );
       if (hashResult.isLeft()) {
         return left(hashResult.getLeft().toNullable()!);
       }
@@ -200,38 +203,6 @@ class EpubImportService {
     }
 
     return right((manifest, coverPath));
-  }
-
-  /// Calculate SHA-256 hash of a file
-  Future<Either<String, String>> _calculateFileHash(File file) async {
-    try {
-      final stream = file.openRead();
-      final digest = await sha256.bind(stream).first;
-
-      BigInt number = BigInt.parse(digest.toString(), radix: 16);
-      final hash = _toBase62(number);
-
-      return right(hash);
-    } catch (e) {
-      return left('Hash calculation failed: $e');
-    }
-  }
-
-  String _toBase62(BigInt num) {
-    if (num == BigInt.zero) return '0';
-
-    const chars =
-        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    final base = BigInt.from(chars.length);
-    final codeUnits = <int>[];
-
-    while (num > BigInt.zero) {
-      var remainder = (num % base).toInt();
-      codeUnits.add(chars.codeUnitAt(remainder));
-      num = num ~/ base;
-    }
-
-    return String.fromCharCodes(codeUnits.reversed);
   }
 
   /// Copy EPUB file to books directory
@@ -466,4 +437,37 @@ Uint8List? _compressImageInIsolate(Uint8List rawBytes) {
     debugPrint('Image compression worker error: $e');
     return null;
   }
+}
+
+/// Calculate SHA-256 hash of a file
+Future<Either<String, String>> _calculateFileHashInIsolate(String path) async {
+  try {
+    final file = File(path);
+    final stream = file.openRead();
+    final digest = await sha256.bind(stream).first;
+
+    BigInt number = BigInt.parse(digest.toString(), radix: 16);
+    final hash = _toBase62(number);
+
+    return right(hash);
+  } catch (e) {
+    return left('Hash calculation failed: $e');
+  }
+}
+
+String _toBase62(BigInt num) {
+  if (num == BigInt.zero) return '0';
+
+  const chars =
+      '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  final base = BigInt.from(chars.length);
+  final codeUnits = <int>[];
+
+  while (num > BigInt.zero) {
+    var remainder = (num % base).toInt();
+    codeUnits.add(chars.codeUnitAt(remainder));
+    num = num ~/ base;
+  }
+
+  return String.fromCharCodes(codeUnits.reversed);
 }

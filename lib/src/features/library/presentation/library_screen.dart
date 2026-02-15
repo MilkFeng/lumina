@@ -12,6 +12,7 @@ import '../application/library_notifier.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
+import 'widgets/batch_import_dialog.dart';
 import 'widgets/book_grid_item.dart';
 import 'widgets/group_selection_dialog.dart';
 import 'widgets/sort_bottom_sheet.dart';
@@ -157,7 +158,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     }
 
     return FloatingActionButton(
-      onPressed: () => _handleImportBook(context, ref),
+      onPressed: () => _handleImportFiles(context, ref),
       child: const Icon(Icons.add_outlined),
     );
   }
@@ -704,62 +705,47 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     }
   }
 
-  Future<void> _handleImportBook(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleImportFiles(BuildContext context, WidgetRef ref) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['epub'],
-        allowMultiple: false,
+        allowMultiple: true,
       );
 
       if (result == null || result.files.isEmpty) {
         return;
       }
 
-      final finalName = result.files.single.name;
-      final fileExtension = finalName.contains('.')
-          ? finalName.split('.').last
-          : '';
-      if (fileExtension.toLowerCase() != 'epub') {
-        if (context.mounted) {
-          ToastService.showError(AppLocalizations.of(context)!.invalidFileType);
-        }
-        return;
-      }
+      final selectedPaths = result.paths.whereType<String>();
+      final files = selectedPaths.map(File.new).toList();
 
-      final filePath = result.files.single.path;
-
-      if (filePath == null) {
+      if (files.isEmpty) {
         if (context.mounted) {
           ToastService.showError(AppLocalizations.of(context)!.fileAccessError);
         }
         return;
       }
 
-      if (context.mounted) {
-        ToastService.showInfo(AppLocalizations.of(context)!.importing);
-      }
-
-      final file = File(filePath);
-      final importResult = await ref
+      final stream = ref
           .read(libraryNotifierProvider.notifier)
-          .importBook(file);
+          .importMultipleBooks(files);
+
+      if (!context.mounted) return;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Theme.of(
+          context,
+        ).colorScheme.scrim.withValues(alpha: 0.5),
+        builder: (ctx) => BatchImportDialog(progressStream: stream),
+      );
 
       FilePicker.platform.clearTemporaryFiles();
 
       if (context.mounted) {
-        importResult.fold(
-          (error) {
-            ToastService.showError(error);
-          },
-          (book) {
-            ToastService.showSuccess(
-              AppLocalizations.of(context)!.successfullyImported(book.title),
-            );
-            // Refresh bookshelf
-            ref.read(bookshelfNotifierProvider.notifier).refresh();
-          },
-        );
+        ref.read(bookshelfNotifierProvider.notifier).refresh();
       }
     } catch (e) {
       if (context.mounted) {

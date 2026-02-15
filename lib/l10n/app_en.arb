@@ -225,6 +225,11 @@
   "@success": {
     "description": "Success label"
   },
+
+  "failed": "Failed",
+  "@failed": {
+    "description": "Failed label"
+  },
   
   "loading": "Loading",
   "@loading": {
@@ -409,6 +414,27 @@
   "importing": "Importing...",
   "@importing": {
     "description": "Importing progress message"
+  },
+
+  "importCompleted": "Import completed",
+  "@importCompleted": {
+    "description": "Import completed message"
+  },
+
+  "importingProgress": "{success} success, {failed} failed, {remaining} remaining",
+  "@importingProgress": {
+    "description": "Importing progress details",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
   },
   
   "successfullyImported": "Successfully imported \"{title}\"",
