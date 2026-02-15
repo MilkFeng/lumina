@@ -13,7 +13,6 @@ import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
 import 'widgets/book_grid_item.dart';
-import 'widgets/sync_button.dart';
 import 'widgets/group_selection_dialog.dart';
 import 'widgets/sort_bottom_sheet.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -298,11 +297,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               icon: const Icon(Icons.sort_rounded),
               onPressed: () => _showSortBottomSheet(context, ref, state),
               tooltip: AppLocalizations.of(context)!.sort,
-            ),
-            SyncButton(
-              onSync: () {
-                ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
-              },
             ),
           ],
         ],

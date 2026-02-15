@@ -5,7 +5,6 @@ import '../services/toast_service.dart';
 import '../../features/library/presentation/library_screen.dart';
 import '../../features/library/presentation/book_detail_screen.dart';
 import '../../features/reader/presentation/reader_screen.dart';
-import '../../features/sync/presentation/sync_settings_screen.dart';
 import '../../features/about/presentation/about_screen.dart';
 
 /// App Router Configuration
@@ -45,18 +44,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return MaterialPage(
             key: state.pageKey,
             child: ReaderScreen(fileHash: fileHash),
-          );
-        },
-      ),
-
-      // Sync Settings Screen
-      GoRoute(
-        path: '/sync-settings',
-        name: 'sync-settings',
-        pageBuilder: (context, state) {
-          return MaterialPage(
-            key: state.pageKey,
-            child: const SyncSettingsScreen(),
           );
         },
       ),
