@@ -83,11 +83,6 @@ class _AboutScreenState extends State<AboutScreen> {
               ),
               _buildTipTile(
                 context,
-                icon: Icons.sync_outlined,
-                tip: l10n.tipLongPressSync,
-              ),
-              _buildTipTile(
-                context,
                 icon: Icons.keyboard_double_arrow_right_outlined,
                 tip: l10n.tipLongPressNextTrack,
               ),
