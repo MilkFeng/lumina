@@ -142,69 +142,6 @@ class EpubImportService {
     }
   }
 
-  Future<Either<String, (BookManifest, String?)>> updateBookManifestAndCover(
-    String epubAbsPath,
-    int bookId,
-    String? fileHash,
-  ) async {
-    File epubFile = File(epubAbsPath);
-    if (!await epubFile.exists()) {
-      return left('EPUB file does not exist at $epubAbsPath');
-    }
-
-    if (fileHash == null) {
-      final hashResult = await compute(
-        _calculateFileHashInIsolate,
-        epubFile.path,
-      );
-      if (hashResult.isLeft()) {
-        return left(hashResult.getLeft().toNullable()!);
-      }
-      fileHash = hashResult.getRight().toNullable()!;
-    }
-
-    final parseResult = await compute(
-      _parseEpubInIsolate,
-      _ParseParams(filePath: epubAbsPath, fileHash: fileHash),
-    );
-
-    if (parseResult.isLeft()) {
-      // Clean up copied file on parse failure
-      await _deleteFile(epubAbsPath);
-      return left(parseResult.getLeft().toNullable()!);
-    }
-
-    final parseData = parseResult.getRight().toNullable()!;
-
-    // Extract and save cover image
-    final coverPath = await _extractCover(
-      epubAbsPath,
-      fileHash,
-      parseData.coverHref,
-      parseData.opfRootPath,
-    );
-
-    final manifest = BookManifest()
-      ..fileHash = fileHash
-      ..opfRootPath = parseData.opfRootPath
-      ..spine = parseData.spine
-      ..toc = parseData.toc
-      ..manifest = parseData.manifestItems
-      ..epubVersion = parseData.epubVersion
-      ..lastUpdated = DateTime.now();
-
-    final saveManifestResult = await _manifestRepo.saveManifest(manifest);
-    if (saveManifestResult.isLeft()) {
-      // Rollback: delete ShelfBook and files
-      await _shelfBookRepo.deleteBook(bookId);
-      await _deleteFile(epubAbsPath);
-      if (coverPath != null) await _deleteFile(coverPath);
-      return left(saveManifestResult.getLeft().toNullable()!);
-    }
-
-    return right((manifest, coverPath));
-  }
-
   /// Copy EPUB file to books directory
   /// Returns absolute path to the copied file
   Future<Either<String, String>> _copyEpubFile(
