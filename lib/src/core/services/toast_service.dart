@@ -27,6 +27,8 @@ class ToastService {
     ToastBubbleType type, {
     Duration duration = const Duration(seconds: 3),
   }) {
+    debugPrint('Toast: [${type.name.toUpperCase()}] $message');
+
     final overlay = navigatorKey.currentState?.overlay;
     if (overlay == null) {
       return;
