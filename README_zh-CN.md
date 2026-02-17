@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg)]()
 
-> 一个基于 Flutter 开发的轻量级 EPUB 电子书阅读器，支持基于 WebDAV 的云端同步
+> 一个基于 Flutter 开发的轻量级 EPUB 电子书阅读器，支持 Android 和 iOS 双平台。
 
 ## 🚧 早期开发阶段
 
@@ -16,7 +16,6 @@
 
 - 📚 **EPUB 阅读** - 支持 EPUB 2.0/3.0 格式，流畅翻页，自动保存阅读进度，基于 WebView 的完整的 Epub 渲染
 - 🗂️ **书架管理** - 自定义分组、多维度排序、批量操作
-- ☁️ **WebDAV 同步** - 书籍与阅读进度云端同步，多设备无缝切换
 - 🎨 **优雅界面** - 亮暗主题切换，内置思源宋体，舒适阅读体验
 - ⚡ **高效架构** - 流式加载 Epub 压缩文件，快速启动
 
@@ -30,9 +29,9 @@
       <sub>书架页面</sub>
     </td>
     <td align="center">
-      <img src="docs/webdav.jpg" width="250px" />
+      <img src="docs/dark.jpg" width="250px" />
       <br />
-      <sub>WebDAV 同步</sub>
+      <sub>深色模式</sub>
     </td>
     <td align="center">
       <img src="docs/chinese.jpg" width="250px" />
@@ -45,11 +44,6 @@
       <img src="docs/toc.jpg" width="250px" />
       <br />
       <sub>目录导航</sub>
-    </td>
-    <td align="center">
-      <img src="docs/dark.jpg" width="250px" />
-      <br />
-      <sub>深色模式</sub>
     </td>
     <td align="center">
       <img src="docs/about.jpg" width="250px" />
@@ -67,12 +61,6 @@
 - **iOS 用户**：下载 `.ipa` 文件，并使用 **侧载工具** 进行安装。
     - **推荐工具**：[AltStore](https://altstore.io/) (推荐)、[Sideloadly](https://sideloadly.io/) 或 [TrollStore](https://github.com/opa334/TrollStore) (仅限特定系统版本)。
     - *注意：使用免费 Apple ID 进行侧载时，通常每 7 天需要刷新一次签名。*
-
-### 开始使用
-
-1. **导入书籍**：点击主页右下角的「+」按钮，选择本地的 EPUB 文件导入
-2. **配置同步（可选）**：长按书架页面的同步图标，填写 WebDAV 服务器信息，测试连接成功后即可开始同步
-3. **开始阅读**：点击书籍封面打开图书详情，点击「开始阅读」或「继续阅读」进入阅读界面
 
 ## 🔧 开发者指南
 
@@ -135,10 +123,6 @@ flutter build ios --release
 ### 自定义字体许可
 本项目内置了「思源宋体」（Source Han Serif）字体，遵循 [SIL Open Font License 1.1](./assets/fonts/LICENSE.txt)。
 
-### WebDAV 功能说明
-- WebDAV 同步功能目前为实验性特性，建议使用前先备份重要数据
-- 首次同步可能需要较长时间，取决于书籍数量和网络状况
-
 ### EPUB 格式支持
 - 支持标准 EPUB 2.0 和 EPUB 3.0 格式
 - 暂不支持 DRM 加密的电子书
@@ -150,7 +134,7 @@ flutter build ios --release
 - [x] Stream-from-Zip 流式加载
 - [x] 流畅的翻页动画
 - [x] 阅读进度自动保存
-- [x] 云端同步 (WebDAV)
+- [ ] 云端同步 (WebDAV)
 - [x] 书架分组管理
 - [x] 目录导航
 - [x] 自适应亮暗主题

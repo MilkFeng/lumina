@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg)]()
 
-> A lightweight EPUB e-book reader built with Flutter, featuring cloud synchronization via WebDAV
+> A lightweight EPUB e-book reader built with Flutter, supporting both Android and iOS platforms.
 
 ## 🚧 Early Development Stage
 
@@ -16,7 +16,6 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
 
 - 📚 **EPUB Reading** - Supports EPUB 2.0/3.0 formats with smooth page turning, automatic reading progress saving, and complete EPUB rendering based on WebView
 - 🗂️ **Bookshelf Management** - Custom grouping, multi-dimensional sorting, and batch operations
-- ☁️ **WebDAV Sync** - Cloud synchronization of books and reading progress, seamless switching across multiple devices
 - 🎨 **Elegant Interface** - Light/dark theme switching, built-in Source Han Serif font for comfortable reading experience
 - ⚡ **Efficient Architecture** - Streaming loading of EPUB compressed files for fast startup
 
@@ -30,9 +29,9 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
       <sub>Shelf</sub>
     </td>
     <td align="center">
-      <img src="docs/webdav.jpg" width="250px" />
+      <img src="docs/dark.jpg" width="250px" />
       <br />
-      <sub>WebDAV Sync</sub>
+      <sub>Dark Mode</sub>
     </td>
     <td align="center">
       <img src="docs/chinese.jpg" width="250px" />
@@ -45,11 +44,6 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
       <img src="docs/toc.jpg" width="250px" />
       <br />
       <sub>Table of Contents</sub>
-    </td>
-    <td align="center">
-      <img src="docs/dark.jpg" width="250px" />
-      <br />
-      <sub>Dark Mode</sub>
     </td>
     <td align="center">
       <img src="docs/about.jpg" width="250px" />
@@ -67,12 +61,6 @@ Visit the [Releases page](https://github.com/MilkFeng/lumina/releases) to downlo
 - **iOS Users**: Download the `.ipa` file and install it via **sideloading**.
     - **Recommended Tools**: [AltStore](https://altstore.io/) (Recommended), [Sideloadly](https://sideloadly.io/), or [TrollStore](https://github.com/opa334/TrollStore) (for supported iOS versions).
     - *Note: If using a free Apple ID, you will typically need to refresh the app signature every 7 days.*
-
-### Getting Started
-
-1. **Import Books**: Tap the "+" button in the bottom right corner of the home page, select local EPUB files to import
-2. **Configure Sync (Optional)**: Long press the sync icon on the bookshelf page, fill in WebDAV server information, and start syncing after successful connection test
-3. **Start Reading**: Tap the book cover to open book details, then tap "Start Reading" or "Continue Reading" to enter the reading interface
 
 ## 🔧 Developer Guide
 
@@ -135,10 +123,6 @@ flutter build ios --release
 ### Custom Font License
 This project includes the "Source Han Serif" font, licensed under the [SIL Open Font License 1.1](./assets/fonts/LICENSE.txt).
 
-### WebDAV Functionality
-- WebDAV sync is currently an experimental feature. Backup important data before use
-- Initial sync may take considerable time depending on the number of books and network conditions
-
 ### EPUB Format Support
 - Supports standard EPUB 2.0 and EPUB 3.0 formats
 - DRM-encrypted e-books are not currently supported
@@ -150,7 +134,7 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Stream-from-Zip streaming loading
 - [x] Smooth page turning animations
 - [x] Automatic reading progress saving
-- [x] Cloud sync (WebDAV)
+- [ ] Cloud sync (WebDAV)
 - [x] Bookshelf grouping management
 - [x] Table of contents navigation
 - [x] Adaptive light/dark themes
