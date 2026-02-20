@@ -147,7 +147,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 color: Theme.of(
                   context,
                 ).colorScheme.scrim.withValues(alpha: 0.5),
-                child: const Center(child: CircularProgressIndicator()),
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
               ),
             ),
         ],
@@ -174,7 +176,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     BookshelfState state,
   ) {
     if (_tabController == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
     }
 
     return Stack(
