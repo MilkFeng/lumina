@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:saf_stream/saf_stream.dart';
@@ -42,26 +43,82 @@ class ImportCacheManager {
   /// For [AndroidUriPath]: Streams content from SAF URI to cache file
   /// For [IOSFilePath]: Directly copies file to cache
   ///
-  /// Returns an [ImportableEpub] containing the cached file and its hash.
-  /// The cache file is created with a temporary name and can be renamed later
-  /// based on the hash.
+  /// Returns an [ImportableEpub] containing the cached file, its hash,
+  /// and the original file name.
   Future<ImportableEpub> createCacheAndHash(PlatformPath platformPath) async {
     final cacheDir = await _getCacheDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final tempCachePath = path.join(cacheDir.path, 'temp_$timestamp.epub');
     final tempCacheFile = File(tempCachePath);
 
+    // Extract original file name from platform path
+    String originalName;
+
     switch (platformPath) {
       case AndroidUriPath(:final uri):
         await _streamAndHashFromSAF(uri, tempCacheFile);
+        originalName = _extractFileNameFromUri(uri);
       case IOSFilePath(:final path):
         await _copyAndHashFromFileSystem(path, tempCacheFile);
+        originalName = path.split('/').last;
     }
 
     // Calculate hash of the cached file
     final hash = await _calculateFileHash(tempCacheFile);
 
-    return ImportableEpub(cacheFile: tempCacheFile, hash: hash);
+    return ImportableEpub(
+      cacheFile: tempCacheFile,
+      hash: hash,
+      originalName: originalName,
+    );
+  }
+
+  /// Extracts the file name from an Android SAF URI
+  ///
+  /// Handles various URI formats and decodes URL-encoded characters.
+  String _extractFileNameFromUri(String uri) {
+    try {
+      // Debug logging
+      final parsedUri = Uri.parse(uri);
+
+      // Get the last path segment
+      final segments = parsedUri.pathSegments;
+
+      if (segments.isNotEmpty) {
+        final lastSegment = segments.last;
+
+        // Extract filename from document ID format (e.g., "primary:path/file.epub")
+        if (lastSegment.contains(':')) {
+          final colonIndex = lastSegment.indexOf(':');
+          final pathPart = lastSegment.substring(colonIndex + 1);
+
+          // Get the last part after splitting by /
+          if (pathPart.contains('/')) {
+            final fileName = pathPart.split('/').last;
+            return fileName;
+          } else {
+            // No slash, the whole thing is the filename
+            return pathPart;
+          }
+        }
+
+        // If no colon, try splitting by /
+        if (lastSegment.contains('/')) {
+          final fileName = lastSegment.split('/').last;
+          return fileName;
+        }
+
+        // No special characters, return as-is
+        return lastSegment;
+      }
+
+      // Fallback: return a default name
+      return 'unknown.epub';
+    } catch (e) {
+      // ignore: avoid_print
+      debugPrint('Error extracting file name from URI: $e');
+      return 'unknown.epub';
+    }
   }
 
   /// Streams content from Android SAF URI to cache file
@@ -131,7 +188,7 @@ class ImportCacheManager {
       // Log error but don't throw to avoid interrupting cleanup operations
       // In production, you might want to log this to a logging service
       // ignore: avoid_print
-      print('Warning: Failed to delete cache file ${cacheFile.path}: $e');
+      debugPrint('Warning: Failed to delete cache file ${cacheFile.path}: $e');
     }
   }
 
@@ -151,7 +208,7 @@ class ImportCacheManager {
       }
     } catch (e) {
       // ignore: avoid_print
-      print('Warning: Failed to clear import cache: $e');
+      debugPrint('Warning: Failed to clear import cache: $e');
     }
   }
 

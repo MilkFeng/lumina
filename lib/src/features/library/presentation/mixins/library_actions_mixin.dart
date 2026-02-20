@@ -61,14 +61,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
         return;
       }
 
-      // Extract cache files from ImportableEpub objects
-      final files = importables
-          .map((importable) => importable.cacheFile)
-          .toList();
-
       final stream = ref
           .read(libraryNotifierProvider.notifier)
-          .importMultipleBooks(files);
+          .importMultipleBooks(importables);
 
       if (!context.mounted) return;
 

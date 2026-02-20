@@ -11,11 +11,18 @@ class ImportableEpub {
   /// SHA-256 hash of the file content for deduplication
   final String hash;
 
-  const ImportableEpub({required this.cacheFile, required this.hash});
+  /// The original file name from the source
+  final String originalName;
+
+  const ImportableEpub({
+    required this.cacheFile,
+    required this.hash,
+    required this.originalName,
+  });
 
   @override
   String toString() =>
-      'ImportableEpub(cacheFile: ${cacheFile.path}, hash: $hash)';
+      'ImportableEpub(originalName: $originalName, cacheFile: ${cacheFile.path}, hash: $hash)';
 
   @override
   bool operator ==(Object other) =>
@@ -23,16 +30,22 @@ class ImportableEpub {
       other is ImportableEpub &&
           runtimeType == other.runtimeType &&
           cacheFile.path == other.cacheFile.path &&
-          hash == other.hash;
+          hash == other.hash &&
+          originalName == other.originalName;
 
   @override
-  int get hashCode => Object.hash(cacheFile.path, hash);
+  int get hashCode => Object.hash(cacheFile.path, hash, originalName);
 
   /// Creates a copy with optional field replacements
-  ImportableEpub copyWith({File? cacheFile, String? hash}) {
+  ImportableEpub copyWith({
+    File? cacheFile,
+    String? hash,
+    String? originalName,
+  }) {
     return ImportableEpub(
       cacheFile: cacheFile ?? this.cacheFile,
       hash: hash ?? this.hash,
+      originalName: originalName ?? this.originalName,
     );
   }
 }

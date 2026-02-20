@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
@@ -92,7 +93,9 @@ class LibraryNotifier extends _$LibraryNotifier {
   }
 
   /// Import a new book from file
-  Stream<ImportProgress> importMultipleBooks(List<File> files) async* {
+  Stream<ImportProgress> importMultipleBooks(
+    List<ImportableEpub> files,
+  ) async* {
     final totalCount = files.length;
 
     if (totalCount == 0) return;
@@ -102,7 +105,7 @@ class LibraryNotifier extends _$LibraryNotifier {
 
     for (final file in files) {
       currentCount++;
-      final fileName = file.path.split(Platform.pathSeparator).last;
+      final fileName = file.originalName;
 
       // 1. Notify UI that we're starting to process this file
       yield ImportProgress(
@@ -113,7 +116,7 @@ class LibraryNotifier extends _$LibraryNotifier {
       );
 
       // 2. Import the book and wait for result
-      final result = await importService.importBook(file);
+      final result = await importService.importBook(file.cacheFile);
 
       // 3. Notify UI of success or failure for this file
       yield result.fold(
