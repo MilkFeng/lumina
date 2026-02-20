@@ -29,10 +29,10 @@ packages:
     dependency: "direct main"
     description:
       name: archive
-      sha256: "2fde1607386ab523f7a36bb3e7edb43bd58e6edaf2ffb29d8a6d578b297fdbbd"
+      sha256: a96e8b390886ee8abb49b7bd3ac8df6f451c621619f52a26e815fdcf568959ff
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.7"
+    version: "4.0.9"
   args:
     dependency: transitive
     description:
@@ -178,7 +178,7 @@ packages:
     source: hosted
     version: "1.19.1"
   convert:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: convert
       sha256: b30acd5944035672bc15c6b7a8b47d773e41e2f17de064350988c5d02adb1c68
@@ -861,6 +861,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  saf_stream:
+    dependency: "direct main"
+    description:
+      name: saf_stream
+      sha256: c05449997698c481a03e428162a999f93b1ee1bcc0349d651899a59f7b10230a
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.12.3"
+  saf_util:
+    dependency: "direct main"
+    description:
+      name: saf_util
+      sha256: "219f983e5f17b28998335158cdc97add9d52af9884e38b5a43f10dcc070510ec"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.11.0"
   shared_preferences:
     dependency: "direct main"
     description:

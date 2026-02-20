@@ -41,6 +41,7 @@ dependencies:
   xml: ^6.6.1
   archive: ^4.0.7
   crypto: ^3.0.7
+  convert: ^3.1.2
   
   # Reader
   flutter_inappwebview: ^6.1.5
@@ -56,6 +57,8 @@ dependencies:
 
   # Image Compression
   image: ^4.7.2
+  saf_stream: ^0.12.3
+  saf_util: ^0.11.0
   
 
 dev_dependencies:
