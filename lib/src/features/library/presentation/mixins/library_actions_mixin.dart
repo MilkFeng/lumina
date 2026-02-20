@@ -35,9 +35,8 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       final importService = ref.read(unifiedImportServiceProvider);
       final paths = await importService.pickFiles();
 
-      isSelectingFiles = false;
-
       if (paths.isEmpty) {
+        isSelectingFiles = false;
         return;
       }
 
@@ -48,11 +47,12 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
           final importable = await importService.processEpub(path);
           importables.add(importable);
         } catch (e) {
-          // Skip files that fail to process
-          // ignore: avoid_print
-          print('Failed to process file: $path, error: $e');
+          // Skip files that fail to process and log the error
+          debugPrint('Failed to process file: $path, error: $e');
         }
       }
+
+      isSelectingFiles = false;
 
       if (importables.isEmpty) {
         if (context.mounted) {
