@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
 import 'platform_path.dart';
 import 'importable_epub.dart';
 import 'import_cache_manager.dart';
@@ -13,7 +12,7 @@ import 'import_cache_manager.dart';
 /// - Processing selected files into cached, hashed ImportableEpub objects
 ///
 /// Android: Uses native MethodChannel with SAF (Storage Access Framework)
-/// iOS: Uses file_picker package with standard file system operations
+/// iOS: Currently unsupported (requires native implementation or file_picker package)
 class UnifiedImportService {
   static const String _channelName = 'com.lumina.reader/native_picker';
   static const MethodChannel _channel = MethodChannel(_channelName);
@@ -26,7 +25,7 @@ class UnifiedImportService {
   /// Pick multiple EPUB files using platform-appropriate picker
   ///
   /// Android: Uses native SAF document picker via MethodChannel
-  /// iOS: Uses file_picker package
+  /// iOS: Currently unsupported - returns empty list
   ///
   /// Returns a list of [PlatformPath] objects representing selected files.
   /// Returns empty list if user cancels or no files are selected.
@@ -50,7 +49,7 @@ class UnifiedImportService {
   /// Pick a folder and recursively scan for EPUB files
   ///
   /// Android: Uses native SAF tree picker with background traversal via MethodChannel
-  /// iOS: Uses file_picker package with Dart-based recursive scanning
+  /// iOS: Currently unsupported - returns empty list
   ///
   /// Returns a list of [PlatformPath] objects for all EPUB files found.
   /// Returns empty list if user cancels or no EPUB files are found.
@@ -139,59 +138,27 @@ class UnifiedImportService {
 
   // ==================== iOS Implementation ====================
 
-  /// iOS: Pick files using file_picker package
+  /// iOS: Pick files - currently unsupported without file_picker package
+  ///
+  /// To support iOS, either:
+  /// 1. Implement native iOS file picker via MethodChannel
+  /// 2. Add file_picker package back
+  /// 3. Use UIDocumentPickerViewController via platform channel
   Future<List<PlatformPath>> _pickFilesIOS() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['epub'],
-        allowMultiple: true,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        return [];
-      }
-
-      return result.files
-          .where((file) => file.path != null)
-          .map((file) => IOSFilePath(file.path!))
-          .toList();
-    } catch (e) {
-      // ignore: avoid_print
-      print('iOS file picker error: $e');
-      return [];
-    }
+    // ignore: avoid_print
+    print(
+      'iOS file picker not implemented. Add file_picker package or implement native picker.',
+    );
+    return [];
   }
 
-  /// iOS: Pick folder using file_picker and scan recursively for EPUB files
+  /// iOS: Pick folder - currently unsupported without file_picker package
   Future<List<PlatformPath>> _pickFolderIOS() async {
-    try {
-      final directoryPath = await FilePicker.platform.getDirectoryPath();
-
-      if (directoryPath == null) {
-        return [];
-      }
-
-      final directory = Directory(directoryPath);
-      if (!await directory.exists()) {
-        return [];
-      }
-
-      // Recursively scan for EPUB files
-      final epubPaths = <PlatformPath>[];
-
-      await for (final entity in directory.list(recursive: true)) {
-        if (entity is File && entity.path.toLowerCase().endsWith('.epub')) {
-          epubPaths.add(IOSFilePath(entity.path));
-        }
-      }
-
-      return epubPaths;
-    } catch (e) {
-      // ignore: avoid_print
-      print('iOS folder picker error: $e');
-      return [];
-    }
+    // ignore: avoid_print
+    print(
+      'iOS folder picker not implemented. Add file_picker package or implement native picker.',
+    );
+    return [];
   }
 
   // ==================== Utility Methods ====================

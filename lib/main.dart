@@ -1,8 +1,8 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/features/reader/data/services/epub_stream_service_provider.dart';
 import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
@@ -61,5 +61,7 @@ void main() async {
       child: const LuminaReaderApp(),
     ),
   );
-  FilePicker.platform.clearTemporaryFiles();
+
+  final cacheManager = ImportCacheManager();
+  await cacheManager.clearAll();
 }

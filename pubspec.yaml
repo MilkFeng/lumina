@@ -48,7 +48,6 @@ dependencies:
   
   # File Picking & Permissions
   path: ^1.9.1
-  file_picker: ^10.3.10
   
   # App Info & URL Launcher
   package_info_plus: ^9.0.0
