@@ -494,6 +494,12 @@ abstract class AppLocalizations {
   /// **'Import failed: {error}'**
   String importFailed(String error);
 
+  /// Importing file message
+  ///
+  /// In en, this message translates to:
+  /// **'Importing \"{fileName}\"...'**
+  String importingFile(String fileName);
+
   /// Sync completed message
   ///
   /// In en, this message translates to:

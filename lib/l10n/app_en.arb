@@ -361,6 +361,16 @@
       }
     }
   },
+
+  "importingFile": "Importing \"{fileName}\"...",
+  "@importingFile": {
+    "description": "Importing file message",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
   
   "syncCompleted": "Sync completed",
   "@syncCompleted": {

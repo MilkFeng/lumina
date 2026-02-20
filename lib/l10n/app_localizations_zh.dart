@@ -217,6 +217,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String importingFile(String fileName) {
+    return '正在导入“$fileName”……';
+  }
+
+  @override
   String get syncCompleted => '同步完成';
 
   @override

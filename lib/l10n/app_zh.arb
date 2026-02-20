@@ -371,6 +371,16 @@
       }
     }
   },
+
+  "importingFile": "正在导入“{fileName}”……",
+  "@importingFile": {
+    "description": "正在导入文件消息",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
   
   "syncCompleted": "同步完成",
   "@syncCompleted": {

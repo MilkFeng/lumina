@@ -217,6 +217,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String importingFile(String fileName) {
+    return 'Importing \"$fileName\"...';
+  }
+
+  @override
   String get syncCompleted => 'Sync completed';
 
   @override

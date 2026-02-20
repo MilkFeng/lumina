@@ -86,6 +86,13 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
             errorMessage: progress.errorMessage,
           ),
         );
+      } else if (progress.status == ImportStatus.processing) {
+        _results.add(
+          _ImportResultItem.processing(
+            fileName: progress.currentFileName,
+            errorMessage: progress.errorMessage,
+          ),
+        );
       }
 
       final isLastFile = _currentCount == _totalCount && _totalCount > 0;
@@ -156,11 +163,16 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
                   itemBuilder: (context, index) {
                     final item = _results[index];
                     final isSuccess = item.isSuccess;
+                    final isProcessing = item.isProcessing;
 
-                    final color = isSuccess
+                    final color = isProcessing
+                        ? theme.colorScheme.secondary.withValues(alpha: 0.8)
+                        : isSuccess
                         ? theme.colorScheme.primary.withValues(alpha: 0.8)
                         : theme.colorScheme.error.withValues(alpha: 0.8);
-                    final message = isSuccess
+                    final message = isProcessing
+                        ? l10n.importingFile(item.fileName)
+                        : isSuccess
                         ? l10n.successfullyImported(
                             item.book?.title ?? item.fileName,
                           )
@@ -195,14 +207,22 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
 class _ImportResultItem {
   _ImportResultItem.success({required this.fileName, this.book})
     : isSuccess = true,
+      isProcessing = false,
       errorMessage = null;
 
   _ImportResultItem.failed({required this.fileName, this.errorMessage})
     : isSuccess = false,
+      isProcessing = false,
+      book = null;
+
+  _ImportResultItem.processing({required this.fileName, this.errorMessage})
+    : isSuccess = false,
+      isProcessing = true,
       book = null;
 
   final bool isSuccess;
   final String fileName;
   final String? errorMessage;
   final ShelfBook? book;
+  final bool isProcessing;
 }
