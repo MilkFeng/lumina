@@ -68,3 +68,12 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Kotlin Coroutines for background file operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    
+    // DocumentFile for SAF folder traversal
+    implementation("androidx.documentfile:documentfile:1.0.1")
+}

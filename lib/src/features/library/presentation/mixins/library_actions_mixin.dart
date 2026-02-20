@@ -1,13 +1,12 @@
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../application/library_notifier.dart';
+import '../../data/services/unified_import_service_provider.dart';
 import '../../domain/shelf_group.dart';
 import '../widgets/batch_import_dialog.dart';
 import '../widgets/group_selection_dialog.dart';
@@ -32,27 +31,40 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     try {
       isSelectingFiles = true;
 
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['epub'],
-        allowMultiple: true,
-      );
+      // Use unified import service for cross-platform file picking
+      final importService = ref.read(unifiedImportServiceProvider);
+      final paths = await importService.pickFiles();
 
       isSelectingFiles = false;
 
-      if (result == null || result.files.isEmpty) {
+      if (paths.isEmpty) {
         return;
       }
 
-      final selectedPaths = result.paths.whereType<String>();
-      final files = selectedPaths.map(File.new).toList();
+      // Process files one by one
+      final importables = <ImportableEpub>[];
+      for (final path in paths) {
+        try {
+          final importable = await importService.processEpub(path);
+          importables.add(importable);
+        } catch (e) {
+          // Skip files that fail to process
+          // ignore: avoid_print
+          print('Failed to process file: $path, error: $e');
+        }
+      }
 
-      if (files.isEmpty) {
+      if (importables.isEmpty) {
         if (context.mounted) {
           ToastService.showError(AppLocalizations.of(context)!.fileAccessError);
         }
         return;
       }
+
+      // Extract cache files from ImportableEpub objects
+      final files = importables
+          .map((importable) => importable.cacheFile)
+          .toList();
 
       final stream = ref
           .read(libraryNotifierProvider.notifier)
@@ -69,12 +81,16 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
         builder: (ctx) => BatchImportDialog(progressStream: stream),
       );
 
-      FilePicker.platform.clearTemporaryFiles();
+      // Clean up cache files after import
+      for (final importable in importables) {
+        await importService.cleanCache(importable.cacheFile);
+      }
 
       if (context.mounted) {
         ref.read(bookshelfNotifierProvider.notifier).refresh();
       }
     } catch (e) {
+      isSelectingFiles = false;
       if (context.mounted) {
         ToastService.showError(
           AppLocalizations.of(context)!.importFailed(e.toString()),
