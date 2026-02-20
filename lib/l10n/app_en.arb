@@ -362,7 +362,7 @@
     }
   },
 
-  "importingFile": "Importing \"{fileName}\"...",
+  "importingFile": "Importing \"{fileName}\"",
   "@importingFile": {
     "description": "Importing file message",
     "placeholders": {

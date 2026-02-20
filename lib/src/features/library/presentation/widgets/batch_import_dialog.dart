@@ -170,7 +170,7 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
                         : isSuccess
                         ? theme.colorScheme.primary.withValues(alpha: 0.8)
                         : theme.colorScheme.error.withValues(alpha: 0.8);
-                    final message = isProcessing
+                    String message = isProcessing
                         ? l10n.importingFile(item.fileName)
                         : isSuccess
                         ? l10n.successfullyImported(
@@ -179,6 +179,8 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
                         : l10n.importFailed(
                             item.errorMessage ?? 'Unknown error',
                           );
+
+                    message = isProcessing ? '○ $message' : '● $message';
 
                     return Text(
                       message,

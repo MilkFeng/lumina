@@ -218,7 +218,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String importingFile(String fileName) {
-    return 'Importing \"$fileName\"...';
+    return 'Importing \"$fileName\"';
   }
 
   @override

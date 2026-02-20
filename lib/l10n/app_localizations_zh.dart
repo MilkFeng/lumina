@@ -218,7 +218,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String importingFile(String fileName) {
-    return '正在导入“$fileName”……';
+    return '正在导入“$fileName”';
   }
 
   @override

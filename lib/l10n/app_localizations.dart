@@ -497,7 +497,7 @@ abstract class AppLocalizations {
   /// Importing file message
   ///
   /// In en, this message translates to:
-  /// **'Importing \"{fileName}\"...'**
+  /// **'Importing \"{fileName}\"'**
   String importingFile(String fileName);
 
   /// Sync completed message
