@@ -76,34 +76,25 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     List<PlatformPath> paths,
     Function() onImportablesReady,
   ) async {
-    try {
-      if (paths.isEmpty) {
-        onImportablesReady();
-        return;
-      }
-
-      // Process files one by one
-      final importables = await _processEpubs(paths, ref);
+    if (paths.isEmpty) {
       onImportablesReady();
+      return;
+    }
 
-      if (importables.isEmpty) {
-        if (context.mounted) {
-          ToastService.showError(AppLocalizations.of(context)!.fileAccessError);
-        }
-        return;
-      }
+    // Process files one by one
+    final importables = await _processEpubs(paths, ref);
+    onImportablesReady();
 
+    if (importables.isEmpty) {
       if (context.mounted) {
-        await _importAndClean(context, ref, importables);
-        ref.read(bookshelfNotifierProvider.notifier).refresh();
+        ToastService.showError(AppLocalizations.of(context)!.fileAccessError);
       }
-    } catch (e) {
-      isSelectingFiles = false;
-      if (context.mounted) {
-        ToastService.showError(
-          AppLocalizations.of(context)!.importFailed(e.toString()),
-        );
-      }
+      return;
+    }
+
+    if (context.mounted) {
+      await _importAndClean(context, ref, importables);
+      ref.read(bookshelfNotifierProvider.notifier).refresh();
     }
   }
 
