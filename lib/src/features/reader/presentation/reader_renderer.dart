@@ -360,9 +360,13 @@ class _ReaderRendererState extends State<ReaderRenderer>
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapUp: _handleTapZone,
-        onHorizontalDragEnd: _handleHorizontalDragEnd,
-        onLongPressStart: _handleLongPressStart,
+        onTapUp: widget.shouldShowWebView ? _handleTapZone : null,
+        onHorizontalDragEnd: widget.shouldShowWebView
+            ? _handleHorizontalDragEnd
+            : null,
+        onLongPressStart: widget.shouldShowWebView
+            ? _handleLongPressStart
+            : null,
         child: Platform.isAndroid
             ? Stack(
                 children: [
