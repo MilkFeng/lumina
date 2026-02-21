@@ -755,5 +755,15 @@
   "longPressToViewImage": "Long press on image to view original",
   "@longPressToViewImage": {
     "description": "Tip for long pressing image to view original"
+  },
+
+  "importFromFolder": "Scan Folder",
+  "@importFromFolder": {
+    "description": "Import from folder option label"
+  },
+
+  "importFiles": "Import Files",
+  "@importFiles": {
+    "description": "Import files option label"
   }
 }

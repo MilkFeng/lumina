@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
 import 'mixins/library_actions_mixin.dart';
@@ -164,10 +165,35 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       return null;
     }
 
-    return FloatingActionButton(
-      onPressed: () => handleImportFiles(context, ref),
-      child: const Icon(Icons.add_outlined),
+    return SpeedDial(
+      icon: Icons.add_outlined,
+      activeIcon: Icons.close_outlined,
+      overlayColor: Colors.black,
+      overlayOpacity: 0.4,
+      spaceBetweenChildren: 12,
+      children: [
+        SpeedDialChild(
+          child: const Icon(Icons.folder_open_outlined),
+          label: AppLocalizations.of(context)!.importFromFolder,
+          onTap: () => _scanFolder(context, ref),
+        ),
+        SpeedDialChild(
+          child: const Icon(Icons.file_present_outlined),
+          label: AppLocalizations.of(context)!.importFiles,
+          onTap: () => _importFiles(context, ref),
+        ),
+      ],
     );
+  }
+
+  // Placeholder method for scanning folder
+  void _scanFolder(BuildContext context, WidgetRef ref) {
+    handleScanFolder(context, ref);
+  }
+
+  // Placeholder method for importing files
+  void _importFiles(BuildContext context, WidgetRef ref) {
+    handleImportFiles(context, ref);
   }
 
   Widget _buildTabView(

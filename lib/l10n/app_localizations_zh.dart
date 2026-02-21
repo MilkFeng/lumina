@@ -439,4 +439,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get longPressToViewImage => '长按图片查看原图';
+
+  @override
+  String get importFromFolder => '扫描文件夹';
+
+  @override
+  String get importFiles => '导入文件';
 }

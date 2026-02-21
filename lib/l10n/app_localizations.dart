@@ -877,6 +877,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long press on image to view original'**
   String get longPressToViewImage;
+
+  /// Import from folder option label
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Folder'**
+  String get importFromFolder;
+
+  /// Import files option label
+  ///
+  /// In en, this message translates to:
+  /// **'Import Files'**
+  String get importFiles;
 }
 
 class _AppLocalizationsDelegate

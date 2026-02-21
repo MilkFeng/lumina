@@ -27,32 +27,64 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     }
   }
 
-  Future<void> handleImportFiles(BuildContext context, WidgetRef ref) async {
+  Future<List<ImportableEpub>> _processEpubs(
+    List<PlatformPath> paths,
+    WidgetRef ref,
+  ) async {
+    final importService = ref.read(unifiedImportServiceProvider);
+    final importables = <ImportableEpub>[];
+    for (final path in paths) {
+      try {
+        final importable = await importService.processEpub(path);
+        importables.add(importable);
+      } catch (e) {
+        debugPrint('Failed to process file: $path, error: $e');
+      }
+    }
+    return importables;
+  }
+
+  Future<void> _importAndClean(
+    BuildContext context,
+    WidgetRef ref,
+    List<ImportableEpub> importables,
+  ) async {
+    final importService = ref.read(unifiedImportServiceProvider);
+
+    final stream = ref
+        .read(libraryNotifierProvider.notifier)
+        .importMultipleBooks(importables);
+
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.5),
+      builder: (ctx) => BatchImportDialog(progressStream: stream),
+    );
+
+    // Clean up cache files after import
+    for (final importable in importables) {
+      await importService.cleanCache(importable.cacheFile);
+    }
+  }
+
+  Future<void> _importPaths(
+    BuildContext context,
+    WidgetRef ref,
+    List<PlatformPath> paths,
+    Function() onImportablesReady,
+  ) async {
     try {
-      isSelectingFiles = true;
-
-      // Use unified import service for cross-platform file picking
-      final importService = ref.read(unifiedImportServiceProvider);
-      final paths = await importService.pickFiles();
-
       if (paths.isEmpty) {
-        isSelectingFiles = false;
+        onImportablesReady();
         return;
       }
 
       // Process files one by one
-      final importables = <ImportableEpub>[];
-      for (final path in paths) {
-        try {
-          final importable = await importService.processEpub(path);
-          importables.add(importable);
-        } catch (e) {
-          // Skip files that fail to process and log the error
-          debugPrint('Failed to process file: $path, error: $e');
-        }
-      }
-
-      isSelectingFiles = false;
+      final importables = await _processEpubs(paths, ref);
+      onImportablesReady();
 
       if (importables.isEmpty) {
         if (context.mounted) {
@@ -61,28 +93,55 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
         return;
       }
 
-      final stream = ref
-          .read(libraryNotifierProvider.notifier)
-          .importMultipleBooks(importables);
-
-      if (!context.mounted) return;
-
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Theme.of(
-          context,
-        ).colorScheme.scrim.withValues(alpha: 0.5),
-        builder: (ctx) => BatchImportDialog(progressStream: stream),
-      );
-
-      // Clean up cache files after import
-      for (final importable in importables) {
-        await importService.cleanCache(importable.cacheFile);
+      if (context.mounted) {
+        await _importAndClean(context, ref, importables);
+        ref.read(bookshelfNotifierProvider.notifier).refresh();
       }
+    } catch (e) {
+      isSelectingFiles = false;
+      if (context.mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.importFailed(e.toString()),
+        );
+      }
+    }
+  }
+
+  Future<void> handleScanFolder(BuildContext context, WidgetRef ref) async {
+    try {
+      isSelectingFiles = true;
+
+      // Use unified import service for cross-platform file picking
+      final importService = ref.read(unifiedImportServiceProvider);
+      final paths = await importService.pickFolder();
 
       if (context.mounted) {
-        ref.read(bookshelfNotifierProvider.notifier).refresh();
+        await _importPaths(context, ref, paths, () {
+          isSelectingFiles = false;
+        });
+      }
+    } catch (e) {
+      isSelectingFiles = false;
+      if (context.mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.importFailed(e.toString()),
+        );
+      }
+    }
+  }
+
+  Future<void> handleImportFiles(BuildContext context, WidgetRef ref) async {
+    try {
+      isSelectingFiles = true;
+
+      // Use unified import service for cross-platform file picking
+      final importService = ref.read(unifiedImportServiceProvider);
+      final paths = await importService.pickFiles();
+
+      if (context.mounted) {
+        await _importPaths(context, ref, paths, () {
+          isSelectingFiles = false;
+        });
       }
     } catch (e) {
       isSelectingFiles = false;

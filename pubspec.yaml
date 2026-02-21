@@ -59,6 +59,9 @@ dependencies:
   saf_stream: ^0.12.3
   saf_util: ^0.11.0
   
+  # Speed Dial FAB
+  flutter_speed_dial: ^7.0.0
+  
 
 dev_dependencies:
   flutter_test:

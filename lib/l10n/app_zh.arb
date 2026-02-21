@@ -765,5 +765,15 @@
   "longPressToViewImage": "长按图片查看原图",
   "@longPressToViewImage": {
     "description": "长按图片查看原图的提示"
+  },
+
+  "importFromFolder": "扫描文件夹",
+  "@importFromFolder": {
+    "description": "从文件夹导入选项标签"
+  },
+
+  "importFiles": "导入文件",
+  "@importFiles": {
+    "description": "导入文件选项标签"
   }
 }

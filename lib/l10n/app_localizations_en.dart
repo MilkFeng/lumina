@@ -442,4 +442,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get longPressToViewImage => 'Long press on image to view original';
+
+  @override
+  String get importFromFolder => 'Scan Folder';
+
+  @override
+  String get importFiles => 'Import Files';
 }
