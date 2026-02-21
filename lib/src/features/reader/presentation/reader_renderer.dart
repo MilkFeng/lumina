@@ -436,6 +436,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onImageLongPress: widget.onImageLongPress,
         ),
         shouldShowWebView: widget.shouldShowWebView,
+        coverRelativePath: widget.bookSession.book?.coverPath,
       ),
     );
   }

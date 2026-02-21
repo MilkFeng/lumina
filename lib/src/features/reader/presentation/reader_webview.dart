@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:lumina/src/core/widgets/book_cover.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
@@ -112,6 +113,7 @@ class ReaderWebView extends StatefulWidget {
   final ReaderWebViewController controller;
   final VoidCallback? onWebViewCreated;
   final bool shouldShowWebView;
+  final String? coverRelativePath;
 
   const ReaderWebView({
     super.key,
@@ -126,6 +128,7 @@ class ReaderWebView extends StatefulWidget {
     required this.controller,
     this.onWebViewCreated,
     required this.shouldShowWebView,
+    this.coverRelativePath,
   });
 
   @override
@@ -139,10 +142,22 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   HeadlessInAppWebView? _headlessWebView;
   bool _isHeadlessInitialized = false;
 
+  bool _isSubsequentLoad = false;
+
   @override
   void initState() {
     super.initState();
     widget.controller._attachState(this);
+  }
+
+  @override
+  void didUpdateWidget(covariant ReaderWebView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isLoading && widget.isLoading) {
+      setState(() {
+        _isSubsequentLoad = true;
+      });
+    }
   }
 
   void _initHeadlessWebViewIfNeeded(double width, double height) {
@@ -290,12 +305,29 @@ class _ReaderWebViewState extends State<ReaderWebView> {
               child: IgnorePointer(
                 ignoring: !widget.isLoading && widget.shouldShowWebView,
                 child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 180),
+                  duration: const Duration(milliseconds: 240),
                   curve: Curves.easeOut,
                   opacity: (widget.isLoading || !widget.shouldShowWebView)
                       ? 1.0
                       : 0.0,
-                  child: Container(color: widget.surfaceColor),
+                  child: Container(
+                    color: widget.surfaceColor,
+                    child: _isSubsequentLoad
+                        ? null
+                        : Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight:
+                                    MediaQuery.of(context).size.height * 0.3,
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.5,
+                              ),
+                              child: BookCover(
+                                relativePath: widget.coverRelativePath,
+                              ),
+                            ),
+                          ),
+                  ),
                 ),
               ),
             ),

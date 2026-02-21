@@ -43,12 +43,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   double? _initialProgressToRestore;
 
   // WebView visibility control for smoother transitions
+  Animation<double>? _routeAnimation;
   bool _shouldShowWebView = false;
 
   // Image viewer state
   bool _isImageViewerVisible = false;
   String? _currentImageUrl;
   Rect? _currentImageRect;
+
+  ThemeData? _currentTheme;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -67,15 +70,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final router = ModalRoute.of(context);
+      _currentTheme = Theme.of(context);
       if (router != null && router.animation != null) {
-        final routeAnimation = router.animation!;
-        routeAnimation.addStatusListener((status) {
-          if (status == AnimationStatus.completed) {
-            setState(() {
-              _shouldShowWebView = true;
-            });
-          }
-        });
+        _routeAnimation = router.animation!;
+        _routeAnimation?.addStatusListener(_handleRouteAnimationStatus);
       } else {
         _shouldShowWebView = true;
       }
@@ -85,6 +83,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    _routeAnimation = null;
     super.dispose();
   }
 
@@ -101,7 +101,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _updateWebViewTheme();
+    // Update WebView theme when system theme changes
+    if (_currentTheme == null || _currentTheme != Theme.of(context)) {
+      _currentTheme = Theme.of(context);
+      _updateWebViewTheme();
+    }
+  }
+
+  void _handleRouteAnimationStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      setState(() {
+        _shouldShowWebView = true;
+      });
+      _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+      _routeAnimation = null;
+    }
   }
 
   /// Load ShelfBook + BookManifest from database
