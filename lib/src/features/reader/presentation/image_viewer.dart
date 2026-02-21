@@ -34,14 +34,12 @@ class ImageViewer extends StatefulWidget {
     required String epubPath,
     required String fileHash,
   }) {
-    HapticFeedback.lightImpact();
-
     Navigator.of(context).push(
       PageRouteBuilder(
         settings: const RouteSettings(name: 'ImageViewer'),
         opaque: false,
         barrierDismissible: true,
-        barrierColor: Colors.transparent,
+        barrierColor: null,
         pageBuilder: (context, animation, secondaryAnimation) {
           return ImageViewer(
             imageUrl: imageUrl,
@@ -115,7 +113,7 @@ class _ImageViewerState extends State<ImageViewer>
     });
 
     await _controller.reverse();
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(const Duration(milliseconds: 20));
 
     if (mounted) {
       widget.onClose();
@@ -150,9 +148,11 @@ class _ImageViewerState extends State<ImageViewer>
           });
         }
 
+        HapticFeedback.lightImpact();
         await Future.delayed(const Duration(milliseconds: 10));
         _controller.forward();
       } else {
+        HapticFeedback.lightImpact();
         if (mounted) {
           ToastService.showError('Failed to load image');
           await _handleClose();
@@ -160,6 +160,7 @@ class _ImageViewerState extends State<ImageViewer>
       }
     } catch (e) {
       debugPrint('Error loading zoomed image: $e');
+      HapticFeedback.lightImpact();
       if (mounted) {
         ToastService.showError('Error loading image');
         await _handleClose();

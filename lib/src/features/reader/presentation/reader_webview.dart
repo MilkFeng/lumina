@@ -111,6 +111,7 @@ class ReaderWebView extends StatefulWidget {
   final bool isLoading;
   final ReaderWebViewController controller;
   final VoidCallback? onWebViewCreated;
+  final bool shouldShowWebView;
 
   const ReaderWebView({
     super.key,
@@ -124,6 +125,7 @@ class ReaderWebView extends StatefulWidget {
     required this.isLoading,
     required this.controller,
     this.onWebViewCreated,
+    required this.shouldShowWebView,
   });
 
   @override
@@ -134,11 +136,30 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   final GlobalKey _repaintKey = GlobalKey();
 
   InAppWebViewController? _controller;
+  HeadlessInAppWebView? _headlessWebView;
+  bool _isHeadlessInitialized = false;
 
   @override
   void initState() {
     super.initState();
     widget.controller._attachState(this);
+  }
+
+  void _initHeadlessWebViewIfNeeded(double width, double height) {
+    if (_isHeadlessInitialized) return;
+
+    _headlessWebView = HeadlessInAppWebView(
+      initialData: _generateInitialData(width, height),
+      initialSettings: defaultSettings,
+      shouldInterceptRequest: _shouldInterceptRequest,
+      onLoadResourceWithCustomScheme: _onLoadResourceWithCustomScheme,
+      shouldOverrideUrlLoading: _shouldOverrideUrlLoading,
+      onWebViewCreated: _onWebViewCreated,
+      onLoadStop: _onLoadStop,
+    );
+
+    _headlessWebView?.run();
+    _isHeadlessInitialized = true;
   }
 
   // JavaScript methods
@@ -178,76 +199,109 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     await _evaluateJavascript("window.reader.checkElementAt($x, $y)");
   }
 
+  InAppWebViewInitialData _generateInitialData(double width, double height) {
+    return InAppWebViewInitialData(
+      data: generateSkeletonHtml(
+        width,
+        height,
+        widget.surfaceColor,
+        widget.onSurfaceColor,
+        widget.padding,
+      ),
+      baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
+    );
+  }
+
+  Future<WebResourceResponse?> _shouldInterceptRequest(
+    InAppWebViewController controller,
+    WebResourceRequest request,
+  ) async {
+    return await widget.webViewHandler.handleRequest(
+      epubPath: widget.bookSession.book!.filePath!,
+      fileHash: widget.fileHash,
+      requestUrl: request.url,
+    );
+  }
+
+  Future<CustomSchemeResponse?> _onLoadResourceWithCustomScheme(
+    InAppWebViewController controller,
+    WebResourceRequest request,
+  ) async {
+    return await widget.webViewHandler.handleRequestWithCustomScheme(
+      epubPath: widget.bookSession.book!.filePath!,
+      fileHash: widget.fileHash,
+      requestUrl: request.url,
+    );
+  }
+
+  Future<NavigationActionPolicy?> _shouldOverrideUrlLoading(
+    InAppWebViewController controller,
+    NavigationAction navigationAction,
+  ) async {
+    final uri = navigationAction.request.url!;
+    if (uri.scheme == 'data') {
+      return NavigationActionPolicy.ALLOW;
+    }
+    if (EpubWebViewHandler.isEpubRequest(uri)) {
+      return NavigationActionPolicy.ALLOW;
+    }
+    return NavigationActionPolicy.CANCEL;
+  }
+
+  void _onWebViewCreated(InAppWebViewController controller) {
+    _controller = controller;
+    _setupJavaScriptHandlers(controller);
+    widget.onWebViewCreated?.call();
+  }
+
+  void _onLoadStop(InAppWebViewController controller, WebUri? url) {
+    widget.callbacks.onInitialized();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width - widget.padding.horizontal;
-    final height = MediaQuery.of(context).size.height - widget.padding.vertical;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth - widget.padding.horizontal;
+        final height = constraints.maxHeight - widget.padding.vertical;
+        _initHeadlessWebViewIfNeeded(width, height);
 
-    return Stack(
-      children: [
-        RepaintBoundary(
-          key: _repaintKey,
-          child: AbsorbPointer(
-            child: InAppWebView(
-              initialData: InAppWebViewInitialData(
-                data: generateSkeletonHtml(
-                  width,
-                  height,
-                  widget.surfaceColor,
-                  widget.onSurfaceColor,
-                  widget.padding,
-                ),
-                baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
+        return Stack(
+          children: [
+            RepaintBoundary(
+              key: _repaintKey,
+              child: AbsorbPointer(
+                child: widget.shouldShowWebView
+                    ? InAppWebView(
+                        headlessWebView: _headlessWebView,
+                        initialData: _generateInitialData(width, height),
+                        initialSettings: defaultSettings,
+                        shouldInterceptRequest: _shouldInterceptRequest,
+                        onLoadResourceWithCustomScheme:
+                            _onLoadResourceWithCustomScheme,
+                        shouldOverrideUrlLoading: _shouldOverrideUrlLoading,
+                        onWebViewCreated: _onWebViewCreated,
+                        onLoadStop: _onLoadStop,
+                      )
+                    : Container(color: widget.surfaceColor),
               ),
-              initialSettings: defaultSettings,
-              shouldInterceptRequest: (controller, request) async {
-                return await widget.webViewHandler.handleRequest(
-                  epubPath: widget.bookSession.book!.filePath!,
-                  fileHash: widget.fileHash,
-                  requestUrl: request.url,
-                );
-              },
-              onLoadResourceWithCustomScheme: (controller, request) async {
-                return await widget.webViewHandler
-                    .handleRequestWithCustomScheme(
-                      epubPath: widget.bookSession.book!.filePath!,
-                      fileHash: widget.fileHash,
-                      requestUrl: request.url,
-                    );
-              },
-              shouldOverrideUrlLoading: (controller, navigationAction) async {
-                final uri = navigationAction.request.url!;
-                if (uri.scheme == 'data') {
-                  return NavigationActionPolicy.ALLOW;
-                }
-                if (EpubWebViewHandler.isEpubRequest(uri)) {
-                  return NavigationActionPolicy.ALLOW;
-                }
-                return NavigationActionPolicy.CANCEL;
-              },
-              onWebViewCreated: (controller) {
-                _controller = controller;
-                _setupJavaScriptHandlers(controller);
-                widget.onWebViewCreated?.call();
-              },
-              onLoadStop: (controller, url) async {
-                widget.callbacks.onInitialized();
-              },
             ),
-          ),
-        ),
-        Positioned.fill(
-          child: IgnorePointer(
-            ignoring: !widget.isLoading,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              opacity: widget.isLoading ? 1.0 : 0.0,
-              child: Container(color: widget.surfaceColor),
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: !widget.isLoading && widget.shouldShowWebView,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  opacity: (widget.isLoading || !widget.shouldShowWebView)
+                      ? 1.0
+                      : 0.0,
+                  child: Container(color: widget.surfaceColor),
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 

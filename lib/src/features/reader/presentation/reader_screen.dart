@@ -42,6 +42,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   int _totalPagesInChapter = 1;
   double? _initialProgressToRestore;
 
+  bool _shouldShowWebView = false;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -55,6 +57,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
         _loadBook();
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final router = ModalRoute.of(context);
+      if (router != null && router.animation != null) {
+        final routeAnimation = router.animation!;
+        routeAnimation.addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            setState(() {
+              _shouldShowWebView = true;
+            });
+          }
+        });
+      } else {
+        _shouldShowWebView = true;
       }
     });
   }
@@ -404,6 +421,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               },
               onScrollAnchors: _handleScrollAnchors,
               onImageLongPress: _handleImageLongPress,
+              shouldShowWebView: _shouldShowWebView,
             ),
 
             ControlPanel(

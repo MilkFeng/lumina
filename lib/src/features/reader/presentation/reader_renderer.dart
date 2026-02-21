@@ -95,6 +95,7 @@ class ReaderRenderer extends StatefulWidget {
   final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
+  final bool shouldShowWebView;
 
   const ReaderRenderer({
     super.key,
@@ -113,6 +114,7 @@ class ReaderRenderer extends StatefulWidget {
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
+    required this.shouldShowWebView,
   });
 
   @override
@@ -433,6 +435,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
         ),
+        shouldShowWebView: widget.shouldShowWebView,
       ),
     );
   }
