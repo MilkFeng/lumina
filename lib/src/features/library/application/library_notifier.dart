@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
@@ -138,6 +140,83 @@ class LibraryNotifier extends _$LibraryNotifier {
     }
 
     // 4. After all files are processed, refresh the book list
+    await refresh();
+  }
+
+  /// Stream pipeline to process files one by one: Cache -> Import -> Clean.
+  /// This prevents OOM and storage issues when importing massive folders.
+  Stream<ImportProgress> importPipelineStream(List<PlatformPath> paths) async* {
+    final totalCount = paths.length;
+    if (totalCount == 0) return;
+
+    final unifiedImportService = ref.read(unifiedImportServiceProvider);
+    final epubImportService = ref.read(epubImportServiceProvider);
+
+    int currentCount = 0;
+
+    for (final path in paths) {
+      currentCount++;
+      ImportableEpub? importable;
+      String currentFileName = '';
+
+      try {
+        // 1. Cache the file from URI to local temp directory
+        importable = await unifiedImportService.processEpub(path);
+
+        // Assuming your ImportableEpub model has originalName property
+        // If not, you might need to extract the name from the PlatformPath beforehand
+        currentFileName = importable.originalName;
+
+        // 2. Notify UI that caching is done and actual import is starting
+        yield ImportProgress(
+          totalCount: totalCount,
+          currentCount: currentCount,
+          currentFileName: currentFileName,
+          status: ImportStatus.processing,
+        );
+
+        // 3. Import the book and wait for the Either result
+        final result = await epubImportService.importBook(importable.cacheFile);
+
+        // 4. Notify UI of success or failure for this file
+        yield result.fold(
+          (errorMessage) => ImportProgress(
+            totalCount: totalCount,
+            currentCount: currentCount,
+            currentFileName: currentFileName,
+            status: ImportStatus.failed,
+            errorMessage: errorMessage,
+          ),
+          (book) => ImportProgress(
+            totalCount: totalCount,
+            currentCount: currentCount,
+            currentFileName: currentFileName,
+            status: ImportStatus.success,
+            book: book,
+          ),
+        );
+      } catch (e) {
+        // Handle unexpected errors during the caching or stream reading phase
+        yield ImportProgress(
+          totalCount: totalCount,
+          currentCount: currentCount,
+          currentFileName: currentFileName,
+          status: ImportStatus.failed,
+          errorMessage: 'Pipeline error: $e',
+        );
+      } finally {
+        // 5. CRITICAL: Always clean up the temporary cache file IMMEDIATELY
+        if (importable != null) {
+          try {
+            await unifiedImportService.cleanCache(importable.cacheFile);
+          } catch (cleanError) {
+            debugPrint('Failed to clean cache file: $cleanError');
+          }
+        }
+      }
+    }
+
+    // 6. After all files are processed, refresh the book list to update UI
     await refresh();
   }
 

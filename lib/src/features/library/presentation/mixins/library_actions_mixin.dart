@@ -27,49 +27,6 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     }
   }
 
-  Future<List<ImportableEpub>> _processEpubs(
-    List<PlatformPath> paths,
-    WidgetRef ref,
-  ) async {
-    final importService = ref.read(unifiedImportServiceProvider);
-    final importables = <ImportableEpub>[];
-    for (final path in paths) {
-      try {
-        final importable = await importService.processEpub(path);
-        importables.add(importable);
-      } catch (e) {
-        debugPrint('Failed to process file: $path, error: $e');
-      }
-    }
-    return importables;
-  }
-
-  Future<void> _importAndClean(
-    BuildContext context,
-    WidgetRef ref,
-    List<ImportableEpub> importables,
-  ) async {
-    final importService = ref.read(unifiedImportServiceProvider);
-
-    final stream = ref
-        .read(libraryNotifierProvider.notifier)
-        .importMultipleBooks(importables);
-
-    if (!context.mounted) return;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.5),
-      builder: (ctx) => BatchImportDialog(progressStream: stream),
-    );
-
-    // Clean up cache files after import
-    for (final importable in importables) {
-      await importService.cleanCache(importable.cacheFile);
-    }
-  }
-
   Future<void> _importPaths(
     BuildContext context,
     WidgetRef ref,
@@ -82,18 +39,25 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     }
 
     // Process files one by one
-    final importables = await _processEpubs(paths, ref);
     onImportablesReady();
 
-    if (importables.isEmpty) {
-      if (context.mounted) {
-        ToastService.showError(AppLocalizations.of(context)!.fileAccessError);
-      }
-      return;
-    }
+    final stream = ref
+        .read(libraryNotifierProvider.notifier)
+        .importPipelineStream(paths);
+
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.5),
+      builder: (ctx) => BatchImportDialog(progressStream: stream),
+    );
+
+    // Clean all temporary files after import is done
+    ref.read(unifiedImportServiceProvider).clearAllCache();
 
     if (context.mounted) {
-      await _importAndClean(context, ref, importables);
       ref.read(bookshelfNotifierProvider.notifier).refresh();
     }
   }
