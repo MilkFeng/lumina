@@ -70,6 +70,10 @@ flutter {
 }
 
 dependencies {
+    // AndroidX Activity for registerForActivityResult support
+    implementation("androidx.activity:activity-ktx:1.12.4")
+    implementation("androidx.fragment:fragment-ktx:	1.8.9")
+    
     // Kotlin Coroutines for background file operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")

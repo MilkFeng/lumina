@@ -1,17 +1,21 @@
 package com.lumina.reader
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.provider.DocumentsContract
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.documentfile.provider.DocumentFile
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.lifecycle.lifecycleScope
 
 /**
  * MainActivity with native file picker implementation
@@ -20,14 +24,45 @@ import kotlinx.coroutines.withContext
  * All folder traversal happens in background threads using Kotlin Coroutines
  * to avoid ANRs on the main thread.
  */
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     private val channelName = "com.lumina.reader/native_picker"
     private var methodChannel: MethodChannel? = null
     private var pendingResult: MethodChannel.Result? = null
 
-    // Request codes for activity results
-    private val requestCodePickFiles = 1001
-    private val requestCodePickFolder = 1002
+    // Activity result launchers - initialized in onCreate
+    private lateinit var pickFilesLauncher: ActivityResultLauncher<Intent>
+    private lateinit var pickFolderLauncher: ActivityResultLauncher<Intent>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        // Register activity result launchers BEFORE calling super.onCreate()
+        pickFilesLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            val pendingResult = this.pendingResult ?: return@registerForActivityResult
+            this.pendingResult = null
+
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                handlePickFilesResult(result.data!!, pendingResult)
+            } else {
+                pendingResult.success(emptyList<String>())
+            }
+        }
+
+        pickFolderLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            val pendingResult = this.pendingResult ?: return@registerForActivityResult
+            this.pendingResult = null
+
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                handlePickFolderResult(result.data!!, pendingResult)
+            } else {
+                pendingResult.success(emptyList<String>())
+            }
+        }
+
+        super.onCreate(savedInstanceState)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -77,7 +112,7 @@ class MainActivity : FlutterActivity() {
         }
 
         try {
-            startActivityForResult(intent, requestCodePickFiles)
+            pickFilesLauncher.launch(intent)
         } catch (e: Exception) {
             pendingResult = null
             result.error("PICKER_ERROR", "Failed to launch file picker: ${e.message}", null)
@@ -105,31 +140,10 @@ class MainActivity : FlutterActivity() {
         }
 
         try {
-            startActivityForResult(intent, requestCodePickFolder)
+            pickFolderLauncher.launch(intent)
         } catch (e: Exception) {
             pendingResult = null
             result.error("PICKER_ERROR", "Failed to launch folder picker: ${e.message}", null)
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        val result = pendingResult ?: return
-        pendingResult = null
-
-        if (resultCode != Activity.RESULT_OK || data == null) {
-            result.success(emptyList<String>())
-            return
-        }
-
-        when (requestCode) {
-            requestCodePickFiles -> {
-                handlePickFilesResult(data, result)
-            }
-            requestCodePickFolder -> {
-                handlePickFolderResult(data, result)
-            }
         }
     }
 
@@ -139,28 +153,42 @@ class MainActivity : FlutterActivity() {
      * Extracts URIs from single or multiple file selection.
      */
     private fun handlePickFilesResult(data: Intent, result: MethodChannel.Result) {
-        val uris = mutableListOf<String>()
+        // Launch a coroutine on the Main dispatcher, but offload heavy work to IO
+        lifecycleScope.launch {
+            try {
+                val uris = withContext(Dispatchers.IO) {
+                    val validUris = mutableListOf<String>()
 
-        // Handle multiple files
-        data.clipData?.let { clipData ->
-            for (i in 0 until clipData.itemCount) {
-                val uri = clipData.getItemAt(i).uri
-                if (isEpubFile(uri)) {
-                    uris.add(uri.toString())
+                    // Handle multiple files
+                    data.clipData?.let { clipData ->
+                        for (i in 0 until clipData.itemCount) {
+                            val uri = clipData.getItemAt(i).uri
+                            // isEpubFile does IPC via ContentResolver, must run in IO thread
+                            if (isEpubFile(uri)) {
+                                validUris.add(uri.toString())
+                            }
+                        }
+                    }
+
+                    // Handle single file (if clipData is null but data has a URI)
+                    if (validUris.isEmpty()) {
+                        data.data?.let { uri ->
+                            if (isEpubFile(uri)) {
+                                validUris.add(uri.toString())
+                            }
+                        }
+                    }
+                    
+                    validUris
                 }
+                
+                // Return result on the Main thread
+                result.success(uris)
+                
+            } catch (e: Exception) {
+                result.error("FILE_PROCESS_ERROR", "Failed to process selected files: ${e.message}", null)
             }
         }
-
-        // Handle single file
-        if (uris.isEmpty()) {
-            data.data?.let { uri ->
-                if (isEpubFile(uri)) {
-                    uris.add(uri.toString())
-                }
-            }
-        }
-
-        result.success(uris)
     }
 
     /**
@@ -187,7 +215,7 @@ class MainActivity : FlutterActivity() {
         }
 
         // Traverse folder in background thread
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             try {
                 val epubUris = withContext(Dispatchers.IO) {
                     traverseFolderForEpubs(treeUri)

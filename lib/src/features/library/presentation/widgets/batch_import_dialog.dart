@@ -159,9 +159,10 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: _results.length,
+                  reverse: true,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final item = _results[index];
+                    final item = _results[_results.length - 1 - index];
                     final isSuccess = item.isSuccess;
                     final isProcessing = item.isProcessing;
 
