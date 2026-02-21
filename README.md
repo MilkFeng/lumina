@@ -145,7 +145,7 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Improve screenshot speed during page turns on iOS
 - [ ] Import folders
 - [ ] Improve consistency of page turn animations between iOS and Android
-- [ ] Optimize initial loading lag when opening the first book
+- [x] Optimize initial loading lag when opening the first book
 - [ ] Edit book metadata (cover, title, author, etc.)
 - [ ] Reading settings (font size, line spacing, background color, etc.)
 
