@@ -95,6 +95,7 @@ class ReaderRenderer extends StatefulWidget {
   final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
+  final bool shouldShowWebView;
 
   const ReaderRenderer({
     super.key,
@@ -113,6 +114,7 @@ class ReaderRenderer extends StatefulWidget {
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
+    required this.shouldShowWebView,
   });
 
   @override
@@ -358,9 +360,13 @@ class _ReaderRendererState extends State<ReaderRenderer>
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapUp: _handleTapZone,
-        onHorizontalDragEnd: _handleHorizontalDragEnd,
-        onLongPressStart: _handleLongPressStart,
+        onTapUp: widget.shouldShowWebView ? _handleTapZone : null,
+        onHorizontalDragEnd: widget.shouldShowWebView
+            ? _handleHorizontalDragEnd
+            : null,
+        onLongPressStart: widget.shouldShowWebView
+            ? _handleLongPressStart
+            : null,
         child: Platform.isAndroid
             ? Stack(
                 children: [
@@ -433,6 +439,8 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
         ),
+        shouldShowWebView: widget.shouldShowWebView,
+        coverRelativePath: widget.bookSession.book?.coverPath,
       ),
     );
   }

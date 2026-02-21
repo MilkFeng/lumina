@@ -6,54 +6,14 @@
     "description": "Application name"
   },
   
-  "library": "Library",
-  "@library": {
-    "description": "Library tab label"
-  },
-  
-  "bookshelf": "Bookshelf",
-  "@bookshelf": {
-    "description": "Bookshelf tab label"
-  },
-  
   "settings": "Settings",
   "@settings": {
     "description": "Settings tab label"
   },
   
-  "allBooks": "All Books",
-  "@allBooks": {
-    "description": "All books shelf name"
-  },
-  
-  "reading": "Reading",
-  "@reading": {
-    "description": "Reading shelf name"
-  },
-  
-  "finished": "Finished",
-  "@finished": {
-    "description": "Finished shelf name"
-  },
-  
-  "toRead": "To Read",
-  "@toRead": {
-    "description": "To read shelf name"
-  },
-  
-  "addBook": "Add Book",
-  "@addBook": {
-    "description": "Add book button label"
-  },
-  
   "importBook": "Import Book",
   "@importBook": {
     "description": "Import book action"
-  },
-  
-  "deleteBook": "Delete Book",
-  "@deleteBook": {
-    "description": "Delete book action"
   },
   
   "deleteBookConfirm": "Are you sure you want to delete this book?",
@@ -126,56 +86,6 @@
     "description": "Save button label"
   },
   
-  "language": "Language",
-  "@language": {
-    "description": "Language setting label"
-  },
-  
-  "english": "English",
-  "@english": {
-    "description": "English language option"
-  },
-  
-  "chinese": "Chinese",
-  "@chinese": {
-    "description": "Chinese language option"
-  },
-  
-  "theme": "Theme",
-  "@theme": {
-    "description": "Theme setting label"
-  },
-  
-  "lightMode": "Light Mode",
-  "@lightMode": {
-    "description": "Light mode option"
-  },
-  
-  "darkMode": "Dark Mode",
-  "@darkMode": {
-    "description": "Dark mode option"
-  },
-  
-  "fontSize": "Font Size",
-  "@fontSize": {
-    "description": "Font size setting label"
-  },
-  
-  "lineHeight": "Line Height",
-  "@lineHeight": {
-    "description": "Line height setting label"
-  },
-  
-  "publisher": "Publisher",
-  "@publisher": {
-    "description": "Publisher label"
-  },
-  
-  "readingTime": "Reading Time",
-  "@readingTime": {
-    "description": "Reading time label"
-  },
-  
   "lastRead": "Last Read",
   "@lastRead": {
     "description": "Last read time label"
@@ -189,11 +99,6 @@
   "addYourFirstBook": "Add your first book to get started",
   "@addYourFirstBook": {
     "description": "Empty library hint"
-  },
-  
-  "searchBooks": "Search books",
-  "@searchBooks": {
-    "description": "Search books placeholder"
   },
   
   "sortBy": "Sort by",
@@ -224,6 +129,11 @@
   "success": "Success",
   "@success": {
     "description": "Success label"
+  },
+
+  "failed": "Failed",
+  "@failed": {
+    "description": "Failed label"
   },
   
   "loading": "Loading",
@@ -410,6 +320,27 @@
   "@importing": {
     "description": "Importing progress message"
   },
+
+  "importCompleted": "Import completed",
+  "@importCompleted": {
+    "description": "Import completed message"
+  },
+
+  "importingProgress": "{success} success, {failed} failed, {remaining} remaining",
+  "@importingProgress": {
+    "description": "Importing progress details",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
   
   "successfullyImported": "Successfully imported \"{title}\"",
   "@successfullyImported": {
@@ -426,6 +357,16 @@
     "description": "Import failed error message",
     "placeholders": {
       "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "importingFile": "Importing \"{fileName}\"",
+  "@importingFile": {
+    "description": "Importing file message",
+    "placeholders": {
+      "fileName": {
         "type": "String"
       }
     }
@@ -814,5 +755,15 @@
   "longPressToViewImage": "Long press on image to view original",
   "@longPressToViewImage": {
     "description": "Tip for long pressing image to view original"
+  },
+
+  "importFromFolder": "Scan Folder",
+  "@importFromFolder": {
+    "description": "Import from folder option label"
+  },
+
+  "importFiles": "Import Files",
+  "@importFiles": {
+    "description": "Import files option label"
   }
 }

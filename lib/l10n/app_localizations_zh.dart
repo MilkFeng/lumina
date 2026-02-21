@@ -12,34 +12,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appName => 'Lumina';
 
   @override
-  String get library => '书库';
-
-  @override
-  String get bookshelf => '书架';
-
-  @override
   String get settings => '设置';
 
   @override
-  String get allBooks => '全部图书';
-
-  @override
-  String get reading => '在读';
-
-  @override
-  String get finished => '已读完';
-
-  @override
-  String get toRead => '想读';
-
-  @override
-  String get addBook => '添加图书';
-
-  @override
-  String get importBook => '导入图书';
-
-  @override
-  String get deleteBook => '删除图书';
+  String get importBook => '导入书籍';
 
   @override
   String get deleteBookConfirm => '确定要删除这本书吗？';
@@ -84,36 +60,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get save => '保存';
 
   @override
-  String get language => '语言';
-
-  @override
-  String get english => 'English';
-
-  @override
-  String get chinese => '简体中文';
-
-  @override
-  String get theme => '主题';
-
-  @override
-  String get lightMode => '浅色模式';
-
-  @override
-  String get darkMode => '深色模式';
-
-  @override
-  String get fontSize => '字体大小';
-
-  @override
-  String get lineHeight => '行高';
-
-  @override
-  String get publisher => '出版社';
-
-  @override
-  String get readingTime => '阅读时长';
-
-  @override
   String get lastRead => '最后阅读';
 
   @override
@@ -121,9 +67,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addYourFirstBook => '添加您的第一本书开始阅读';
-
-  @override
-  String get searchBooks => '搜索书籍';
 
   @override
   String get sortBy => '排序方式';
@@ -142,6 +85,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get success => '成功';
+
+  @override
+  String get failed => '失败';
 
   @override
   String get loading => '加载中';
@@ -253,6 +199,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importing => '导入中……';
 
   @override
+  String get importCompleted => '导入完成';
+
+  @override
+  String importingProgress(int success, int failed, int remaining) {
+    return '$success 成功，$failed 失败，$remaining 剩余';
+  }
+
+  @override
   String successfullyImported(String title) {
     return '成功导入“$title”';
   }
@@ -260,6 +214,11 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String importFailed(String error) {
     return '导入失败：$error';
+  }
+
+  @override
+  String importingFile(String fileName) {
+    return '正在导入“$fileName”';
   }
 
   @override
@@ -480,4 +439,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get longPressToViewImage => '长按图片查看原图';
+
+  @override
+  String get importFromFolder => '扫描文件夹';
+
+  @override
+  String get importFiles => '导入文件';
 }

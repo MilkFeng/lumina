@@ -25,39 +25,6 @@ class ImageViewer extends StatefulWidget {
 
   @override
   State<ImageViewer> createState() => _ImageViewerState();
-
-  static void handleImageLongPress(
-    BuildContext context, {
-    required String imageUrl,
-    required Rect rect,
-    required EpubWebViewHandler webViewHandler,
-    required String epubPath,
-    required String fileHash,
-  }) {
-    HapticFeedback.lightImpact();
-
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        settings: const RouteSettings(name: 'ImageViewer'),
-        opaque: false,
-        barrierDismissible: true,
-        barrierColor: Colors.transparent,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return ImageViewer(
-            imageUrl: imageUrl,
-            webViewHandler: webViewHandler,
-            epubPath: epubPath,
-            fileHash: fileHash,
-            onClose: () => Navigator.of(context).pop(),
-            sourceRect: rect,
-          );
-        },
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return child;
-        },
-      ),
-    );
-  }
 }
 
 class _ImageViewerState extends State<ImageViewer>
@@ -115,7 +82,6 @@ class _ImageViewerState extends State<ImageViewer>
     });
 
     await _controller.reverse();
-    await Future.delayed(const Duration(milliseconds: 50));
 
     if (mounted) {
       widget.onClose();
@@ -150,9 +116,11 @@ class _ImageViewerState extends State<ImageViewer>
           });
         }
 
+        HapticFeedback.lightImpact();
         await Future.delayed(const Duration(milliseconds: 10));
         _controller.forward();
       } else {
+        HapticFeedback.lightImpact();
         if (mounted) {
           ToastService.showError('Failed to load image');
           await _handleClose();
@@ -160,6 +128,7 @@ class _ImageViewerState extends State<ImageViewer>
       }
     } catch (e) {
       debugPrint('Error loading zoomed image: $e');
+      HapticFeedback.lightImpact();
       if (mounted) {
         ToastService.showError('Error loading image');
         await _handleClose();

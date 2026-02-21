@@ -38,7 +38,8 @@ class BookDetailScreen extends ConsumerWidget {
         ),
       ),
       body: bookAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         error: (error, stack) => _buildErrorBody(context, error.toString()),
         data: (book) {
           if (book == null) {

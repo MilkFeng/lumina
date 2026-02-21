@@ -1,15 +1,13 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:image/image.dart' as img;
 import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:lumina/src/features/library/data/services/epub_import_workers.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/shelf_book.dart';
 import '../../domain/book_manifest.dart';
 import '../shelf_book_repository.dart';
 import '../book_manifest_repository.dart';
-import '../parsers/epub_zip_parser.dart';
 
 /// Service for importing EPUB files using "stream-from-zip" strategy
 /// - Copies EPUB to AppDocDir/books/{fileHash}.epub (keeps compressed)
@@ -17,6 +15,9 @@ import '../parsers/epub_zip_parser.dart';
 /// - Parses metadata in-memory (no full unzip)
 /// - Saves to Isar: ShelfBook + BookManifest
 class EpubImportService {
+  static const String kBooksDir = 'books';
+  static const String kCoversDir = 'covers';
+
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
 
@@ -26,55 +27,39 @@ class EpubImportService {
   }) : _shelfBookRepo = shelfBookRepo,
        _manifestRepo = manifestRepo;
 
-  /// Import an EPUB file
+  /// Import an EPUB file following a clean pipeline pattern
   /// Returns Either:
   ///   - Right: The imported ShelfBook
   ///   - Left: error message
   Future<Either<String, ShelfBook>> importBook(File file) async {
     try {
-      // Step 1: Calculate SHA-256 hash
-      final hashResult = await _calculateFileHash(file);
-      if (hashResult.isLeft()) {
-        return left(hashResult.getLeft().toNullable()!);
-      }
-      final fileHash = hashResult.getRight().toNullable()!;
+      // Pipeline: Hash → Check → Copy → Parse → Extract → Create → Save
+      final fileHash = await _calculateHash(
+        file,
+      ).then((result) => result.getOrElse((error) => throw Exception(error)));
 
-      // Step 2: Check if book already exists
-      final existsAndNotDeleted = await _shelfBookRepo.bookExistsAndNotDeleted(
+      final bookExists = await _checkBookExistence(fileHash);
+      if (bookExists.isLeft()) {
+        return left(bookExists.getLeft().toNullable()!);
+      }
+
+      final epubPath = await _copyToAppStorage(
+        file,
         fileHash,
-      );
-      if (existsAndNotDeleted) {
-        return left('Book already exists');
-      }
+      ).then((result) => result.getOrElse((error) => throw Exception(error)));
 
-      final exists = await _shelfBookRepo.bookExists(fileHash);
+      final parseData =
+          await _parseAndExtract(
+            epubPath,
+            fileHash,
+            file.path.split('/').last,
+          ).then(
+            (result) => result.fold((error) {
+              _deleteFile(epubPath);
+              throw Exception(error);
+            }, (data) => data),
+          );
 
-      // Step 3: Copy EPUB to books directory
-      final copyResult = await _copyEpubFile(file, fileHash);
-      if (copyResult.isLeft()) {
-        return left(copyResult.getLeft().toNullable()!);
-      }
-      final epubPath = copyResult.getRight().toNullable()!;
-
-      // Step 4: Parse EPUB in-memory (heavy operation, use isolate)
-      final parseResult = await compute(
-        _parseEpubInIsolate,
-        _ParseParams(
-          filePath: epubPath,
-          fileHash: fileHash,
-          originalFileName: file.path.split('/').last,
-        ),
-      );
-
-      if (parseResult.isLeft()) {
-        // Clean up copied file on parse failure
-        await _deleteFile(epubPath);
-        return left(parseResult.getLeft().toNullable()!);
-      }
-
-      final parseData = parseResult.getRight().toNullable()!;
-
-      // Step 5: Extract and save cover image
       final coverPath = await _extractCover(
         epubPath,
         fileHash,
@@ -82,104 +67,100 @@ class EpubImportService {
         parseData.opfRootPath,
       );
 
-      final relativePath = epubPath.replaceAll(AppStorage.documentsPath, '');
+      final entities = await _createEntities(
+        fileHash,
+        epubPath,
+        coverPath,
+        parseData,
+        bookExists.getRight().toNullable()!,
+      );
 
-      // Step 6: Create ShelfBook entity
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final shelfBook = ShelfBook()
-        ..fileHash = fileHash
-        ..filePath = relativePath
-        ..coverPath = coverPath
-        ..title = parseData.title
-        ..author = parseData.author
-        ..authors = parseData.authors
-        ..description = parseData.description
-        ..subjects = parseData.subjects
-        ..totalChapters = parseData.totalChapters
-        ..epubVersion = parseData.epubVersion
-        ..importDate = now
-        ..updatedAt = now;
+      final savedBook =
+          await _saveTransaction(
+            entities.$1,
+            entities.$2,
+            epubPath,
+            coverPath,
+          ).then(
+            (result) => result.fold((error) {
+              _deleteFile(epubPath);
+              if (coverPath != null) _deleteFile(coverPath);
+              throw Exception(error);
+            }, (book) => book),
+          );
 
-      if (exists) {
-        shelfBook.id = await _shelfBookRepo.getBookIdByHash(fileHash);
-      }
-
-      // Step 7: Create BookManifest entity
-      final manifest = BookManifest()
-        ..fileHash = fileHash
-        ..opfRootPath = parseData.opfRootPath
-        ..spine = parseData.spine
-        ..toc = parseData.toc
-        ..manifest = parseData.manifestItems
-        ..epubVersion = parseData.epubVersion
-        ..lastUpdated = DateTime.now();
-
-      // Step 8: Save to database (transactional)
-      final saveBookResult = await _shelfBookRepo.saveBook(shelfBook);
-      if (saveBookResult.isLeft()) {
-        // Clean up files on save failure
-        await _deleteFile(epubPath);
-        if (coverPath != null) await _deleteFile(coverPath);
-        return left(saveBookResult.getLeft().toNullable()!);
-      }
-
-      final saveManifestResult = await _manifestRepo.saveManifest(manifest);
-      if (saveManifestResult.isLeft()) {
-        // Rollback: delete ShelfBook and files
-        final bookId = saveBookResult.getRight().toNullable()!;
-        await _shelfBookRepo.deleteBook(bookId);
-        await _deleteFile(epubPath);
-        if (coverPath != null) await _deleteFile(coverPath);
-        return left(saveManifestResult.getLeft().toNullable()!);
-      }
-
-      // Update book ID from database
-      shelfBook.id = saveBookResult.getRight().toNullable()!;
-
-      return right(shelfBook);
+      return right(savedBook);
     } catch (e) {
       return left('Import failed: $e');
     }
   }
 
-  Future<Either<String, (BookManifest, String?)>> updateBookManifestAndCover(
-    String epubAbsPath,
-    int bookId,
-    String? fileHash,
-  ) async {
-    File epubFile = File(epubAbsPath);
-    if (!await epubFile.exists()) {
-      return left('EPUB file does not exist at $epubAbsPath');
-    }
+  /// Calculate file hash using isolate
+  Future<Either<String, String>> _calculateHash(File file) async {
+    return compute(ImportWorkers.calculateFileHash, file.path);
+  }
 
-    if (fileHash == null) {
-      final hashResult = await _calculateFileHash(epubFile);
-      if (hashResult.isLeft()) {
-        return left(hashResult.getLeft().toNullable()!);
-      }
-      fileHash = hashResult.getRight().toNullable()!;
-    }
-
-    final parseResult = await compute(
-      _parseEpubInIsolate,
-      _ParseParams(filePath: epubAbsPath, fileHash: fileHash),
-    );
-
-    if (parseResult.isLeft()) {
-      // Clean up copied file on parse failure
-      await _deleteFile(epubAbsPath);
-      return left(parseResult.getLeft().toNullable()!);
-    }
-
-    final parseData = parseResult.getRight().toNullable()!;
-
-    // Extract and save cover image
-    final coverPath = await _extractCover(
-      epubAbsPath,
+  /// Check if book already exists
+  /// Returns Either:
+  ///   - Left: error (book already exists)
+  ///   - Right: true if book exists but deleted, false if never existed
+  Future<Either<String, bool>> _checkBookExistence(String fileHash) async {
+    final existsAndNotDeleted = await _shelfBookRepo.bookExistsAndNotDeleted(
       fileHash,
-      parseData.coverHref,
-      parseData.opfRootPath,
     );
+    if (existsAndNotDeleted) {
+      return left('Book already exists');
+    }
+
+    final exists = await _shelfBookRepo.bookExists(fileHash);
+    return right(exists);
+  }
+
+  /// Parse EPUB and extract metadata using isolate
+  Future<Either<String, ParseResult>> _parseAndExtract(
+    String epubPath,
+    String fileHash,
+    String originalFileName,
+  ) async {
+    return compute(
+      ImportWorkers.parseEpub,
+      ParseParams(
+        filePath: epubPath,
+        fileHash: fileHash,
+        originalFileName: originalFileName,
+      ),
+    );
+  }
+
+  /// Create ShelfBook and BookManifest entities
+  /// Returns tuple (ShelfBook, BookManifest)
+  Future<(ShelfBook, BookManifest)> _createEntities(
+    String fileHash,
+    String epubPath,
+    String? coverPath,
+    ParseResult parseData,
+    bool bookExisted,
+  ) async {
+    final relativePath = epubPath.replaceAll(AppStorage.documentsPath, '');
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    final shelfBook = ShelfBook()
+      ..fileHash = fileHash
+      ..filePath = relativePath
+      ..coverPath = coverPath
+      ..title = parseData.title
+      ..author = parseData.author
+      ..authors = parseData.authors
+      ..description = parseData.description
+      ..subjects = parseData.subjects
+      ..totalChapters = parseData.totalChapters
+      ..epubVersion = parseData.epubVersion
+      ..importDate = now
+      ..updatedAt = now;
+
+    if (bookExisted) {
+      shelfBook.id = await _shelfBookRepo.getBookIdByHash(fileHash);
+    }
 
     final manifest = BookManifest()
       ..fileHash = fileHash
@@ -190,58 +171,44 @@ class EpubImportService {
       ..epubVersion = parseData.epubVersion
       ..lastUpdated = DateTime.now();
 
+    return (shelfBook, manifest);
+  }
+
+  /// Save ShelfBook and BookManifest in a transactional manner
+  /// Rollback on failure
+  Future<Either<String, ShelfBook>> _saveTransaction(
+    ShelfBook shelfBook,
+    BookManifest manifest,
+    String epubPath,
+    String? coverPath,
+  ) async {
+    final saveBookResult = await _shelfBookRepo.saveBook(shelfBook);
+    if (saveBookResult.isLeft()) {
+      return left(saveBookResult.getLeft().toNullable()!);
+    }
+
+    final bookId = saveBookResult.getRight().toNullable()!;
+
     final saveManifestResult = await _manifestRepo.saveManifest(manifest);
     if (saveManifestResult.isLeft()) {
-      // Rollback: delete ShelfBook and files
+      // Rollback: delete ShelfBook
       await _shelfBookRepo.deleteBook(bookId);
-      await _deleteFile(epubAbsPath);
-      if (coverPath != null) await _deleteFile(coverPath);
       return left(saveManifestResult.getLeft().toNullable()!);
     }
 
-    return right((manifest, coverPath));
-  }
-
-  /// Calculate SHA-256 hash of a file
-  Future<Either<String, String>> _calculateFileHash(File file) async {
-    try {
-      final stream = file.openRead();
-      final digest = await sha256.bind(stream).first;
-
-      BigInt number = BigInt.parse(digest.toString(), radix: 16);
-      final hash = _toBase62(number);
-
-      return right(hash);
-    } catch (e) {
-      return left('Hash calculation failed: $e');
-    }
-  }
-
-  String _toBase62(BigInt num) {
-    if (num == BigInt.zero) return '0';
-
-    const chars =
-        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    final base = BigInt.from(chars.length);
-    final codeUnits = <int>[];
-
-    while (num > BigInt.zero) {
-      var remainder = (num % base).toInt();
-      codeUnits.add(chars.codeUnitAt(remainder));
-      num = num ~/ base;
-    }
-
-    return String.fromCharCodes(codeUnits.reversed);
+    // Update book with ID from database
+    shelfBook.id = bookId;
+    return right(shelfBook);
   }
 
   /// Copy EPUB file to books directory
   /// Returns absolute path to the copied file
-  Future<Either<String, String>> _copyEpubFile(
+  Future<Either<String, String>> _copyToAppStorage(
     File sourceFile,
     String fileHash,
   ) async {
     try {
-      final booksDir = Directory('${AppStorage.documentsPath}/books');
+      final booksDir = Directory('${AppStorage.documentsPath}/$kBooksDir');
       if (!await booksDir.exists()) {
         await booksDir.create(recursive: true);
       }
@@ -262,7 +229,7 @@ class EpubImportService {
   }
 
   /// Extract cover image from EPUB and save to covers directory
-  /// Returns absolute path to the cover image, or null if no cover found
+  /// Returns relative path to the cover image, or null if no cover found
   Future<String?> _extractCover(
     String epubPath,
     String fileHash,
@@ -274,7 +241,7 @@ class EpubImportService {
     }
 
     try {
-      final coversDir = Directory('${AppStorage.documentsPath}/covers');
+      final coversDir = Directory('${AppStorage.documentsPath}/$kCoversDir');
       if (!await coversDir.exists()) {
         await coversDir.create(recursive: true);
       }
@@ -298,9 +265,9 @@ class EpubImportService {
       // Determine file extension from MIME type or filename
       var extension = _getImageExtension(coverPath);
 
-      // Write cover to disk
+      // Compress image using worker
       final rawCoverData = coverFile.content;
-      var coverData = await compute(_compressImageInIsolate, rawCoverData);
+      var coverData = await compute(ImportWorkers.compressImage, rawCoverData);
       if (coverData != null) {
         extension = '.jpg';
       } else {
@@ -310,7 +277,7 @@ class EpubImportService {
       final outputPath = '${coversDir.path}/$fileHash$extension';
       await File(outputPath).writeAsBytes(coverData as List<int>);
 
-      return 'covers/$fileHash$extension';
+      return '$kCoversDir/$fileHash$extension';
     } catch (e) {
       // Cover extraction is non-critical, log and continue
       debugPrint('Cover extraction failed: $e');
@@ -365,105 +332,5 @@ class EpubImportService {
     } catch (e) {
       return left('Delete book failed: $e');
     }
-  }
-}
-
-/// Parameters for isolate parsing
-class _ParseParams {
-  final String filePath;
-  final String fileHash;
-  final String? originalFileName;
-
-  _ParseParams({
-    required this.filePath,
-    required this.fileHash,
-    this.originalFileName,
-  });
-}
-
-/// Result of in-memory EPUB parsing
-class _ParseResult {
-  final String title;
-  final String author;
-  final List<String> authors;
-  final String? description;
-  final List<String> subjects;
-  final String? coverHref;
-  final String opfRootPath;
-  final String epubVersion;
-  final int totalChapters;
-  final List<SpineItem> spine;
-  final List<TocItem> toc;
-  final List<ManifestItem> manifestItems;
-
-  _ParseResult({
-    required this.title,
-    required this.author,
-    required this.authors,
-    this.description,
-    required this.subjects,
-    this.coverHref,
-    required this.opfRootPath,
-    required this.epubVersion,
-    required this.totalChapters,
-    required this.spine,
-    required this.toc,
-    required this.manifestItems,
-  });
-}
-
-/// Isolate function to parse EPUB in-memory
-Future<Either<String, _ParseResult>> _parseEpubInIsolate(
-  _ParseParams params,
-) async {
-  try {
-    final parser = EpubZipParser();
-    final parseResult = await parser.parseFromFile(
-      params.filePath,
-      fileName: params.originalFileName,
-    );
-
-    if (parseResult.isLeft()) {
-      return left(parseResult.getLeft().toNullable()!);
-    }
-
-    final data = parseResult.getRight().toNullable()!;
-
-    final result = _ParseResult(
-      title: data.title,
-      author: data.author,
-      authors: data.authors,
-      description: data.description,
-      subjects: data.subjects,
-      coverHref: data.coverHref,
-      opfRootPath: data.opfRootPath,
-      epubVersion: data.epubVersion,
-      totalChapters: data.totalChapters,
-      spine: data.spine,
-      toc: data.toc,
-      manifestItems: data.manifestItems,
-    );
-
-    return right(result);
-  } catch (e) {
-    return left('Parse error: $e');
-  }
-}
-
-/// Isolate function to compress image to JPEG
-Uint8List? _compressImageInIsolate(Uint8List rawBytes) {
-  try {
-    final image = img.decodeImage(rawBytes);
-    if (image == null) return null;
-
-    img.Image resizedImage = image;
-    if (image.width > 500) {
-      resizedImage = img.copyResize(image, width: 500);
-    }
-
-    return Uint8List.fromList(img.encodeJpg(resizedImage, quality: 80));
-  } catch (e) {
-    debugPrint('Image compression worker error: $e');
-    return null;
   }
 }

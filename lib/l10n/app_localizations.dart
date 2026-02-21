@@ -104,65 +104,17 @@ abstract class AppLocalizations {
   /// **'Lumina'**
   String get appName;
 
-  /// Library tab label
-  ///
-  /// In en, this message translates to:
-  /// **'Library'**
-  String get library;
-
-  /// Bookshelf tab label
-  ///
-  /// In en, this message translates to:
-  /// **'Bookshelf'**
-  String get bookshelf;
-
   /// Settings tab label
   ///
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
 
-  /// All books shelf name
-  ///
-  /// In en, this message translates to:
-  /// **'All Books'**
-  String get allBooks;
-
-  /// Reading shelf name
-  ///
-  /// In en, this message translates to:
-  /// **'Reading'**
-  String get reading;
-
-  /// Finished shelf name
-  ///
-  /// In en, this message translates to:
-  /// **'Finished'**
-  String get finished;
-
-  /// To read shelf name
-  ///
-  /// In en, this message translates to:
-  /// **'To Read'**
-  String get toRead;
-
-  /// Add book button label
-  ///
-  /// In en, this message translates to:
-  /// **'Add Book'**
-  String get addBook;
-
   /// Import book action
   ///
   /// In en, this message translates to:
   /// **'Import Book'**
   String get importBook;
-
-  /// Delete book action
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Book'**
-  String get deleteBook;
 
   /// Delete book confirmation message
   ///
@@ -248,66 +200,6 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
-  /// Language setting label
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get language;
-
-  /// English language option
-  ///
-  /// In en, this message translates to:
-  /// **'English'**
-  String get english;
-
-  /// Chinese language option
-  ///
-  /// In en, this message translates to:
-  /// **'Chinese'**
-  String get chinese;
-
-  /// Theme setting label
-  ///
-  /// In en, this message translates to:
-  /// **'Theme'**
-  String get theme;
-
-  /// Light mode option
-  ///
-  /// In en, this message translates to:
-  /// **'Light Mode'**
-  String get lightMode;
-
-  /// Dark mode option
-  ///
-  /// In en, this message translates to:
-  /// **'Dark Mode'**
-  String get darkMode;
-
-  /// Font size setting label
-  ///
-  /// In en, this message translates to:
-  /// **'Font Size'**
-  String get fontSize;
-
-  /// Line height setting label
-  ///
-  /// In en, this message translates to:
-  /// **'Line Height'**
-  String get lineHeight;
-
-  /// Publisher label
-  ///
-  /// In en, this message translates to:
-  /// **'Publisher'**
-  String get publisher;
-
-  /// Reading time label
-  ///
-  /// In en, this message translates to:
-  /// **'Reading Time'**
-  String get readingTime;
-
   /// Last read time label
   ///
   /// In en, this message translates to:
@@ -325,12 +217,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add your first book to get started'**
   String get addYourFirstBook;
-
-  /// Search books placeholder
-  ///
-  /// In en, this message translates to:
-  /// **'Search books'**
-  String get searchBooks;
 
   /// Sort by label
   ///
@@ -367,6 +253,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Success'**
   String get success;
+
+  /// Failed label
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get failed;
 
   /// Loading label
   ///
@@ -578,6 +470,18 @@ abstract class AppLocalizations {
   /// **'Importing...'**
   String get importing;
 
+  /// Import completed message
+  ///
+  /// In en, this message translates to:
+  /// **'Import completed'**
+  String get importCompleted;
+
+  /// Importing progress details
+  ///
+  /// In en, this message translates to:
+  /// **'{success} success, {failed} failed, {remaining} remaining'**
+  String importingProgress(int success, int failed, int remaining);
+
   /// Successfully imported message
   ///
   /// In en, this message translates to:
@@ -589,6 +493,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import failed: {error}'**
   String importFailed(String error);
+
+  /// Importing file message
+  ///
+  /// In en, this message translates to:
+  /// **'Importing \"{fileName}\"'**
+  String importingFile(String fileName);
 
   /// Sync completed message
   ///
@@ -967,6 +877,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Long press on image to view original'**
   String get longPressToViewImage;
+
+  /// Import from folder option label
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Folder'**
+  String get importFromFolder;
+
+  /// Import files option label
+  ///
+  /// In en, this message translates to:
+  /// **'Import Files'**
+  String get importFiles;
 }
 
 class _AppLocalizationsDelegate

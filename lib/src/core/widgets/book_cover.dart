@@ -61,19 +61,18 @@ class BookCover extends ConsumerWidget {
   Widget _buildPlaceholder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[900] : Colors.grey[200],
-        border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-          width: 1,
+    return AspectRatio(
+      aspectRatio: 210 / 297,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[900] : Colors.grey[200],
         ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.book_outlined,
-          size: 48,
-          color: isDark ? Colors.grey[700] : Colors.grey,
+        child: Center(
+          child: Icon(
+            Icons.book_outlined,
+            size: 48,
+            color: isDark ? Colors.grey[700] : Colors.grey,
+          ),
         ),
       ),
     );
