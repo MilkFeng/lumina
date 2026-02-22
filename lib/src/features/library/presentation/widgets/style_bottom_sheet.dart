@@ -39,7 +39,7 @@ class StyleBottomSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.2),
+                  ).colorScheme.onSurface.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -60,12 +60,6 @@ class StyleBottomSheet extends StatelessWidget {
                 ),
                 _OptionChip(
                   icon: Icons.grid_view_outlined,
-                  label: 'Comfortable',
-                  isSelected: currentViewMode == ViewMode.comfortable,
-                  onTap: () => onViewModeSelected(ViewMode.comfortable),
-                ),
-                _OptionChip(
-                  icon: Icons.view_agenda_outlined,
                   label: 'Relaxed',
                   isSelected: currentViewMode == ViewMode.relaxed,
                   onTap: () => onViewModeSelected(ViewMode.relaxed),
@@ -148,7 +142,7 @@ class _SectionTitle extends StatelessWidget {
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
       ),
     );
   }
@@ -177,16 +171,16 @@ class _OptionChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     final bgColor = isSelected
-        ? colorScheme.primaryContainer.withOpacity(0.3)
+        ? colorScheme.primaryContainer.withValues(alpha: 0.15)
         : colorScheme.surfaceContainerHighest;
 
     final borderColor = isSelected
-        ? colorScheme.primary.withOpacity(0.5)
-        : Colors.transparent;
+        ? colorScheme.primary.withValues(alpha: 0.5)
+        : colorScheme.secondary.withValues(alpha: 0.3);
 
     final contentColor = isSelected
         ? colorScheme.primary
-        : colorScheme.onSurface.withOpacity(0.8);
+        : colorScheme.onSurface.withValues(alpha: 0.8);
 
     return InkWell(
       onTap: onTap,

@@ -11,7 +11,7 @@ import '../data/services/epub_import_service.dart';
 part 'bookshelf_notifier.g.dart';
 
 /// How densely books are shown in the grid.
-enum ViewMode { compact, comfortable, relaxed }
+enum ViewMode { compact, relaxed }
 
 /// State for bookshelf view (sorting, grouping, selection)
 class BookshelfState {

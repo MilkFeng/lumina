@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,14 +6,14 @@ import '../../domain/shelf_book.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../application/bookshelf_notifier.dart';
-import '../../../../../l10n/app_localizations.dart';
 
-/// Book grid item widget - displays a single book in the grid
-/// This is a dumb/presentational widget that accepts data and callbacks
+/// Book grid item widget – displays a single book in the grid.
+/// Appearance branches into three helpers based on [viewMode].
 class BookGridItem extends ConsumerWidget {
   final ShelfBook book;
   final bool isSelectionMode;
   final bool isSelected;
+  final ViewMode viewMode;
   final VoidCallback? onLongPress;
 
   const BookGridItem({
@@ -20,8 +21,11 @@ class BookGridItem extends ConsumerWidget {
     required this.book,
     required this.isSelectionMode,
     required this.isSelected,
+    required this.viewMode,
     this.onLongPress,
   });
+
+  // ─── public build ────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,207 +34,244 @@ class BookGridItem extends ConsumerWidget {
       onLongPress: onLongPress,
       child: Stack(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Book Cover with selection overlay
-              Expanded(
-                child: Stack(
-                  children: [
-                    Hero(
-                      tag: 'book-cover-${book.id}',
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: BookCover(relativePath: book.coverPath),
-                        ),
-                      ),
-                    ),
-                    // Selection overlay
-                    if (isSelectionMode)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withAlpha(102)
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withAlpha(51),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+          // Main mode-specific layout
+          switch (viewMode) {
+            ViewMode.relaxed => _buildRelaxed(context),
+            ViewMode.compact => Positioned.fill(child: _buildCompact(context)),
+          },
 
-              const SizedBox(height: 12),
-
-              // Book Title
-              Text(
-                book.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTheme.contentTextStyle,
-              ),
-
-              const SizedBox(height: 4),
-
-              // Book Author
-              if (book.author.isNotEmpty)
-                Text(
-                  book.author,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTheme.contentTextStyle.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withAlpha(153),
-                    fontSize: 12,
-                  ),
-                ),
-
-              // Reading Progress Indicator
-              if (book.readingProgress > 0 && !book.isDeleted)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: book.readingProgress,
-                      minHeight: 3,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primary.withAlpha(51),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          // Selection Checkbox
+          // Selection checkbox (top-left, all modes)
           if (isSelectionMode)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.surface,
-                  border: Border.all(
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.outline,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? Icon(
-                        Icons.check,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      )
-                    : null,
-              ),
-            ),
+            Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
 
-          // Finished Badge
-          if (book.isFinished && !isSelectionMode)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline,
-                  size: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+          // Finished badge (top-right, relaxed / comfortable only;
+          // compact bakes it into its own cover stack)
+          if (book.isFinished &&
+              !isSelectionMode &&
+              viewMode != ViewMode.compact)
+            Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
         ],
       ),
     );
   }
 
+  // ─── mode helpers ─────────────────────────────────────────────────────────
+
+  /// Relaxed: cover + title + author + progress bar.
+  Widget _buildRelaxed(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildCoverStack(context, fit: StackFit.expand)),
+        const SizedBox(height: 12),
+        Text(
+          book.title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: AppTheme.contentTextStyle,
+        ),
+        const SizedBox(height: 4),
+        if (book.author.isNotEmpty)
+          Text(
+            book.author,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTheme.contentTextStyle.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+              fontSize: 12,
+            ),
+          ),
+        if (book.readingProgress > 0 && !book.isDeleted)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: book.readingProgress,
+                minHeight: 3,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withAlpha(51),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Compact: cover only, title gradient overlay + frosted progress badge.
+  Widget _buildCompact(BuildContext context) {
+    return _buildCoverStack(
+      context,
+      fit: StackFit.expand,
+      extras: [
+        // Bottom gradient + title
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(6),
+            ),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(6, 32, 6, 6),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black87],
+                ),
+              ),
+              child: Text(
+                book.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Progress badge (top-right)
+        _buildProgressBadge(context),
+        // Finished badge (top-right, replaces progress badge)
+        if (book.isFinished && !isSelectionMode)
+          Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
+      ],
+    );
+  }
+
+  // ─── shared cover stack ───────────────────────────────────────────────────
+
+  Widget _buildCoverStack(
+    BuildContext context, {
+    List<Widget> extras = const [],
+    StackFit fit = StackFit.loose,
+  }) {
+    return Stack(
+      fit: fit,
+      children: [
+        Hero(
+          tag: 'book-cover-${book.id}',
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: BookCover(relativePath: book.coverPath),
+            ),
+          ),
+        ),
+        // Selection colour overlay
+        if (isSelectionMode)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary.withAlpha(102)
+                    : Theme.of(context).colorScheme.onSurface.withAlpha(51),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+        ...extras,
+      ],
+    );
+  }
+
+  // ─── badge helpers ────────────────────────────────────────────────────────
+
+  /// Frosted-glass percentage badge (comfortable / compact modes).
+  Widget _buildProgressBadge(BuildContext context) {
+    if (book.readingProgress <= 0 || book.isFinished || isSelectionMode) {
+      return const SizedBox.shrink();
+    }
+    return Positioned(
+      top: 8,
+      right: 8,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            color: Colors.black.withValues(alpha: 0.7),
+            child: Text(
+              '${(book.readingProgress * 100).toStringAsFixed(2)}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFinishedBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.green,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(
+        Icons.check_circle_outline,
+        size: 16,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildCheckbox(BuildContext context) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isSelected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.surface,
+        border: Border.all(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.outline,
+          width: 2,
+        ),
+      ),
+      child: isSelected
+          ? Icon(
+              Icons.check,
+              size: 16,
+              color: Theme.of(context).colorScheme.onPrimary,
+            )
+          : null,
+    );
+  }
+
+  // ─── tap handler ──────────────────────────────────────────────────────────
+
   void _handleTap(BuildContext context, WidgetRef ref) {
     if (isSelectionMode) {
-      // Toggle selection
       ref.read(bookshelfNotifierProvider.notifier).toggleItemSelection(book);
     } else {
-      // Navigate to book detail and reload on return
       context.push('/book/${book.fileHash}').then((_) {
         ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
       });
     }
-  }
-}
-
-/// Empty library placeholder
-class EmptyLibraryPlaceholder extends StatelessWidget {
-  final VoidCallback onImportTap;
-
-  const EmptyLibraryPlaceholder({super.key, required this.onImportTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(48.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.library_books_outlined,
-              size: 80,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 24),
-            Text(
-              l10n.noBooks,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              l10n.addYourFirstBook,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: onImportTap,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.importBook),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
