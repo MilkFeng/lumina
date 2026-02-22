@@ -820,5 +820,35 @@
   "backupLibrary": "Backup Library",
   "@backupLibrary": {
     "description": "Backup library option label"
+  },
+
+  "restoringBackup": "Restoring Backup…",
+  "@restoringBackup": {
+    "description": "Title shown while restore is in progress"
+  },
+
+  "restoreCompleted": "Restore Completed",
+  "@restoreCompleted": {
+    "description": "Title shown when restore finishes"
+  },
+
+  "restoreSuccess": "Successfully restored {count} {count, plural, =1{book} other{books}}.",
+  "@restoreSuccess": {
+    "description": "Restore success message with book count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "restoreFailed": "Failed to restore backup: {message}",
+  "@restoreFailed": {
+    "description": "Restore failure message",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
   }
 }

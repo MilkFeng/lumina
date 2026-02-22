@@ -937,6 +937,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup Library'**
   String get backupLibrary;
+
+  /// Title shown while restore is in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring Backup…'**
+  String get restoringBackup;
+
+  /// Title shown when restore finishes
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Completed'**
+  String get restoreCompleted;
+
+  /// Restore success message with book count
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully restored {count} {count, plural, =1{book} other{books}}.'**
+  String restoreSuccess(int count);
+
+  /// Restore failure message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restore backup: {message}'**
+  String restoreFailed(String message);
 }
 
 class _AppLocalizationsDelegate

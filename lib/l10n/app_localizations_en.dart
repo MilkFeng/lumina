@@ -478,4 +478,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupLibrary => 'Backup Library';
+
+  @override
+  String get restoringBackup => 'Restoring Backup…';
+
+  @override
+  String get restoreCompleted => 'Restore Completed';
+
+  @override
+  String restoreSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'books',
+      one: 'book',
+    );
+    return 'Successfully restored $count $_temp0.';
+  }
+
+  @override
+  String restoreFailed(String message) {
+    return 'Failed to restore backup: $message';
+  }
 }

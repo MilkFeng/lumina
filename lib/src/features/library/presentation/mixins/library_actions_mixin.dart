@@ -16,6 +16,7 @@ import '../../data/services/unified_import_service_provider.dart';
 import '../../domain/shelf_group.dart';
 import '../widgets/batch_import_dialog.dart';
 import '../widgets/group_selection_dialog.dart';
+import '../widgets/restore_backup_dialog.dart';
 
 /// Mixin that provides action methods for LibraryScreen.
 /// Handles imports, deletions, group management, and file operations.
@@ -343,41 +344,28 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
 
     if (!context.mounted) return;
 
-    // 2. Show a non-dismissible progress dialog while the restore runs.
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const PopScope(
-        canPop: false,
-        child: AlertDialog(
-          title: Text('Restoring backup...'),
-          content: SizedBox(
-            height: 80,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-        ),
-      ),
-    );
-
-    // 3. Run the restore.
-    final result = await ref
+    // 2. Start the restore immediately so the future is already running when
+    //    the dialog is displayed.
+    final restoreFuture = ref
         .read(importBackupServiceProvider)
         .importLibraryFromFolder(selectedPath);
 
+    // 3. Show the restore dialog; it tracks progress and shows the result.
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: RestoreBackupDialog(restoreFuture: restoreFuture),
+      ),
+    );
+
     if (!context.mounted) return;
 
-    // 4. Dismiss the loading dialog.
-    Navigator.of(context, rootNavigator: true).pop();
-
-    if (!context.mounted) return;
-
-    // 5. Show feedback and refresh the library on success.
-    switch (result) {
-      case ImportSuccess(:final importedBooks):
-        ref.read(bookshelfNotifierProvider.notifier).refresh();
-        ToastService.showSuccess('Successfully restored $importedBooks books.');
-      case ImportFailure(:final message):
-        ToastService.showError('Failed to restore backup: $message');
+    // 4. Refresh the library after a successful restore.
+    final result = await restoreFuture;
+    if (result is ImportSuccess) {
+      ref.read(bookshelfNotifierProvider.notifier).refresh();
     }
   }
 

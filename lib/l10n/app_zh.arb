@@ -830,5 +830,35 @@
   "backupLibrary": "备份书库",
   "@backupLibrary": {
     "description": "备份书库选项标签"
+  },
+
+  "restoringBackup": "正在恢复备份…",
+  "@restoringBackup": {
+    "description": "恢复进行中时显示的标题"
+  },
+
+  "restoreCompleted": "恢复完成",
+  "@restoreCompleted": {
+    "description": "恢复完成时显示的标题"
+  },
+
+  "restoreSuccess": "已成功恢复 {count} 本书。",
+  "@restoreSuccess": {
+    "description": "恢复成功消息，包含书籍数量",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "restoreFailed": "备份恢复失败：{message}",
+  "@restoreFailed": {
+    "description": "恢复失败消息",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
   }
 }

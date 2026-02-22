@@ -475,4 +475,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupLibrary => '备份书库';
+
+  @override
+  String get restoringBackup => '正在恢复备份…';
+
+  @override
+  String get restoreCompleted => '恢复完成';
+
+  @override
+  String restoreSuccess(int count) {
+    return '已成功恢复 $count 本书。';
+  }
+
+  @override
+  String restoreFailed(String message) {
+    return '备份恢复失败：$message';
+  }
 }
