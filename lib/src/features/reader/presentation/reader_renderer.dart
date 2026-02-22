@@ -430,7 +430,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
           BoxShadow(
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.05),
+                : Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
           ),
         ],

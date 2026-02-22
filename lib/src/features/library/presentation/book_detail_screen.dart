@@ -212,6 +212,7 @@ class BookDetailScreen extends ConsumerWidget {
                   context,
                   AppLocalizations.of(context)!.epubVersion(book.epubVersion),
                 ),
+                _buildMetadataChip(context, directionToString(book.direction)),
               ],
             ),
 

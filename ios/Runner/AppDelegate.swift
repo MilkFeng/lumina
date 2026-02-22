@@ -130,7 +130,7 @@ import WebKit
       }
 
       let isDarkMode = self.window?.traitCollection.userInterfaceStyle == .dark
-      let shadowOpacity: Float = isDarkMode ? 0.3 : 0.05
+      let shadowOpacity: Float = isDarkMode ? 0.3 : 0.15
       
       shadowLayer.shadowColor = UIColor.black.cgColor
       shadowLayer.shadowOpacity = shadowOpacity

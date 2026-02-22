@@ -106,3 +106,13 @@ class ShelfBook {
   @ignore
   bool isDownloading = false;
 }
+
+String directionToString(int direction) {
+  switch (direction) {
+    case 1:
+      return 'RTL';
+    case 0:
+    default:
+      return 'LTR';
+  }
+}
