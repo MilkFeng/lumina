@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
@@ -6,6 +8,8 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../application/library_notifier.dart';
+import '../../data/services/export_backup_service.dart';
+import '../../data/services/export_backup_service_provider.dart';
 import '../../data/services/unified_import_service_provider.dart';
 import '../../domain/shelf_group.dart';
 import '../widgets/batch_import_dialog.dart';
@@ -270,6 +274,66 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       await ref
           .read(bookshelfNotifierProvider.notifier)
           .renameGroup(group.id, result);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Export / Backup
+  // ---------------------------------------------------------------------------
+
+  /// Triggers a full library backup export.
+  ///
+  /// Shows a non-dismissible loading dialog while the export runs, then
+  /// presents feedback via a [SnackBar]:
+  ///   - Android success → folder path in Downloads
+  ///   - iOS / other success → Share Sheet was presented by the service
+  ///   - Failure → error message in red
+  Future<void> handleExportBackup(BuildContext context, WidgetRef ref) async {
+    // Show a non-dismissible progress dialog for the duration of the export.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(strokeWidth: 2),
+              SizedBox(width: 20),
+              Flexible(child: Text('Preparing backup...')),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final result = await ref
+        .read(exportBackupServiceProvider)
+        .exportLibraryAsFolder();
+
+    // Guard against widget being unmounted while awaiting.
+    if (!context.mounted) return;
+
+    // Dismiss the loading dialog.
+    Navigator.of(context, rootNavigator: true).pop();
+
+    if (!context.mounted) return;
+
+    switch (result) {
+      case ExportSuccess(:final path):
+        final message = (Platform.isAndroid && path != null)
+            ? 'Backup successfully saved to $path'
+            : 'Backup ready for sharing';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      case ExportFailure(:final message):
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $message'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
     }
   }
 

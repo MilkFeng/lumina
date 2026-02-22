@@ -42,7 +42,7 @@
         <!-- DocumentsProvider for exposing EPUB files through Storage Access Framework -->
         <provider
             android:name=".LuminaDocumentsProvider"
-            android:authorities="com.lumina.reader.documents"
+            android:authorities="${applicationId}.documents"
             android:exported="true"
             android:grantUriPermissions="true"
             android:permission="android.permission.MANAGE_DOCUMENTS">

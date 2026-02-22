@@ -61,6 +61,9 @@ dependencies:
   
   # Speed Dial FAB
   flutter_speed_dial: ^7.0.0
+
+  # File Sharing (iOS Share Sheet)
+  share_plus: ^10.1.4
   
 
 dev_dependencies:

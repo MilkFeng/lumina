@@ -16,6 +16,7 @@ class LibraryAppBar extends StatelessWidget {
     required this.onSelectAll,
     required this.onClearSelection,
     required this.onEditGroup,
+    required this.onExportPressed,
     super.key,
   });
 
@@ -26,6 +27,7 @@ class LibraryAppBar extends StatelessWidget {
   final VoidCallback onSelectAll;
   final VoidCallback onClearSelection;
   final void Function(ShelfGroup group, AppLocalizations l10n) onEditGroup;
+  final VoidCallback onExportPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +74,11 @@ class LibraryAppBar extends StatelessWidget {
               ),
             )
           else ...[
+            IconButton(
+              icon: const Icon(Icons.save_alt_outlined),
+              onPressed: onExportPressed,
+              tooltip: 'Backup library',
+            ),
             IconButton(
               icon: const Icon(Icons.sort_rounded),
               onPressed: onSortPressed,
