@@ -111,6 +111,8 @@ flutter:
       fonts:
         - asset: assets/fonts/SourceHanSerifSC-Regular-Subset.ttf
           weight: 400
+        - asset: assets/fonts/SourceHanSerifSC-Bold-Subset.ttf
+          weight: 700
 
   assets:
     - assets/icons/icon.svg
