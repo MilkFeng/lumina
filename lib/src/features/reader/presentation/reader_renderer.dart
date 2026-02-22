@@ -191,9 +191,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
     _isAnimating = true;
 
     try {
-      await _prepareNativePageTurn();
+      await _prepareIOSPageTurn();
       await widget.onPerformPageTurn(isNext);
-      unawaited(_animateNativePageTurn(isNext));
+      unawaited(_animateIOSPageTurn(isNext));
     } finally {
       _isAnimating = false;
     }
@@ -301,7 +301,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
-  Future<void> _prepareNativePageTurn() async {
+  Future<void> _prepareIOSPageTurn() async {
     if (!Platform.isIOS) return;
     try {
       await _nativePageTurnChannel.invokeMethod<void>('preparePageTurn');
@@ -312,11 +312,12 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
-  Future<void> _animateNativePageTurn(bool isNext) async {
+  Future<void> _animateIOSPageTurn(bool isNext) async {
     if (!Platform.isIOS) return;
     try {
       await _nativePageTurnChannel.invokeMethod<void>('animatePageTurn', {
         'isNext': isNext,
+        'isVertical': widget.isVertical,
       });
     } on MissingPluginException {
       // no-op for configurations without iOS native channel

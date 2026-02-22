@@ -46,7 +46,8 @@ import WebKit
         case "animatePageTurn":
           let args = call.arguments as? [String: Any]
           let isNext = args?["isNext"] as? Bool ?? true
-          self.handleAnimatePageTurn(isNext: isNext, result: result)
+          let isVertical = args?["isVertical"] as? Bool ?? false
+          self.handleAnimatePageTurn(isNext: isNext, isVertical: isVertical, result: result)
         default:
           result(FlutterMethodNotImplemented)
         }
@@ -100,9 +101,9 @@ import WebKit
     }
   }
 
-  private func handleAnimatePageTurn(isNext: Bool, result: @escaping FlutterResult) {
+  private func handleAnimatePageTurn(isNext: Bool, isVertical: Bool, result: @escaping FlutterResult) {
     DispatchQueue.main.async {
-        self.cancelActivePageTurnAnimation()
+      self.cancelActivePageTurnAnimation()
 
       guard let snapshot = self.pageTurnSnapshotView, 
             let webView = self.pageTurnWebView,
@@ -111,8 +112,8 @@ import WebKit
         return
       }
 
-        self.pageTurnAnimationToken += 1
-        let animationToken = self.pageTurnAnimationToken
+      self.pageTurnAnimationToken += 1
+      let animationToken = self.pageTurnAnimationToken
 
       let width = webView.bounds.width
       if width <= 0 {
@@ -142,44 +143,56 @@ import WebKit
       if isNext {
         superview.bringSubviewToFront(snapshot)
         
+        // if vertical, (0, 0) -> (width, 0)
+        // else (0, 0) -> (-width, 0)
         snapshot.transform = .identity
         webView.transform = .identity
 
-          let animator = UIViewPropertyAnimator(duration: 0.18, curve: .easeOut) {
+        let animator = UIViewPropertyAnimator(duration: 0.18, curve: .easeOut) {
+          if isVertical {
+            snapshot.transform = CGAffineTransform(translationX: width, y: 0)
+          } else {
             snapshot.transform = CGAffineTransform(translationX: -width, y: 0)
           }
-          self.pageTurnAnimator = animator
-          animator.addCompletion { _ in
-            if animationToken == self.pageTurnAnimationToken {
-              self.cleanupAfterAnimation(snapshot: snapshot, webView: webView)
+        }
+        self.pageTurnAnimator = animator
+        animator.addCompletion { _ in
+          if animationToken == self.pageTurnAnimationToken {
+            self.cleanupAfterAnimation(snapshot: snapshot, webView: webView)
+        }
+          if self.pageTurnAnimator === animator {
+            self.pageTurnAnimator = nil
           }
-            if self.pageTurnAnimator === animator {
-              self.pageTurnAnimator = nil
-            }
-            result(nil)
-          }
-          animator.startAnimation()
+          result(nil)
+        }
+        animator.startAnimation()
 
       } else {        
         superview.bringSubviewToFront(webView)
         
-        webView.transform = CGAffineTransform(translationX: -width, y: 0)
+        // if vertical, (width, 0) -> (0, 0)
+        // else (-width, 0) -> (0, 0)
+        if isVertical {
+          webView.transform = CGAffineTransform(translationX: width, y: 0)
+        } else {
+          webView.transform = CGAffineTransform(translationX: -width, y: 0)
+        }
         snapshot.transform = .identity
 
-          let animator = UIViewPropertyAnimator(duration: 0.18, curve: .easeOut) {
-            webView.transform = .identity
+        let animator = UIViewPropertyAnimator(duration: 0.18, curve: .easeOut) {
+          webView.transform = .identity
+        }
+        self.pageTurnAnimator = animator
+        animator.addCompletion { _ in
+          if animationToken == self.pageTurnAnimationToken {
+            self.cleanupAfterAnimation(snapshot: snapshot, webView: webView)
           }
-          self.pageTurnAnimator = animator
-          animator.addCompletion { _ in
-            if animationToken == self.pageTurnAnimationToken {
-              self.cleanupAfterAnimation(snapshot: snapshot, webView: webView)
-            }
-            if self.pageTurnAnimator === animator {
-              self.pageTurnAnimator = nil
-          }
-            result(nil)
-          }
-          animator.startAnimation()
+          if self.pageTurnAnimator === animator {
+            self.pageTurnAnimator = nil
+        }
+          result(nil)
+        }
+        animator.startAnimation()
       }
     }
   }
