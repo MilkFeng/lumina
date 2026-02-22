@@ -238,10 +238,11 @@ def main():
         command = [
             'pyftsubset',
             source_path,
-            f'--text-file={regular_text_file if weight == 400 else text_file}',
+            f'--text-file={regular_text_file if weight == 400 or weight == 700 else text_file}',
             f'--output-file={output_path}',
-            '--layout-features=*', 
-            '--obfuscate-names',
+            '--layout-features=*',
+            '--name-IDs=*',
+            '--name-legacy',
             '--no-hinting',
             '--desubroutinize'
         ]
@@ -287,7 +288,7 @@ def main():
     print(f"    - family: {FONT_FAMILY_CONTENT_NAME}")
     print(f"      fonts:")
     for item in generated_results:
-        if (item['weight'] != 400):
+        if (item['weight'] != 400 and item['weight'] != 700):
             continue
         print(f"        - asset: {item['asset']}")
         print(f"          weight: {item['weight']}")

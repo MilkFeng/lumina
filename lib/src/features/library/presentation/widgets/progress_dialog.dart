@@ -116,6 +116,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                           alpha: 0.8,
                         ),
                         fontFamily: AppTheme.fontFamilyContent,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
@@ -129,7 +130,6 @@ class _ProgressDialogState extends State<ProgressDialog> {
                         l10n.details,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
-                          fontFamily: AppTheme.fontFamilyContent,
                           fontWeight: FontWeight.bold,
                           decoration: TextDecoration.underline,
                         ),
@@ -179,6 +179,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontFamily: AppTheme.fontFamilyContent,
                                   color: color,
+                                  fontWeight: FontWeight.w400,
                                 ),
                               );
                             },
