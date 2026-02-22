@@ -911,5 +911,20 @@
         "type": "int"
       }
     }
+  },
+
+  "viewMode": "View Mode",
+  "@viewMode": {
+    "description": "View mode section title in the style bottom sheet"
+  },
+
+  "viewModeCompact": "Compact",
+  "@viewModeCompact": {
+    "description": "Compact view mode option"
+  },
+
+  "viewModeRelaxed": "Relaxed",
+  "@viewModeRelaxed": {
+    "description": "Relaxed view mode option"
   }
 }

@@ -1,4 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/providers/shared_preferences_provider.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
 import '../data/shelf_book_repository.dart';
@@ -8,10 +10,14 @@ import '../data/services/epub_import_service.dart';
 
 part 'bookshelf_notifier.g.dart';
 
+/// How densely books are shown in the grid.
+enum ViewMode { compact, relaxed }
+
 /// State for bookshelf view (sorting, grouping, selection)
 class BookshelfState {
   final List<ShelfBook> books;
   final ShelfBookSortBy sortBy;
+  final ViewMode viewMode;
   final int? currentGroupId; // Navigation: which folder we're inside
   final int?
   filterGroupId; // Filter: show books from specific group (null = all)
@@ -25,6 +31,7 @@ class BookshelfState {
   BookshelfState.bookshelfState({
     required this.books,
     this.sortBy = ShelfBookSortBy.recentlyAdded,
+    this.viewMode = ViewMode.relaxed,
     this.currentGroupId,
     this.filterGroupId,
     this.selectedBookIds = const {},
@@ -38,6 +45,7 @@ class BookshelfState {
   BookshelfState copyWith({
     List<ShelfBook>? books,
     ShelfBookSortBy? sortBy,
+    ViewMode? viewMode,
     int? currentGroupId,
     int? filterGroupId,
     Set<int>? selectedBookIds,
@@ -52,6 +60,7 @@ class BookshelfState {
     return BookshelfState.bookshelfState(
       books: books ?? this.books,
       sortBy: sortBy ?? this.sortBy,
+      viewMode: viewMode ?? this.viewMode,
       currentGroupId: clearGroup
           ? null
           : (currentGroupId ?? this.currentGroupId),
@@ -73,6 +82,11 @@ class BookshelfState {
 @riverpod
 class BookshelfNotifier extends _$BookshelfNotifier {
   static const int _maxCachedTabs = 8;
+  static const String _sortOrderKey = 'bookshelf_sort_order';
+  static const String _viewModeKey = 'bookshelf_view_mode';
+
+  // Cached SharedPreferences instance, set during build.
+  SharedPreferences? _prefs;
 
   // Access repositories via providers (lazy initialization)
   ShelfBookRepository get _repository => ref.read(shelfBookRepositoryProvider);
@@ -80,13 +94,29 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   @override
   Future<BookshelfState> build() async {
-    // Dependencies are injected via providers
-    return await _loadBooks();
+    // Load SharedPreferences and restore the previously saved sort order.
+    _prefs = await ref.read(sharedPreferencesProvider.future);
+    final savedSortName = _prefs?.getString(_sortOrderKey);
+    final savedSort = savedSortName != null
+        ? ShelfBookSortBy.values.firstWhere(
+            (e) => e.name == savedSortName,
+            orElse: () => ShelfBookSortBy.recentlyAdded,
+          )
+        : ShelfBookSortBy.recentlyAdded;
+    final savedViewModeName = _prefs?.getString(_viewModeKey);
+    final savedViewMode = savedViewModeName != null
+        ? ViewMode.values.firstWhere(
+            (e) => e.name == savedViewModeName,
+            orElse: () => ViewMode.relaxed,
+          )
+        : ViewMode.relaxed;
+    return await _loadBooks(sortBy: savedSort, viewMode: savedViewMode);
   }
 
   /// Load folders + books with current filters
   Future<BookshelfState> _loadBooks({
     ShelfBookSortBy? sortBy,
+    ViewMode? viewMode,
     int? groupId,
     int? filterGroupId,
     bool clearGroup = false,
@@ -96,6 +126,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
         state.valueOrNull ?? BookshelfState.bookshelfState(books: []);
 
     final actualSortBy = sortBy ?? currentState.sortBy;
+    final actualViewMode = viewMode ?? currentState.viewMode;
     final actualGroupId = clearGroup
         ? null
         : (groupId ?? currentState.currentGroupId);
@@ -129,6 +160,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     return BookshelfState.bookshelfState(
       books: books,
       sortBy: actualSortBy,
+      viewMode: actualViewMode,
       currentGroupId: actualGroupId,
       filterGroupId: actualFilterGroupId,
       availableGroups: allGroups,
@@ -140,10 +172,20 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     );
   }
 
-  /// Change sort order
+  /// Change sort order and persist the selection.
   Future<void> changeSortOrder(ShelfBookSortBy sortBy) async {
+    // Persist asynchronously – fire and forget, no need to await.
+    _prefs?.setString(_sortOrderKey, sortBy.name);
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _loadBooks(sortBy: sortBy));
+  }
+
+  /// Change view mode and persist the selection.
+  void changeViewMode(ViewMode mode) {
+    _prefs?.setString(_viewModeKey, mode.name);
+    final currentState = state.valueOrNull;
+    if (currentState == null) return;
+    state = AsyncValue.data(currentState.copyWith(viewMode: mode));
   }
 
   /// Filter by group (null = show all books)

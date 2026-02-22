@@ -216,7 +216,7 @@
     "description": "分类名称输入标签"
   },
   
-  "sortBooksBy": "图书排序方式",
+  "sortBooksBy": "排序方式",
   "@sortBooksBy": {
     "description": "图书排序底部表单标题"
   },
@@ -921,5 +921,20 @@
         "type": "int"
       }
     }
+  },
+
+  "viewMode": "显示模式",
+  "@viewMode": {
+    "description": "样式底部弹窗中的显示模式标题"
+  },
+
+  "viewModeCompact": "紧凑",
+  "@viewModeCompact": {
+    "description": "紧凑视图模式选项"
+  },
+
+  "viewModeRelaxed": "宽松",
+  "@viewModeRelaxed": {
+    "description": "宽松视图模式选项"
   }
 }

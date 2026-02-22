@@ -132,7 +132,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get categoryName => '分类名称';
 
   @override
-  String get sortBooksBy => '图书排序方式';
+  String get sortBooksBy => '排序方式';
 
   @override
   String get titleAZ => '标题 (A-Z)';
@@ -522,4 +522,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String restoringProgress(int success, int failed, int remaining) {
     return '$success 成功，$failed 失败，$remaining 剩余';
   }
+
+  @override
+  String get viewMode => '显示模式';
+
+  @override
+  String get viewModeCompact => '紧凑';
+
+  @override
+  String get viewModeRelaxed => '宽松';
 }

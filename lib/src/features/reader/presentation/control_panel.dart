@@ -122,7 +122,7 @@ class _ControlPanelState extends State<ControlPanel> {
                     child: Text(
                       widget.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w700,
                         fontFamily: AppTheme.fontFamilyContent,
                       ),
                       maxLines: 1,
