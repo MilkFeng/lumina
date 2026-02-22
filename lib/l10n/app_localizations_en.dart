@@ -461,4 +461,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String exportFailed(String message) {
     return 'Backup failed: $message';
   }
+
+  @override
+  String progressing(String fileName) {
+    return 'Processing $fileName';
+  }
+
+  @override
+  String get restoreFromBackup => 'Restore from Backup';
+
+  @override
+  String get backupLibrary => 'Backup Library';
 }

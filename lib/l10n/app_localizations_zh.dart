@@ -458,4 +458,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String exportFailed(String message) {
     return '备份失败：$message';
   }
+
+  @override
+  String progressing(String fileName) {
+    return '正在处理：$fileName';
+  }
+
+  @override
+  String get restoreFromBackup => '从备份恢复';
+
+  @override
+  String get backupLibrary => '备份书库';
 }

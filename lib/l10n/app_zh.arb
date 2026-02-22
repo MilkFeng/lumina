@@ -800,5 +800,25 @@
         "type": "String"
       }
     }
+  },
+
+  "progressing": "正在处理：{fileName}",
+  "@progressing": {
+    "description": "正在处理文件消息",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "restoreFromBackup": "从备份恢复",
+  "@restoreFromBackup": {
+    "description": "从备份恢复选项标签"
+  },
+
+  "backupLibrary": "备份书库",
+  "@backupLibrary": {
+    "description": "备份书库选项标签"
   }
 }

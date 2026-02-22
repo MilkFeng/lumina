@@ -790,5 +790,25 @@
         "type": "String"
       }
     }
+  },
+
+  "progressing": "Processing {fileName}",
+  "@progressing": {
+    "description": "Importing progress message with file name",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "restoreFromBackup": "Restore from Backup",
+  "@restoreFromBackup": {
+    "description": "Restore from backup option label"
+  },
+
+  "backupLibrary": "Backup Library",
+  "@backupLibrary": {
+    "description": "Backup library option label"
   }
 }

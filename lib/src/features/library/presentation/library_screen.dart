@@ -184,7 +184,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         ),
         SpeedDialChild(
           child: const Icon(Icons.settings_backup_restore_outlined),
-          label: 'Restore Backup',
+          label: AppLocalizations.of(context)!.restoreFromBackup,
           onTap: () => handleRestoreBackup(context, ref),
         ),
       ],

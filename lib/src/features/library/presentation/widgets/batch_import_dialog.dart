@@ -137,7 +137,7 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
               ),
               const SizedBox(height: 4),
               Text(
-                _currentFileName,
+                AppLocalizations.of(context)!.progressing(_currentFileName),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(

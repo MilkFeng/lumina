@@ -75,12 +75,12 @@ class LibraryAppBar extends StatelessWidget {
             )
           else ...[
             IconButton(
-              icon: const Icon(Icons.save_alt_outlined),
+              icon: const Icon(Icons.archive_outlined),
               onPressed: onExportPressed,
-              tooltip: 'Backup library',
+              tooltip: AppLocalizations.of(context)!.backupLibrary,
             ),
             IconButton(
-              icon: const Icon(Icons.sort_rounded),
+              icon: const Icon(Icons.sort_outlined),
               onPressed: onSortPressed,
               tooltip: AppLocalizations.of(context)!.sort,
             ),

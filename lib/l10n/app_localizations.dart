@@ -907,6 +907,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup failed: {message}'**
   String exportFailed(String message);
+
+  /// Importing progress message with file name
+  ///
+  /// In en, this message translates to:
+  /// **'Processing {fileName}'**
+  String progressing(String fileName);
+
+  /// Restore from backup option label
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Backup'**
+  String get restoreFromBackup;
+
+  /// Backup library option label
+  ///
+  /// In en, this message translates to:
+  /// **'Backup Library'**
+  String get backupLibrary;
 }
 
 class _AppLocalizationsDelegate
