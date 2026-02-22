@@ -30,6 +30,13 @@ class ShelfBookRepository {
         .findAll();
   }
 
+  /// Get all file hashes across every record (including soft-deleted).
+  /// Used by [StorageCleanupService] to determine which physical files are valid.
+  Future<Set<String>> getAllFileHashes() async {
+    final books = await _isar.shelfBooks.where().findAll();
+    return books.map((b) => b.fileHash).toSet();
+  }
+
   /// Get all books with advanced sorting and optional group filter
   Future<List<ShelfBook>> getBooksSorted({
     ShelfBookSortBy sortBy = ShelfBookSortBy.recentlyAdded,

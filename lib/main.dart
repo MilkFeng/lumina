@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service_provider.dart';
+import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import 'package:lumina/src/features/reader/data/services/epub_stream_service_provider.dart';
 import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
 import 'src/app.dart';
@@ -63,8 +62,5 @@ void main() async {
     ),
   );
 
-  final cacheManager = ImportCacheManager();
-  await cacheManager.clearAll();
-
-  container.read(exportBackupServiceProvider).clearCache();
+  container.read(storageCleanupServiceProvider).cleanCacheFiles();
 }

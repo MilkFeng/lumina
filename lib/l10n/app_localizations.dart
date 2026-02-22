@@ -836,6 +836,36 @@ abstract class AppLocalizations {
   /// **'About'**
   String get about;
 
+  /// Storage section title on About page
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storage;
+
+  /// Clean cache button label
+  ///
+  /// In en, this message translates to:
+  /// **'Clean Cache'**
+  String get cleanCache;
+
+  /// Clean cache subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Remove unused orphan files from storage'**
+  String get cleanCacheSubtitle;
+
+  /// Clean cache success message
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.'**
+  String cleanCacheSuccess(int count);
+
+  /// Cache is already clean message
+  ///
+  /// In en, this message translates to:
+  /// **'Cache is already clean.'**
+  String get cleanCacheAlreadyClean;
+
   /// Project information section title
   ///
   /// In en, this message translates to:

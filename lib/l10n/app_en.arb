@@ -722,6 +722,36 @@
     "description": "About page title"
   },
 
+  "storage": "Storage",
+  "@storage": {
+    "description": "Storage section title on About page"
+  },
+
+  "cleanCache": "Clean Cache",
+  "@cleanCache": {
+    "description": "Clean cache button label"
+  },
+
+  "cleanCacheSubtitle": "Remove unused orphan files from storage",
+  "@cleanCacheSubtitle": {
+    "description": "Clean cache subtitle"
+  },
+
+  "cleanCacheSuccess": "Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.",
+  "@cleanCacheSuccess": {
+    "description": "Clean cache success message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "cleanCacheAlreadyClean": "Cache is already clean.",
+  "@cleanCacheAlreadyClean": {
+    "description": "Cache is already clean message"
+  },
+
   "projectInfo": "Project Info",
   "@projectInfo": {
     "description": "Project information section title"

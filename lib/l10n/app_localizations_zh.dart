@@ -420,6 +420,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get about => '关于';
 
   @override
+  String get storage => '存储';
+
+  @override
+  String get cleanCache => '清理缓存';
+
+  @override
+  String get cleanCacheSubtitle => '删除存储中无用的孤立文件';
+
+  @override
+  String cleanCacheSuccess(int count) {
+    return '清理完成，已删除 $count 个无用文件。';
+  }
+
+  @override
+  String get cleanCacheAlreadyClean => '缓存已是最新，无需清理。';
+
+  @override
   String get projectInfo => '项目信息';
 
   @override

@@ -421,6 +421,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About';
 
   @override
+  String get storage => 'Storage';
+
+  @override
+  String get cleanCache => 'Clean Cache';
+
+  @override
+  String get cleanCacheSubtitle => 'Remove unused orphan files from storage';
+
+  @override
+  String cleanCacheSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'files',
+      one: 'file',
+    );
+    return 'Cache cleaned. Removed $count unused $_temp0.';
+  }
+
+  @override
+  String get cleanCacheAlreadyClean => 'Cache is already clean.';
+
+  @override
   String get projectInfo => 'Project Info';
 
   @override

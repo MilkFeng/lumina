@@ -58,6 +58,15 @@ class MockShelfBookRepository extends _i1.Mock
       ) as _i4.Future<List<_i5.ShelfBook>>);
 
   @override
+  _i4.Future<Set<String>> getAllFileHashes() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllFileHashes,
+          [],
+        ),
+        returnValue: _i4.Future<Set<String>>.value(<String>{}),
+      ) as _i4.Future<Set<String>>);
+
+  @override
   _i4.Future<List<_i5.ShelfBook>> getBooksSorted({
     _i3.ShelfBookSortBy? sortBy = _i3.ShelfBookSortBy.recentlyAdded,
     String? groupName,

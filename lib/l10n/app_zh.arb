@@ -732,6 +732,36 @@
     "description": "关于页面标题"
   },
 
+  "storage": "存储",
+  "@storage": {
+    "description": "关于页面存储部分标题"
+  },
+
+  "cleanCache": "清理缓存",
+  "@cleanCache": {
+    "description": "清理缓存按钮文本"
+  },
+
+  "cleanCacheSubtitle": "删除存储中无用的孤立文件",
+  "@cleanCacheSubtitle": {
+    "description": "清理缓存副标题"
+  },
+
+  "cleanCacheSuccess": "清理完成，已删除 {count} 个无用文件。",
+  "@cleanCacheSuccess": {
+    "description": "清理缓存成功消息",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "cleanCacheAlreadyClean": "缓存已是最新，无需清理。",
+  "@cleanCacheAlreadyClean": {
+    "description": "缓存无需清理消息"
+  },
+
   "projectInfo": "项目信息",
   "@projectInfo": {
     "description": "项目信息部分标题"

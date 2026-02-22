@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// About Screen - Shows app information, tips and credits
-class AboutScreen extends StatefulWidget {
+class AboutScreen extends ConsumerStatefulWidget {
   const AboutScreen({super.key});
 
   @override
-  State<AboutScreen> createState() => _AboutScreenState();
+  ConsumerState<AboutScreen> createState() => _AboutScreenState();
 }
 
-class _AboutScreenState extends State<AboutScreen> {
+class _AboutScreenState extends ConsumerState<AboutScreen> {
   String _version = '';
+  bool _isCleaning = false;
 
   @override
   void initState() {
@@ -67,6 +71,15 @@ class _AboutScreenState extends State<AboutScreen> {
                 subtitle: 'Milk Feng',
               ),
             ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Storage Section
+          _buildInfoSection(
+            context,
+            title: l10n.storage,
+            children: [_buildCleanCacheTile(context, l10n)],
           ),
 
           const SizedBox(height: 24),
@@ -213,6 +226,52 @@ class _AboutScreenState extends State<AboutScreen> {
       ),
       dense: true,
     );
+  }
+
+  Widget _buildCleanCacheTile(BuildContext context, AppLocalizations l10n) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+      leading: Icon(
+        Icons.cleaning_services_outlined,
+        color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+      ),
+      title: Text(
+        l10n.cleanCache,
+        style: AppTheme.contentTextStyle.copyWith(fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        l10n.cleanCacheSubtitle,
+        style: AppTheme.contentTextStyle.copyWith(
+          fontSize: 13,
+          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+        ),
+      ),
+      trailing: _isCleaning
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : null,
+      onTap: _isCleaning ? null : () => _cleanCache(context, l10n),
+    );
+  }
+
+  Future<void> _cleanCache(BuildContext context, AppLocalizations l10n) async {
+    setState(() => _isCleaning = true);
+
+    final service = ref.read(storageCleanupServiceProvider);
+    final deletedCount = await service.cleanOrphanFiles();
+
+    setState(() => _isCleaning = false);
+
+    if (!context.mounted) return;
+
+    final message = deletedCount == 0
+        ? l10n.cleanCacheAlreadyClean
+        : l10n.cleanCacheSuccess(deletedCount);
+
+    ToastService.showInfo(message);
   }
 
   Future<void> _launchUrl(String url) async {
