@@ -194,6 +194,8 @@ class _OptionChip extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (icon != null) ...[
               Transform.scale(
@@ -209,6 +211,7 @@ class _OptionChip extends StatelessWidget {
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 color: contentColor,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
