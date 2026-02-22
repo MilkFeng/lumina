@@ -889,6 +889,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import Files'**
   String get importFiles;
+
+  /// Backup saved success message with path
+  ///
+  /// In en, this message translates to:
+  /// **'Backup successfully saved to Downloads: {path}'**
+  String backupSavedToDownloads(String path);
+
+  /// Backup ready for sharing message
+  ///
+  /// In en, this message translates to:
+  /// **'Backup ready for sharing'**
+  String get backupReadyToShare;
+
+  /// Backup export failed message
+  ///
+  /// In en, this message translates to:
+  /// **'Backup failed: {message}'**
+  String exportFailed(String message);
 }
 
 class _AppLocalizationsDelegate

@@ -295,14 +295,8 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       barrierDismissible: false,
       builder: (_) => const PopScope(
         canPop: false,
-        child: AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(strokeWidth: 2),
-              SizedBox(width: 20),
-              Flexible(child: Text('Preparing backup...')),
-            ],
-          ),
+        child: Positioned.fill(
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
         ),
       ),
     );
@@ -322,17 +316,12 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     switch (result) {
       case ExportSuccess(:final path):
         final message = (Platform.isAndroid && path != null)
-            ? 'Backup successfully saved to $path'
-            : 'Backup ready for sharing';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+            ? AppLocalizations.of(context)!.backupSavedToDownloads(path)
+            : AppLocalizations.of(context)!.backupReadyToShare;
+        ToastService.showSuccess(message);
       case ExportFailure(:final message):
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Export failed: $message'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+        ToastService.showError(
+          AppLocalizations.of(context)!.exportFailed(message),
         );
     }
   }

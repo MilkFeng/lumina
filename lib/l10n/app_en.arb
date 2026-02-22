@@ -765,5 +765,30 @@
   "importFiles": "Import Files",
   "@importFiles": {
     "description": "Import files option label"
+  },
+
+  "backupSavedToDownloads": "Backup successfully saved to Downloads: {path}",
+  "@backupSavedToDownloads": {
+    "description": "Backup saved success message with path",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+
+  "backupReadyToShare": "Backup ready for sharing",
+  "@backupReadyToShare": {
+    "description": "Backup ready for sharing message"
+  },
+
+  "exportFailed": "Backup failed: {message}",
+  "@exportFailed": {
+    "description": "Backup export failed message",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
   }
 }

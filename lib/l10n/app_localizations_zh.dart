@@ -445,4 +445,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importFiles => '导入文件';
+
+  @override
+  String backupSavedToDownloads(String path) {
+    return '备份已成功保存到下载文件夹：$path';
+  }
+
+  @override
+  String get backupReadyToShare => '备份已准备好分享';
+
+  @override
+  String exportFailed(String message) {
+    return '备份失败：$message';
+  }
 }

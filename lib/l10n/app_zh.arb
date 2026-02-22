@@ -775,5 +775,30 @@
   "importFiles": "导入文件",
   "@importFiles": {
     "description": "导入文件选项标签"
+  },
+
+  "backupSavedToDownloads": "备份已成功保存到下载文件夹：{path}",
+  "@backupSavedToDownloads": {
+    "description": "备份保存成功消息",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+
+  "backupReadyToShare": "备份已准备好分享",
+  "@backupReadyToShare": {
+    "description": "备份准备好分享消息"
+  },
+
+  "exportFailed": "备份失败：{message}",
+  "@exportFailed": {
+    "description": "备份失败消息",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
   }
 }

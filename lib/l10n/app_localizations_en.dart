@@ -448,4 +448,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importFiles => 'Import Files';
+
+  @override
+  String backupSavedToDownloads(String path) {
+    return 'Backup successfully saved to Downloads: $path';
+  }
+
+  @override
+  String get backupReadyToShare => 'Backup ready for sharing';
+
+  @override
+  String exportFailed(String message) {
+    return 'Backup failed: $message';
+  }
 }
