@@ -72,19 +72,15 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
 
       if (progress.status == ImportStatus.success) {
         _successCount++;
-        _results.add(
-          _ImportResultItem.success(
-            fileName: progress.currentFileName,
-            book: progress.book,
-          ),
+        _results.last = _ImportResultItem.success(
+          fileName: progress.currentFileName,
+          book: progress.book,
         );
       } else if (progress.status == ImportStatus.failed) {
         _failedCount++;
-        _results.add(
-          _ImportResultItem.failed(
-            fileName: progress.currentFileName,
-            errorMessage: progress.errorMessage,
-          ),
+        _results.last = _ImportResultItem.failed(
+          fileName: progress.currentFileName,
+          errorMessage: progress.errorMessage,
         );
       } else if (progress.status == ImportStatus.processing) {
         _results.add(
@@ -181,7 +177,11 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
                             item.errorMessage ?? 'Unknown error',
                           );
 
-                    message = isProcessing ? '○ $message' : '● $message';
+                    final indicator = isProcessing ? '○' : '●';
+                    final fileName = item.fileName.isNotEmpty
+                        ? item.fileName
+                        : '';
+                    message = '$indicator $fileName\n$message';
 
                     return Text(
                       message,
