@@ -441,6 +441,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
         ),
         shouldShowWebView: widget.shouldShowWebView,
         coverRelativePath: widget.bookSession.book?.coverPath,
+        direction: widget.bookSession.direction,
       ),
     );
   }

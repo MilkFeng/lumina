@@ -156,7 +156,8 @@ class EpubImportService {
       ..totalChapters = parseData.totalChapters
       ..epubVersion = parseData.epubVersion
       ..importDate = now
-      ..updatedAt = now;
+      ..updatedAt = now
+      ..direction = parseData.readDirection;
 
     if (bookExisted) {
       shelfBook.id = await _shelfBookRepo.getBookIdByHash(fileHash);

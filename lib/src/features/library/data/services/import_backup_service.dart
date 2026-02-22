@@ -397,7 +397,8 @@ class ImportBackupService {
       ..groupName = m['groupName'] as String?
       ..isDeleted = m['isDeleted'] as bool? ?? false
       ..updatedAt = m['updatedAt'] as int
-      ..lastSyncedDate = m['lastSyncedDate'] as int?;
+      ..lastSyncedDate = m['lastSyncedDate'] as int?
+      ..direction = m['direction'] as int? ?? 0;
   }
 
   /// Deserialises a full [BookManifest] (including all embedded objects).

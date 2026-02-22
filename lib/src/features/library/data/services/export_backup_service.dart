@@ -273,6 +273,7 @@ class ExportBackupService {
     'isDeleted': b.isDeleted,
     'updatedAt': b.updatedAt,
     'lastSyncedDate': b.lastSyncedDate,
+    'direction': b.direction,
   };
 
   /// Serialises [ShelfGroup] to a JSON-compatible map.

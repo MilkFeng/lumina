@@ -150,6 +150,13 @@ class EpubZipParser {
           .findElements('manifest')
           .firstOrNull;
 
+      final directionStr =
+          spineElement?.getAttribute('page-progression-direction') ?? 'ltr';
+      int direction = 0; // Default to LTR
+      if (directionStr.toLowerCase() == 'rtl') {
+        direction = 1;
+      }
+
       if (spineElement == null || manifestElement == null) {
         return left('Spine or manifest element not found');
       }
@@ -165,7 +172,7 @@ class EpubZipParser {
         }
       }
 
-      final metadata = _parseMetadata(
+      var metadata = _parseMetadata(
         metadataElement,
         manifestMap,
         version,
@@ -286,6 +293,7 @@ class EpubZipParser {
                 ..mediaType = 'application/xhtml+xml',
             )
             .toList(),
+        readDirection: direction,
       );
 
       return right(result);
@@ -656,6 +664,7 @@ class EpubZipParseResult {
   final List<SpineItem> spine;
   final List<TocItem> toc;
   final List<ManifestItem> manifestItems;
+  final int readDirection;
 
   EpubZipParseResult({
     required this.title,
@@ -670,6 +679,7 @@ class EpubZipParseResult {
     required this.spine,
     required this.toc,
     required this.manifestItems,
+    required this.readDirection,
   });
 }
 

@@ -47,73 +47,78 @@ const ShelfBookSchema = CollectionSchema(
       name: r'description',
       type: IsarType.string,
     ),
-    r'epubVersion': PropertySchema(
+    r'direction': PropertySchema(
       id: 6,
+      name: r'direction',
+      type: IsarType.long,
+    ),
+    r'epubVersion': PropertySchema(
+      id: 7,
       name: r'epubVersion',
       type: IsarType.string,
     ),
     r'fileHash': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'fileHash',
       type: IsarType.string,
     ),
     r'filePath': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'filePath',
       type: IsarType.string,
     ),
     r'groupName': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'groupName',
       type: IsarType.string,
     ),
     r'importDate': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'importDate',
       type: IsarType.long,
     ),
     r'isDeleted': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'isFinished': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'isFinished',
       type: IsarType.bool,
     ),
     r'lastOpenedDate': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'lastOpenedDate',
       type: IsarType.long,
     ),
     r'lastSyncedDate': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'lastSyncedDate',
       type: IsarType.long,
     ),
     r'readingProgress': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'readingProgress',
       type: IsarType.double,
     ),
     r'subjects': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'subjects',
       type: IsarType.stringList,
     ),
     r'title': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'title',
       type: IsarType.string,
     ),
     r'totalChapters': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'totalChapters',
       type: IsarType.long,
     ),
     r'updatedAt': PropertySchema(
-      id: 19,
+      id: 20,
       name: r'updatedAt',
       type: IsarType.long,
     )
@@ -326,20 +331,21 @@ void _shelfBookSerialize(
   writer.writeString(offsets[3], object.coverPath);
   writer.writeLong(offsets[4], object.currentChapterIndex);
   writer.writeString(offsets[5], object.description);
-  writer.writeString(offsets[6], object.epubVersion);
-  writer.writeString(offsets[7], object.fileHash);
-  writer.writeString(offsets[8], object.filePath);
-  writer.writeString(offsets[9], object.groupName);
-  writer.writeLong(offsets[10], object.importDate);
-  writer.writeBool(offsets[11], object.isDeleted);
-  writer.writeBool(offsets[12], object.isFinished);
-  writer.writeLong(offsets[13], object.lastOpenedDate);
-  writer.writeLong(offsets[14], object.lastSyncedDate);
-  writer.writeDouble(offsets[15], object.readingProgress);
-  writer.writeStringList(offsets[16], object.subjects);
-  writer.writeString(offsets[17], object.title);
-  writer.writeLong(offsets[18], object.totalChapters);
-  writer.writeLong(offsets[19], object.updatedAt);
+  writer.writeLong(offsets[6], object.direction);
+  writer.writeString(offsets[7], object.epubVersion);
+  writer.writeString(offsets[8], object.fileHash);
+  writer.writeString(offsets[9], object.filePath);
+  writer.writeString(offsets[10], object.groupName);
+  writer.writeLong(offsets[11], object.importDate);
+  writer.writeBool(offsets[12], object.isDeleted);
+  writer.writeBool(offsets[13], object.isFinished);
+  writer.writeLong(offsets[14], object.lastOpenedDate);
+  writer.writeLong(offsets[15], object.lastSyncedDate);
+  writer.writeDouble(offsets[16], object.readingProgress);
+  writer.writeStringList(offsets[17], object.subjects);
+  writer.writeString(offsets[18], object.title);
+  writer.writeLong(offsets[19], object.totalChapters);
+  writer.writeLong(offsets[20], object.updatedAt);
 }
 
 ShelfBook _shelfBookDeserialize(
@@ -355,21 +361,22 @@ ShelfBook _shelfBookDeserialize(
   object.coverPath = reader.readStringOrNull(offsets[3]);
   object.currentChapterIndex = reader.readLong(offsets[4]);
   object.description = reader.readStringOrNull(offsets[5]);
-  object.epubVersion = reader.readString(offsets[6]);
-  object.fileHash = reader.readString(offsets[7]);
-  object.filePath = reader.readStringOrNull(offsets[8]);
-  object.groupName = reader.readStringOrNull(offsets[9]);
+  object.direction = reader.readLong(offsets[6]);
+  object.epubVersion = reader.readString(offsets[7]);
+  object.fileHash = reader.readString(offsets[8]);
+  object.filePath = reader.readStringOrNull(offsets[9]);
+  object.groupName = reader.readStringOrNull(offsets[10]);
   object.id = id;
-  object.importDate = reader.readLong(offsets[10]);
-  object.isDeleted = reader.readBool(offsets[11]);
-  object.isFinished = reader.readBool(offsets[12]);
-  object.lastOpenedDate = reader.readLongOrNull(offsets[13]);
-  object.lastSyncedDate = reader.readLongOrNull(offsets[14]);
-  object.readingProgress = reader.readDouble(offsets[15]);
-  object.subjects = reader.readStringList(offsets[16]) ?? [];
-  object.title = reader.readString(offsets[17]);
-  object.totalChapters = reader.readLong(offsets[18]);
-  object.updatedAt = reader.readLong(offsets[19]);
+  object.importDate = reader.readLong(offsets[11]);
+  object.isDeleted = reader.readBool(offsets[12]);
+  object.isFinished = reader.readBool(offsets[13]);
+  object.lastOpenedDate = reader.readLongOrNull(offsets[14]);
+  object.lastSyncedDate = reader.readLongOrNull(offsets[15]);
+  object.readingProgress = reader.readDouble(offsets[16]);
+  object.subjects = reader.readStringList(offsets[17]) ?? [];
+  object.title = reader.readString(offsets[18]);
+  object.totalChapters = reader.readLong(offsets[19]);
+  object.updatedAt = reader.readLong(offsets[20]);
   return object;
 }
 
@@ -393,32 +400,34 @@ P _shelfBookDeserializeProp<P>(
     case 5:
       return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 9:
       return (reader.readStringOrNull(offset)) as P;
     case 10:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 12:
       return (reader.readBool(offset)) as P;
     case 13:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 14:
       return (reader.readLongOrNull(offset)) as P;
     case 15:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 16:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readDouble(offset)) as P;
     case 17:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 18:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 19:
+      return (reader.readLong(offset)) as P;
+    case 20:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2135,6 +2144,60 @@ extension ShelfBookQueryFilter
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> directionEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'direction',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      directionGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'direction',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> directionLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'direction',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> directionBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'direction',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> epubVersionEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -3573,6 +3636,18 @@ extension ShelfBookQuerySortBy on QueryBuilder<ShelfBook, ShelfBook, QSortBy> {
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByDirection() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'direction', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByDirectionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'direction', Sort.desc);
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByEpubVersion() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'epubVersion', Sort.asc);
@@ -3795,6 +3870,18 @@ extension ShelfBookQuerySortThenBy
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByDirection() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'direction', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByDirectionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'direction', Sort.desc);
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByEpubVersion() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'epubVersion', Sort.asc);
@@ -4007,6 +4094,12 @@ extension ShelfBookQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByDirection() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'direction');
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByEpubVersion(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -4139,6 +4232,12 @@ extension ShelfBookQueryProperty
   QueryBuilder<ShelfBook, String?, QQueryOperations> descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<ShelfBook, int, QQueryOperations> directionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'direction');
     });
   }
 

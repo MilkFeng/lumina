@@ -55,6 +55,11 @@ class ShelfBook {
   @Index()
   late int importDate;
 
+  /// Reading direction (from spine "page-progression-direction" attribute)
+  /// Possible values: "ltr" (left-to-right), "rtl" (right-to-left)
+  /// LTR = 0, RTL = 1 for easier handling in the reader
+  late int direction;
+
   // ==================== READING PROGRESS ====================
 
   /// Current chapter index (0-based, flattened spine order)
