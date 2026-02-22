@@ -1,4 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/providers/shared_preferences_provider.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
 import '../data/shelf_book_repository.dart';
@@ -73,6 +75,10 @@ class BookshelfState {
 @riverpod
 class BookshelfNotifier extends _$BookshelfNotifier {
   static const int _maxCachedTabs = 8;
+  static const String _sortOrderKey = 'bookshelf_sort_order';
+
+  // Cached SharedPreferences instance, set during build.
+  SharedPreferences? _prefs;
 
   // Access repositories via providers (lazy initialization)
   ShelfBookRepository get _repository => ref.read(shelfBookRepositoryProvider);
@@ -80,8 +86,16 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   @override
   Future<BookshelfState> build() async {
-    // Dependencies are injected via providers
-    return await _loadBooks();
+    // Load SharedPreferences and restore the previously saved sort order.
+    _prefs = await ref.read(sharedPreferencesProvider.future);
+    final savedSortName = _prefs?.getString(_sortOrderKey);
+    final savedSort = savedSortName != null
+        ? ShelfBookSortBy.values.firstWhere(
+            (e) => e.name == savedSortName,
+            orElse: () => ShelfBookSortBy.recentlyAdded,
+          )
+        : ShelfBookSortBy.recentlyAdded;
+    return await _loadBooks(sortBy: savedSort);
   }
 
   /// Load folders + books with current filters
@@ -140,8 +154,10 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     );
   }
 
-  /// Change sort order
+  /// Change sort order and persist the selection.
   Future<void> changeSortOrder(ShelfBookSortBy sortBy) async {
+    // Persist asynchronously – fire and forget, no need to await.
+    _prefs?.setString(_sortOrderKey, sortBy.name);
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _loadBooks(sortBy: sortBy));
   }
