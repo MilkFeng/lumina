@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:isar/isar.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/features/library/application/progress_log.dart';
+import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
+import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
 import 'package:path/path.dart' as p;
 
 import '../../domain/book_manifest.dart';
@@ -67,7 +68,6 @@ class BackupImportProgress extends ProgressLog {
     required this.current,
     required this.total,
     required this.currentFileName,
-    required this.isCompleted,
     this.result,
   }) : super(
          _importResultToMessage(result, currentFileName),
@@ -82,9 +82,6 @@ class BackupImportProgress extends ProgressLog {
 
   /// Title (or hash) of the book currently being processed.
   final String currentFileName;
-
-  /// True when the entire operation is finished (success or failure).
-  final bool isCompleted;
 
   /// Populated only on the final event. Either [ImportSuccess] or [ImportFailure].
   final ImportResult? result;
@@ -114,13 +111,16 @@ class ImportBackupService {
   static const _kBooksDir = 'books';
   static const _kCoversDir = 'covers';
 
-  final Isar _isar;
+  final ShelfBookRepository _shelfBookRepository;
+  final BookManifestRepository _bookManifestRepository;
   final UnifiedImportService _importService;
 
   ImportBackupService({
-    required Isar isar,
+    required ShelfBookRepository shelfBookRepository,
+    required BookManifestRepository bookManifestRepository,
     required UnifiedImportService importService,
-  }) : _isar = isar,
+  }) : _shelfBookRepository = shelfBookRepository,
+       _bookManifestRepository = bookManifestRepository,
        _importService = importService;
 
   // ---------------------------------------------------------------------------
@@ -139,7 +139,6 @@ class ImportBackupService {
       current: 0,
       total: 0,
       currentFileName: '',
-      isCompleted: true,
       result: ImportFailure(message),
     );
 
@@ -172,11 +171,7 @@ class ImportBackupService {
 
       if (groupsJson.isNotEmpty) {
         final groups = groupsJson.map(_mapToShelfGroup).toList();
-        await _isar.writeTxn(() async {
-          for (final group in groups) {
-            await _isar.shelfGroups.putByName(group);
-          }
-        });
+        await _mergeGroup(groups);
       }
 
       yield ProgressLog('Groups restored.', ProgressLogType.info);
@@ -208,7 +203,6 @@ class ImportBackupService {
           current: importedCount,
           total: booksJson.length,
           currentFileName: displayName,
-          isCompleted: false,
         );
 
         final pathsForBook = backupPaths.bookPaths[hash];
@@ -224,12 +218,14 @@ class ImportBackupService {
         }
 
         // -- A. Process & Copy EPUB --
-        final importableEpub = await _importService.processEpub(
-          pathsForBook.epubPath,
-        );
         final destEpub = File(p.join(internalBooksDir.path, '$hash.epub'));
-        await importableEpub.cacheFile.copy(destEpub.path);
-        await _importService.cleanCache(importableEpub.cacheFile);
+        if (!destEpub.existsSync()) {
+          final importableEpub = await _importService.processEpub(
+            pathsForBook.epubPath,
+          );
+          await importableEpub.cacheFile.copy(destEpub.path);
+          await _importService.cleanCache(importableEpub.cacheFile);
+        }
 
         // -- B. Process & Copy Cover --
         String? restoredCoverPath;
@@ -254,21 +250,12 @@ class ImportBackupService {
         }
 
         // -- C. Process Manifest JSON --
-        BookManifest? manifest;
-        try {
-          final manifestString = await _importService.processPlainFile(
-            pathsForBook.manifestPath,
-          );
-          final manifestMap =
-              jsonDecode(manifestString) as Map<String, dynamic>;
-          manifest = _mapToBookManifest(manifestMap);
-        } catch (e) {
-          debugPrint('[ImportBackup] Failed to process manifest for $hash: $e');
-          yield ProgressLog(
-            'Warning: Failed to restore metadata for "$displayName", skipping manifest.',
-            ProgressLogType.warning,
-          );
-        }
+        final manifestString = await _importService.processPlainFile(
+          pathsForBook.manifestPath,
+        );
+        final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
+        final manifest = _mapToBookManifest(manifestMap);
+        await _mergeManifest(manifest);
 
         // -- D. Build ShelfBook and upsert immediately --
         final book = _mapToShelfBook(
@@ -276,12 +263,8 @@ class ImportBackupService {
           filePath: '$_kBooksDir/$hash.epub',
           coverPath: restoredCoverPath,
         );
-        await _isar.writeTxn(() async {
-          await _isar.shelfBooks.putByFileHash(book);
-          if (manifest != null) {
-            await _isar.bookManifests.putByFileHash(manifest);
-          }
-        });
+        await _mergeBook(book);
+
         importedCount++;
         debugPrint(
           '[ImportBackup] Upserted "$displayName" ($importedCount/${booksJson.length}).',
@@ -291,7 +274,6 @@ class ImportBackupService {
           current: importedCount,
           total: booksJson.length,
           currentFileName: displayName,
-          isCompleted: true,
           result: ImportSuccess(importedBooks: importedCount),
         );
       }
@@ -307,6 +289,60 @@ class ImportBackupService {
     } catch (e, st) {
       debugPrint('[ImportBackup] Unexpected error: $e\n$st');
       yield failure('Import failed: $e');
+    }
+  }
+
+  Future<void> _mergeGroup(List<ShelfGroup> backupGroups) async {
+    for (final backupGroup in backupGroups) {
+      final existingGroup = await _shelfBookRepository.getGroupByName(
+        backupGroup.name,
+      );
+
+      if (existingGroup == null) {
+        await _shelfBookRepository.createGroup(name: backupGroup.name);
+      } else {
+        if (backupGroup.updatedAt > existingGroup.updatedAt) {
+          backupGroup.id = existingGroup.id;
+          await _shelfBookRepository.saveGroup(backupGroup);
+        }
+      }
+    }
+  }
+
+  Future<void> _mergeManifest(BookManifest backupManifest) async {
+    final existingManifest = await _bookManifestRepository.getManifestByHash(
+      backupManifest.fileHash,
+    );
+
+    if (existingManifest == null) {
+      await _bookManifestRepository.saveManifest(backupManifest);
+    } else {
+      if (backupManifest.lastUpdated.isAfter(existingManifest.lastUpdated)) {
+        await _bookManifestRepository.saveManifest(backupManifest);
+      }
+    }
+  }
+
+  Future<void> _mergeBook(ShelfBook backupBook) async {
+    final existingBook = await _shelfBookRepository.getBookByHash(
+      backupBook.fileHash,
+    );
+    if (existingBook == null) {
+      await _shelfBookRepository.saveBook(backupBook);
+    } else {
+      if (backupBook.updatedAt > existingBook.updatedAt) {
+        backupBook.id = existingBook.id;
+        if (backupBook.coverPath == null && existingBook.coverPath != null) {
+          backupBook.coverPath = existingBook.coverPath;
+        }
+        await _shelfBookRepository.saveBook(backupBook);
+      } else {
+        if (!backupBook.isDeleted && existingBook.isDeleted) {
+          backupBook.id = existingBook.id;
+          backupBook.isDeleted = false;
+          await _shelfBookRepository.saveBook(backupBook);
+        }
+      }
     }
   }
 

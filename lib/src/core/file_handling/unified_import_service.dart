@@ -21,10 +21,15 @@ class BackupPathsForBook {
 }
 
 class BackupPaths {
+  PlatformPath rootPath;
   PlatformPath shelfFile;
   Map<String, BackupPathsForBook> bookPaths; // Keyed by book hash
 
-  BackupPaths({required this.shelfFile, required this.bookPaths});
+  BackupPaths({
+    required this.rootPath,
+    required this.shelfFile,
+    required this.bookPaths,
+  });
 }
 
 /// Unified entry point for EPUB file import across platforms
@@ -282,7 +287,15 @@ class UnifiedImportService {
         }
       }
 
-      return BackupPaths(shelfFile: shelfFile, bookPaths: bookPaths);
+      final shelfUri = Uri.decodeFull((shelfFile as AndroidUriPath).uri);
+      final rootUri = p.dirname(shelfUri);
+      final rootPath = AndroidUriPath(rootUri);
+
+      return BackupPaths(
+        rootPath: rootPath,
+        shelfFile: shelfFile,
+        bookPaths: bookPaths,
+      );
     } on PlatformException catch (e) {
       debugPrint('Android backup folder picker error: ${e.message}');
       return null;

@@ -12,7 +12,6 @@ import '../../application/library_notifier.dart';
 import '../../data/services/export_backup_service.dart';
 import '../../data/services/export_backup_service_provider.dart';
 import '../../data/services/import_backup_service.dart';
-import '../../data/services/import_backup_service_provider.dart';
 import '../../data/services/unified_import_service_provider.dart';
 import '../../domain/shelf_group.dart';
 import '../widgets/group_selection_dialog.dart';
@@ -71,7 +70,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
             final hasProgress = totalCount > 0;
             final isCompleted = currentCount == totalCount && totalCount > 0;
             final progressValue = hasProgress
-                ? (isCompleted ? 1.0 : (currentCount - 1) / totalCount)
+                ? (isCompleted ? 1.0 : currentCount / totalCount)
                 : null;
 
             return ProgressDialog(
@@ -117,7 +116,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     ref.read(unifiedImportServiceProvider).clearAllCache();
 
     if (context.mounted) {
-      ref.read(bookshelfNotifierProvider.notifier).refresh();
+      await ref.read(bookshelfNotifierProvider.notifier).refresh();
     }
   }
 
@@ -407,7 +406,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       // 2. Start the stream before opening the dialog so that no work is
       //    duplicated on dialog rebuilds.
       final progressStream = ref
-          .read(importBackupServiceProvider)
+          .read(libraryNotifierProvider.notifier)
           .importLibraryFromFolder(selectedPath);
 
       // 3. Show the restore dialog; it subscribes to the stream and returns
@@ -420,7 +419,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       int failedCount = 0;
       String currentFileName = '';
 
-      final result = await showDialog(
+      await showDialog(
         context: context,
         barrierDismissible: false,
         barrierColor: Theme.of(
@@ -432,7 +431,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
               final hasProgress = totalCount > 0;
               final isCompleted = currentCount == totalCount && totalCount > 0;
               final progressValue = hasProgress
-                  ? (isCompleted ? 1.0 : (currentCount - 1) / totalCount)
+                  ? (isCompleted ? 1.0 : currentCount / totalCount)
                   : null;
 
               return ProgressDialog(
@@ -475,13 +474,6 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
           );
         },
       );
-
-      if (!context.mounted) return;
-
-      // 4. Refresh the library shelf after a successful restore.
-      if (result is ImportSuccess) {
-        ref.read(bookshelfNotifierProvider.notifier).refresh();
-      }
     } catch (e) {
       if (context.mounted) {
         ToastService.showError(
@@ -490,6 +482,11 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       }
     } finally {
       isSelectingFiles = false;
+    }
+
+    // 4. Refresh the library shelf after a successful restore.
+    if (context.mounted) {
+      await ref.read(bookshelfNotifierProvider.notifier).refresh();
     }
   }
 

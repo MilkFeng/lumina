@@ -10,6 +10,8 @@ import 'package:path/path.dart' as p;
 sealed class PlatformPath {
   const PlatformPath();
 
+  String get name;
+
   /// Creates a PlatformPath from a platform-specific string
   ///
   /// On Android, this should be a content:// URI
@@ -21,8 +23,6 @@ sealed class PlatformPath {
       return IOSFilePath(value);
     }
   }
-
-  String get name;
 }
 
 /// Android-specific path using Storage Access Framework (SAF) URI

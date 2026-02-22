@@ -3,16 +3,16 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i3;
+import 'dart:async' as _i4;
 
 import 'package:fpdart/fpdart.dart' as _i6;
 import 'package:lumina/src/features/library/data/book_manifest_repository.dart'
     as _i8;
 import 'package:lumina/src/features/library/data/shelf_book_repository.dart'
-    as _i2;
+    as _i3;
 import 'package:lumina/src/features/library/domain/book_manifest.dart' as _i9;
-import 'package:lumina/src/features/library/domain/shelf_book.dart' as _i4;
-import 'package:lumina/src/features/library/domain/shelf_group.dart' as _i5;
+import 'package:lumina/src/features/library/domain/shelf_book.dart' as _i5;
+import 'package:lumina/src/features/library/domain/shelf_group.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i7;
 
@@ -29,27 +29,37 @@ import 'package:mockito/src/dummies.dart' as _i7;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
+class _FakeShelfGroup_0 extends _i1.SmartFake implements _i2.ShelfGroup {
+  _FakeShelfGroup_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [ShelfBookRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockShelfBookRepository extends _i1.Mock
-    implements _i2.ShelfBookRepository {
+    implements _i3.ShelfBookRepository {
   MockShelfBookRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<List<_i4.ShelfBook>> getAllBooks() => (super.noSuchMethod(
+  _i4.Future<List<_i5.ShelfBook>> getAllBooks() => (super.noSuchMethod(
         Invocation.method(
           #getAllBooks,
           [],
         ),
-        returnValue: _i3.Future<List<_i4.ShelfBook>>.value(<_i4.ShelfBook>[]),
-      ) as _i3.Future<List<_i4.ShelfBook>>);
+        returnValue: _i4.Future<List<_i5.ShelfBook>>.value(<_i5.ShelfBook>[]),
+      ) as _i4.Future<List<_i5.ShelfBook>>);
 
   @override
-  _i3.Future<List<_i4.ShelfBook>> getBooksSorted({
-    _i2.ShelfBookSortBy? sortBy = _i2.ShelfBookSortBy.recentlyAdded,
+  _i4.Future<List<_i5.ShelfBook>> getBooksSorted({
+    _i3.ShelfBookSortBy? sortBy = _i3.ShelfBookSortBy.recentlyAdded,
     String? groupName,
     bool? includeAll = false,
   }) =>
@@ -63,45 +73,71 @@ class MockShelfBookRepository extends _i1.Mock
             #includeAll: includeAll,
           },
         ),
-        returnValue: _i3.Future<List<_i4.ShelfBook>>.value(<_i4.ShelfBook>[]),
-      ) as _i3.Future<List<_i4.ShelfBook>>);
+        returnValue: _i4.Future<List<_i5.ShelfBook>>.value(<_i5.ShelfBook>[]),
+      ) as _i4.Future<List<_i5.ShelfBook>>);
 
   @override
-  _i3.Future<List<_i5.ShelfGroup>> getGroups() => (super.noSuchMethod(
+  _i4.Future<List<_i2.ShelfGroup>> getGroups() => (super.noSuchMethod(
         Invocation.method(
           #getGroups,
           [],
         ),
-        returnValue: _i3.Future<List<_i5.ShelfGroup>>.value(<_i5.ShelfGroup>[]),
-      ) as _i3.Future<List<_i5.ShelfGroup>>);
+        returnValue: _i4.Future<List<_i2.ShelfGroup>>.value(<_i2.ShelfGroup>[]),
+      ) as _i4.Future<List<_i2.ShelfGroup>>);
 
   @override
-  _i3.Future<List<_i5.ShelfGroup>> getAllGroups() => (super.noSuchMethod(
+  _i4.Future<List<_i2.ShelfGroup>> getAllGroups() => (super.noSuchMethod(
         Invocation.method(
           #getAllGroups,
           [],
         ),
-        returnValue: _i3.Future<List<_i5.ShelfGroup>>.value(<_i5.ShelfGroup>[]),
-      ) as _i3.Future<List<_i5.ShelfGroup>>);
+        returnValue: _i4.Future<List<_i2.ShelfGroup>>.value(<_i2.ShelfGroup>[]),
+      ) as _i4.Future<List<_i2.ShelfGroup>>);
 
   @override
-  _i3.Future<_i5.ShelfGroup?> getGroupById(int? id) => (super.noSuchMethod(
+  _i4.Future<_i2.ShelfGroup?> getGroupById(int? id) => (super.noSuchMethod(
         Invocation.method(
           #getGroupById,
           [id],
         ),
-        returnValue: _i3.Future<_i5.ShelfGroup?>.value(),
-      ) as _i3.Future<_i5.ShelfGroup?>);
+        returnValue: _i4.Future<_i2.ShelfGroup?>.value(),
+      ) as _i4.Future<_i2.ShelfGroup?>);
 
   @override
-  _i3.Future<_i6.Either<String, int>> createGroup({required String? name}) =>
+  _i4.Future<_i2.ShelfGroup?> getGroupByName(String? name) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getGroupByName,
+          [name],
+        ),
+        returnValue: _i4.Future<_i2.ShelfGroup?>.value(),
+      ) as _i4.Future<_i2.ShelfGroup?>);
+
+  @override
+  _i4.Future<_i2.ShelfGroup> saveGroup(_i2.ShelfGroup? group) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveGroup,
+          [group],
+        ),
+        returnValue: _i4.Future<_i2.ShelfGroup>.value(_FakeShelfGroup_0(
+          this,
+          Invocation.method(
+            #saveGroup,
+            [group],
+          ),
+        )),
+      ) as _i4.Future<_i2.ShelfGroup>);
+
+  @override
+  _i4.Future<_i6.Either<String, int>> createGroup({required String? name}) =>
       (super.noSuchMethod(
         Invocation.method(
           #createGroup,
           [],
           {#name: name},
         ),
-        returnValue: _i3.Future<_i6.Either<String, int>>.value(
+        returnValue: _i4.Future<_i6.Either<String, int>>.value(
             _i7.dummyValue<_i6.Either<String, int>>(
           this,
           Invocation.method(
@@ -110,10 +146,10 @@ class MockShelfBookRepository extends _i1.Mock
             {#name: name},
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, int>>);
+      ) as _i4.Future<_i6.Either<String, int>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> updateGroupName({
+  _i4.Future<_i6.Either<String, bool>> updateGroupName({
     required int? groupId,
     required String? name,
   }) =>
@@ -126,7 +162,7 @@ class MockShelfBookRepository extends _i1.Mock
             #name: name,
           },
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -138,17 +174,17 @@ class MockShelfBookRepository extends _i1.Mock
             },
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> deleteGroup({required int? groupId}) =>
+  _i4.Future<_i6.Either<String, bool>> deleteGroup({required int? groupId}) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteGroup,
           [],
           {#groupId: groupId},
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -157,10 +193,10 @@ class MockShelfBookRepository extends _i1.Mock
             {#groupId: groupId},
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> updateBookGroup({
+  _i4.Future<_i6.Either<String, bool>> updateBookGroup({
     required int? bookId,
     String? groupName,
   }) =>
@@ -173,7 +209,7 @@ class MockShelfBookRepository extends _i1.Mock
             #groupName: groupName,
           },
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -185,10 +221,10 @@ class MockShelfBookRepository extends _i1.Mock
             },
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> moveBooksToGroup({
+  _i4.Future<_i6.Either<String, bool>> moveBooksToGroup({
     required Set<int>? bookIds,
     String? targetGroupName,
   }) =>
@@ -201,7 +237,7 @@ class MockShelfBookRepository extends _i1.Mock
             #targetGroupName: targetGroupName,
           },
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -213,16 +249,16 @@ class MockShelfBookRepository extends _i1.Mock
             },
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> softDeleteBook(int? bookId) =>
+  _i4.Future<_i6.Either<String, bool>> softDeleteBook(int? bookId) =>
       (super.noSuchMethod(
         Invocation.method(
           #softDeleteBook,
           [bookId],
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -230,63 +266,63 @@ class MockShelfBookRepository extends _i1.Mock
             [bookId],
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i4.ShelfBook?> getBookById(int? id) => (super.noSuchMethod(
+  _i4.Future<_i5.ShelfBook?> getBookById(int? id) => (super.noSuchMethod(
         Invocation.method(
           #getBookById,
           [id],
         ),
-        returnValue: _i3.Future<_i4.ShelfBook?>.value(),
-      ) as _i3.Future<_i4.ShelfBook?>);
+        returnValue: _i4.Future<_i5.ShelfBook?>.value(),
+      ) as _i4.Future<_i5.ShelfBook?>);
 
   @override
-  _i3.Future<_i4.ShelfBook?> getBookByHash(String? fileHash) =>
+  _i4.Future<_i5.ShelfBook?> getBookByHash(String? fileHash) =>
       (super.noSuchMethod(
         Invocation.method(
           #getBookByHash,
           [fileHash],
         ),
-        returnValue: _i3.Future<_i4.ShelfBook?>.value(),
-      ) as _i3.Future<_i4.ShelfBook?>);
+        returnValue: _i4.Future<_i5.ShelfBook?>.value(),
+      ) as _i4.Future<_i5.ShelfBook?>);
 
   @override
-  _i3.Future<bool> bookExists(String? fileHash) => (super.noSuchMethod(
+  _i4.Future<bool> bookExists(String? fileHash) => (super.noSuchMethod(
         Invocation.method(
           #bookExists,
           [fileHash],
         ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
+        returnValue: _i4.Future<bool>.value(false),
+      ) as _i4.Future<bool>);
 
   @override
-  _i3.Future<bool> bookExistsAndNotDeleted(String? fileHash) =>
+  _i4.Future<bool> bookExistsAndNotDeleted(String? fileHash) =>
       (super.noSuchMethod(
         Invocation.method(
           #bookExistsAndNotDeleted,
           [fileHash],
         ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
+        returnValue: _i4.Future<bool>.value(false),
+      ) as _i4.Future<bool>);
 
   @override
-  _i3.Future<int> getBookIdByHash(String? fileHash) => (super.noSuchMethod(
+  _i4.Future<int> getBookIdByHash(String? fileHash) => (super.noSuchMethod(
         Invocation.method(
           #getBookIdByHash,
           [fileHash],
         ),
-        returnValue: _i3.Future<int>.value(0),
-      ) as _i3.Future<int>);
+        returnValue: _i4.Future<int>.value(0),
+      ) as _i4.Future<int>);
 
   @override
-  _i3.Future<_i6.Either<String, int>> saveBook(_i4.ShelfBook? book) =>
+  _i4.Future<_i6.Either<String, int>> saveBook(_i5.ShelfBook? book) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveBook,
           [book],
         ),
-        returnValue: _i3.Future<_i6.Either<String, int>>.value(
+        returnValue: _i4.Future<_i6.Either<String, int>>.value(
             _i7.dummyValue<_i6.Either<String, int>>(
           this,
           Invocation.method(
@@ -294,16 +330,16 @@ class MockShelfBookRepository extends _i1.Mock
             [book],
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, int>>);
+      ) as _i4.Future<_i6.Either<String, int>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> deleteBook(int? id) =>
+  _i4.Future<_i6.Either<String, bool>> deleteBook(int? id) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteBook,
           [id],
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -311,10 +347,10 @@ class MockShelfBookRepository extends _i1.Mock
             [id],
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> updateProgress({
+  _i4.Future<_i6.Either<String, bool>> updateProgress({
     required int? bookId,
     required int? currentChapterIndex,
     required double? progress,
@@ -331,7 +367,7 @@ class MockShelfBookRepository extends _i1.Mock
             #scrollPosition: scrollPosition,
           },
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -345,16 +381,16 @@ class MockShelfBookRepository extends _i1.Mock
             },
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> markAsFinished(int? bookId) =>
+  _i4.Future<_i6.Either<String, bool>> markAsFinished(int? bookId) =>
       (super.noSuchMethod(
         Invocation.method(
           #markAsFinished,
           [bookId],
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -362,28 +398,28 @@ class MockShelfBookRepository extends _i1.Mock
             [bookId],
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<List<_i4.ShelfBook>> getRecentBooks({int? limit = 10}) =>
+  _i4.Future<List<_i5.ShelfBook>> getRecentBooks({int? limit = 10}) =>
       (super.noSuchMethod(
         Invocation.method(
           #getRecentBooks,
           [],
           {#limit: limit},
         ),
-        returnValue: _i3.Future<List<_i4.ShelfBook>>.value(<_i4.ShelfBook>[]),
-      ) as _i3.Future<List<_i4.ShelfBook>>);
+        returnValue: _i4.Future<List<_i5.ShelfBook>>.value(<_i5.ShelfBook>[]),
+      ) as _i4.Future<List<_i5.ShelfBook>>);
 
   @override
-  _i3.Future<List<_i4.ShelfBook>> searchBooks(String? query) =>
+  _i4.Future<List<_i5.ShelfBook>> searchBooks(String? query) =>
       (super.noSuchMethod(
         Invocation.method(
           #searchBooks,
           [query],
         ),
-        returnValue: _i3.Future<List<_i4.ShelfBook>>.value(<_i4.ShelfBook>[]),
-      ) as _i3.Future<List<_i4.ShelfBook>>);
+        returnValue: _i4.Future<List<_i5.ShelfBook>>.value(<_i5.ShelfBook>[]),
+      ) as _i4.Future<List<_i5.ShelfBook>>);
 }
 
 /// A class which mocks [BookManifestRepository].
@@ -396,42 +432,42 @@ class MockBookManifestRepository extends _i1.Mock
   }
 
   @override
-  _i3.Future<_i9.BookManifest?> getManifestByHash(String? fileHash) =>
+  _i4.Future<_i9.BookManifest?> getManifestByHash(String? fileHash) =>
       (super.noSuchMethod(
         Invocation.method(
           #getManifestByHash,
           [fileHash],
         ),
-        returnValue: _i3.Future<_i9.BookManifest?>.value(),
-      ) as _i3.Future<_i9.BookManifest?>);
+        returnValue: _i4.Future<_i9.BookManifest?>.value(),
+      ) as _i4.Future<_i9.BookManifest?>);
 
   @override
-  _i3.Future<_i9.BookManifest?> getManifestById(int? id) => (super.noSuchMethod(
+  _i4.Future<_i9.BookManifest?> getManifestById(int? id) => (super.noSuchMethod(
         Invocation.method(
           #getManifestById,
           [id],
         ),
-        returnValue: _i3.Future<_i9.BookManifest?>.value(),
-      ) as _i3.Future<_i9.BookManifest?>);
+        returnValue: _i4.Future<_i9.BookManifest?>.value(),
+      ) as _i4.Future<_i9.BookManifest?>);
 
   @override
-  _i3.Future<bool> manifestExists(String? fileHash) => (super.noSuchMethod(
+  _i4.Future<bool> manifestExists(String? fileHash) => (super.noSuchMethod(
         Invocation.method(
           #manifestExists,
           [fileHash],
         ),
-        returnValue: _i3.Future<bool>.value(false),
-      ) as _i3.Future<bool>);
+        returnValue: _i4.Future<bool>.value(false),
+      ) as _i4.Future<bool>);
 
   @override
-  _i3.Future<_i6.Either<String, int>> saveManifest(
+  _i4.Future<_i6.Either<String, int>> saveManifest(
           _i9.BookManifest? manifest) =>
       (super.noSuchMethod(
         Invocation.method(
           #saveManifest,
           [manifest],
         ),
-        returnValue: _i3.Future<_i6.Either<String, int>>.value(
+        returnValue: _i4.Future<_i6.Either<String, int>>.value(
             _i7.dummyValue<_i6.Either<String, int>>(
           this,
           Invocation.method(
@@ -439,16 +475,16 @@ class MockBookManifestRepository extends _i1.Mock
             [manifest],
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, int>>);
+      ) as _i4.Future<_i6.Either<String, int>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> deleteManifestByHash(String? fileHash) =>
+  _i4.Future<_i6.Either<String, bool>> deleteManifestByHash(String? fileHash) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteManifestByHash,
           [fileHash],
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -456,16 +492,16 @@ class MockBookManifestRepository extends _i1.Mock
             [fileHash],
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<_i6.Either<String, bool>> deleteManifest(int? id) =>
+  _i4.Future<_i6.Either<String, bool>> deleteManifest(int? id) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteManifest,
           [id],
         ),
-        returnValue: _i3.Future<_i6.Either<String, bool>>.value(
+        returnValue: _i4.Future<_i6.Either<String, bool>>.value(
             _i7.dummyValue<_i6.Either<String, bool>>(
           this,
           Invocation.method(
@@ -473,20 +509,20 @@ class MockBookManifestRepository extends _i1.Mock
             [id],
           ),
         )),
-      ) as _i3.Future<_i6.Either<String, bool>>);
+      ) as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i3.Future<List<_i9.BookManifest>> getAllManifests() => (super.noSuchMethod(
+  _i4.Future<List<_i9.BookManifest>> getAllManifests() => (super.noSuchMethod(
         Invocation.method(
           #getAllManifests,
           [],
         ),
         returnValue:
-            _i3.Future<List<_i9.BookManifest>>.value(<_i9.BookManifest>[]),
-      ) as _i3.Future<List<_i9.BookManifest>>);
+            _i4.Future<List<_i9.BookManifest>>.value(<_i9.BookManifest>[]),
+      ) as _i4.Future<List<_i9.BookManifest>>);
 
   @override
-  _i3.Future<_i9.SpineItem?> getSpineItemByIndex(
+  _i4.Future<_i9.SpineItem?> getSpineItemByIndex(
     String? fileHash,
     int? index,
   ) =>
@@ -498,25 +534,25 @@ class MockBookManifestRepository extends _i1.Mock
             index,
           ],
         ),
-        returnValue: _i3.Future<_i9.SpineItem?>.value(),
-      ) as _i3.Future<_i9.SpineItem?>);
+        returnValue: _i4.Future<_i9.SpineItem?>.value(),
+      ) as _i4.Future<_i9.SpineItem?>);
 
   @override
-  _i3.Future<int?> getSpineCount(String? fileHash) => (super.noSuchMethod(
+  _i4.Future<int?> getSpineCount(String? fileHash) => (super.noSuchMethod(
         Invocation.method(
           #getSpineCount,
           [fileHash],
         ),
-        returnValue: _i3.Future<int?>.value(),
-      ) as _i3.Future<int?>);
+        returnValue: _i4.Future<int?>.value(),
+      ) as _i4.Future<int?>);
 
   @override
-  _i3.Future<List<_i9.TocItem>> getFlattenedToc(String? fileHash) =>
+  _i4.Future<List<_i9.TocItem>> getFlattenedToc(String? fileHash) =>
       (super.noSuchMethod(
         Invocation.method(
           #getFlattenedToc,
           [fileHash],
         ),
-        returnValue: _i3.Future<List<_i9.TocItem>>.value(<_i9.TocItem>[]),
-      ) as _i3.Future<List<_i9.TocItem>>);
+        returnValue: _i4.Future<List<_i9.TocItem>>.value(<_i9.TocItem>[]),
+      ) as _i4.Future<List<_i9.TocItem>>);
 }

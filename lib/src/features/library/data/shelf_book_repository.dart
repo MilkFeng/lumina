@@ -97,6 +97,24 @@ class ShelfBookRepository {
     return await isar.shelfGroups.get(id);
   }
 
+  Future<ShelfGroup?> getGroupByName(String name) async {
+    final isar = _isar;
+    return await isar.shelfGroups
+        .filter()
+        .nameEqualTo(name)
+        .and()
+        .isDeletedEqualTo(false)
+        .findFirst();
+  }
+
+  Future<ShelfGroup> saveGroup(ShelfGroup group) async {
+    final isar = _isar;
+    final id = await isar.writeTxn(() async {
+      return await isar.shelfGroups.put(group);
+    });
+    return group..id = id;
+  }
+
   /// Create a new group
   Future<Either<String, int>> createGroup({required String name}) async {
     try {

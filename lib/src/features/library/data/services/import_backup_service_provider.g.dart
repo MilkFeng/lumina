@@ -7,7 +7,7 @@ part of 'import_backup_service_provider.dart';
 // **************************************************************************
 
 String _$importBackupServiceHash() =>
-    r'51bb3092e44dd368d7ca36eff9f5362237a01562';
+    r'e902e3c607bbbf9742c2787965875250a7d9ce1b';
 
 /// Provider for [ImportBackupService].
 ///

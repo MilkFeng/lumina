@@ -1,7 +1,8 @@
+import 'package:lumina/src/features/library/data/repositories/book_manifest_repository_provider.dart';
+import 'package:lumina/src/features/library/data/repositories/shelf_book_repository_provider.dart';
 import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/database/providers.dart';
 import 'import_backup_service.dart';
 
 part 'import_backup_service_provider.g.dart';
@@ -13,7 +14,13 @@ part 'import_backup_service_provider.g.dart';
 /// exposed through the higher-level repository layer.
 @riverpod
 ImportBackupService importBackupService(ImportBackupServiceRef ref) {
-  final isar = ref.watch(isarProvider).requireValue;
+  final shelfBookRepo = ref.watch(shelfBookRepositoryProvider);
+  final manifestRepo = ref.watch(bookManifestRepositoryProvider);
+
   final importService = ref.watch(unifiedImportServiceProvider);
-  return ImportBackupService(isar: isar, importService: importService);
+  return ImportBackupService(
+    shelfBookRepository: shelfBookRepo,
+    bookManifestRepository: manifestRepo,
+    importService: importService,
+  );
 }
