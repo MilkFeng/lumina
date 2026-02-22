@@ -289,6 +289,12 @@ class ImportBackupService {
     } catch (e, st) {
       debugPrint('[ImportBackup] Unexpected error: $e\n$st');
       yield failure('Import failed: $e');
+    } finally {
+      // Release all security-scoped resource accesses held by the native iOS
+      // picker plugin.  This is a no-op on Android; calling it unconditionally
+      // keeps the code simple and guarantees no resource leaks on iOS even if
+      // the import fails or is cancelled.
+      await _importService.releaseIosAccess();
     }
   }
 

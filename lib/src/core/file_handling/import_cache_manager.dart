@@ -19,7 +19,19 @@ class ImportCacheManager {
   static const String _importCacheDir = 'import_cache';
   final _safStream = SafStream();
 
+  /// Optional callback used on iOS for copy-on-demand.
+  ///
+  /// When set, the iOS branch of [createCacheAndHash] delegates to this
+  /// instead of reading the security-scoped file directly.  This allows
+  /// Swift to copy the file inside the still-open security scope and return
+  /// a plain temp path that Dart can then rename into the cache directory in
+  /// O(1) time.
+  final Future<String> Function(String)? _iosFetchCallback;
+
   Directory? _cacheDirectory;
+
+  ImportCacheManager({Future<String> Function(String)? iosFetchCallback})
+    : _iosFetchCallback = iosFetchCallback;
 
   /// Gets the import cache directory, creating it if necessary
   Future<Directory> _getCacheDirectory() async {
@@ -58,9 +70,18 @@ class ImportCacheManager {
       case AndroidUriPath(:final uri):
         await _streamAndHashFromSAF(uri, tempCacheFile);
         originalName = _extractFileNameFromUri(uri);
-      case IOSFilePath(:final path):
-        await _copyAndHashFromFileSystem(path, tempCacheFile);
-        originalName = path.split('/').last;
+      case IOSFilePath(path: final originalPath):
+        final fetchCallback = _iosFetchCallback;
+        if (fetchCallback != null) {
+          // Copy-on-demand: Swift copies the security-scoped file to a temp
+          // location, then we rename it into the cache directory (O(1)).
+          final tempPath = await fetchCallback(originalPath);
+          await _moveAndHashFromFileSystem(tempPath, tempCacheFile);
+        } else {
+          // Fallback when no callback was provided (e.g. in unit tests).
+          await _copyAndHashFromFileSystem(originalPath, tempCacheFile);
+        }
+        originalName = path.basename(originalPath);
     }
 
     // Calculate hash of the cached file
@@ -163,6 +184,35 @@ class ImportCacheManager {
         await targetFile.delete();
       }
       rethrow;
+    }
+  }
+
+  /// Moves [srcPath] to [targetFile] using a rename when possible (O(1) on
+  /// the same APFS volume), otherwise falls back to copy + delete.
+  ///
+  /// Used for the iOS copy-on-demand path where Swift has already placed a
+  /// fresh copy in `NSTemporaryDirectory()`.
+  Future<void> _moveAndHashFromFileSystem(
+    String srcPath,
+    File targetFile,
+  ) async {
+    final srcFile = File(srcPath);
+    try {
+      // Prefer atomic rename (O(1)).
+      await srcFile.rename(targetFile.path);
+    } on FileSystemException {
+      // Cross-device move: copy then delete.
+      try {
+        await srcFile.copy(targetFile.path);
+      } catch (e) {
+        if (await targetFile.exists()) await targetFile.delete();
+        rethrow;
+      }
+      try {
+        if (await srcFile.exists()) await srcFile.delete();
+      } catch (_) {
+        // Non-fatal: the OS will eventually reclaim the temp file.
+      }
     }
   }
 

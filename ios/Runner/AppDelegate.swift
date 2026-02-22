@@ -17,6 +17,11 @@ import WebKit
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
 
+    // Register the lazy copy-on-demand native file picker plugin.
+    if let registrar = self.registrar(forPlugin: "NativePickerPlugin") {
+      NativePickerPlugin.register(with: registrar)
+    }
+
     if let registrar = self.registrar(forPlugin: pageTurnPluginKey) {
       let channel = FlutterMethodChannel(
         name: "lumina/reader_page_turn",
