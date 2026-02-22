@@ -146,8 +146,8 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Optimize initial loading lag when opening the first book
 - [x] Export library
 - [x] Test import/export functionality on iOS
+- [x] Bookshelf homepage can switch between "Compact, Comfortable" layout modes, and can set whether to show book reading progress bars
 - [ ] Associate with epub format for direct opening of epub files
-- [ ] Bookshelf homepage can switch between "Compact, Comfortable" layout modes, and can set whether to show book reading progress bars
 - [ ] Edit book metadata (cover, title, author, etc.)
 - [ ] Reading settings (font size, line spacing, background color, etc.)
 - [ ] Footnote support
