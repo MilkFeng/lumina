@@ -344,6 +344,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   }
 
   Future<void> _handleExportBackup(BuildContext context, WidgetRef ref) async {
+    if (_isExporting) return; // Prevent multiple taps
     setState(() => _isExporting = true);
 
     final result = await ref
