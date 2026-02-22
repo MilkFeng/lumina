@@ -55,8 +55,6 @@ final class ImportFailure extends ImportResult {
 class ImportBackupService {
   static const _kBooksDir = 'books';
   static const _kCoversDir = 'covers';
-  static const _kManifestsDir = 'manifests';
-  static const _kShelfFile = 'shelf.json';
 
   /// How many books are upserted per Isar write transaction.
   /// Keeps individual transactions short; rarely matters in practice since
@@ -64,8 +62,13 @@ class ImportBackupService {
   static const _kBatchSize = 50;
 
   final Isar _isar;
+  final UnifiedImportService _importService;
 
-  ImportBackupService({required Isar isar}) : _isar = isar;
+  ImportBackupService({
+    required Isar isar,
+    required UnifiedImportService importService,
+  }) : _isar = isar,
+       _importService = importService;
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -75,8 +78,162 @@ class ImportBackupService {
   ///
   /// Returns [ImportSuccess] with the number of books imported, or
   /// [ImportFailure] describing what went wrong.
+  /// Restores a library from the folder at [backupDirPath].
+  ///
+  /// Returns [ImportSuccess] with the number of books imported, or
+  /// [ImportFailure] describing what went wrong.
   Future<ImportResult> importLibraryFromFolder(BackupPaths backupPaths) async {
-    return ImportFailure('Not implemented');
+    try {
+      // -----------------------------------------------------------------------
+      // 1. Read and parse global shelf.json via UnifiedImportService
+      // -----------------------------------------------------------------------
+      final shelfString = await _importService.processPlainFile(
+        backupPaths.shelfFile,
+      );
+      final shelfJson = jsonDecode(shelfString) as Map<String, dynamic>;
+
+      final groupsJson = (shelfJson['groups'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final booksJson = (shelfJson['books'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+
+      // -----------------------------------------------------------------------
+      // 2. Restore groups (upsert by name to avoid duplicates).
+      // -----------------------------------------------------------------------
+      if (groupsJson.isNotEmpty) {
+        final groups = groupsJson.map(_mapToShelfGroup).toList();
+        await _isar.writeTxn(() async {
+          for (final group in groups) {
+            // putByName performs an insert-or-update keyed on the unique `name`
+            await _isar.shelfGroups.putByName(group);
+          }
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // 3. Ensure internal storage directories exist.
+      // -----------------------------------------------------------------------
+      final internalBooksDir = await Directory(
+        p.join(AppStorage.documentsPath, _kBooksDir),
+      ).create(recursive: true);
+
+      final internalCoversDir = await Directory(
+        p.join(AppStorage.documentsPath, _kCoversDir),
+      ).create(recursive: true);
+
+      // -----------------------------------------------------------------------
+      // 4. Restore books in batches.
+      // -----------------------------------------------------------------------
+      int importedCount = 0;
+
+      for (
+        var batchStart = 0;
+        batchStart < booksJson.length;
+        batchStart += _kBatchSize
+      ) {
+        final batchEnd = (batchStart + _kBatchSize).clamp(0, booksJson.length);
+        final batch = booksJson.sublist(batchStart, batchEnd);
+
+        final shelfBooks = <ShelfBook>[];
+        final manifests = <BookManifest>[];
+
+        for (final bookMap in batch) {
+          final hash = bookMap['fileHash'] as String;
+          final pathsForBook = backupPaths.bookPaths[hash];
+
+          if (pathsForBook == null) {
+            debugPrint(
+              '[ImportBackup] Files for book $hash not found in backup paths, skipping.',
+            );
+            continue;
+          }
+
+          // -- A. Process & Copy EPUB (Zero Memory OOM Risk) --
+          // processEpub will stream the file safely to ImportCacheManager.
+          final importableEpub = await _importService.processEpub(
+            pathsForBook.epubPath,
+          );
+          final destEpub = File(p.join(internalBooksDir.path, '$hash.epub'));
+          await importableEpub.cacheFile.copy(
+            destEpub.path,
+          ); // Copy from cache to final destination
+
+          // Optional but recommended: clean up the temporary cache file right away
+          await _importService.cleanCache(importableEpub.cacheFile);
+
+          // -- B. Process & Copy Cover (Low Memory) --
+          String? restoredCoverPath;
+          if (pathsForBook.coverPath != null) {
+            try {
+              // processBinaryFile loads the small image into Uint8List bytes
+              final coverBytes = await _importService.processBinaryFile(
+                pathsForBook.coverPath!,
+              );
+
+              // Extract original extension (e.g., .jpg, .png) or default to .jpg
+              final ext = p.extension(pathsForBook.coverPath.toString());
+              final finalExt = ext.isNotEmpty ? ext : '.jpg';
+
+              final destCover = File(
+                p.join(internalCoversDir.path, '$hash$finalExt'),
+              );
+              await destCover.writeAsBytes(coverBytes);
+              restoredCoverPath = destCover.path;
+            } catch (e) {
+              debugPrint(
+                '[ImportBackup] Failed to process cover for $hash: $e',
+              );
+            }
+          }
+
+          // -- C. Process Manifest JSON (Low Memory) --
+          try {
+            final manifestString = await _importService.processPlainFile(
+              pathsForBook.manifestPath,
+            );
+            final manifestMap =
+                jsonDecode(manifestString) as Map<String, dynamic>;
+            manifests.add(_mapToBookManifest(manifestMap));
+          } catch (e) {
+            debugPrint(
+              '[ImportBackup] Failed to process manifest for $hash: $e',
+            );
+          }
+
+          // -- D. Build ShelfBook and inject restored absolute paths --
+          final book = _mapToShelfBook(
+            bookMap,
+            filePath: destEpub.path,
+            coverPath: restoredCoverPath,
+          );
+          shelfBooks.add(book);
+        }
+
+        // -- E. Upsert the entire batch in a single transaction --
+        await _isar.writeTxn(() async {
+          for (final book in shelfBooks) {
+            await _isar.shelfBooks.putByFileHash(book);
+          }
+          for (final manifest in manifests) {
+            await _isar.bookManifests.putByFileHash(manifest);
+          }
+        });
+
+        importedCount += shelfBooks.length;
+        debugPrint(
+          '[ImportBackup] Batch ${batchStart ~/ _kBatchSize + 1}: upserted ${shelfBooks.length} books.',
+        );
+      }
+
+      debugPrint('[ImportBackup] Import complete. Total books: $importedCount');
+      return ImportSuccess(importedBooks: importedCount);
+    } on FormatException catch (e) {
+      debugPrint('[ImportBackup] JSON parse error: $e');
+      return ImportFailure('Failed to parse backup data: ${e.message}');
+    } catch (e, st) {
+      debugPrint('[ImportBackup] Unexpected error: $e\n$st');
+      return ImportFailure('Import failed: $e');
+    }
   }
 
   // ---------------------------------------------------------------------------
