@@ -358,7 +358,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       case ExportSuccess(:final path):
         final message = (Platform.isAndroid && path != null)
             ? AppLocalizations.of(context)!.backupSavedToDownloads(path)
-            : AppLocalizations.of(context)!.backupReadyToShare;
+            : AppLocalizations.of(context)!.backupShared;
         ToastService.showSuccess(message);
       case ExportFailure(:final message):
         ToastService.showError(
