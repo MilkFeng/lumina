@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show Rect;
 
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../domain/book_manifest.dart';
@@ -51,6 +51,7 @@ class ExportBackupService {
   static const _kCoversDir = 'covers';
   static const _kManifestsDir = 'manifests';
   static const _kShelfFile = 'shelf.json';
+  static const _kIOSBackupSubdir = 'backup';
 
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
@@ -70,14 +71,11 @@ class ExportBackupService {
   /// Returns [ExportSuccess] with the folder path on Android, or [ExportSuccess]
   /// with null on iOS (the Share Sheet handles delivery).
   /// Returns [ExportFailure] on any unrecoverable error.
-  Future<ExportResult> exportLibraryAsFolder() async {
-    String backupName = '';
-    if (Platform.isAndroid) {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      backupName = 'lumina-backup-$timestamp';
-    } else {
-      backupName = 'lumina-backup';
-    }
+  Future<ExportResult> exportLibraryAsFolder({
+    Rect? sharePositionOrigin,
+  }) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final backupName = 'lumina-backup-$timestamp';
     Directory? targetDir;
 
     try {
@@ -94,8 +92,8 @@ class ExportBackupService {
         // iOS: use the system temporary directory.  Files here survive long
         // enough to be picked up by the Share Sheet, and we delete them in
         // `finally` to avoid wasting space.
-        final tempDir = await getTemporaryDirectory();
-        targetDir = Directory(p.join(tempDir.path, backupName));
+        final tempDir = AppStorage.tempPath;
+        targetDir = Directory(p.join(tempDir, _kIOSBackupSubdir, backupName));
       }
 
       // -----------------------------------------------------------------------
@@ -180,9 +178,11 @@ class ExportBackupService {
         return ExportSuccess(path: targetDir.path);
       } else {
         // iOS: share the entire folder via the native Share Sheet.
-        await Share.shareXFiles([
-          XFile(targetDir.path),
-        ], subject: 'Lumina Backup');
+        await Share.shareXFiles(
+          [XFile(targetDir.path)],
+          subject: 'Lumina Backup',
+          sharePositionOrigin: sharePositionOrigin,
+        );
         return const ExportSuccess();
       }
     } on FileSystemException catch (e) {
@@ -211,9 +211,8 @@ class ExportBackupService {
 
   Future<void> clearCache() async {
     if (Platform.isIOS) {
-      final backupName = 'lumina-backup';
-      final tempDir = await getTemporaryDirectory();
-      final targetDir = Directory(p.join(tempDir.path, backupName));
+      final tempDir = AppStorage.tempPath;
+      final targetDir = Directory(p.join(tempDir, _kIOSBackupSubdir));
       try {
         if (targetDir.existsSync()) {
           await targetDir.delete(recursive: true);
