@@ -481,7 +481,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get backupReadyToShare => 'Backup ready for sharing';
+  String get backupShared => 'Backup successfully shared';
 
   @override
   String exportFailed(String message) {

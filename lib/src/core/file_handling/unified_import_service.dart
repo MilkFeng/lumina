@@ -48,10 +48,15 @@ class UnifiedImportService {
 
   final _safStream = SafStream();
 
-  final ImportCacheManager _cacheManager;
+  // Use `late final` so we can pass `fetchIosFileToTemp` as a callback
+  // into ImportCacheManager without a circular-reference problem.
+  late final ImportCacheManager _cacheManager;
 
-  UnifiedImportService({ImportCacheManager? cacheManager})
-    : _cacheManager = cacheManager ?? ImportCacheManager();
+  UnifiedImportService({ImportCacheManager? cacheManager}) {
+    _cacheManager =
+        cacheManager ??
+        ImportCacheManager(iosFetchCallback: fetchIosFileToTemp);
+  }
 
   /// Pick multiple EPUB files using platform-appropriate picker
   ///
@@ -135,9 +140,40 @@ class UnifiedImportService {
     switch (path) {
       case AndroidUriPath(:final uri):
         return await _safStream.readFileBytes(uri);
-      case IOSFilePath(:final path):
-        final file = File(path);
-        return await file.readAsBytes();
+      case IOSFilePath(path: final pathStr):
+        // 1. Fetch just-in-time inside the active security scope.
+        final tempPath = await fetchIosFileToTemp(pathStr);
+        final tempFile = File(tempPath);
+        // 2. Read into memory.
+        final bytes = await tempFile.readAsBytes();
+        // 3. Clean up the temp copy immediately.
+        if (await tempFile.exists()) await tempFile.delete();
+        return bytes;
+    }
+  }
+
+  /// Asks Swift to copy [originalPath] (inside the active security scope)
+  /// to a fresh unique file in `NSTemporaryDirectory()` and returns the
+  /// resulting absolute temp path.
+  ///
+  /// iOS only.  On other platforms this is a no-op that returns the original
+  /// path unchanged.
+  Future<String> fetchIosFileToTemp(String originalPath) async {
+    if (!Platform.isIOS) return originalPath;
+    final tempPath = await _channel.invokeMethod<String>(
+      'fetchIosFile',
+      originalPath,
+    );
+    return tempPath ?? originalPath;
+  }
+
+  /// Releases all security-scoped resource accesses held on the native side.
+  ///
+  /// **Must** be called in the `finally` block of any iOS pick+process
+  /// operation to prevent resource leaks.
+  Future<void> releaseIosAccess() async {
+    if (Platform.isIOS) {
+      await _channel.invokeMethod<void>('releaseIosAccess');
     }
   }
 
@@ -309,30 +345,121 @@ class UnifiedImportService {
 
   // ==================== iOS Implementation ====================
 
-  /// iOS: Pick files - currently unsupported without file_picker package
-  ///
-  /// To support iOS, either:
-  /// 1. Implement native iOS file picker via MethodChannel
-  /// 2. Add file_picker package back
-  /// 3. Use UIDocumentPickerViewController via platform channel
+  /// iOS: Pick multiple EPUB files (lazy – security scope retained by Swift).
   Future<List<PlatformPath>> _pickFilesIOS() async {
-    debugPrint(
-      'iOS file picker not implemented. Add file_picker package or implement native picker.',
-    );
-    return [];
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'pickEpubFiles',
+      );
+      if (result == null) return [];
+      return result
+          .whereType<String>()
+          .map((path) => IOSFilePath(path))
+          .toList();
+    } on PlatformException catch (e) {
+      debugPrint('iOS file picker error: ${e.message}');
+      return [];
+    }
   }
 
-  /// iOS: Pick folder - currently unsupported without file_picker package
+  /// iOS: Pick EPUB-containing folder (lazy – security scope retained by Swift).
   Future<List<PlatformPath>> _pickFolderIOS() async {
-    debugPrint(
-      'iOS folder picker not implemented. Add file_picker package or implement native picker.',
-    );
-    return [];
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'pickEpubFolder',
+      );
+      if (result == null) return [];
+      return result
+          .whereType<String>()
+          .map((path) => IOSFilePath(path))
+          .toList();
+    } on PlatformException catch (e) {
+      debugPrint('iOS folder picker error: ${e.message}');
+      return [];
+    }
   }
 
+  /// iOS: Pick backup folder and parse its structure (lazy – scope retained).
   Future<BackupPaths?> _pickBackupFolderIOS() async {
-    debugPrint('iOS backup folder picker not yet implemented.');
-    return null;
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'pickBackupFolder',
+      );
+      if (result == null || result.isEmpty) return null;
+
+      PlatformPath? shelfFile;
+      final Map<String, Map<String, PlatformPath>> tempBookComponents = {};
+
+      for (final item in result) {
+        if (item is! String) continue;
+
+        final pathStr = item;
+        final platformPath = IOSFilePath(pathStr);
+        final fileName = p.basename(pathStr);
+        final parentDirName = p.basename(p.dirname(pathStr));
+
+        if (fileName.isEmpty) continue;
+
+        if (fileName == 'shelf.json') {
+          shelfFile = platformPath;
+          continue;
+        }
+
+        if (parentDirName == 'books' && fileName.endsWith('.epub')) {
+          final hash = fileName.replaceAll('.epub', '');
+          tempBookComponents.putIfAbsent(hash, () => {})['epub'] = platformPath;
+        } else if (parentDirName == 'manifests' && fileName.endsWith('.json')) {
+          final hash = fileName.replaceAll('.json', '');
+          tempBookComponents.putIfAbsent(hash, () => {})['manifest'] =
+              platformPath;
+        } else if (parentDirName == 'covers') {
+          final extIndex = fileName.lastIndexOf('.');
+          if (extIndex != -1) {
+            final hash = fileName.substring(0, extIndex);
+            tempBookComponents.putIfAbsent(hash, () => {})['cover'] =
+                platformPath;
+          }
+        }
+      }
+
+      if (shelfFile == null) {
+        ToastService.showError('Invalid backup: shelf.json not found');
+        return null;
+      }
+
+      final Map<String, BackupPathsForBook> bookPaths = {};
+      for (final entry in tempBookComponents.entries) {
+        final hash = entry.key;
+        final components = entry.value;
+        if (components.containsKey('epub') &&
+            components.containsKey('manifest')) {
+          bookPaths[hash] = BackupPathsForBook(
+            epubPath: components['epub']!,
+            manifestPath: components['manifest']!,
+            coverPath: components['cover'],
+          );
+        } else {
+          debugPrint(
+            'Warning: Missing EPUB or manifest for hash $hash, skipping.',
+          );
+        }
+      }
+
+      final rootPath = IOSFilePath(p.dirname((shelfFile as IOSFilePath).path));
+
+      return BackupPaths(
+        rootPath: rootPath,
+        shelfFile: shelfFile,
+        bookPaths: bookPaths,
+      );
+    } on PlatformException catch (e) {
+      ToastService.showError('Failed to pick backup folder: ${e.message}');
+      return null;
+    } catch (e, st) {
+      ToastService.showError('Unexpected error picking backup folder: $e');
+      debugPrint('Unexpected error picking backup folder: $e\n$st');
+      return null;
+    }
   }
 
   // ==================== Utility Methods ====================

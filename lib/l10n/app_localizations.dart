@@ -932,11 +932,11 @@ abstract class AppLocalizations {
   /// **'Backup successfully saved to Downloads: {path}'**
   String backupSavedToDownloads(String path);
 
-  /// Backup ready for sharing message
+  /// Backup shared success message
   ///
   /// In en, this message translates to:
-  /// **'Backup ready for sharing'**
-  String get backupReadyToShare;
+  /// **'Backup successfully shared'**
+  String get backupShared;
 
   /// Backup export failed message
   ///

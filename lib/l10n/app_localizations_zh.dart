@@ -472,7 +472,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get backupReadyToShare => '备份已准备好分享';
+  String get backupShared => '备份已通过分享功能导出';
 
   @override
   String exportFailed(String message) {

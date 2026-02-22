@@ -22,7 +22,7 @@ class IsarDatabaseImpl implements IsarDatabase {
         ShelfGroupSchema, // Folder/group entity
         BookManifestSchema, // Heavy reader entity
       ],
-      directory: AppStorage.documentsPath,
+      directory: AppStorage.supportPath,
       inspector: true, // Enable Isar Inspector for debugging
     );
 

@@ -24,6 +24,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   String _version = '';
   bool _isCleaning = false;
   bool _isExporting = false;
+  final _exportTileKey = GlobalKey();
 
   @override
   void initState() {
@@ -273,6 +274,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
   Widget _buildBackupTile(BuildContext context, AppLocalizations l10n) {
     return ListTile(
+      key: _exportTileKey,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
       leading: Icon(
         Icons.archive_outlined,
@@ -332,12 +334,22 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   ///   - Android success → folder path in Downloads
   ///   - iOS / other success → Share Sheet was presented by the service
   ///   - Failure → error message in red
+  /// Returns the screen-space [Rect] of the export tile, used as the
+  /// `sharePositionOrigin` anchor for the iOS Share Sheet popover.
+  Rect? _exportTileRect() {
+    final box = _exportTileKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    final offset = box.localToGlobal(Offset.zero);
+    return offset & box.size;
+  }
+
   Future<void> _handleExportBackup(BuildContext context, WidgetRef ref) async {
+    if (_isExporting) return; // Prevent multiple taps
     setState(() => _isExporting = true);
 
     final result = await ref
         .read(exportBackupServiceProvider)
-        .exportLibraryAsFolder();
+        .exportLibraryAsFolder(sharePositionOrigin: _exportTileRect());
 
     // Guard against widget being unmounted while awaiting.
     if (!context.mounted) return;
@@ -346,7 +358,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       case ExportSuccess(:final path):
         final message = (Platform.isAndroid && path != null)
             ? AppLocalizations.of(context)!.backupSavedToDownloads(path)
-            : AppLocalizations.of(context)!.backupReadyToShare;
+            : AppLocalizations.of(context)!.backupShared;
         ToastService.showSuccess(message);
       case ExportFailure(:final message):
         ToastService.showError(

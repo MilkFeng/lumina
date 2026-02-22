@@ -812,9 +812,9 @@
     }
   },
 
-  "backupReadyToShare": "Backup ready for sharing",
-  "@backupReadyToShare": {
-    "description": "Backup ready for sharing message"
+  "backupShared": "Backup successfully shared",
+  "@backupShared": {
+    "description": "Backup shared success message"
   },
 
   "exportFailed": "Backup failed: {message}",

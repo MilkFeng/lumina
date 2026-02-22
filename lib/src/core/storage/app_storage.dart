@@ -5,6 +5,7 @@ class AppStorage {
 
   static late final String documentsPath;
   static late final String tempPath;
+  static late final String supportPath;
 
   static Future<void> init() async {
     final docDir = await getApplicationDocumentsDirectory();
@@ -12,5 +13,8 @@ class AppStorage {
 
     final tempDir = await getTemporaryDirectory();
     tempPath = tempDir.path;
+
+    final supportDir = await getApplicationSupportDirectory();
+    supportPath = supportDir.path;
   }
 }
