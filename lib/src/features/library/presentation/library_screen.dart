@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
 import 'mixins/library_actions_mixin.dart';

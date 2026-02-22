@@ -64,9 +64,6 @@ dependencies:
 
   # File Sharing (iOS Share Sheet)
   share_plus: ^10.1.4
-
-  # Directory Picker (backup restore)
-  file_picker: ^8.1.7
   
 
 dev_dependencies:

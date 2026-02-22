@@ -32,6 +32,7 @@ class MainActivity : FlutterFragmentActivity() {
     // Activity result launchers - initialized in onCreate
     private lateinit var pickFilesLauncher: ActivityResultLauncher<Intent>
     private lateinit var pickFolderLauncher: ActivityResultLauncher<Intent>
+    private lateinit var pickBackupFolderLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Register activity result launchers BEFORE calling super.onCreate()
@@ -61,6 +62,19 @@ class MainActivity : FlutterFragmentActivity() {
             }
         }
 
+        pickBackupFolderLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            val pendingResult = this.pendingResult ?: return@registerForActivityResult
+            this.pendingResult = null
+
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                handlePickBackupFolderResult(result.data!!, pendingResult)
+            } else {
+                pendingResult.success(emptyList<String>())
+            }
+        }
+
         super.onCreate(savedInstanceState)
     }
 
@@ -75,6 +89,9 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 "pickEpubFolder" -> {
                     pickEpubFolder(result)
+                }
+                "pickBackupFolder" -> {
+                    pickBackupFolder(result)
                 }
                 else -> {
                     result.notImplemented()
@@ -189,6 +206,101 @@ class MainActivity : FlutterFragmentActivity() {
                 result.error("FILE_PROCESS_ERROR", "Failed to process selected files: ${e.message}", null)
             }
         }
+    }
+
+    /**
+     * Launches folder picker for selecting a Lumina backup directory.
+     *
+     * Uses ACTION_OPEN_DOCUMENT_TREE and converts the tree URI to a real
+     * filesystem path so the Dart [File] API can access files directly.
+     * Returns a single-element list containing the absolute folder path,
+     * or an empty list if the user cancels.
+     */
+    private fun pickBackupFolder(result: MethodChannel.Result) {
+        if (pendingResult != null) {
+            result.error("ALREADY_ACTIVE", "Folder picker is already active", null)
+            return
+        }
+
+        pendingResult = result
+
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        try {
+            pickBackupFolderLauncher.launch(intent)
+        } catch (e: Exception) {
+            pendingResult = null
+            result.error("PICKER_ERROR", "Failed to launch folder picker: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Handles the result of the backup folder picker.
+     *
+     * Converts the SAF tree URI to a real filesystem path so the Dart
+     * side can use the standard [File] API without SAF boilerplate.
+     *
+     * The tree document ID has the form "primary:relative/path" for
+     * internal storage and "XXXX-XXXX:relative/path" for SD cards.
+     */
+    private fun handlePickBackupFolderResult(data: Intent, result: MethodChannel.Result) {
+        val treeUri = data.data ?: run {
+            result.success(emptyList<String>())
+            return
+        }
+
+        // Take persistable permissions for future access if needed
+        try {
+            contentResolver.takePersistableUriPermission(
+                treeUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        } catch (e: Exception) {
+            // Permission might not be persistable, continue anyway
+        }
+
+        // Traverse folder in background thread
+        lifecycleScope.launch {
+            try {
+                val uris = withContext(Dispatchers.IO) {
+                    traverseFolderForBackupFiles(treeUri)
+                }
+                result.success(uris)
+            } catch (e: Exception) {
+                result.error("TRAVERSAL_ERROR", "Failed to traverse folder: ${e.message}", null)
+            }
+        }
+    }
+
+    private fun traverseFolderForBackupFiles(treeUri: Uri): List<String> {
+        val uris = mutableListOf<String>()
+        val documentFile = DocumentFile.fromTreeUri(this, treeUri) ?: return uris
+
+        // Use a queue for iterative traversal to avoid deep recursion
+        val queue = ArrayDeque<DocumentFile>()
+        queue.add(documentFile)
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+
+            try {
+                if (current.isDirectory) {
+                    // Add subdirectories to queue
+                    current.listFiles().forEach { child ->
+                        queue.add(child)
+                    }
+                } else if (current.isFile) {
+                    uris.add(current.uri.toString())
+                }
+            } catch (e: Exception) {
+                // Skip files/folders that can't be accessed
+                continue
+            }
+        }
+
+        return uris
     }
 
     /**

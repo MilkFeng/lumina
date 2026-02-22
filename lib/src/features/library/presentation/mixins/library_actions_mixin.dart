@@ -336,7 +336,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     // 1. Ask the user to select the backup directory.
     final selectedPath = await ref
         .read(unifiedImportServiceProvider)
-        .pickBackupDirectory();
+        .pickBackupFolder();
 
     // User cancelled — exit silently.
     if (selectedPath == null) return;
