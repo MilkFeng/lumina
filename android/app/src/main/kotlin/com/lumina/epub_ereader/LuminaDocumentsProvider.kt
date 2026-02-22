@@ -1,4 +1,4 @@
-package com.lumina.reader
+package com.lumina.ereader
 
 import android.database.Cursor
 import android.database.MatrixCursor

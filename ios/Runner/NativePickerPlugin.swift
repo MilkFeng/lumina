@@ -3,7 +3,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 /// Stateful Flutter plugin that handles lazy, copy-on-demand file access for
-/// the `com.lumina.reader/native_picker` MethodChannel.
+/// the `com.lumina.ereader/native_picker` MethodChannel.
 ///
 /// Security-scoped resources are kept alive across MethodChannel calls so
 /// Dart can request individual files to be copied one at a time rather than
@@ -39,7 +39,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate {
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
-      name: "com.lumina.reader/native_picker",
+      name: "com.lumina.ereader/native_picker",
       binaryMessenger: registrar.messenger()
     )
     let instance = NativePickerPlugin()

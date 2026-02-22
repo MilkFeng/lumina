@@ -1,4 +1,4 @@
-package com.lumina.reader
+package com.lumina.ereader
 
 import android.content.Intent
 import android.net.Uri
@@ -25,7 +25,7 @@ import androidx.lifecycle.lifecycleScope
  * to avoid ANRs on the main thread.
  */
 class MainActivity : FlutterFragmentActivity() {
-    private val channelName = "com.lumina.reader/native_picker"
+    private val channelName = "com.lumina.ereader/native_picker"
     private var methodChannel: MethodChannel? = null
     private var pendingResult: MethodChannel.Result? = null
 

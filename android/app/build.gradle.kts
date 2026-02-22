@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.lumina.reader"
+    namespace = "com.lumina.ereader"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lumina.reader"
+        applicationId = "com.lumina.ereader"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
