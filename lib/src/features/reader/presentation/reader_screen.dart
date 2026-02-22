@@ -455,6 +455,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   totalSpineItems: _bookSession.spine.length,
                   currentPageInChapter: _currentPageInChapter,
                   totalPagesInChapter: _totalPagesInChapter,
+                  direction: _bookSession.book!.direction,
                   onBack: () {
                     _saveProgress();
                     context.pop();

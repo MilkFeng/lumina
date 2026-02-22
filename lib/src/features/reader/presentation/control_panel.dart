@@ -11,6 +11,7 @@ class ControlPanel extends StatefulWidget {
   final int totalSpineItems;
   final int currentPageInChapter;
   final int totalPagesInChapter;
+  final int direction;
   final VoidCallback onBack;
   final VoidCallback onOpenDrawer;
   final VoidCallback onPreviousPage;
@@ -28,6 +29,7 @@ class ControlPanel extends StatefulWidget {
     required this.totalSpineItems,
     required this.currentPageInChapter,
     required this.totalPagesInChapter,
+    required this.direction,
     required this.onBack,
     required this.onOpenDrawer,
     required this.onPreviousPage,
@@ -37,6 +39,8 @@ class ControlPanel extends StatefulWidget {
     required this.onPreviousChapter,
     required this.onNextChapter,
   });
+
+  bool get isVertical => direction == 1;
 
   @override
   State<ControlPanel> createState() => _ControlPanelState();
@@ -51,17 +55,58 @@ class _ControlPanelState extends State<ControlPanel> {
     super.dispose();
   }
 
-  bool get _shouldHandleOnLongPressLeft {
+  bool get _shouldHandleOnPreviousChapter {
     return widget.currentSpineItemIndex > 0 || widget.currentPageInChapter > 0;
   }
 
-  bool get _shouldHandleOnLongPressRight {
+  bool get _shouldHandleOnNextChapter {
     return widget.currentSpineItemIndex < widget.totalSpineItems - 1 ||
         (widget.currentSpineItemIndex == widget.totalSpineItems - 1 &&
             widget.currentPageInChapter < widget.totalPagesInChapter - 1);
   }
 
-  void _handleLongPressLeft() {
+  bool get _shouldHandleOnLongPressLeft {
+    if (widget.isVertical) {
+      return _shouldHandleOnNextChapter;
+    } else {
+      return _shouldHandleOnPreviousChapter;
+    }
+  }
+
+  bool get _shouldHandleOnLongPressRight {
+    if (widget.isVertical) {
+      return _shouldHandleOnPreviousChapter;
+    } else {
+      return _shouldHandleOnNextChapter;
+    }
+  }
+
+  bool get _shouldHandleOnPreviousPage {
+    return widget.currentSpineItemIndex > 0 || widget.currentPageInChapter > 0;
+  }
+
+  bool get _shouldHandleOnNextPage {
+    return widget.currentSpineItemIndex < widget.totalSpineItems - 1 ||
+        widget.currentPageInChapter < widget.totalPagesInChapter - 1;
+  }
+
+  bool get _shouldHandleOnPressLeft {
+    if (widget.isVertical) {
+      return _shouldHandleOnNextPage;
+    } else {
+      return _shouldHandleOnPreviousPage;
+    }
+  }
+
+  bool get _shouldHandleOnPressRight {
+    if (widget.isVertical) {
+      return _shouldHandleOnPreviousPage;
+    } else {
+      return _shouldHandleOnNextPage;
+    }
+  }
+
+  void _handlePreviousChapter() {
     if (widget.currentPageInChapter == 0 && widget.currentSpineItemIndex > 0) {
       HapticFeedback.selectionClick();
       widget.onPreviousChapter();
@@ -71,7 +116,7 @@ class _ControlPanelState extends State<ControlPanel> {
     }
   }
 
-  void _handleLongPressRight() {
+  void _handleNextChapter() {
     if (widget.currentSpineItemIndex < widget.totalSpineItems - 1) {
       HapticFeedback.selectionClick();
       widget.onNextChapter();
@@ -79,6 +124,38 @@ class _ControlPanelState extends State<ControlPanel> {
         widget.currentPageInChapter < widget.totalPagesInChapter - 1) {
       HapticFeedback.selectionClick();
       widget.onLastPage();
+    }
+  }
+
+  void _handleLongPressLeft() {
+    if (widget.isVertical) {
+      _handleNextChapter();
+    } else {
+      _handlePreviousChapter();
+    }
+  }
+
+  void _handleLongPressRight() {
+    if (widget.isVertical) {
+      _handlePreviousChapter();
+    } else {
+      _handleNextChapter();
+    }
+  }
+
+  void _handleTapLeft() {
+    if (widget.isVertical) {
+      widget.onNextPage();
+    } else {
+      widget.onPreviousPage();
+    }
+  }
+
+  void _handleTapRight() {
+    if (widget.isVertical) {
+      widget.onPreviousPage();
+    } else {
+      widget.onNextPage();
     }
   }
 
@@ -191,10 +268,8 @@ class _ControlPanelState extends State<ControlPanel> {
                         },
                         child: IconButton(
                           icon: const Icon(Icons.chevron_left_outlined),
-                          onPressed:
-                              (widget.currentSpineItemIndex > 0 ||
-                                  widget.currentPageInChapter > 0)
-                              ? widget.onPreviousPage
+                          onPressed: _shouldHandleOnPressLeft
+                              ? _handleTapLeft
                               : null,
                           onLongPress: null,
                         ),
@@ -235,12 +310,8 @@ class _ControlPanelState extends State<ControlPanel> {
                         },
                         child: IconButton(
                           icon: const Icon(Icons.chevron_right_outlined),
-                          onPressed:
-                              (widget.currentSpineItemIndex <
-                                      widget.totalSpineItems - 1 ||
-                                  widget.currentPageInChapter <
-                                      widget.totalPagesInChapter - 1)
-                              ? widget.onNextPage
+                          onPressed: _shouldHandleOnPressRight
+                              ? _handleTapRight
                               : null,
                           onLongPress: null,
                         ),

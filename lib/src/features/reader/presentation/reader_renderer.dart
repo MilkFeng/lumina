@@ -117,6 +117,10 @@ class ReaderRenderer extends StatefulWidget {
     required this.shouldShowWebView,
   });
 
+  bool get isVertical {
+    return bookSession.direction == 1;
+  }
+
   @override
   State<ReaderRenderer> createState() => _ReaderRendererState();
 }
@@ -237,29 +241,36 @@ class _ReaderRendererState extends State<ReaderRenderer>
       _screenshotData?.dispose();
       _screenshotData = screenshot;
 
+      Tween<Offset> tween;
+
       if (isNext) {
-        _slideAnimation =
-            Tween<Offset>(
-              begin: Offset.zero,
-              end: const Offset(-1.0, 0.0),
-            ).animate(
-              CurvedAnimation(
-                parent: _animController,
-                curve: Curves.easeInCubic,
-              ),
-            );
+        if (widget.isVertical) {
+          tween = Tween<Offset>(
+            begin: Offset.zero,
+            end: const Offset(1.0, 0.0),
+          );
+        } else {
+          tween = Tween<Offset>(
+            begin: Offset.zero,
+            end: const Offset(-1.0, 0.0),
+          );
+        }
       } else {
-        _slideAnimation =
-            Tween<Offset>(
-              begin: const Offset(-1.0, 0.0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(
-                parent: _animController,
-                curve: Curves.easeInCubic,
-              ),
-            );
+        if (widget.isVertical) {
+          tween = Tween<Offset>(
+            begin: const Offset(1.0, 0.0),
+            end: Offset.zero,
+          );
+        } else {
+          tween = Tween<Offset>(
+            begin: const Offset(-1.0, 0.0),
+            end: Offset.zero,
+          );
+        }
       }
+      _slideAnimation = tween.animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeInCubic),
+      );
       _animController.reset();
     });
 
@@ -326,13 +337,21 @@ class _ReaderRendererState extends State<ReaderRenderer>
         widget.onToggleControls();
         return;
       }
-      _performPageTurn(false);
+      if (widget.isVertical) {
+        _performPageTurn(true);
+      } else {
+        _performPageTurn(false);
+      }
     } else if (ratio > 0.8) {
       if (widget.showControls) {
         widget.onToggleControls();
         return;
       }
-      _performPageTurn(true);
+      if (widget.isVertical) {
+        _performPageTurn(false);
+      } else {
+        _performPageTurn(true);
+      }
     } else {
       widget.onToggleControls();
     }
@@ -342,9 +361,17 @@ class _ReaderRendererState extends State<ReaderRenderer>
     final velocity = details.primaryVelocity ?? 0;
 
     if (velocity < -200) {
-      _performPageTurn(true);
+      if (widget.isVertical) {
+        await _performPageTurn(false);
+      } else {
+        await _performPageTurn(true);
+      }
     } else if (velocity > 200) {
-      _performPageTurn(false);
+      if (widget.isVertical) {
+        await _performPageTurn(true);
+      } else {
+        await _performPageTurn(false);
+      }
     }
   }
 
