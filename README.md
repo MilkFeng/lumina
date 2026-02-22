@@ -147,12 +147,12 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Export library
 - [x] Test import/export functionality on iOS
 - [ ] Associate with epub format for direct opening of epub files
-- [ ] Cloud sync (WebDAV)
 - [ ] Bookshelf homepage can switch between "Compact, Comfortable" layout modes, and can set whether to show book reading progress bars
 - [ ] Edit book metadata (cover, title, author, etc.)
 - [ ] Reading settings (font size, line spacing, background color, etc.)
 - [ ] Footnote support
 - [ ] Vertical and RTL support
+- [ ] Cloud sync (WebDAV)
 - [ ] Search functionality
 - [ ] Annotation and bookmarking features
 - [ ] Improve consistency of page turn animations between iOS and Android, better page turn animations
