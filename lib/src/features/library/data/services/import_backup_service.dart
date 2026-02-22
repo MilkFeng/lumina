@@ -170,15 +170,13 @@ class ImportBackupService {
                 pathsForBook.coverPath!,
               );
 
-              // Extract original extension (e.g., .jpg, .png) or default to .jpg
-              final ext = p.extension(pathsForBook.coverPath.toString());
-              final finalExt = ext.isNotEmpty ? ext : '.jpg';
+              final coverFileName = pathsForBook.coverPath!.name;
 
               final destCover = File(
-                p.join(internalCoversDir.path, '$hash$finalExt'),
+                p.join(internalCoversDir.path, coverFileName),
               );
               await destCover.writeAsBytes(coverBytes);
-              restoredCoverPath = destCover.path;
+              restoredCoverPath = '$_kCoversDir/$coverFileName';
             } catch (e) {
               debugPrint(
                 '[ImportBackup] Failed to process cover for $hash: $e',
@@ -201,9 +199,10 @@ class ImportBackupService {
           }
 
           // -- D. Build ShelfBook and inject restored absolute paths --
+          final filePath = '$_kBooksDir/$hash.epub';
           final book = _mapToShelfBook(
             bookMap,
-            filePath: destEpub.path,
+            filePath: filePath,
             coverPath: restoredCoverPath,
           );
           shelfBooks.add(book);

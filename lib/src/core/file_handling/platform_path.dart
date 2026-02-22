@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+
 /// Sealed class representing a platform-specific file path
 ///
 /// This abstraction allows us to handle file access differently on Android
@@ -18,6 +21,8 @@ sealed class PlatformPath {
       return IOSFilePath(value);
     }
   }
+
+  String get name;
 }
 
 /// Android-specific path using Storage Access Framework (SAF) URI
@@ -41,6 +46,17 @@ final class AndroidUriPath extends PlatformPath {
 
   @override
   int get hashCode => uri.hashCode;
+
+  @override
+  String get name {
+    try {
+      final decodedUri = Uri.decodeFull(uri);
+      return p.basename(decodedUri);
+    } catch (e) {
+      debugPrint('Failed to decode URI: $uri, error: $e');
+      return uri; // Fallback to raw URI if decoding fails
+    }
+  }
 }
 
 /// iOS-specific path using traditional file system path
@@ -64,4 +80,7 @@ final class IOSFilePath extends PlatformPath {
 
   @override
   int get hashCode => path.hashCode;
+
+  @override
+  String get name => p.basename(path);
 }
