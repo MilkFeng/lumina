@@ -352,7 +352,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         .exportLibraryAsFolder(sharePositionOrigin: _exportTileRect());
 
     // Guard against widget being unmounted while awaiting.
-    if (!context.mounted) return;
+    if (!context.mounted) {
+      _isExporting = false;
+      return;
+    }
 
     switch (result) {
       case ExportSuccess(:final path):

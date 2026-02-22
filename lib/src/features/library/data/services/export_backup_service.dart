@@ -178,11 +178,11 @@ class ExportBackupService {
         return ExportSuccess(path: targetDir.path);
       } else {
         // iOS: share the entire folder via the native Share Sheet.
-        final result = await Share.shareXFiles(
-          [XFile(targetDir.path)],
-          subject: 'Lumina Backup',
-          sharePositionOrigin: sharePositionOrigin,
+        final shareParams = ShareParams(
+          files: [XFile(targetDir.path)],
+          title: 'Lumina Backup',
         );
+        final result = await SharePlus.instance.share(shareParams);
         debugPrint('[ExportBackup] iOS share result: $result');
         if (result.status == ShareResultStatus.success) {
           debugPrint('[ExportBackup] iOS export complete: ${targetDir.path}');

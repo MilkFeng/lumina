@@ -78,6 +78,8 @@ class BookDetailScreen extends ConsumerWidget {
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+                fontFamily: AppTheme.fontFamilyContent,
+                fontWeight: FontWeight.w400,
               ),
               textAlign: TextAlign.center,
             ),
