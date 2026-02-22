@@ -185,6 +185,7 @@ class EpubReader {
       config: {
         safeWidth: 0,
         safeHeight: 0,
+        direction: 0,
         padding: { top: 0, left: 0, right: 0, bottom: 0 },
         theme: {
           backgroundColor: '#FFFFFF',
@@ -212,6 +213,7 @@ class EpubReader {
 
     this.state.config.safeWidth = Math.floor(config.safeWidth ?? 0);
     this.state.config.safeHeight = Math.floor(config.safeHeight ?? 0);
+    this.state.config.direction = Number(config.direction) || 0;
     this.state.config.padding = {
       top: Number(padding.top ?? 0),
       left: Number(padding.left ?? 0),
@@ -243,6 +245,25 @@ class EpubReader {
     return this.state.config.safeWidth;
   }
 
+  _getHeight() {
+    return this.state.config.safeHeight;
+  }
+
+  _isVertical() {
+    return this.state.config.direction === 1;
+  }
+
+  _scrollTo(iframe, offset) {
+    if (!iframe || !iframe.contentWindow) return;
+
+    const scrollOptions = this._isVertical()
+        ? { top: offset, left: 0, behavior: 'auto' }
+        : { top: 0, left: offset, behavior: 'auto' };
+
+    const doc = iframe.contentDocument;
+    doc.body.scrollTo(scrollOptions);
+  }
+
   _waitForAllResources(doc) {
     const imagesReady = Promise.all(Array.from(doc.images).map((img) => {
       if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
@@ -262,16 +283,29 @@ class EpubReader {
   _calculatePageCount(iframe) {
     if (!iframe || !iframe.contentDocument) return 0;
 
-    const scrollWidth = iframe.contentDocument.body.scrollWidth;
-    const viewportWidth = this._getWidth();
-    const pageCount = Math.round((scrollWidth + 128) / (viewportWidth + 128));
-    return pageCount;
+    if (this._isVertical()) {
+      const scrollHeight = iframe.contentDocument.body.scrollHeight;
+      const viewportHeight = this._getHeight();
+      const pageCount = Math.round((scrollHeight + 128) / (viewportHeight + 128));
+      return pageCount;
+    } else {
+      const scrollWidth = iframe.contentDocument.body.scrollWidth;
+      const viewportWidth = this._getWidth();
+      const pageCount = Math.round((scrollWidth + 128) / (viewportWidth + 128));
+      return pageCount;
+    }
   }
 
-  _calculateScrollLeft(pageIndex) {
-    const viewportWidth = this._getWidth();
-    const scrollLeft = pageIndex * viewportWidth + (pageIndex * 128);
-    return scrollLeft;
+  _calculateScrollOffset(pageIndex) {
+    if (this._isVertical()) {
+      const viewportHeight = this._getHeight();
+      const scrollTop = pageIndex * viewportHeight + (pageIndex * 128);
+      return scrollTop;
+    } else {
+      const viewportWidth = this._getWidth();
+      const scrollLeft = pageIndex * viewportWidth + (pageIndex * 128);
+      return scrollLeft;
+    }
   }
 
   _convertToColumnBreak(value) {
@@ -337,11 +371,19 @@ class EpubReader {
     let lastPassedAnchor = 'top';
     const threshold = 50;
 
+    const isVertical = this._isVertical();
+
     for (let i = 0; i < anchors.length; i++) {
       const anchorId = anchors[i];
       if (anchorId === 'top') {
-        if (doc.body.scrollLeft < threshold) {
-          activeAnchors.push('top');
+        if (isVertical) {
+          if (doc.body.scrollTop < threshold) {
+            activeAnchors.push('top');
+          }
+        } else {
+          if (doc.body.scrollLeft < threshold) {
+            activeAnchors.push('top');
+          }
         }
         continue;
       }
@@ -351,12 +393,20 @@ class EpubReader {
       if (element) {
         const rect = element.getBoundingClientRect();
 
-        if (rect.left < threshold && rect.right > threshold) {
-          activeAnchors.push(anchorId);
-        }
-
-        if (rect.left < threshold) {
-          lastPassedAnchor = anchorId;
+        if (isVertical) {
+          if (rect.top < threshold && rect.bottom > threshold) {
+            activeAnchors.push(anchorId);
+          }
+          if (rect.top < threshold) {
+            lastPassedAnchor = anchorId;
+          }
+        } else {
+          if (rect.left < threshold && rect.right > threshold) {
+            activeAnchors.push(anchorId);
+          }
+          if (rect.left < threshold) {
+            lastPassedAnchor = anchorId;
+          }
         }
       }
     }
@@ -373,13 +423,21 @@ class EpubReader {
     const element = doc.getElementById(anchorId);
     if (!element) return 0;
 
-    const viewportWidth = this._getWidth();
-    const elementRect = element.getBoundingClientRect();
-    const bodyRect = doc.body.getBoundingClientRect();
-    const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width / 5);
-
-    const pageIndex = Math.round((absoluteLeft + 128) / (viewportWidth + 128));
-    return pageIndex;
+    if (this._isVertical()) {
+      const viewportHeight = this._getHeight();
+      const elementRect = element.getBoundingClientRect();
+      const bodyRect = doc.body.getBoundingClientRect();
+      const absoluteTop = elementRect.top + doc.body.scrollTop - bodyRect.top + (elementRect.height / 5);
+      const pageIndex = Math.round((absoluteTop + 128) / (viewportHeight + 128));
+      return pageIndex;
+    } else {
+      const viewportWidth = this._getWidth();
+      const elementRect = element.getBoundingClientRect();
+      const bodyRect = doc.body.getBoundingClientRect();
+      const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width / 5);
+      const pageIndex = Math.round((absoluteLeft + 128) / (viewportWidth + 128));
+      return pageIndex;
+    }
   }
 
   _extractTargetIdFromHref(href) {
@@ -507,8 +565,8 @@ class EpubReader {
         if (url && url.includes('#')) {
           const anchor = url.split('#')[1];
           pageIndex = this._calculatePageIndexOfAnchor(iframe, anchor);
-          const scrollLeft = this._calculateScrollLeft(pageIndex);
-          doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+          const offset = this._calculateScrollOffset(pageIndex);
+          this._scrollTo(iframe, offset);
         }
 
         if (iframe.id === 'frame-curr') {
@@ -560,8 +618,8 @@ class EpubReader {
     const iframe = this._frameElement('curr');
     if (!iframe || !iframe.contentWindow) return;
 
-    const scrollLeft = this._calculateScrollLeft(pageIndex);
-    iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+    const scrollOffset = this._calculateScrollOffset(pageIndex);
+    this._scrollTo(iframe, scrollOffset);
 
     requestAnimationFrame(() => {
       window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
@@ -573,8 +631,8 @@ class EpubReader {
     const iframe = this._frameElement(slot);
     if (!iframe || !iframe.contentWindow) return;
 
-    const scrollLeft = this._calculateScrollLeft(pageIndex);
-    iframe.contentDocument.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+    const scrollOffset = this._calculateScrollOffset(pageIndex);
+    this._scrollTo(iframe, scrollOffset);
 
     requestAnimationFrame(() => {
       if (iframe.id === 'frame-curr') {
@@ -595,10 +653,17 @@ class EpubReader {
     const iframe = this._frameElement('curr');
     if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return 0;
 
-    const scrollLeft = iframe.contentDocument.body.scrollLeft;
-    const viewportWidth = this._getWidth();
-    const pageIndex = Math.round((scrollLeft + 128) / (viewportWidth + 128));
-    return pageIndex;
+    if (this._isVertical()) {
+      const scrollTop = iframe.contentDocument.body.scrollTop || 0;
+      const viewportHeight = this._getHeight();
+      const pageIndex = Math.round((scrollTop + 128) / (viewportHeight + 128));
+      return pageIndex;
+    } else {
+      const scrollLeft = iframe.contentDocument.body.scrollLeft;
+      const viewportWidth = this._getWidth();
+      const pageIndex = Math.round((scrollLeft + 128) / (viewportWidth + 128));
+      return pageIndex;
+    }
   }
 
   _updatePageState(iframeId) {
@@ -699,6 +764,8 @@ class EpubReader {
     root.style.setProperty('--padding-right', this.state.config.padding.right + 'px');
     root.style.setProperty('--padding-bottom', this.state.config.padding.bottom + 'px');
     root.style.setProperty('--background-color', this.state.config.theme.backgroundColor);
+    root.style.setProperty('--reader-overflow-x', this._isVertical() ? 'hidden' : 'auto');
+    root.style.setProperty('--reader-overflow-y', this._isVertical() ? 'auto' : 'hidden');
     if (this.state.config.theme.defaultTextColor) {
       body.classList.add('override-color');
       root.style.setProperty('--default-text-color', this.state.config.theme.defaultTextColor);
@@ -749,10 +816,11 @@ class EpubReader {
       if (iframe && iframe.contentDocument) {
         const doc = iframe.contentDocument;
         const scrollLeft = doc.body.scrollLeft;
+        const scrollTop = doc.body.scrollTop;
         this._updateCSSVariables(doc, 'injected-variable-style');
         requestAnimationFrame(() => {
           setTimeout(() => {
-            doc.body.scrollTo({ left: scrollLeft, top: 0, behavior: 'auto' });
+            doc.body.scrollTo({ left: scrollLeft, top: scrollTop, behavior: 'auto' });
           }, 200);
         });
       }
@@ -821,6 +889,7 @@ String _generateVariableStyle(
   Color backgroundColor,
   Color? defaultTextColor,
   EdgeInsets padding,
+  int direction,
 ) {
   final safeWidth = viewWidth.floor();
   final safeHeight = viewHeight.floor();
@@ -835,6 +904,8 @@ String _generateVariableStyle(
       --padding-left: ${padding.left}px;
       --padding-right: ${padding.right}px;
       --padding-bottom: ${padding.bottom}px;
+      --reader-overflow-x: ${direction == 1 ? 'hidden' : 'auto'};
+      --reader-overflow-y: ${direction == 1 ? 'auto' : 'hidden'};
     }
   ''';
 }
@@ -846,6 +917,7 @@ String generateSkeletonHtml(
   Color backgroundColor,
   Color? defaultTextColor,
   EdgeInsets padding,
+  int direction,
 ) {
   final safeWidth = viewWidth.floor();
   final safeHeight = viewHeight.floor();
@@ -856,6 +928,7 @@ String generateSkeletonHtml(
     backgroundColor,
     defaultTextColor,
     padding,
+    direction,
   );
 
   final initialConfigJson = jsonEncode({
@@ -867,6 +940,7 @@ String generateSkeletonHtml(
       'right': padding.right,
       'bottom': padding.bottom,
     },
+    'direction': direction,
     'theme': {
       'backgroundColor': colorToHex(backgroundColor),
       'defaultTextColor': defaultTextColor != null
@@ -913,7 +987,6 @@ String generateSkeletonHtml(
 /// CSS to inject into each iframe for horizontal pagination
 
 const _paginationCss = '''
-/* Reset and base styles */
 html, body {
   margin: 0 !important;
   padding: 0 !important;
@@ -921,7 +994,6 @@ html, body {
   height: var(--safe-height) !important;
   background-color: transparent !important;
   touch-action: none !important;
-  overflow-y: hidden !important;
 
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -936,18 +1008,11 @@ html, body {
   text-align: justify;
 }
 
-/* CRITICAL: Disable all scrolling vertically - horizontal only */
-html {
-  overflow-y: hidden !important;
-  overflow-x: scroll !important;
+html, body {
+  overflow-x: var(--reader-overflow-x) !important;
+  overflow-y: var(--reader-overflow-y) !important;
 }
 
-body {
-  overflow-y: hidden !important;
-  overflow-x: scroll !important;
-}
-
-/* Horizontal columnization for pagination */
 body {
   column-width: var(--safe-width) !important;
   column-gap: 128px !important;
@@ -955,7 +1020,6 @@ body {
   height: var(--safe-height) !important;
 }
 
-/* Fit within viewport */
 body * {
   max-width: var(--safe-width) !important;
 
@@ -963,7 +1027,6 @@ body * {
   widows: 2;
 }
 
-/* Hide scrollbars completely */
 ::-webkit-scrollbar, 
 ::-webkit-scrollbar:horizontal, 
 ::-webkit-scrollbar:vertical {

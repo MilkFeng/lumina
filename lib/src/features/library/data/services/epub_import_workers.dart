@@ -39,6 +39,7 @@ class ParseResult {
   final List<SpineItem> spine;
   final List<TocItem> toc;
   final List<ManifestItem> manifestItems;
+  final int readDirection;
 
   ParseResult({
     required this.title,
@@ -53,6 +54,7 @@ class ParseResult {
     required this.spine,
     required this.toc,
     required this.manifestItems,
+    required this.readDirection,
   });
 }
 
@@ -105,6 +107,7 @@ class ImportWorkers {
         spine: data.spine,
         toc: data.toc,
         manifestItems: data.manifestItems,
+        readDirection: data.readDirection,
       );
 
       return right(result);

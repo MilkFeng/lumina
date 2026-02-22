@@ -6,7 +6,7 @@ part of 'bookshelf_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$bookshelfNotifierHash() => r'ebb6fb1cdc85eacd161e3967798e5ed66f6556ac';
+String _$bookshelfNotifierHash() => r'16c3fe4c814b8a1b5c3c28d6dc2829b5e3be5814';
 
 /// Notifier for managing bookshelf operations with dependency injection
 ///

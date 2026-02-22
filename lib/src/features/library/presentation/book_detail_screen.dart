@@ -129,18 +129,19 @@ class BookDetailScreen extends ConsumerWidget {
               textAlign: TextAlign.left,
             ),
 
-            const SizedBox(height: 12),
-
-            // Author
-            Text(
-              book.author,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.secondary,
-                fontFamily: AppTheme.fontFamilyContent,
-                fontWeight: FontWeight.w400,
+            // Authors
+            if (book.authors.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                book.authors.join(AppLocalizations.of(context)!.spliter),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.secondary,
+                  fontFamily: AppTheme.fontFamilyContent,
+                  fontWeight: FontWeight.w400,
+                ),
+                textAlign: TextAlign.left,
               ),
-              textAlign: TextAlign.left,
-            ),
+            ],
 
             // Description (if available)
             if (book.description != null && book.description!.isNotEmpty) ...[
@@ -212,6 +213,7 @@ class BookDetailScreen extends ConsumerWidget {
                   context,
                   AppLocalizations.of(context)!.epubVersion(book.epubVersion),
                 ),
+                _buildMetadataChip(context, directionToString(book.direction)),
               ],
             ),
 

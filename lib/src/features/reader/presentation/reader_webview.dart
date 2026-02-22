@@ -114,6 +114,7 @@ class ReaderWebView extends StatefulWidget {
   final VoidCallback? onWebViewCreated;
   final bool shouldShowWebView;
   final String? coverRelativePath;
+  final int direction;
 
   const ReaderWebView({
     super.key,
@@ -129,6 +130,7 @@ class ReaderWebView extends StatefulWidget {
     this.onWebViewCreated,
     required this.shouldShowWebView,
     this.coverRelativePath,
+    required this.direction,
   });
 
   @override
@@ -222,6 +224,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         widget.surfaceColor,
         widget.onSurfaceColor,
         widget.padding,
+        widget.direction,
       ),
       baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
     );

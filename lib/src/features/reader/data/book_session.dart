@@ -29,6 +29,7 @@ class BookSession {
   List<TocItem> get toc => _manifest?.toc ?? [];
   Set<String> get activeAnchors => _activeAnchors;
   bool get isLoaded => _book != null && _manifest != null;
+  int get direction => _book?.direction ?? 0;
 
   /// Load ShelfBook and BookManifest from database
   Future<bool> loadBook(WidgetRef ref) async {
