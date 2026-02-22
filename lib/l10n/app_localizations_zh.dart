@@ -491,4 +491,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String restoreFailed(String message) {
     return '备份恢复失败：$message';
   }
+
+  @override
+  String get restoring => '正在恢复…';
+
+  @override
+  String restoringProgress(int success, int failed, int remaining) {
+    return '$success 成功，$failed 失败，$remaining 剩余';
+  }
 }

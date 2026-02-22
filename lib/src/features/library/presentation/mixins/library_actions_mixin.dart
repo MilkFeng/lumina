@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/library/presentation/widgets/progress_dialog.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
@@ -14,9 +15,7 @@ import '../../data/services/import_backup_service.dart';
 import '../../data/services/import_backup_service_provider.dart';
 import '../../data/services/unified_import_service_provider.dart';
 import '../../domain/shelf_group.dart';
-import '../widgets/batch_import_dialog.dart';
 import '../widgets/group_selection_dialog.dart';
-import '../widgets/restore_backup_dialog.dart';
 
 /// Mixin that provides action methods for LibraryScreen.
 /// Handles imports, deletions, group management, and file operations.
@@ -54,11 +53,64 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
 
     if (!context.mounted) return;
 
+    final l10n = AppLocalizations.of(context)!;
+
+    int totalCount = 0;
+    int currentCount = 0;
+    int successCount = 0;
+    int failedCount = 0;
+    String currentFileName = '';
+
     await showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.5),
-      builder: (ctx) => BatchImportDialog(progressStream: stream),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogContext, setState) {
+            final hasProgress = totalCount > 0;
+            final isCompleted = currentCount == totalCount && totalCount > 0;
+            final progressValue = hasProgress
+                ? (isCompleted ? 1.0 : (currentCount - 1) / totalCount)
+                : null;
+
+            return ProgressDialog(
+              title: l10n.importing,
+              completeTitle: l10n.importCompleted,
+              progressMessage: l10n.importingProgress(
+                successCount,
+                failedCount,
+                totalCount - successCount - failedCount,
+              ),
+              processingMessage: l10n.progressing(currentFileName),
+              progressStream: stream,
+              progressValue: progressValue,
+
+              onProgress: (log) {
+                if (log is ImportProgress) {
+                  setState(() {
+                    totalCount = log.totalCount;
+                    currentCount = log.currentCount;
+                    currentFileName = log.currentFileName;
+
+                    if (log.status == ImportStatus.success) {
+                      successCount++;
+                    } else if (log.status == ImportStatus.failed) {
+                      failedCount++;
+                    }
+                  });
+                }
+              },
+              onError: (error, stackTrace) {
+                ToastService.showError(l10n.importFailed(error.toString()));
+              },
+              onCompleted: () {
+                ToastService.showSuccess(l10n.importCompleted);
+              },
+            );
+          },
+        );
+      },
     );
 
     // Clean all temporary files after import is done
@@ -334,38 +386,110 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
   /// Uses [UnifiedImportService.pickBackupDirectory] to select the folder so
   /// that all platform-specific picker logic stays in one place.
   Future<void> handleRestoreBackup(BuildContext context, WidgetRef ref) async {
-    // 1. Ask the user to select the backup directory.
-    final selectedPath = await ref
-        .read(unifiedImportServiceProvider)
-        .pickBackupFolder();
+    isSelectingFiles = true;
+    try {
+      // 1. Ask the user to select the backup directory.
+      final selectedPath = await ref
+          .read(unifiedImportServiceProvider)
+          .pickBackupFolder();
 
-    // User cancelled — exit silently.
-    if (selectedPath == null) return;
+      // User cancelled — exit silently.
+      if (selectedPath == null) {
+        isSelectingFiles = false;
+        return;
+      }
 
-    if (!context.mounted) return;
+      if (!context.mounted) {
+        isSelectingFiles = false;
+        return;
+      }
 
-    // 2. Start the restore immediately so the future is already running when
-    //    the dialog is displayed.
-    final restoreFuture = ref
-        .read(importBackupServiceProvider)
-        .importLibraryFromFolder(selectedPath);
+      // 2. Start the stream before opening the dialog so that no work is
+      //    duplicated on dialog rebuilds.
+      final progressStream = ref
+          .read(importBackupServiceProvider)
+          .importLibraryFromFolder(selectedPath);
 
-    // 3. Show the restore dialog; it tracks progress and shows the result.
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: RestoreBackupDialog(restoreFuture: restoreFuture),
-      ),
-    );
+      // 3. Show the restore dialog; it subscribes to the stream and returns
+      //    the final ImportResult when the user closes it.
+      final l10n = AppLocalizations.of(context)!;
 
-    if (!context.mounted) return;
+      int totalCount = 0;
+      int currentCount = 0;
+      int successCount = 0;
+      int failedCount = 0;
+      String currentFileName = '';
 
-    // 4. Refresh the library after a successful restore.
-    final result = await restoreFuture;
-    if (result is ImportSuccess) {
-      ref.read(bookshelfNotifierProvider.notifier).refresh();
+      final result = await showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Theme.of(
+          context,
+        ).colorScheme.scrim.withValues(alpha: 0.5),
+        builder: (ctx) {
+          return StatefulBuilder(
+            builder: (dialogContext, setState) {
+              final hasProgress = totalCount > 0;
+              final isCompleted = currentCount == totalCount && totalCount > 0;
+              final progressValue = hasProgress
+                  ? (isCompleted ? 1.0 : (currentCount - 1) / totalCount)
+                  : null;
+
+              return ProgressDialog(
+                title: l10n.restoring,
+                completeTitle: l10n.restoreCompleted,
+                progressMessage: l10n.restoringProgress(
+                  successCount,
+                  failedCount,
+                  totalCount - successCount - failedCount,
+                ),
+                processingMessage: l10n.progressing(currentFileName),
+                progressStream: progressStream,
+                progressValue: progressValue,
+
+                onProgress: (log) {
+                  if (log is BackupImportProgress) {
+                    setState(() {
+                      totalCount = log.total;
+                      currentCount = log.current;
+                      currentFileName = log.currentFileName;
+
+                      if (log.result != null) {
+                        if (log.result is ImportSuccess) {
+                          successCount++;
+                        } else if (log.result is ImportFailure) {
+                          failedCount++;
+                        }
+                      }
+                    });
+                  }
+                },
+                onError: (error, stackTrace) {
+                  ToastService.showError(l10n.restoreFailed(error.toString()));
+                },
+                onCompleted: () {
+                  ToastService.showSuccess(l10n.restoreCompleted);
+                },
+              );
+            },
+          );
+        },
+      );
+
+      if (!context.mounted) return;
+
+      // 4. Refresh the library shelf after a successful restore.
+      if (result is ImportSuccess) {
+        ref.read(bookshelfNotifierProvider.notifier).refresh();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.restoreFailed(e.toString()),
+        );
+      }
+    } finally {
+      isSelectingFiles = false;
     }
   }
 

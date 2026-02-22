@@ -860,5 +860,26 @@
         "type": "String"
       }
     }
+  },
+
+  "restoring": "正在恢复…",
+  "@restoring": {
+    "description": "正在恢复时显示的标题"
+  },
+
+  "restoringProgress": "{success} 成功，{failed} 失败，{remaining} 剩余",
+  "@restoringProgress": {
+    "description": "恢复进度消息，包含成功、失败和未处理的书籍数量",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
   }
 }

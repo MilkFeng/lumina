@@ -850,5 +850,26 @@
         "type": "String"
       }
     }
+  },
+
+  "restoring": "Restoring...",
+  "@restoring": {
+    "description": "Restoring progress message"
+  },
+
+  "restoringProgress": "{success} success, {failed} failed, {remaining} remaining",
+  "@restoringProgress": {
+    "description": "Restoring progress details",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
   }
 }

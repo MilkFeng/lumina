@@ -961,6 +961,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to restore backup: {message}'**
   String restoreFailed(String message);
+
+  /// Restoring progress message
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring...'**
+  String get restoring;
+
+  /// Restoring progress details
+  ///
+  /// In en, this message translates to:
+  /// **'{success} success, {failed} failed, {remaining} remaining'**
+  String restoringProgress(int success, int failed, int remaining);
 }
 
 class _AppLocalizationsDelegate

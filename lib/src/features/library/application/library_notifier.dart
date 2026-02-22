@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/features/library/application/progress_log.dart';
 import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
@@ -12,7 +13,7 @@ part 'library_notifier.g.dart';
 
 enum ImportStatus { processing, success, failed }
 
-class ImportProgress {
+class ImportProgress extends ProgressLog {
   final int totalCount;
   final int currentCount;
   final String currentFileName;
@@ -27,7 +28,18 @@ class ImportProgress {
     required this.status,
     this.errorMessage,
     this.book,
-  });
+  }) : super(
+         status == ImportStatus.failed
+             ? errorMessage ?? 'Unknown error'
+             : (status == ImportStatus.success
+                   ? 'Imported: ${book?.title}'
+                   : 'Processing: $currentFileName'),
+         status == ImportStatus.failed
+             ? ProgressLogType.error
+             : (status == ImportStatus.success
+                   ? ProgressLogType.success
+                   : ProgressLogType.info),
+       );
 }
 
 /// State for library operations (updated for ShelfBook)
@@ -95,9 +107,11 @@ class LibraryNotifier extends _$LibraryNotifier {
   }
 
   /// Import a new book from file
-  Stream<ImportProgress> importMultipleBooks(
-    List<ImportableEpub> files,
-  ) async* {
+  Stream<ProgressLog> importMultipleBooks(List<ImportableEpub> files) async* {
+    yield ProgressLog(
+      'Starting import of ${files.length} books',
+      ProgressLogType.info,
+    );
     final totalCount = files.length;
 
     if (totalCount == 0) return;
@@ -107,6 +121,10 @@ class LibraryNotifier extends _$LibraryNotifier {
 
     for (final file in files) {
       currentCount++;
+      yield ProgressLog(
+        'Processing file ${file.originalName} ($currentCount of $totalCount)',
+        ProgressLogType.info,
+      );
       final fileName = file.originalName;
 
       // 1. Notify UI that we're starting to process this file
@@ -140,6 +158,10 @@ class LibraryNotifier extends _$LibraryNotifier {
     }
 
     // 4. After all files are processed, refresh the book list
+    yield ProgressLog(
+      'Import completed. Refreshing library...',
+      ProgressLogType.success,
+    );
     await refresh();
   }
 

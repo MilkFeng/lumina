@@ -500,4 +500,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String restoreFailed(String message) {
     return 'Failed to restore backup: $message';
   }
+
+  @override
+  String get restoring => 'Restoring...';
+
+  @override
+  String restoringProgress(int success, int failed, int remaining) {
+    return '$success success, $failed failed, $remaining remaining';
+  }
 }
