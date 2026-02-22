@@ -822,9 +822,9 @@
     }
   },
 
-  "backupReadyToShare": "备份已准备好分享",
-  "@backupReadyToShare": {
-    "description": "备份准备好分享消息"
+  "backupShared": "备份已通过分享功能导出",
+  "@backupShared": {
+    "description": "备份分享成功消息"
   },
 
   "exportFailed": "备份失败：{message}",
