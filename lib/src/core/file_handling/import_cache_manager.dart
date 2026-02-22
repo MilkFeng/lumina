@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
 import 'package:saf_stream/saf_stream.dart';
 import 'platform_path.dart';
 import 'importable_epub.dart';
@@ -39,8 +39,8 @@ class ImportCacheManager {
       return _cacheDirectory!;
     }
 
-    final docDir = await getApplicationDocumentsDirectory();
-    final cacheDir = Directory(path.join(docDir.path, _importCacheDir));
+    final docDir = AppStorage.tempPath;
+    final cacheDir = Directory(path.join(docDir, _importCacheDir));
 
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);
