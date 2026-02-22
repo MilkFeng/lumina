@@ -46,7 +46,7 @@ class StyleBottomSheet extends StatelessWidget {
             ),
 
             // ── View Mode ──────────────────────────────────────────────────
-            _SectionTitle(label: 'View Mode'),
+            _SectionTitle(label: l10n.viewMode),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,
@@ -54,13 +54,13 @@ class StyleBottomSheet extends StatelessWidget {
               children: [
                 _OptionChip(
                   icon: Icons.grid_on_outlined,
-                  label: 'Compact',
+                  label: l10n.viewModeCompact,
                   isSelected: currentViewMode == ViewMode.compact,
                   onTap: () => onViewModeSelected(ViewMode.compact),
                 ),
                 _OptionChip(
                   icon: Icons.grid_view_outlined,
-                  label: 'Relaxed',
+                  label: l10n.viewModeRelaxed,
                   isSelected: currentViewMode == ViewMode.relaxed,
                   onTap: () => onViewModeSelected(ViewMode.relaxed),
                 ),

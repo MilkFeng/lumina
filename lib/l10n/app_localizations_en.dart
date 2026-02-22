@@ -538,4 +538,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String restoringProgress(int success, int failed, int remaining) {
     return '$success success, $failed failed, $remaining remaining';
   }
+
+  @override
+  String get viewMode => 'View Mode';
+
+  @override
+  String get viewModeCompact => 'Compact';
+
+  @override
+  String get viewModeRelaxed => 'Relaxed';
 }

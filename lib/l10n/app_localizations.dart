@@ -1015,6 +1015,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{success} success, {failed} failed, {remaining} remaining'**
   String restoringProgress(int success, int failed, int remaining);
+
+  /// View mode section title in the style bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'View Mode'**
+  String get viewMode;
+
+  /// Compact view mode option
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get viewModeCompact;
+
+  /// Relaxed view mode option
+  ///
+  /// In en, this message translates to:
+  /// **'Relaxed'**
+  String get viewModeRelaxed;
 }
 
 class _AppLocalizationsDelegate
