@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'platform_path.dart';
 import 'importable_epub.dart';
@@ -81,6 +82,23 @@ class UnifiedImportService {
   /// Throws exceptions on I/O errors or invalid files.
   Future<ImportableEpub> processEpub(PlatformPath path) async {
     return await _cacheManager.createCacheAndHash(path);
+  }
+
+  /// Pick a single directory whose path will be used as-is (e.g., for backup restore).
+  ///
+  /// Uses [FilePicker.platform.getDirectoryPath] on both platforms.
+  /// Returns `null` if the user cancels.
+  Future<String?> pickBackupDirectory() async {
+    try {
+      return await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Select Lumina Backup Folder',
+        lockParentWindow: true,
+      );
+    } on PlatformException catch (e) {
+      // ignore: avoid_print
+      print('Directory picker error: ${e.message}');
+      return null;
+    }
   }
 
   /// Clean up a cached file

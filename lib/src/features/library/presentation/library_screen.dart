@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
 import 'mixins/library_actions_mixin.dart';
@@ -181,6 +182,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           child: const Icon(Icons.file_present_outlined),
           label: AppLocalizations.of(context)!.importFiles,
           onTap: () => _importFiles(context, ref),
+        ),
+        SpeedDialChild(
+          child: const Icon(Icons.settings_backup_restore_outlined),
+          label: 'Restore Backup',
+          onTap: () => handleRestoreBackup(context, ref),
         ),
       ],
     );

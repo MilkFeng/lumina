@@ -10,6 +10,8 @@ import '../../application/bookshelf_notifier.dart';
 import '../../application/library_notifier.dart';
 import '../../data/services/export_backup_service.dart';
 import '../../data/services/export_backup_service_provider.dart';
+import '../../data/services/import_backup_service.dart';
+import '../../data/services/import_backup_service_provider.dart';
 import '../../data/services/unified_import_service_provider.dart';
 import '../../domain/shelf_group.dart';
 import '../widgets/batch_import_dialog.dart';
@@ -323,6 +325,59 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
         ToastService.showError(
           AppLocalizations.of(context)!.exportFailed(message),
         );
+    }
+  }
+
+  /// Triggers a full library backup restore.
+  ///
+  /// Uses [UnifiedImportService.pickBackupDirectory] to select the folder so
+  /// that all platform-specific picker logic stays in one place.
+  Future<void> handleRestoreBackup(BuildContext context, WidgetRef ref) async {
+    // 1. Ask the user to select the backup directory.
+    final selectedPath = await ref
+        .read(unifiedImportServiceProvider)
+        .pickBackupDirectory();
+
+    // User cancelled — exit silently.
+    if (selectedPath == null) return;
+
+    if (!context.mounted) return;
+
+    // 2. Show a non-dismissible progress dialog while the restore runs.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: Text('Restoring backup...'),
+          content: SizedBox(
+            height: 80,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+        ),
+      ),
+    );
+
+    // 3. Run the restore.
+    final result = await ref
+        .read(importBackupServiceProvider)
+        .importLibraryFromFolder(selectedPath);
+
+    if (!context.mounted) return;
+
+    // 4. Dismiss the loading dialog.
+    Navigator.of(context, rootNavigator: true).pop();
+
+    if (!context.mounted) return;
+
+    // 5. Show feedback and refresh the library on success.
+    switch (result) {
+      case ImportSuccess(:final importedBooks):
+        ref.read(bookshelfNotifierProvider.notifier).refresh();
+        ToastService.showSuccess('Successfully restored $importedBooks books.');
+      case ImportFailure(:final message):
+        ToastService.showError('Failed to restore backup: $message');
     }
   }
 
