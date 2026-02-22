@@ -371,6 +371,11 @@
       }
     }
   },
+
+  "details": "Details",
+  "@details": {
+    "description": "Details button label"
+  },
   
   "syncCompleted": "Sync completed",
   "@syncCompleted": {
@@ -800,6 +805,11 @@
         "type": "String"
       }
     }
+  },
+
+  "progressedAll": "All Processed",
+  "@progressedAll": {
+    "description": "All files processed message"
   },
 
   "restoreFromBackup": "Restore from Backup",

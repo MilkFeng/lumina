@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'Importing \"{fileName}\"'**
   String importingFile(String fileName);
 
+  /// Details button label
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
   /// Sync completed message
   ///
   /// In en, this message translates to:
@@ -913,6 +919,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Processing {fileName}'**
   String progressing(String fileName);
+
+  /// All files processed message
+  ///
+  /// In en, this message translates to:
+  /// **'All Processed'**
+  String get progressedAll;
 
   /// Restore from backup option label
   ///

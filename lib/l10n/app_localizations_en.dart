@@ -222,6 +222,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get details => 'Details';
+
+  @override
   String get syncCompleted => 'Sync completed';
 
   @override
@@ -466,6 +469,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String progressing(String fileName) {
     return 'Processing $fileName';
   }
+
+  @override
+  String get progressedAll => 'All Processed';
 
   @override
   String get restoreFromBackup => 'Restore from Backup';

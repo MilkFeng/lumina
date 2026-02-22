@@ -222,6 +222,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get details => '详情';
+
+  @override
   String get syncCompleted => '同步完成';
 
   @override
@@ -463,6 +466,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String progressing(String fileName) {
     return '正在处理：$fileName';
   }
+
+  @override
+  String get progressedAll => '全部处理完成';
 
   @override
   String get restoreFromBackup => '从备份恢复';

@@ -381,6 +381,11 @@
       }
     }
   },
+
+  "details": "详情",
+  "@details": {
+    "description": "详情按钮标签"
+  },
   
   "syncCompleted": "同步完成",
   "@syncCompleted": {
@@ -810,6 +815,11 @@
         "type": "String"
       }
     }
+  },
+
+  "progressedAll": "全部处理完成",
+  "@progressedAll": {
+    "description": "全部处理完成消息"
   },
 
   "restoreFromBackup": "从备份恢复",

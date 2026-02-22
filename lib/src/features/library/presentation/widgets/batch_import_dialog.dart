@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 
 import '../../application/library_notifier.dart';
@@ -25,6 +26,7 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
   int _successCount = 0;
   int _failedCount = 0;
   bool _isCompleted = false;
+  bool _showDetails = false;
 
   final List<_ImportResultItem> _results = [];
 
@@ -45,12 +47,16 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
             ),
           );
         });
+        ToastService.showError(
+          AppLocalizations.of(context)!.importFailed(error.toString()),
+        );
       },
       onDone: () {
         if (!mounted) return;
         setState(() {
           _isCompleted = true;
         });
+        ToastService.showSuccess(AppLocalizations.of(context)!.importCompleted);
       },
       cancelOnError: false,
     );
@@ -136,64 +142,109 @@ class _BatchImportDialogState extends State<BatchImportDialog> {
                 style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 4),
-              Text(
-                AppLocalizations.of(context)!.progressing(_currentFileName),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.8,
-                  ),
-                  fontFamily: AppTheme.fontFamilyContent,
-                ),
-              ),
-            ],
-            if (_results.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 220),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: _results.length,
-                  reverse: true,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final item = _results[_results.length - 1 - index];
-                    final isSuccess = item.isSuccess;
-                    final isProcessing = item.isProcessing;
-
-                    final color = isProcessing
-                        ? theme.colorScheme.secondary.withValues(alpha: 0.8)
-                        : isSuccess
-                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                        : theme.colorScheme.error.withValues(alpha: 0.8);
-                    String message = isProcessing
-                        ? l10n.importingFile(item.fileName)
-                        : isSuccess
-                        ? l10n.successfullyImported(
-                            item.book?.title ?? item.fileName,
-                          )
-                        : l10n.importFailed(
-                            item.errorMessage ?? 'Unknown error',
-                          );
-
-                    final indicator = isProcessing ? '○' : '●';
-                    final fileName = item.fileName.isNotEmpty
-                        ? item.fileName
-                        : '';
-                    message = '$indicator $fileName\n$message';
-
-                    return Text(
-                      message,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      _isCompleted
+                          ? l10n.progressedAll
+                          : l10n.progressing(_currentFileName),
+                      maxLines: 2,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.8,
+                        ),
                         fontFamily: AppTheme.fontFamilyContent,
-                        color: color,
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+
+                  SizedBox(width: 12),
+
+                  if (_results.isNotEmpty)
+                    GestureDetector(
+                      onTap: () => setState(() => _showDetails = !_showDetails),
+                      child: Text(
+                        l10n.details,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontFamily: AppTheme.fontFamilyContent,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
+
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300), // 动画时长
+              curve: Curves.easeInOutCubic, // 动画曲线，让展开收起更丝滑
+              alignment: Alignment.topCenter, // 从上往下展开
+              child: (_results.isNotEmpty && _showDetails)
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 12),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 220),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: _results.length,
+                            reverse: true,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final item =
+                                  _results[_results.length - 1 - index];
+                              final isSuccess = item.isSuccess;
+                              final isProcessing = item.isProcessing;
+
+                              final color = isProcessing
+                                  ? theme.colorScheme.secondary.withValues(
+                                      alpha: 0.8,
+                                    )
+                                  : isSuccess
+                                  ? theme.colorScheme.primary.withValues(
+                                      alpha: 0.8,
+                                    )
+                                  : theme.colorScheme.error.withValues(
+                                      alpha: 0.8,
+                                    );
+                              String message = isProcessing
+                                  ? l10n.importingFile(item.fileName)
+                                  : isSuccess
+                                  ? l10n.successfullyImported(
+                                      item.book?.title ?? item.fileName,
+                                    )
+                                  : l10n.importFailed(
+                                      item.errorMessage ?? 'Unknown error',
+                                    );
+
+                              final indicator = isProcessing ? '○' : '●';
+                              final fileName = item.fileName.isNotEmpty
+                                  ? item.fileName
+                                  : '';
+                              message = '$indicator $fileName\n$message';
+
+                              return Text(
+                                message,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontFamily: AppTheme.fontFamilyContent,
+                                  color: color,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox(width: double.infinity, height: 0),
+            ),
           ],
         ),
       ),
