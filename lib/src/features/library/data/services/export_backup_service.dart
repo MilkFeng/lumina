@@ -71,8 +71,13 @@ class ExportBackupService {
   /// with null on iOS (the Share Sheet handles delivery).
   /// Returns [ExportFailure] on any unrecoverable error.
   Future<ExportResult> exportLibraryAsFolder() async {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final backupName = 'lumina-backup-$timestamp';
+    String backupName = '';
+    if (Platform.isAndroid) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      backupName = 'lumina-backup-$timestamp';
+    } else {
+      backupName = 'lumina-backup';
+    }
     Directory? targetDir;
 
     try {
@@ -85,14 +90,10 @@ class ExportBackupService {
         targetDir = Directory(
           '/storage/emulated/0/Download/Lumina/$backupName',
         );
-      } else if (Platform.isIOS) {
+      } else {
         // iOS: use the system temporary directory.  Files here survive long
         // enough to be picked up by the Share Sheet, and we delete them in
         // `finally` to avoid wasting space.
-        final tempDir = await getTemporaryDirectory();
-        targetDir = Directory(p.join(tempDir.path, backupName));
-      } else {
-        // Fallback for other platforms (desktop / web) — use temp dir.
         final tempDir = await getTemporaryDirectory();
         targetDir = Directory(p.join(tempDir.path, backupName));
       }
@@ -154,9 +155,7 @@ class ExportBackupService {
         // -- Serialise BookManifest to JSON ------------------------------------
         final manifest = await _manifestRepo.getManifestByHash(hash);
         if (manifest != null) {
-          final manifestJson = const JsonEncoder.withIndent(
-            '  ',
-          ).convert(_manifestToMap(manifest));
+          final manifestJson = jsonEncode(_manifestToMap(manifest));
           await File(
             p.join(manifestsOutDir.path, '$hash.json'),
           ).writeAsString(manifestJson);
@@ -168,11 +167,8 @@ class ExportBackupService {
       // -----------------------------------------------------------------------
       // 5. Write shelf.json (ShelfBooks + ShelfGroups).
       // -----------------------------------------------------------------------
-      final shelfMap = {
-        'books': books.map(_shelfBookToMap).toList(),
-        'groups': groups.map(_shelfGroupToMap).toList(),
-      };
-      final shelfJson = const JsonEncoder.withIndent('  ').convert(shelfMap);
+      final shelfMap = _shelfToMap(books, groups);
+      final shelfJson = jsonEncode(shelfMap);
       await File(p.join(targetDir.path, _kShelfFile)).writeAsString(shelfJson);
 
       // -----------------------------------------------------------------------
@@ -213,9 +209,35 @@ class ExportBackupService {
     }
   }
 
+  Future<void> clearCache() async {
+    if (Platform.isIOS) {
+      final backupName = 'lumina-backup';
+      final tempDir = await getTemporaryDirectory();
+      final targetDir = Directory(p.join(tempDir.path, backupName));
+      try {
+        if (targetDir.existsSync()) {
+          await targetDir.delete(recursive: true);
+          debugPrint('[ExportBackup] Cache cleared successfully.');
+        }
+      } catch (e) {
+        debugPrint('[ExportBackup] Cache clearing failed: $e');
+      }
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // JSON Mapping helpers
   // ---------------------------------------------------------------------------
+
+  /// Serialises the entire shelf (books + groups) to a JSON-compatible map.
+  Map<String, dynamic> _shelfToMap(
+    List<ShelfBook> books,
+    List<ShelfGroup> groups,
+  ) => {
+    'version': 1, // for future-proofing the format
+    'books': books.map(_shelfBookToMap).toList(),
+    'groups': groups.map(_shelfGroupToMap).toList(),
+  };
 
   /// Serialises [ShelfBook] to a JSON-compatible map.
   ///
@@ -258,6 +280,7 @@ class ExportBackupService {
   ///
   /// Excludes [id] — the [fileHash] is the canonical identifier.
   Map<String, dynamic> _manifestToMap(BookManifest m) => {
+    'version': 1, // for future-proofing the format
     'fileHash': m.fileHash,
     'opfRootPath': m.opfRootPath,
     'epubVersion': m.epubVersion,
