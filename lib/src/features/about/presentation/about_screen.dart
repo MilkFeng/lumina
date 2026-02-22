@@ -23,6 +23,7 @@ class AboutScreen extends ConsumerStatefulWidget {
 class _AboutScreenState extends ConsumerState<AboutScreen> {
   String _version = '';
   bool _isCleaning = false;
+  bool _isExporting = false;
 
   @override
   void initState() {
@@ -59,17 +60,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           _buildInfoSection(
             context,
             title: l10n.library,
-            children: [
-              _buildInfoTile(
-                context,
-                icon: Icons.archive_outlined,
-                title: l10n.backupLibrary,
-                subtitle: l10n.backupLibraryDescription,
-                onTap: () {
-                  _handleExportBackup(context, ref);
-                },
-              ),
-            ],
+            children: [_buildBackupTile(context, l10n)],
           ),
 
           const SizedBox(height: 24),
@@ -280,6 +271,35 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     );
   }
 
+  Widget _buildBackupTile(BuildContext context, AppLocalizations l10n) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+      leading: Icon(
+        Icons.archive_outlined,
+        color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+      ),
+      title: Text(
+        l10n.backupLibrary,
+        style: AppTheme.contentTextStyle.copyWith(fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        l10n.backupLibraryDescription,
+        style: AppTheme.contentTextStyle.copyWith(
+          fontSize: 13,
+          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+        ),
+      ),
+      trailing: _isExporting
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : null,
+      onTap: _isExporting ? null : () => _handleExportBackup(context, ref),
+    );
+  }
+
   Future<void> _cleanCache(BuildContext context, AppLocalizations l10n) async {
     setState(() => _isCleaning = true);
 
@@ -313,28 +333,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   ///   - iOS / other success → Share Sheet was presented by the service
   ///   - Failure → error message in red
   Future<void> _handleExportBackup(BuildContext context, WidgetRef ref) async {
-    // Show a non-dismissible progress dialog for the duration of the export.
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const PopScope(
-        canPop: false,
-        child: Positioned.fill(
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ),
-    );
+    setState(() => _isExporting = true);
 
     final result = await ref
         .read(exportBackupServiceProvider)
         .exportLibraryAsFolder();
 
     // Guard against widget being unmounted while awaiting.
-    if (!context.mounted) return;
-
-    // Dismiss the loading dialog.
-    Navigator.of(context, rootNavigator: true).pop();
-
     if (!context.mounted) return;
 
     switch (result) {
@@ -348,5 +353,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           AppLocalizations.of(context)!.exportFailed(message),
         );
     }
+
+    setState(() => _isExporting = false);
   }
 }
