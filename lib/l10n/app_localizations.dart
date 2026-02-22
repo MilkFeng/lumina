@@ -968,6 +968,18 @@ abstract class AppLocalizations {
   /// **'Backup Library'**
   String get backupLibrary;
 
+  /// Library section title
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get library;
+
+  /// Backup library feature description
+  ///
+  /// In en, this message translates to:
+  /// **'Export your library data as a folder, including book files and database backup'**
+  String get backupLibraryDescription;
+
   /// Title shown while restore is in progress
   ///
   /// In en, this message translates to:

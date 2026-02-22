@@ -494,6 +494,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupLibrary => '备份书库';
 
   @override
+  String get library => '书库';
+
+  @override
+  String get backupLibraryDescription => '将书库数据导出为一个文件夹，包括书籍文件和数据库备份';
+
+  @override
   String get restoringBackup => '正在恢复备份…';
 
   @override

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
 import 'platform_path.dart';
@@ -70,7 +71,7 @@ class UnifiedImportService {
       }
     } catch (e) {
       // Log error but don't throw to maintain graceful degradation
-      debugPrint('Error picking files: $e');
+      ToastService.showError('Error picking files: $e');
       return [];
     }
   }
@@ -93,7 +94,7 @@ class UnifiedImportService {
       }
     } catch (e) {
       // Log error but don't throw to maintain graceful degradation
-      debugPrint('Error picking folder: $e');
+      ToastService.showError('Error picking folder: $e');
       return [];
     }
   }
@@ -158,7 +159,7 @@ class UnifiedImportService {
         throw UnsupportedError('Platform not supported');
       }
     } on PlatformException catch (e) {
-      debugPrint('Backup folder picker error: ${e.message}');
+      ToastService.showError('Backup folder picker error: ${e.message}');
       return null;
     }
   }
@@ -263,7 +264,7 @@ class UnifiedImportService {
       }
 
       if (shelfFile == null) {
-        debugPrint('Backup validation failed: shelf.json is missing.');
+        ToastService.showError('Invalid backup: shelf.json not found');
         return null;
       }
 
@@ -297,10 +298,11 @@ class UnifiedImportService {
         bookPaths: bookPaths,
       );
     } on PlatformException catch (e) {
-      debugPrint('Android backup folder picker error: ${e.message}');
+      ToastService.showError('Failed to pick backup folder: ${e.message}');
       return null;
     } catch (e, st) {
-      debugPrint('Unexpected error parsing URIs: $e\n$st');
+      ToastService.showError('Unexpected error picking backup folder: $e');
+      debugPrint('Unexpected error picking backup folder: $e\n$st');
       return null;
     }
   }

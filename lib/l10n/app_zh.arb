@@ -857,9 +857,19 @@
     "description": "从备份恢复选项标签"
   },
 
+  "library": "书库",
+  "@library": {
+    "description": "书库部分标题"
+  },
+
   "backupLibrary": "备份书库",
   "@backupLibrary": {
     "description": "备份书库选项标签"
+  },
+
+  "backupLibraryDescription": "将书库数据导出为一个文件夹，包括书籍文件和数据库备份",
+  "@backupLibraryDescription": {
+    "description": "备份书库功能描述"
   },
 
   "restoringBackup": "正在恢复备份…",

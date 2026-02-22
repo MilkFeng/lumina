@@ -229,7 +229,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     .clearSelection(),
                 onEditGroup: (group, l10n) =>
                     showEditGroupDialog(context, ref, group, l10n),
-                onExportPressed: () => handleExportBackup(context, ref),
               ),
             ];
           },

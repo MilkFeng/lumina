@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
+import 'package:lumina/src/features/library/data/services/export_backup_service_provider.dart';
 import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -51,6 +55,34 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
           const SizedBox(height: 48),
 
+          // Library Section
+          _buildInfoSection(
+            context,
+            title: l10n.library,
+            children: [
+              _buildInfoTile(
+                context,
+                icon: Icons.archive_outlined,
+                title: l10n.backupLibrary,
+                subtitle: l10n.backupLibraryDescription,
+                onTap: () {
+                  _handleExportBackup(context, ref);
+                },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Storage Section
+          _buildInfoSection(
+            context,
+            title: l10n.storage,
+            children: [_buildCleanCacheTile(context, l10n)],
+          ),
+
+          const SizedBox(height: 24),
+
           // Project Info Section
           _buildInfoSection(
             context,
@@ -71,15 +103,6 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 subtitle: 'Milk Feng',
               ),
             ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Storage Section
-          _buildInfoSection(
-            context,
-            title: l10n.storage,
-            children: [_buildCleanCacheTile(context, l10n)],
           ),
 
           const SizedBox(height: 24),
@@ -261,6 +284,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     setState(() => _isCleaning = true);
 
     final service = ref.read(storageCleanupServiceProvider);
+    await service.cleanCacheFiles();
     final deletedCount = await service.cleanOrphanFiles();
 
     setState(() => _isCleaning = false);
@@ -278,6 +302,51 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// Triggers a full library backup export.
+  ///
+  /// Shows a non-dismissible loading dialog while the export runs, then
+  /// presents feedback via a [SnackBar]:
+  ///   - Android success → folder path in Downloads
+  ///   - iOS / other success → Share Sheet was presented by the service
+  ///   - Failure → error message in red
+  Future<void> _handleExportBackup(BuildContext context, WidgetRef ref) async {
+    // Show a non-dismissible progress dialog for the duration of the export.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Positioned.fill(
+          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+      ),
+    );
+
+    final result = await ref
+        .read(exportBackupServiceProvider)
+        .exportLibraryAsFolder();
+
+    // Guard against widget being unmounted while awaiting.
+    if (!context.mounted) return;
+
+    // Dismiss the loading dialog.
+    Navigator.of(context, rootNavigator: true).pop();
+
+    if (!context.mounted) return;
+
+    switch (result) {
+      case ExportSuccess(:final path):
+        final message = (Platform.isAndroid && path != null)
+            ? AppLocalizations.of(context)!.backupSavedToDownloads(path)
+            : AppLocalizations.of(context)!.backupReadyToShare;
+        ToastService.showSuccess(message);
+      case ExportFailure(:final message):
+        ToastService.showError(
+          AppLocalizations.of(context)!.exportFailed(message),
+        );
     }
   }
 }

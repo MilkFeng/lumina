@@ -852,6 +852,16 @@
     "description": "Backup library option label"
   },
 
+  "library": "Library",
+  "@library": {
+    "description": "Library section title"
+  },
+
+  "backupLibraryDescription": "Export your library data as a folder, including book files and database backup",
+  "@backupLibraryDescription": {
+    "description": "Backup library feature description"
+  },
+
   "restoringBackup": "Restoring Backup…",
   "@restoringBackup": {
     "description": "Title shown while restore is in progress"

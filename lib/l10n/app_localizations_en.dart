@@ -503,6 +503,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupLibrary => 'Backup Library';
 
   @override
+  String get library => 'Library';
+
+  @override
+  String get backupLibraryDescription =>
+      'Export your library data as a folder, including book files and database backup';
+
+  @override
   String get restoringBackup => 'Restoring Backup…';
 
   @override
