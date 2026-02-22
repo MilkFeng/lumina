@@ -936,5 +936,10 @@
   "viewModeRelaxed": "宽松",
   "@viewModeRelaxed": {
     "description": "宽松视图模式选项"
+  },
+
+  "spliter": "，",
+  "@spliter": {
+    "description": "用于分隔多个值的分隔符"
   }
 }

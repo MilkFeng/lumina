@@ -1033,6 +1033,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Relaxed'**
   String get viewModeRelaxed;
+
+  /// Spliter used to separate multiple values in a single string
+  ///
+  /// In en, this message translates to:
+  /// **', '**
+  String get spliter;
 }
 
 class _AppLocalizationsDelegate

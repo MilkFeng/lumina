@@ -547,4 +547,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewModeRelaxed => 'Relaxed';
+
+  @override
+  String get spliter => ', ';
 }

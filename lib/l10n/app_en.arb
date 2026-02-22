@@ -926,5 +926,10 @@
   "viewModeRelaxed": "Relaxed",
   "@viewModeRelaxed": {
     "description": "Relaxed view mode option"
+  },
+
+  "spliter": ", ",
+  "@spliter": {
+    "description": "Spliter used to separate multiple values in a single string"
   }
 }

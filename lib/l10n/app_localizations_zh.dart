@@ -531,4 +531,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewModeRelaxed => '宽松';
+
+  @override
+  String get spliter => '，';
 }
