@@ -222,6 +222,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get details => 'Details';
+
+  @override
   String get syncCompleted => 'Sync completed';
 
   @override
@@ -418,6 +421,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About';
 
   @override
+  String get storage => 'Storage';
+
+  @override
+  String get cleanCache => 'Clean Cache';
+
+  @override
+  String get cleanCacheSubtitle => 'Remove unused orphan files from storage';
+
+  @override
+  String cleanCacheSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'files',
+      one: 'file',
+    );
+    return 'Cache cleaned. Removed $count unused $_temp0.';
+  }
+
+  @override
+  String get cleanCacheAlreadyClean => 'Cache is already clean.';
+
+  @override
   String get projectInfo => 'Project Info';
 
   @override
@@ -448,4 +474,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importFiles => 'Import Files';
+
+  @override
+  String backupSavedToDownloads(String path) {
+    return 'Backup successfully saved to Downloads: $path';
+  }
+
+  @override
+  String get backupReadyToShare => 'Backup ready for sharing';
+
+  @override
+  String exportFailed(String message) {
+    return 'Backup failed: $message';
+  }
+
+  @override
+  String progressing(String fileName) {
+    return 'Processing $fileName';
+  }
+
+  @override
+  String get progressedAll => 'All Processed';
+
+  @override
+  String get restoreFromBackup => 'Restore from Backup';
+
+  @override
+  String get backupLibrary => 'Backup Library';
+
+  @override
+  String get library => 'Library';
+
+  @override
+  String get backupLibraryDescription =>
+      'Export your library data as a folder, including book files and database backup';
+
+  @override
+  String get restoringBackup => 'Restoring Backup…';
+
+  @override
+  String get restoreCompleted => 'Restore Completed';
+
+  @override
+  String restoreSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'books',
+      one: 'book',
+    );
+    return 'Successfully restored $count $_temp0.';
+  }
+
+  @override
+  String restoreFailed(String message) {
+    return 'Failed to restore backup: $message';
+  }
+
+  @override
+  String get restoring => 'Restoring...';
+
+  @override
+  String restoringProgress(int success, int failed, int remaining) {
+    return '$success success, $failed failed, $remaining remaining';
+  }
 }

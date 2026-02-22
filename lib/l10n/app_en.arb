@@ -371,6 +371,11 @@
       }
     }
   },
+
+  "details": "Details",
+  "@details": {
+    "description": "Details button label"
+  },
   
   "syncCompleted": "Sync completed",
   "@syncCompleted": {
@@ -717,6 +722,36 @@
     "description": "About page title"
   },
 
+  "storage": "Storage",
+  "@storage": {
+    "description": "Storage section title on About page"
+  },
+
+  "cleanCache": "Clean Cache",
+  "@cleanCache": {
+    "description": "Clean cache button label"
+  },
+
+  "cleanCacheSubtitle": "Remove unused orphan files from storage",
+  "@cleanCacheSubtitle": {
+    "description": "Clean cache subtitle"
+  },
+
+  "cleanCacheSuccess": "Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.",
+  "@cleanCacheSuccess": {
+    "description": "Clean cache success message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "cleanCacheAlreadyClean": "Cache is already clean.",
+  "@cleanCacheAlreadyClean": {
+    "description": "Cache is already clean message"
+  },
+
   "projectInfo": "Project Info",
   "@projectInfo": {
     "description": "Project information section title"
@@ -765,5 +800,116 @@
   "importFiles": "Import Files",
   "@importFiles": {
     "description": "Import files option label"
+  },
+
+  "backupSavedToDownloads": "Backup successfully saved to Downloads: {path}",
+  "@backupSavedToDownloads": {
+    "description": "Backup saved success message with path",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+
+  "backupReadyToShare": "Backup ready for sharing",
+  "@backupReadyToShare": {
+    "description": "Backup ready for sharing message"
+  },
+
+  "exportFailed": "Backup failed: {message}",
+  "@exportFailed": {
+    "description": "Backup export failed message",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+
+  "progressing": "Processing {fileName}",
+  "@progressing": {
+    "description": "Importing progress message with file name",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "progressedAll": "All Processed",
+  "@progressedAll": {
+    "description": "All files processed message"
+  },
+
+  "restoreFromBackup": "Restore from Backup",
+  "@restoreFromBackup": {
+    "description": "Restore from backup option label"
+  },
+
+  "backupLibrary": "Backup Library",
+  "@backupLibrary": {
+    "description": "Backup library option label"
+  },
+
+  "library": "Library",
+  "@library": {
+    "description": "Library section title"
+  },
+
+  "backupLibraryDescription": "Export your library data as a folder, including book files and database backup",
+  "@backupLibraryDescription": {
+    "description": "Backup library feature description"
+  },
+
+  "restoringBackup": "Restoring Backup…",
+  "@restoringBackup": {
+    "description": "Title shown while restore is in progress"
+  },
+
+  "restoreCompleted": "Restore Completed",
+  "@restoreCompleted": {
+    "description": "Title shown when restore finishes"
+  },
+
+  "restoreSuccess": "Successfully restored {count} {count, plural, =1{book} other{books}}.",
+  "@restoreSuccess": {
+    "description": "Restore success message with book count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "restoreFailed": "Failed to restore backup: {message}",
+  "@restoreFailed": {
+    "description": "Restore failure message",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+
+  "restoring": "Restoring...",
+  "@restoring": {
+    "description": "Restoring progress message"
+  },
+
+  "restoringProgress": "{success} success, {failed} failed, {remaining} remaining",
+  "@restoringProgress": {
+    "description": "Restoring progress details",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
   }
 }

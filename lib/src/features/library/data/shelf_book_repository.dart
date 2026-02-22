@@ -30,6 +30,13 @@ class ShelfBookRepository {
         .findAll();
   }
 
+  /// Get all file hashes across every record (including soft-deleted).
+  /// Used by [StorageCleanupService] to determine which physical files are valid.
+  Future<Set<String>> getAllFileHashes() async {
+    final books = await _isar.shelfBooks.where().findAll();
+    return books.map((b) => b.fileHash).toSet();
+  }
+
   /// Get all books with advanced sorting and optional group filter
   Future<List<ShelfBook>> getBooksSorted({
     ShelfBookSortBy sortBy = ShelfBookSortBy.recentlyAdded,
@@ -95,6 +102,24 @@ class ShelfBookRepository {
   Future<ShelfGroup?> getGroupById(int id) async {
     final isar = _isar;
     return await isar.shelfGroups.get(id);
+  }
+
+  Future<ShelfGroup?> getGroupByName(String name) async {
+    final isar = _isar;
+    return await isar.shelfGroups
+        .filter()
+        .nameEqualTo(name)
+        .and()
+        .isDeletedEqualTo(false)
+        .findFirst();
+  }
+
+  Future<ShelfGroup> saveGroup(ShelfGroup group) async {
+    final isar = _isar;
+    final id = await isar.writeTxn(() async {
+      return await isar.shelfGroups.put(group);
+    });
+    return group..id = id;
   }
 
   /// Create a new group

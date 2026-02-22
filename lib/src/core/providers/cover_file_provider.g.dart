@@ -6,7 +6,7 @@ part of 'cover_file_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$coverFileHash() => r'6fbbd3f8a82ceff43deb31a373e5a8a485bfc09c';
+String _$coverFileHash() => r'60481f88382ac435e475b4733a7d9bacebd00409';
 
 /// Copied from Dart SDK
 class _SystemHash {

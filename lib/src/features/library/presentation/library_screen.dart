@@ -182,6 +182,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           label: AppLocalizations.of(context)!.importFiles,
           onTap: () => _importFiles(context, ref),
         ),
+        SpeedDialChild(
+          child: const Icon(Icons.settings_backup_restore_outlined),
+          label: AppLocalizations.of(context)!.restoreFromBackup,
+          onTap: () => handleRestoreBackup(context, ref),
+        ),
       ],
     );
   }

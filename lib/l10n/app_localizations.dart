@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'Importing \"{fileName}\"'**
   String importingFile(String fileName);
 
+  /// Details button label
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
+
   /// Sync completed message
   ///
   /// In en, this message translates to:
@@ -830,6 +836,36 @@ abstract class AppLocalizations {
   /// **'About'**
   String get about;
 
+  /// Storage section title on About page
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storage;
+
+  /// Clean cache button label
+  ///
+  /// In en, this message translates to:
+  /// **'Clean Cache'**
+  String get cleanCache;
+
+  /// Clean cache subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Remove unused orphan files from storage'**
+  String get cleanCacheSubtitle;
+
+  /// Clean cache success message
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.'**
+  String cleanCacheSuccess(int count);
+
+  /// Cache is already clean message
+  ///
+  /// In en, this message translates to:
+  /// **'Cache is already clean.'**
+  String get cleanCacheAlreadyClean;
+
   /// Project information section title
   ///
   /// In en, this message translates to:
@@ -889,6 +925,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import Files'**
   String get importFiles;
+
+  /// Backup saved success message with path
+  ///
+  /// In en, this message translates to:
+  /// **'Backup successfully saved to Downloads: {path}'**
+  String backupSavedToDownloads(String path);
+
+  /// Backup ready for sharing message
+  ///
+  /// In en, this message translates to:
+  /// **'Backup ready for sharing'**
+  String get backupReadyToShare;
+
+  /// Backup export failed message
+  ///
+  /// In en, this message translates to:
+  /// **'Backup failed: {message}'**
+  String exportFailed(String message);
+
+  /// Importing progress message with file name
+  ///
+  /// In en, this message translates to:
+  /// **'Processing {fileName}'**
+  String progressing(String fileName);
+
+  /// All files processed message
+  ///
+  /// In en, this message translates to:
+  /// **'All Processed'**
+  String get progressedAll;
+
+  /// Restore from backup option label
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Backup'**
+  String get restoreFromBackup;
+
+  /// Backup library option label
+  ///
+  /// In en, this message translates to:
+  /// **'Backup Library'**
+  String get backupLibrary;
+
+  /// Library section title
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get library;
+
+  /// Backup library feature description
+  ///
+  /// In en, this message translates to:
+  /// **'Export your library data as a folder, including book files and database backup'**
+  String get backupLibraryDescription;
+
+  /// Title shown while restore is in progress
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring Backup…'**
+  String get restoringBackup;
+
+  /// Title shown when restore finishes
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Completed'**
+  String get restoreCompleted;
+
+  /// Restore success message with book count
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully restored {count} {count, plural, =1{book} other{books}}.'**
+  String restoreSuccess(int count);
+
+  /// Restore failure message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restore backup: {message}'**
+  String restoreFailed(String message);
+
+  /// Restoring progress message
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring...'**
+  String get restoring;
+
+  /// Restoring progress details
+  ///
+  /// In en, this message translates to:
+  /// **'{success} success, {failed} failed, {remaining} remaining'**
+  String restoringProgress(int success, int failed, int remaining);
 }
 
 class _AppLocalizationsDelegate

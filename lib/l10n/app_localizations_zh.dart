@@ -222,6 +222,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get details => '详情';
+
+  @override
   String get syncCompleted => '同步完成';
 
   @override
@@ -417,6 +420,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get about => '关于';
 
   @override
+  String get storage => '存储';
+
+  @override
+  String get cleanCache => '清理缓存';
+
+  @override
+  String get cleanCacheSubtitle => '删除存储中无用的孤立文件';
+
+  @override
+  String cleanCacheSuccess(int count) {
+    return '清理完成，已删除 $count 个无用文件。';
+  }
+
+  @override
+  String get cleanCacheAlreadyClean => '缓存已是最新，无需清理。';
+
+  @override
   String get projectInfo => '项目信息';
 
   @override
@@ -445,4 +465,61 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get importFiles => '导入文件';
+
+  @override
+  String backupSavedToDownloads(String path) {
+    return '备份已成功保存到下载文件夹：$path';
+  }
+
+  @override
+  String get backupReadyToShare => '备份已准备好分享';
+
+  @override
+  String exportFailed(String message) {
+    return '备份失败：$message';
+  }
+
+  @override
+  String progressing(String fileName) {
+    return '正在处理：$fileName';
+  }
+
+  @override
+  String get progressedAll => '全部处理完成';
+
+  @override
+  String get restoreFromBackup => '从备份恢复';
+
+  @override
+  String get backupLibrary => '备份书库';
+
+  @override
+  String get library => '书库';
+
+  @override
+  String get backupLibraryDescription => '将书库数据导出为一个文件夹，包括书籍文件和数据库备份';
+
+  @override
+  String get restoringBackup => '正在恢复备份…';
+
+  @override
+  String get restoreCompleted => '恢复完成';
+
+  @override
+  String restoreSuccess(int count) {
+    return '已成功恢复 $count 本书。';
+  }
+
+  @override
+  String restoreFailed(String message) {
+    return '备份恢复失败：$message';
+  }
+
+  @override
+  String get restoring => '正在恢复…';
+
+  @override
+  String restoringProgress(int success, int failed, int remaining) {
+    return '$success 成功，$failed 失败，$remaining 剩余';
+  }
 }

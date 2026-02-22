@@ -381,6 +381,11 @@
       }
     }
   },
+
+  "details": "详情",
+  "@details": {
+    "description": "详情按钮标签"
+  },
   
   "syncCompleted": "同步完成",
   "@syncCompleted": {
@@ -727,6 +732,36 @@
     "description": "关于页面标题"
   },
 
+  "storage": "存储",
+  "@storage": {
+    "description": "关于页面存储部分标题"
+  },
+
+  "cleanCache": "清理缓存",
+  "@cleanCache": {
+    "description": "清理缓存按钮文本"
+  },
+
+  "cleanCacheSubtitle": "删除存储中无用的孤立文件",
+  "@cleanCacheSubtitle": {
+    "description": "清理缓存副标题"
+  },
+
+  "cleanCacheSuccess": "清理完成，已删除 {count} 个无用文件。",
+  "@cleanCacheSuccess": {
+    "description": "清理缓存成功消息",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "cleanCacheAlreadyClean": "缓存已是最新，无需清理。",
+  "@cleanCacheAlreadyClean": {
+    "description": "缓存无需清理消息"
+  },
+
   "projectInfo": "项目信息",
   "@projectInfo": {
     "description": "项目信息部分标题"
@@ -775,5 +810,116 @@
   "importFiles": "导入文件",
   "@importFiles": {
     "description": "导入文件选项标签"
+  },
+
+  "backupSavedToDownloads": "备份已成功保存到下载文件夹：{path}",
+  "@backupSavedToDownloads": {
+    "description": "备份保存成功消息",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+
+  "backupReadyToShare": "备份已准备好分享",
+  "@backupReadyToShare": {
+    "description": "备份准备好分享消息"
+  },
+
+  "exportFailed": "备份失败：{message}",
+  "@exportFailed": {
+    "description": "备份失败消息",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+
+  "progressing": "正在处理：{fileName}",
+  "@progressing": {
+    "description": "正在处理文件消息",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+
+  "progressedAll": "全部处理完成",
+  "@progressedAll": {
+    "description": "全部处理完成消息"
+  },
+
+  "restoreFromBackup": "从备份恢复",
+  "@restoreFromBackup": {
+    "description": "从备份恢复选项标签"
+  },
+
+  "library": "书库",
+  "@library": {
+    "description": "书库部分标题"
+  },
+
+  "backupLibrary": "备份书库",
+  "@backupLibrary": {
+    "description": "备份书库选项标签"
+  },
+
+  "backupLibraryDescription": "将书库数据导出为一个文件夹，包括书籍文件和数据库备份",
+  "@backupLibraryDescription": {
+    "description": "备份书库功能描述"
+  },
+
+  "restoringBackup": "正在恢复备份…",
+  "@restoringBackup": {
+    "description": "恢复进行中时显示的标题"
+  },
+
+  "restoreCompleted": "恢复完成",
+  "@restoreCompleted": {
+    "description": "恢复完成时显示的标题"
+  },
+
+  "restoreSuccess": "已成功恢复 {count} 本书。",
+  "@restoreSuccess": {
+    "description": "恢复成功消息，包含书籍数量",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "restoreFailed": "备份恢复失败：{message}",
+  "@restoreFailed": {
+    "description": "恢复失败消息",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+
+  "restoring": "正在恢复…",
+  "@restoring": {
+    "description": "正在恢复时显示的标题"
+  },
+
+  "restoringProgress": "{success} 成功，{failed} 失败，{remaining} 剩余",
+  "@restoringProgress": {
+    "description": "恢复进度消息，包含成功、失败和未处理的书籍数量",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
   }
 }

@@ -41,16 +41,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
+	<key>CADisableMinimumFrameDurationOnPhone</key><true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key><true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
+		<key>NSAllowsArbitraryLoads</key><true/>
 	</dict>
-	<key>io.flutter.embedded_views_preview</key>
-<true/>
+	<key>io.flutter.embedded_views_preview</key><true/>
+	<key>UIFileSharingEnabled</key><true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key><true/>
 </dict>
 </plist>

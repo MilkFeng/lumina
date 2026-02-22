@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/features/library/application/progress_log.dart';
+import 'package:lumina/src/features/library/data/services/import_backup_service_provider.dart';
 import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
@@ -12,7 +14,7 @@ part 'library_notifier.g.dart';
 
 enum ImportStatus { processing, success, failed }
 
-class ImportProgress {
+class ImportProgress extends ProgressLog {
   final int totalCount;
   final int currentCount;
   final String currentFileName;
@@ -27,7 +29,18 @@ class ImportProgress {
     required this.status,
     this.errorMessage,
     this.book,
-  });
+  }) : super(
+         status == ImportStatus.failed
+             ? errorMessage ?? 'Unknown error'
+             : (status == ImportStatus.success
+                   ? 'Imported: ${book?.title}'
+                   : 'Processing: $currentFileName'),
+         status == ImportStatus.failed
+             ? ProgressLogType.error
+             : (status == ImportStatus.success
+                   ? ProgressLogType.success
+                   : ProgressLogType.info),
+       );
 }
 
 /// State for library operations (updated for ShelfBook)
@@ -94,58 +107,42 @@ class LibraryNotifier extends _$LibraryNotifier {
     }
   }
 
-  /// Import a new book from file
-  Stream<ImportProgress> importMultipleBooks(
-    List<ImportableEpub> files,
-  ) async* {
-    final totalCount = files.length;
+  Stream<ProgressLog> importLibraryFromFolder(BackupPaths backupPaths) async* {
+    yield ProgressLog(
+      'Starting import from folder: ${backupPaths.rootPath}',
+      ProgressLogType.info,
+    );
 
-    if (totalCount == 0) return;
+    final importService = ref.read(importBackupServiceProvider);
 
-    final importService = ref.read(epubImportServiceProvider);
-    int currentCount = 0;
-
-    for (final file in files) {
-      currentCount++;
-      final fileName = file.originalName;
-
-      // 1. Notify UI that we're starting to process this file
-      yield ImportProgress(
-        totalCount: totalCount,
-        currentCount: currentCount,
-        currentFileName: fileName,
-        status: ImportStatus.processing,
+    try {
+      await for (final progress in importService.importLibraryFromFolder(
+        backupPaths,
+      )) {
+        yield progress;
+      }
+    } catch (e) {
+      yield ProgressLog(
+        'Failed to import from folder: $e',
+        ProgressLogType.error,
       );
-
-      // 2. Import the book and wait for result
-      final result = await importService.importBook(file.cacheFile);
-
-      // 3. Notify UI of success or failure for this file
-      yield result.fold(
-        (errorMessage) => ImportProgress(
-          totalCount: totalCount,
-          currentCount: currentCount,
-          currentFileName: fileName,
-          status: ImportStatus.failed,
-          errorMessage: errorMessage,
-        ),
-        (book) => ImportProgress(
-          totalCount: totalCount,
-          currentCount: currentCount,
-          currentFileName: fileName,
-          status: ImportStatus.success,
-          book: book,
-        ),
-      );
+      debugPrint('Import from folder error: $e');
     }
 
-    // 4. After all files are processed, refresh the book list
+    yield ProgressLog(
+      'Import from folder completed. Refreshing library...',
+      ProgressLogType.success,
+    );
     await refresh();
   }
 
   /// Stream pipeline to process files one by one: Cache -> Import -> Clean.
   /// This prevents OOM and storage issues when importing massive folders.
-  Stream<ImportProgress> importPipelineStream(List<PlatformPath> paths) async* {
+  Stream<ProgressLog> importPipelineStream(List<PlatformPath> paths) async* {
+    yield ProgressLog(
+      'Starting import of ${paths.length} books',
+      ProgressLogType.info,
+    );
     final totalCount = paths.length;
     if (totalCount == 0) return;
 
@@ -158,6 +155,11 @@ class LibraryNotifier extends _$LibraryNotifier {
       currentCount++;
       ImportableEpub? importable;
       String currentFileName = '';
+
+      yield ProgressLog(
+        'Processing file $currentFileName ($currentCount of $totalCount)',
+        ProgressLogType.info,
+      );
 
       try {
         // 1. Cache the file from URI to local temp directory
@@ -217,6 +219,10 @@ class LibraryNotifier extends _$LibraryNotifier {
     }
 
     // 6. After all files are processed, refresh the book list to update UI
+    yield ProgressLog(
+      'Import completed. Refreshing library...',
+      ProgressLogType.success,
+    );
     await refresh();
   }
 

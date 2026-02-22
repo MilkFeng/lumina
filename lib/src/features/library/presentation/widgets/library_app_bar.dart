@@ -73,7 +73,7 @@ class LibraryAppBar extends StatelessWidget {
             )
           else ...[
             IconButton(
-              icon: const Icon(Icons.sort_rounded),
+              icon: const Icon(Icons.sort_outlined),
               onPressed: onSortPressed,
               tooltip: AppLocalizations.of(context)!.sort,
             ),

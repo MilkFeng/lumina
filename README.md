@@ -134,7 +134,6 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Stream-from-Zip streaming loading
 - [x] Smooth page turning animations
 - [x] Automatic reading progress saving
-- [ ] Cloud sync (WebDAV)
 - [x] Bookshelf grouping management
 - [x] Table of contents navigation
 - [x] Adaptive light/dark themes
@@ -143,11 +142,21 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Long press images to view full-size
 - [x] Simple swipe page turning mode
 - [x] Improve screenshot speed during page turns on iOS
-- [ ] Import folders
-- [ ] Improve consistency of page turn animations between iOS and Android
+- [x] Import folders
 - [x] Optimize initial loading lag when opening the first book
+- [x] Export library
+- [ ] Test import/export functionality on iOS
+- [ ] Associate with epub format for direct opening of epub files
+- [ ] Cloud sync (WebDAV)
+- [ ] Bookshelf homepage can switch between "Compact, Comfortable" layout modes, and can set whether to show book reading progress bars
 - [ ] Edit book metadata (cover, title, author, etc.)
 - [ ] Reading settings (font size, line spacing, background color, etc.)
+- [ ] Footnote support
+- [ ] Vertical and RTL support
+- [ ] Search functionality
+- [ ] Annotation and bookmarking features
+- [ ] Improve consistency of page turn animations between iOS and Android, better page turn animations
+- [ ] Chinese support for error messages
 
 ## 🙏 Acknowledgements
 
