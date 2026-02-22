@@ -8,7 +8,7 @@ import 'mixins/library_actions_mixin.dart';
 import 'widgets/book_grid_item.dart';
 import 'widgets/library_app_bar.dart';
 import 'widgets/library_selection_bar.dart';
-import 'widgets/sort_bottom_sheet.dart';
+import 'widgets/style_bottom_sheet.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Library Screen - Displays user's book collection with advanced bookshelf features
@@ -306,13 +306,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   ) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SortBottomSheet(
+      builder: (context) => StyleBottomSheet(
         currentSort: state.sortBy,
         onSortSelected: (sortBy) {
           ref.read(bookshelfNotifierProvider.notifier).changeSortOrder(sortBy);
+          Navigator.pop(context);
+        },
+        currentViewMode: state.viewMode,
+        onViewModeSelected: (mode) {
+          ref.read(bookshelfNotifierProvider.notifier).changeViewMode(mode);
           Navigator.pop(context);
         },
       ),
