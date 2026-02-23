@@ -21,8 +21,9 @@ Future<ShelfBook?> bookDetail(BookDetailRef ref, String fileHash) async {
 /// Book Detail Screen - Shows detailed information about a book
 class BookDetailScreen extends ConsumerWidget {
   final String bookId; // Actually fileHash now
+  final ShelfBook? initialBook; // Optional initial data to show immediately
 
-  const BookDetailScreen({super.key, required this.bookId});
+  const BookDetailScreen({super.key, required this.bookId, this.initialBook});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,8 +39,14 @@ class BookDetailScreen extends ConsumerWidget {
         ),
       ),
       body: bookAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        loading: () {
+          if (initialBook != null) {
+            // Show the detail with initial data while loading
+            return _buildBookDetail(context, ref, initialBook!);
+          }
+          // Show loading indicator if no initial data
+          return const Center(child: CircularProgressIndicator());
+        },
         error: (error, stack) => _buildErrorBody(context, error.toString()),
         data: (book) {
           if (book == null) {

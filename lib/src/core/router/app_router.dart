@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/features/library/domain/shelf_book.dart';
 import '../services/toast_service.dart';
 import '../../features/library/presentation/library_screen.dart';
 import '../../features/library/presentation/book_detail_screen.dart';
@@ -28,9 +29,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'book-detail',
         pageBuilder: (context, state) {
           final fileHash = state.pathParameters['id']!;
+          final book =
+              state.extra as ShelfBook?; // Try to get the book from extra
           return MaterialPage(
             key: state.pageKey,
-            child: BookDetailScreen(bookId: fileHash),
+            child: BookDetailScreen(bookId: fileHash, initialBook: book),
           );
         },
       ),
