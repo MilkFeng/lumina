@@ -1039,6 +1039,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **', '**
   String get spliter;
+
+  /// Share EPUB source file action label
+  ///
+  /// In en, this message translates to:
+  /// **'Share EPUB'**
+  String get shareEpub;
+
+  /// Error message when sharing EPUB fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to share EPUB: {error}'**
+  String shareEpubFailed(String error);
 }
 
 class _AppLocalizationsDelegate

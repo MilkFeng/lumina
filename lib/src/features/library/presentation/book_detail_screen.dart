@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:share_plus/share_plus.dart';
 import '../domain/shelf_book.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../../../core/widgets/book_cover.dart';
@@ -29,6 +35,10 @@ class BookDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final routeAnimation = ModalRoute.of(context)?.animation;
 
+    // Watch the book state so we can conditionally show the share button
+    final bookAsync = ref.watch(bookDetailProvider(bookId));
+    final book = bookAsync.valueOrNull;
+
     // AbsorbPointer to prevent interactions during transition
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -37,6 +47,14 @@ class BookDetailScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_outlined),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          if (book != null)
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: AppLocalizations.of(context)!.shareEpub,
+              onPressed: () => _shareEpub(context, book, ref),
+            ),
+        ],
       ),
       body: AnimatedBuilder(
         animation: routeAnimation ?? const AlwaysStoppedAnimation(0.0),
@@ -73,6 +91,45 @@ class BookDetailScreen extends ConsumerWidget {
         return _buildBookDetail(context, ref, book);
       },
     );
+  }
+
+  /// Copies the EPUB source file to a sanitised temporary path, shares it via
+  /// the platform share sheet, then deletes the temporary file in a
+  /// [try-finally] block to prevent stale cache accumulation.
+  Future<void> _shareEpub(
+    BuildContext context,
+    ShelfBook book,
+    WidgetRef ref,
+  ) async {
+    final service = ref.read(storageCleanupServiceProvider);
+
+    File? tempFile;
+    try {
+      // Resolve the absolute source path from the relative filePath field
+      final sourcePath = '${AppStorage.documentsPath}${book.filePath}';
+      tempFile = await service.saveTempFileForSharing(
+        File(sourcePath),
+        book.title,
+      );
+
+      // Share and wait for the share sheet to be dismissed
+      final params = ShareParams(
+        subject: book.title,
+        files: [XFile(tempFile.path, mimeType: 'application/epub+zip')],
+      );
+      await SharePlus.instance.share(params);
+    } catch (e) {
+      if (context.mounted) {
+        ToastService.showError(
+          AppLocalizations.of(context)!.shareEpubFailed(e.toString()),
+        );
+      }
+    } finally {
+      // Always clean up the temporary file after sharing or on error
+      if (tempFile != null && await tempFile.exists()) {
+        await tempFile.delete();
+      }
+    }
   }
 
   Widget _buildErrorBody(BuildContext context, String message) {

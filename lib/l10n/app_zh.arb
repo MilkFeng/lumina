@@ -941,5 +941,20 @@
   "spliter": "，",
   "@spliter": {
     "description": "用于分隔多个值的分隔符"
+  },
+
+  "shareEpub": "分享 EPUB",
+  "@shareEpub": {
+    "description": "分享 EPUB 源文件操作"
+  },
+
+  "shareEpubFailed": "分享 EPUB 失败：{error}",
+  "@shareEpubFailed": {
+    "description": "分享 EPUB 失败时的错误提示",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

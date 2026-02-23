@@ -308,6 +308,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     final service = ref.read(storageCleanupServiceProvider);
     await service.cleanCacheFiles();
     final deletedCount = await service.cleanOrphanFiles();
+    await service.cleanShareFiles();
 
     setState(() => _isCleaning = false);
 

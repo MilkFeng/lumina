@@ -534,4 +534,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get spliter => '，';
+
+  @override
+  String get shareEpub => '分享 EPUB';
+
+  @override
+  String shareEpubFailed(String error) {
+    return '分享 EPUB 失败：$error';
+  }
 }

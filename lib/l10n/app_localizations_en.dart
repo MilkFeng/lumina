@@ -550,4 +550,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get spliter => ', ';
+
+  @override
+  String get shareEpub => 'Share EPUB';
+
+  @override
+  String shareEpubFailed(String error) {
+    return 'Failed to share EPUB: $error';
+  }
 }

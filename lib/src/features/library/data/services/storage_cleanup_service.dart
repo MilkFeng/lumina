@@ -13,6 +13,8 @@ class StorageCleanupService {
   static const String _kBooksDir = 'books';
   static const String _kCoversDir = 'covers';
 
+  static const String _kShareDir = 'share';
+
   final ShelfBookRepository _shelfBookRepo;
   final ExportBackupService _exportBackupService;
 
@@ -49,6 +51,25 @@ class StorageCleanupService {
 
     final cacheManager = ImportCacheManager();
     await cacheManager.clearAll();
+  }
+
+  Future<void> cleanShareFiles() async {
+    final shareDir = Directory('${AppStorage.tempPath}/$_kShareDir');
+    if (await shareDir.exists()) {
+      await shareDir.delete(recursive: true);
+    }
+  }
+
+  Future<File> saveTempFileForSharing(File sourceFile, String title) async {
+    final sanitizedTitle = title.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    final tempDir = Directory('${AppStorage.tempPath}/$_kShareDir');
+    if (!await tempDir.exists()) {
+      await tempDir.create(recursive: true);
+    }
+    final tempPath = '${tempDir.path}/$sanitizedTitle.epub';
+    final tempFile = File(tempPath);
+    await sourceFile.copy(tempFile.path);
+    return tempFile;
   }
 
   /// Iterates [dirPath], deletes any [File] whose name (without extension)

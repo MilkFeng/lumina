@@ -931,5 +931,20 @@
   "spliter": ", ",
   "@spliter": {
     "description": "Spliter used to separate multiple values in a single string"
+  },
+
+  "shareEpub": "Share EPUB",
+  "@shareEpub": {
+    "description": "Share EPUB source file action label"
+  },
+
+  "shareEpubFailed": "Failed to share EPUB: {error}",
+  "@shareEpubFailed": {
+    "description": "Error message when sharing EPUB fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
