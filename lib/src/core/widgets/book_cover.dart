@@ -6,6 +6,7 @@ import '../providers/cover_file_provider.dart';
 /// Parent should handle clipping with ClipRRect if rounded corners are needed.
 class BookCover extends ConsumerWidget {
   final String? relativePath;
+  static const int globalCacheHeight = 900;
 
   const BookCover({super.key, required this.relativePath});
 
@@ -34,6 +35,7 @@ class BookCover extends ConsumerWidget {
           child: Image.file(
             file,
             fit: BoxFit.cover,
+            cacheHeight: globalCacheHeight,
             // Prevent white flash during Hero transitions and rebuilds
             gaplessPlayback: true,
             // Smooth fade-in effect (300ms)

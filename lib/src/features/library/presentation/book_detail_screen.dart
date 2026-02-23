@@ -111,7 +111,6 @@ class BookDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildBookDetail(BuildContext context, WidgetRef ref, ShelfBook book) {
-    // V2: coverPath is already absolute
     final coverPath = book.coverPath;
 
     // Format reading progress

@@ -8,8 +8,8 @@ import '../parsers/epub_zip_parser.dart';
 
 /// Configuration constants for import workers
 class ImportWorkerConfig {
-  static const int imageThumbnailMaxWidth = 500;
-  static const int imageCompressionQuality = 80;
+  static const int imageThumbnailMaxHeight = 1200;
+  static const int imageCompressionQuality = 90;
 }
 
 /// Parameters for isolate parsing
@@ -120,7 +120,7 @@ class ImportWorkers {
   /// Returns null if image cannot be decoded
   static Uint8List? compressImage(
     Uint8List rawBytes, {
-    int maxWidth = ImportWorkerConfig.imageThumbnailMaxWidth,
+    int maxHeight = ImportWorkerConfig.imageThumbnailMaxHeight,
     int quality = ImportWorkerConfig.imageCompressionQuality,
   }) {
     try {
@@ -128,8 +128,12 @@ class ImportWorkers {
       if (image == null) return null;
 
       img.Image resizedImage = image;
-      if (image.width > maxWidth) {
-        resizedImage = img.copyResize(image, width: maxWidth);
+      if (image.height > maxHeight) {
+        resizedImage = img.copyResize(
+          image,
+          height: maxHeight,
+          interpolation: img.Interpolation.average,
+        );
       }
 
       return Uint8List.fromList(img.encodeJpg(resizedImage, quality: quality));
