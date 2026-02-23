@@ -373,7 +373,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String connectionFailed(String details) {
-    return '连接失败。请检查您的设置：$details';
+    return '连接失败，请检查您的设置：$details';
   }
 
   @override
@@ -411,7 +411,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get iKnow => '我知道了';
 
   @override
-  String get invalidFileType => '无效的文件类型。请选择一个 EPUB 文件。';
+  String get invalidFileType => '无效的文件类型，请选择一个 EPUB 文件';
 
   @override
   String get fileAccessError => '无法访问文件';
@@ -429,12 +429,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cleanCacheSubtitle => '删除存储中无用的孤立文件';
 
   @override
-  String cleanCacheSuccess(int count) {
-    return '清理完成，已删除 $count 个无用文件。';
+  String cleanCacheSuccessWithCount(int count) {
+    return '清理完成，已删除 $count 个无用文件';
   }
 
   @override
-  String get cleanCacheAlreadyClean => '缓存已是最新，无需清理。';
+  String get cleanCacheSuccess => '清理完成';
 
   @override
   String get projectInfo => '项目信息';
@@ -507,7 +507,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String restoreSuccess(int count) {
-    return '已成功恢复 $count 本书。';
+    return '已成功恢复 $count 本书';
   }
 
   @override
@@ -534,4 +534,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get spliter => '，';
+
+  @override
+  String get shareEpub => '分享 EPUB';
+
+  @override
+  String shareEpubFailed(String error) {
+    return '分享 EPUB 失败：$error';
+  }
 }

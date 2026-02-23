@@ -647,7 +647,7 @@
     "description": "连接测试成功消息"
   },
   
-  "connectionFailed": "连接失败。请检查您的设置：{details}",
+  "connectionFailed": "连接失败，请检查您的设置：{details}",
   "@connectionFailed": {
     "description": "连接测试失败消息",
     "placeholders": {
@@ -717,7 +717,7 @@
     "description": "我知道了按钮文本"
   },
 
-  "invalidFileType": "无效的文件类型。请选择一个 EPUB 文件。",
+  "invalidFileType": "无效的文件类型，请选择一个 EPUB 文件",
   "@invalidFileType": {
     "description": "无效文件类型错误消息"
   },
@@ -747,8 +747,8 @@
     "description": "清理缓存副标题"
   },
 
-  "cleanCacheSuccess": "清理完成，已删除 {count} 个无用文件。",
-  "@cleanCacheSuccess": {
+  "cleanCacheSuccessWithCount": "清理完成，已删除 {count} 个无用文件",
+  "@cleanCacheSuccessWithCount": {
     "description": "清理缓存成功消息",
     "placeholders": {
       "count": {
@@ -757,9 +757,9 @@
     }
   },
 
-  "cleanCacheAlreadyClean": "缓存已是最新，无需清理。",
-  "@cleanCacheAlreadyClean": {
-    "description": "缓存无需清理消息"
+  "cleanCacheSuccess": "清理完成",
+  "@cleanCacheSuccess": {
+    "description": "缓存清理成功消息"
   },
 
   "projectInfo": "项目信息",
@@ -882,7 +882,7 @@
     "description": "恢复完成时显示的标题"
   },
 
-  "restoreSuccess": "已成功恢复 {count} 本书。",
+  "restoreSuccess": "已成功恢复 {count} 本书",
   "@restoreSuccess": {
     "description": "恢复成功消息，包含书籍数量",
     "placeholders": {
@@ -941,5 +941,20 @@
   "spliter": "，",
   "@spliter": {
     "description": "用于分隔多个值的分隔符"
+  },
+
+  "shareEpub": "分享 EPUB",
+  "@shareEpub": {
+    "description": "分享 EPUB 源文件操作"
+  },
+
+  "shareEpubFailed": "分享 EPUB 失败：{error}",
+  "@shareEpubFailed": {
+    "description": "分享 EPUB 失败时的错误提示",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

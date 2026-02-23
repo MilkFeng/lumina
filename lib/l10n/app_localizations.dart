@@ -858,13 +858,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.'**
-  String cleanCacheSuccess(int count);
+  String cleanCacheSuccessWithCount(int count);
 
-  /// Cache is already clean message
+  /// Clean cache success message when no files were removed
   ///
   /// In en, this message translates to:
-  /// **'Cache is already clean.'**
-  String get cleanCacheAlreadyClean;
+  /// **'Cache cleaned'**
+  String get cleanCacheSuccess;
 
   /// Project information section title
   ///
@@ -1039,6 +1039,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **', '**
   String get spliter;
+
+  /// Share EPUB source file action label
+  ///
+  /// In en, this message translates to:
+  /// **'Share EPUB'**
+  String get shareEpub;
+
+  /// Error message when sharing EPUB fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to share EPUB: {error}'**
+  String shareEpubFailed(String error);
 }
 
 class _AppLocalizationsDelegate

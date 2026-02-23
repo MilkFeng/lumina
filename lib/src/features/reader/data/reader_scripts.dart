@@ -788,11 +788,24 @@ class EpubReader {
     const paddingRightItem = '--padding-right: ' + this.state.config.padding.right + 'px;';
     const paddingBottomItem = '--padding-bottom: ' + this.state.config.padding.bottom + 'px;';
     const backgroundColorItem = '--background-color: ' + this.state.config.theme.backgroundColor + ';';
+    const readerOverflowXItem = '--reader-overflow-x: ' + (this._isVertical() ? 'hidden' : 'auto') + ';';
+    const readerOverflowYItem = '--reader-overflow-y: ' + (this._isVertical() ? 'auto' : 'hidden') + ';';
     let defaultTextColorItem = '';
     if (this.state.config.theme.defaultTextColor) {
       defaultTextColorItem = '--default-text-color: ' + this.state.config.theme.defaultTextColor + ';';
     }
-    return ':root {' + safeWidthItem + safeHeightItem + paddingTopItem + paddingLeftItem + paddingRightItem + paddingBottomItem + backgroundColorItem + defaultTextColorItem + '}';
+    return ':root {'
+            + safeWidthItem
+            + safeHeightItem
+            + paddingTopItem
+            + paddingLeftItem
+            + paddingRightItem
+            + paddingBottomItem
+            + backgroundColorItem
+            + defaultTextColorItem
+            + readerOverflowXItem
+            + readerOverflowYItem
+            + '}';
   }
 
   updateTheme(viewWidth, viewHeight, paddingTop, paddingLeft, paddingRight, paddingBottom, backgroundColor, defaultTextColor) {
@@ -1023,8 +1036,8 @@ body {
 body * {
   max-width: var(--safe-width) !important;
 
-  orphans: 2;
-  widows: 2;
+  orphans: 1;
+  widows: 1;
 }
 
 ::-webkit-scrollbar, 

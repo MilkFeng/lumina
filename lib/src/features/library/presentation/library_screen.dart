@@ -103,6 +103,24 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final route = ModalRoute.of(context);
+    final secondaryAnimation =
+        route?.secondaryAnimation ?? const AlwaysStoppedAnimation(0.0);
+
+    // AbsorbPointer to prevent interactions during transition
+    return AnimatedBuilder(
+      animation: secondaryAnimation,
+      builder: (context, child) {
+        final isTransitioning =
+            secondaryAnimation.value > 0.0 && secondaryAnimation.value < 1.0;
+
+        return AbsorbPointer(absorbing: isTransitioning, child: child);
+      },
+      child: _buildContentWidget(context),
+    );
+  }
+
+  Widget _buildContentWidget(BuildContext context) {
     final bookshelfState = ref.watch(bookshelfNotifierProvider);
 
     final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
@@ -218,7 +236,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               LibraryAppBar(
                 state: state,
                 tabController: _tabController!,
-                onSortPressed: () => _showSortBottomSheet(context, ref, state),
+                onSortPressed: () => _showStyleBottomSheet(context, ref, state),
                 onSelectionToggle: () => ref
                     .read(bookshelfNotifierProvider.notifier)
                     .toggleSelectionMode(),
@@ -299,25 +317,33 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 
-  void _showSortBottomSheet(
+  void _showStyleBottomSheet(
     BuildContext context,
     WidgetRef ref,
     BookshelfState state,
   ) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => StyleBottomSheet(
-        currentSort: state.sortBy,
-        onSortSelected: (sortBy) {
-          ref.read(bookshelfNotifierProvider.notifier).changeSortOrder(sortBy);
-          Navigator.pop(context);
-        },
-        currentViewMode: state.viewMode,
-        onViewModeSelected: (mode) {
-          ref.read(bookshelfNotifierProvider.notifier).changeViewMode(mode);
-          Navigator.pop(context);
-        },
+      showDragHandle: true,
+      builder: (context) => SizedBox(
+        width: double.infinity,
+        child: StyleBottomSheet(
+          currentSort: state.sortBy,
+          onSortSelected: (sortBy) {
+            ref
+                .read(bookshelfNotifierProvider.notifier)
+                .changeSortOrder(sortBy);
+            Navigator.pop(context);
+          },
+          currentViewMode: state.viewMode,
+          onViewModeSelected: (mode) {
+            ref.read(bookshelfNotifierProvider.notifier).changeViewMode(mode);
+            Navigator.pop(context);
+          },
+        ),
       ),
+      scrollControlDisabledMaxHeightRatio: 0.75,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
     );
   }
 

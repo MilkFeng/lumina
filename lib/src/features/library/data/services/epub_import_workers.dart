@@ -1,15 +1,15 @@
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:image/image.dart' as img;
 import '../../domain/book_manifest.dart';
 import '../parsers/epub_zip_parser.dart';
 
 /// Configuration constants for import workers
 class ImportWorkerConfig {
-  static const int imageThumbnailMaxWidth = 500;
-  static const int imageCompressionQuality = 80;
+  static const int imageThumbnailMaxHeight = 1200;
+  static const int imageCompressionQuality = 90;
 }
 
 /// Parameters for isolate parsing
@@ -117,22 +117,22 @@ class ImportWorkers {
   }
 
   /// Compress and resize image to JPEG format
-  /// Returns null if image cannot be decoded
-  static Uint8List? compressImage(
+  /// Returns null if image cannot be compressed
+  static Future<Uint8List?> compressImage(
     Uint8List rawBytes, {
-    int maxWidth = ImportWorkerConfig.imageThumbnailMaxWidth,
+    int maxHeight = ImportWorkerConfig.imageThumbnailMaxHeight,
     int quality = ImportWorkerConfig.imageCompressionQuality,
-  }) {
+  }) async {
     try {
-      final image = img.decodeImage(rawBytes);
-      if (image == null) return null;
-
-      img.Image resizedImage = image;
-      if (image.width > maxWidth) {
-        resizedImage = img.copyResize(image, width: maxWidth);
-      }
-
-      return Uint8List.fromList(img.encodeJpg(resizedImage, quality: quality));
+      final result = await FlutterImageCompress.compressWithList(
+        rawBytes,
+        // For cover images, we prioritize height to maintain aspect ratio and avoid excessive width
+        minWidth: maxHeight,
+        minHeight: maxHeight,
+        quality: quality,
+        format: CompressFormat.jpeg,
+      );
+      return result.isEmpty ? null : result;
     } catch (e) {
       debugPrint('Image compression worker error: $e');
       return null;

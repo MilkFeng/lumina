@@ -355,15 +355,29 @@ class EpubZipParser {
     if (coverMeta != null) {
       final coverId = coverMeta.getAttribute('content');
       if (coverId != null) {
-        // Find cover href in manifest (will be resolved later)
         coverHref = manifestMap[coverId]!.$1.path;
       }
     }
 
     if (coverHref == null) {
+      // For EPUB 3, also check for manifest item with properties containing whole word "cover-image"
+      for (final entry in manifestMap.entries) {
+        final properties = entry.value.$2;
+        if (_containsWholeWord(properties, 'cover-image')) {
+          coverHref = entry.value.$1.path;
+          break;
+        }
+      }
+    }
+
+    if (coverHref == null) {
+      // Fallback: look for common cover file names in manifest
       for (final key in manifestMap.keys) {
         final lowerCaseKey = key.toLowerCase();
-        if (lowerCaseKey == 'cover.jpg' || lowerCaseKey == 'cover.png') {
+        if (lowerCaseKey == 'cover.jpg' ||
+            lowerCaseKey == 'cover.png' ||
+            lowerCaseKey == 'cover.jpeg' ||
+            lowerCaseKey == 'cover.webp') {
           coverHref = manifestMap[key]!.$1.path;
           break;
         }

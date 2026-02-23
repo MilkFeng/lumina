@@ -268,7 +268,7 @@ class EpubImportService {
 
       // Compress image using worker
       final rawCoverData = coverFile.content;
-      var coverData = await compute(ImportWorkers.compressImage, rawCoverData);
+      var coverData = await ImportWorkers.compressImage(rawCoverData);
       if (coverData != null) {
         extension = '.jpg';
       } else {

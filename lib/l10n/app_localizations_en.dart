@@ -430,7 +430,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cleanCacheSubtitle => 'Remove unused orphan files from storage';
 
   @override
-  String cleanCacheSuccess(int count) {
+  String cleanCacheSuccessWithCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -441,7 +441,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cleanCacheAlreadyClean => 'Cache is already clean.';
+  String get cleanCacheSuccess => 'Cache cleaned';
 
   @override
   String get projectInfo => 'Project Info';
@@ -550,4 +550,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get spliter => ', ';
+
+  @override
+  String get shareEpub => 'Share EPUB';
+
+  @override
+  String shareEpubFailed(String error) {
+    return 'Failed to share EPUB: $error';
+  }
 }

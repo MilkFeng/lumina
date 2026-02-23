@@ -308,14 +308,15 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     final service = ref.read(storageCleanupServiceProvider);
     await service.cleanCacheFiles();
     final deletedCount = await service.cleanOrphanFiles();
+    await service.cleanShareFiles();
 
     setState(() => _isCleaning = false);
 
     if (!context.mounted) return;
 
     final message = deletedCount == 0
-        ? l10n.cleanCacheAlreadyClean
-        : l10n.cleanCacheSuccess(deletedCount);
+        ? l10n.cleanCacheSuccess
+        : l10n.cleanCacheSuccessWithCount(deletedCount);
 
     ToastService.showInfo(message);
   }

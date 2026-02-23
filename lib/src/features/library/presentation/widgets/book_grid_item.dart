@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -32,25 +31,29 @@ class BookGridItem extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _handleTap(context, ref),
       onLongPress: onLongPress,
-      child: Stack(
-        children: [
-          // Main mode-specific layout
-          switch (viewMode) {
-            ViewMode.relaxed => _buildRelaxed(context),
-            ViewMode.compact => Positioned.fill(child: _buildCompact(context)),
-          },
+      child: RepaintBoundary(
+        child: Stack(
+          children: [
+            // Main mode-specific layout
+            switch (viewMode) {
+              ViewMode.relaxed => _buildRelaxed(context),
+              ViewMode.compact => Positioned.fill(
+                child: _buildCompact(context),
+              ),
+            },
 
-          // Selection checkbox (top-left, all modes)
-          if (isSelectionMode)
-            Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
+            // Selection checkbox (top-left, all modes)
+            if (isSelectionMode)
+              Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
 
-          // Finished badge (top-right, relaxed / comfortable only;
-          // compact bakes it into its own cover stack)
-          if (book.isFinished &&
-              !isSelectionMode &&
-              viewMode != ViewMode.compact)
-            Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
-        ],
+            // Finished badge (top-right, relaxed / comfortable only;
+            // compact bakes it into its own cover stack)
+            if (book.isFinished &&
+                !isSelectionMode &&
+                viewMode != ViewMode.compact)
+              Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
+          ],
+        ),
       ),
     );
   }
@@ -152,12 +155,126 @@ class BookGridItem extends ConsumerWidget {
     List<Widget> extras = const [],
     StackFit fit = StackFit.loose,
   }) {
-    return Stack(
-      fit: fit,
+    final maskAndExtras = Stack(
+      fit: StackFit.expand,
       children: [
-        Hero(
-          tag: 'book-cover-${book.id}',
-          child: Container(
+        // Selection colour overlay
+        if (isSelectionMode)
+          Container(
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary.withAlpha(102)
+                  : Theme.of(context).colorScheme.onSurface.withAlpha(51),
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ...extras,
+      ],
+    );
+
+    return Hero(
+      tag: 'book-cover-${book.id}',
+      flightShuttleBuilder:
+          (
+            BuildContext flightContext,
+            Animation<double> animation,
+            HeroFlightDirection flightDirection,
+            BuildContext fromHeroContext,
+            BuildContext toHeroContext,
+          ) {
+            final bool isPush = flightDirection == HeroFlightDirection.push;
+            final RenderBox? libraryBox =
+                (isPush ? fromHeroContext : toHeroContext).findRenderObject()
+                    as RenderBox?;
+            final RenderBox? detailBox =
+                (isPush ? toHeroContext : fromHeroContext).findRenderObject()
+                    as RenderBox?;
+
+            final Rect libraryRect = libraryBox != null
+                ? (libraryBox.localToGlobal(Offset.zero) & libraryBox.size)
+                : Rect.zero;
+            final Rect detailRect = detailBox != null
+                ? (detailBox.localToGlobal(Offset.zero) & detailBox.size)
+                : Rect.zero;
+
+            final RectTween trajectoryTween = RectTween(
+              begin: libraryRect,
+              end: detailRect,
+            );
+
+            final double statusBarHeight = MediaQuery.paddingOf(
+              flightContext,
+            ).top;
+            final double libraryAppBarBottom =
+                statusBarHeight + kToolbarHeight + 48.0;
+            final double detailAppBarBottom = statusBarHeight + kToolbarHeight;
+
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (context, child) {
+                final libraryOpacity = (1.0 - animation.value).clamp(0.0, 1.0);
+
+                final currentRadius = BorderRadius.lerp(
+                  BorderRadius.circular(6),
+                  BorderRadius.circular(8),
+                  animation.value,
+                )!;
+
+                final Rect currentRect =
+                    trajectoryTween.evaluate(animation) ?? Rect.zero;
+                final double currentGlobalY = currentRect.top;
+
+                final double currentCeilingY =
+                    libraryAppBarBottom +
+                    (detailAppBarBottom - libraryAppBarBottom) *
+                        animation.value;
+
+                final double clipAmount = (currentCeilingY - currentGlobalY)
+                    .clamp(0.0, double.infinity);
+
+                final contentWidget = Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: currentRadius,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: 0.1 * libraryOpacity,
+                            ),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: currentRadius,
+                        child: BookCover(relativePath: book.coverPath),
+                      ),
+                    ),
+
+                    Opacity(
+                      opacity: libraryOpacity,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: maskAndExtras,
+                      ),
+                    ),
+                  ],
+                );
+
+                return ClipRect(
+                  clipper: _TopClipper(clipAmount),
+                  child: contentWidget,
+                );
+              },
+            );
+          },
+      child: Stack(
+        fit: fit,
+        children: [
+          Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(6),
               boxShadow: [
@@ -173,21 +290,9 @@ class BookGridItem extends ConsumerWidget {
               child: BookCover(relativePath: book.coverPath),
             ),
           ),
-        ),
-        // Selection colour overlay
-        if (isSelectionMode)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary.withAlpha(102)
-                    : Theme.of(context).colorScheme.onSurface.withAlpha(51),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-          ),
-        ...extras,
-      ],
+          Positioned.fill(child: maskAndExtras),
+        ],
+      ),
     );
   }
 
@@ -203,18 +308,15 @@ class BookGridItem extends ConsumerWidget {
       right: 8,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            color: Colors.black.withValues(alpha: 0.7),
-            child: Text(
-              '${(book.readingProgress * 100).toStringAsFixed(2)}%',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          color: Colors.black.withValues(alpha: 0.8),
+          child: Text(
+            '${(book.readingProgress * 100).toStringAsFixed(2)}%',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -269,9 +371,24 @@ class BookGridItem extends ConsumerWidget {
     if (isSelectionMode) {
       ref.read(bookshelfNotifierProvider.notifier).toggleItemSelection(book);
     } else {
-      context.push('/book/${book.fileHash}').then((_) {
+      context.push('/book/${book.fileHash}', extra: book).then((_) {
         ref.read(bookshelfNotifierProvider.notifier).reloadQuietly();
       });
     }
   }
+}
+
+class _TopClipper extends CustomClipper<Rect> {
+  final double clipAmount;
+
+  _TopClipper(this.clipAmount);
+
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTRB(0, clipAmount, size.width, size.height);
+  }
+
+  @override
+  bool shouldReclip(_TopClipper oldClipper) =>
+      oldClipper.clipAmount != clipAmount;
 }

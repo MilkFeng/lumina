@@ -55,7 +55,7 @@ dependencies:
   flutter_svg: ^2.2.3
 
   # Image Compression
-  image: ^4.7.2
+  flutter_image_compress: 2.4.0
   saf_stream: ^0.12.3
   saf_util: ^0.11.0
   

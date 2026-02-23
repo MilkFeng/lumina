@@ -737,8 +737,8 @@
     "description": "Clean cache subtitle"
   },
 
-  "cleanCacheSuccess": "Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.",
-  "@cleanCacheSuccess": {
+  "cleanCacheSuccessWithCount": "Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.",
+  "@cleanCacheSuccessWithCount": {
     "description": "Clean cache success message",
     "placeholders": {
       "count": {
@@ -747,9 +747,9 @@
     }
   },
 
-  "cleanCacheAlreadyClean": "Cache is already clean.",
-  "@cleanCacheAlreadyClean": {
-    "description": "Cache is already clean message"
+  "cleanCacheSuccess": "Cache cleaned",
+  "@cleanCacheSuccess": {
+    "description": "Clean cache success message when no files were removed"
   },
 
   "projectInfo": "Project Info",
@@ -931,5 +931,20 @@
   "spliter": ", ",
   "@spliter": {
     "description": "Spliter used to separate multiple values in a single string"
+  },
+
+  "shareEpub": "Share EPUB",
+  "@shareEpub": {
+    "description": "Share EPUB source file action label"
+  },
+
+  "shareEpubFailed": "Failed to share EPUB: {error}",
+  "@shareEpubFailed": {
+    "description": "Error message when sharing EPUB fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
