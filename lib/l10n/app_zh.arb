@@ -747,8 +747,8 @@
     "description": "清理缓存副标题"
   },
 
-  "cleanCacheSuccess": "清理完成，已删除 {count} 个无用文件",
-  "@cleanCacheSuccess": {
+  "cleanCacheSuccessWithCount": "清理完成，已删除 {count} 个无用文件",
+  "@cleanCacheSuccessWithCount": {
     "description": "清理缓存成功消息",
     "placeholders": {
       "count": {
@@ -757,9 +757,9 @@
     }
   },
 
-  "cleanCacheAlreadyClean": "缓存已是最新，无需清理",
-  "@cleanCacheAlreadyClean": {
-    "description": "缓存无需清理消息"
+  "cleanCacheSuccess": "清理完成",
+  "@cleanCacheSuccess": {
+    "description": "缓存清理成功消息"
   },
 
   "projectInfo": "项目信息",

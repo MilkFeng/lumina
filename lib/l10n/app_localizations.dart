@@ -858,13 +858,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.'**
-  String cleanCacheSuccess(int count);
+  String cleanCacheSuccessWithCount(int count);
 
-  /// Cache is already clean message
+  /// Clean cache success message when no files were removed
   ///
   /// In en, this message translates to:
-  /// **'Cache is already clean.'**
-  String get cleanCacheAlreadyClean;
+  /// **'Cache cleaned'**
+  String get cleanCacheSuccess;
 
   /// Project information section title
   ///
