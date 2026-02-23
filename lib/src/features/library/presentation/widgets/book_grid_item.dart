@@ -156,7 +156,6 @@ class BookGridItem extends ConsumerWidget {
     List<Widget> extras = const [],
     StackFit fit = StackFit.loose,
   }) {
-    // 1. 先把准备要在空中溶解的“附加物”打包成一个独立的 Widget
     final maskAndExtras = Stack(
       fit: StackFit.expand,
       children: [
@@ -174,10 +173,8 @@ class BookGridItem extends ConsumerWidget {
       ],
     );
 
-    // 2. 将 Hero 移到最外层
     return Hero(
       tag: 'book-cover-${book.id}',
-      // 3. 接管飞行器建造逻辑
       flightShuttleBuilder:
           (
             BuildContext flightContext,
@@ -186,6 +183,33 @@ class BookGridItem extends ConsumerWidget {
             BuildContext fromHeroContext,
             BuildContext toHeroContext,
           ) {
+            final bool isPush = flightDirection == HeroFlightDirection.push;
+            final RenderBox? libraryBox =
+                (isPush ? fromHeroContext : toHeroContext).findRenderObject()
+                    as RenderBox?;
+            final RenderBox? detailBox =
+                (isPush ? toHeroContext : fromHeroContext).findRenderObject()
+                    as RenderBox?;
+
+            final Rect libraryRect = libraryBox != null
+                ? (libraryBox.localToGlobal(Offset.zero) & libraryBox.size)
+                : Rect.zero;
+            final Rect detailRect = detailBox != null
+                ? (detailBox.localToGlobal(Offset.zero) & detailBox.size)
+                : Rect.zero;
+
+            final RectTween trajectoryTween = RectTween(
+              begin: libraryRect,
+              end: detailRect,
+            );
+
+            final double statusBarHeight = MediaQuery.paddingOf(
+              flightContext,
+            ).top;
+            final double libraryAppBarBottom =
+                statusBarHeight + kToolbarHeight + 48.0;
+            final double detailAppBarBottom = statusBarHeight + kToolbarHeight;
+
             return AnimatedBuilder(
               animation: animation,
               builder: (context, child) {
@@ -197,7 +221,19 @@ class BookGridItem extends ConsumerWidget {
                   animation.value,
                 )!;
 
-                return Stack(
+                final Rect currentRect =
+                    trajectoryTween.evaluate(animation) ?? Rect.zero;
+                final double currentGlobalY = currentRect.top;
+
+                final double currentCeilingY =
+                    libraryAppBarBottom +
+                    (detailAppBarBottom - libraryAppBarBottom) *
+                        animation.value;
+
+                final double clipAmount = (currentCeilingY - currentGlobalY)
+                    .clamp(0.0, double.infinity);
+
+                final contentWidget = Stack(
                   fit: StackFit.expand,
                   children: [
                     Container(
@@ -227,6 +263,11 @@ class BookGridItem extends ConsumerWidget {
                       ),
                     ),
                   ],
+                );
+
+                return ClipRect(
+                  clipper: _TopClipper(clipAmount),
+                  child: contentWidget,
                 );
               },
             );
@@ -336,4 +377,19 @@ class BookGridItem extends ConsumerWidget {
       });
     }
   }
+}
+
+class _TopClipper extends CustomClipper<Rect> {
+  final double clipAmount;
+
+  _TopClipper(this.clipAmount);
+
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTRB(0, clipAmount, size.width, size.height);
+  }
+
+  @override
+  bool shouldReclip(_TopClipper oldClipper) =>
+      oldClipper.clipAmount != clipAmount;
 }
