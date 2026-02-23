@@ -3,7 +3,7 @@ import UIKit
 import WebKit
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private let pageTurnPluginKey = "LuminaReaderPageTurnChannel"
   private var pageTurnChannel: FlutterMethodChannel?
   private weak var pageTurnSnapshotView: UIView?
@@ -11,21 +11,34 @@ import WebKit
   private var pageTurnAnimator: UIViewPropertyAnimator?
   private var pageTurnAnimationToken: Int = 0
 
+  // Helper to get the active window's root view controller for snapshotting.
+  private var activeWindow: UIWindow? {
+    return UIApplication.shared.connectedScenes
+      .filter { $0.activationState == .foregroundActive }
+      .compactMap { $0 as? UIWindowScene }
+      .first?.windows
+      .first(where: { $0.isKeyWindow })
+  }
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  func didInitializeImplicitFlutterEngine(_ engineBridge: any FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
 
     // Register the lazy copy-on-demand native file picker plugin.
-    if let registrar = self.registrar(forPlugin: "NativePickerPlugin") {
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "NativePickerPlugin") {
       NativePickerPlugin.register(with: registrar)
     }
 
-    if let registrar = self.registrar(forPlugin: pageTurnPluginKey) {
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: pageTurnPluginKey) {
       let channel = FlutterMethodChannel(
         name: "lumina/reader_page_turn",
-        binaryMessenger: registrar.messenger()
+        binaryMessenger: engineBridge.applicationRegistrar.messenger()
       )
 
       channel.setMethodCallHandler { [weak self] call, result in
@@ -55,8 +68,6 @@ import WebKit
 
       pageTurnChannel = channel
     }
-
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   private func handlePreparePageTurn(result: @escaping FlutterResult) {
@@ -73,7 +84,8 @@ import WebKit
           self.pageTurnWebView = nil
         }
 
-      guard let webView = self.findTopmostWKWebView(in: self.window?.rootViewController?.view) else {
+      guard let rootView = self.activeWindow?.rootViewController?.view,
+            let webView = self.findTopmostWKWebView(in: rootView) else {
         result(FlutterError(code: "NO_WEBVIEW", message: "No WKWebView found", details: nil))
         return
       }
@@ -130,7 +142,7 @@ import WebKit
         shadowLayer = webView.layer
       }
 
-      let isDarkMode = self.window?.traitCollection.userInterfaceStyle == .dark
+      let isDarkMode = self.activeWindow?.traitCollection.userInterfaceStyle == .dark
       let shadowOpacity: Float = isDarkMode ? 0.3 : 0.15
       
       shadowLayer.shadowColor = UIColor.black.cgColor

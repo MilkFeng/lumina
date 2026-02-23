@@ -8,7 +8,12 @@ import UniformTypeIdentifiers
 /// Security-scoped resources are kept alive across MethodChannel calls so
 /// Dart can request individual files to be copied one at a time rather than
 /// copying everything up-front.
-class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate {
+class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, FlutterSceneLifeCycleDelegate {
+  var registrar: FlutterPluginRegistrar
+
+  init(registrar: FlutterPluginRegistrar) {
+    self.registrar = registrar
+  }
 
   // -------------------------------------------------------------------------
   // MARK: - State for security-scoped access
@@ -42,8 +47,9 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate {
       name: "com.lumina.ereader/native_picker",
       binaryMessenger: registrar.messenger()
     )
-    let instance = NativePickerPlugin()
+    let instance = NativePickerPlugin(registrar: registrar)
     registrar.addMethodCallDelegate(instance, channel: channel)
+    registrar.addSceneDelegate(instance)
   }
 
   // -------------------------------------------------------------------------
@@ -235,7 +241,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate {
   }
 
   private func presentPicker(_ picker: UIDocumentPickerViewController) {
-    guard let rootVC = UIApplication.shared.windows.first?.rootViewController else {
+    guard let rootVC = self.registrar.viewController?.view.window?.windowScene?.windows.first?.rootViewController else {
       pendingPickerResult?(FlutterError(
         code: "NO_VIEW_CONTROLLER",
         message: "Cannot find root view controller to present picker",
