@@ -63,4 +63,5 @@ void main() async {
   );
 
   container.read(storageCleanupServiceProvider).cleanCacheFiles();
+  container.read(storageCleanupServiceProvider).cleanShareFiles();
 }
