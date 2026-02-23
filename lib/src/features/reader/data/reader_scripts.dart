@@ -1036,8 +1036,8 @@ body {
 body * {
   max-width: var(--safe-width) !important;
 
-  orphans: 2;
-  widows: 2;
+  orphans: 1;
+  widows: 1;
 }
 
 ::-webkit-scrollbar, 

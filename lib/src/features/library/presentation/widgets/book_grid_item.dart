@@ -32,25 +32,29 @@ class BookGridItem extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _handleTap(context, ref),
       onLongPress: onLongPress,
-      child: Stack(
-        children: [
-          // Main mode-specific layout
-          switch (viewMode) {
-            ViewMode.relaxed => _buildRelaxed(context),
-            ViewMode.compact => Positioned.fill(child: _buildCompact(context)),
-          },
+      child: RepaintBoundary(
+        child: Stack(
+          children: [
+            // Main mode-specific layout
+            switch (viewMode) {
+              ViewMode.relaxed => _buildRelaxed(context),
+              ViewMode.compact => Positioned.fill(
+                child: _buildCompact(context),
+              ),
+            },
 
-          // Selection checkbox (top-left, all modes)
-          if (isSelectionMode)
-            Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
+            // Selection checkbox (top-left, all modes)
+            if (isSelectionMode)
+              Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
 
-          // Finished badge (top-right, relaxed / comfortable only;
-          // compact bakes it into its own cover stack)
-          if (book.isFinished &&
-              !isSelectionMode &&
-              viewMode != ViewMode.compact)
-            Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
-        ],
+            // Finished badge (top-right, relaxed / comfortable only;
+            // compact bakes it into its own cover stack)
+            if (book.isFinished &&
+                !isSelectionMode &&
+                viewMode != ViewMode.compact)
+              Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
+          ],
+        ),
       ),
     );
   }
@@ -203,18 +207,15 @@ class BookGridItem extends ConsumerWidget {
       right: 8,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            color: Colors.black.withValues(alpha: 0.7),
-            child: Text(
-              '${(book.readingProgress * 100).toStringAsFixed(2)}%',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          color: Colors.black.withValues(alpha: 0.8),
+          child: Text(
+            '${(book.readingProgress * 100).toStringAsFixed(2)}%',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
