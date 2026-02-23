@@ -156,12 +156,85 @@ class BookGridItem extends ConsumerWidget {
     List<Widget> extras = const [],
     StackFit fit = StackFit.loose,
   }) {
-    return Stack(
-      fit: fit,
+    // 1. 先把准备要在空中溶解的“附加物”打包成一个独立的 Widget
+    final maskAndExtras = Stack(
+      fit: StackFit.expand,
       children: [
-        Hero(
-          tag: 'book-cover-${book.id}',
-          child: Container(
+        // Selection colour overlay
+        if (isSelectionMode)
+          Container(
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary.withAlpha(102)
+                  : Theme.of(context).colorScheme.onSurface.withAlpha(51),
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ...extras,
+      ],
+    );
+
+    // 2. 将 Hero 移到最外层
+    return Hero(
+      tag: 'book-cover-${book.id}',
+      // 3. 接管飞行器建造逻辑
+      flightShuttleBuilder:
+          (
+            BuildContext flightContext,
+            Animation<double> animation,
+            HeroFlightDirection flightDirection,
+            BuildContext fromHeroContext,
+            BuildContext toHeroContext,
+          ) {
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (context, child) {
+                final libraryOpacity = (1.0 - animation.value).clamp(0.0, 1.0);
+
+                final currentRadius = BorderRadius.lerp(
+                  BorderRadius.circular(6),
+                  BorderRadius.circular(8),
+                  animation.value,
+                )!;
+
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: currentRadius,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: 0.1 * libraryOpacity,
+                            ),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: currentRadius,
+                        child: BookCover(relativePath: book.coverPath),
+                      ),
+                    ),
+
+                    Opacity(
+                      opacity: libraryOpacity,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: maskAndExtras,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+      child: Stack(
+        fit: fit,
+        children: [
+          Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(6),
               boxShadow: [
@@ -177,21 +250,9 @@ class BookGridItem extends ConsumerWidget {
               child: BookCover(relativePath: book.coverPath),
             ),
           ),
-        ),
-        // Selection colour overlay
-        if (isSelectionMode)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary.withAlpha(102)
-                    : Theme.of(context).colorScheme.onSurface.withAlpha(51),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-          ),
-        ...extras,
-      ],
+          Positioned.fill(child: maskAndExtras),
+        ],
+      ),
     );
   }
 
