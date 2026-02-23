@@ -19,13 +19,16 @@ class BookSession {
   Set<String> _activeAnchors = {};
 
   final String fileHash;
+  final List<SpineItem> _spine = [];
+  final List<SpineItem> _noLinearSpine = [];
 
   BookSession({required this.fileHash});
 
   // Getters
   ShelfBook? get book => _book;
   BookManifest? get manifest => _manifest;
-  List<SpineItem> get spine => _manifest?.spine ?? [];
+  List<SpineItem> get spine => _spine;
+  List<SpineItem> get noLinearSpine => _noLinearSpine;
   List<TocItem> get toc => _manifest?.toc ?? [];
   Set<String> get activeAnchors => _activeAnchors;
   bool get isLoaded => _book != null && _manifest != null;
@@ -49,6 +52,17 @@ class BookSession {
 
     _book = book;
     _manifest = manifest;
+
+    // filter out spine with linear=no
+    _spine.clear();
+    _noLinearSpine.clear();
+    for (final item in manifest.spine) {
+      if (item.linear) {
+        _spine.add(item);
+      } else {
+        _noLinearSpine.add(item);
+      }
+    }
 
     // Pre-calculate TOC lookup maps for O(1) synchronization
     _buildTocLookupMaps();
