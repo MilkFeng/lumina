@@ -27,9 +27,9 @@ class BookDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch book data using fileHash
-    final bookAsync = ref.watch(bookDetailProvider(bookId));
+    final routeAnimation = ModalRoute.of(context)?.animation;
 
+    // AbsorbPointer to prevent interactions during transition
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -38,26 +38,40 @@ class BookDetailScreen extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: bookAsync.when(
-        loading: () {
-          if (initialBook != null) {
-            // Show the detail with initial data while loading
-            return _buildBookDetail(context, ref, initialBook!);
-          }
-          // Show loading indicator if no initial data
-          return const Center(child: CircularProgressIndicator());
+      body: AnimatedBuilder(
+        animation: routeAnimation ?? const AlwaysStoppedAnimation(0.0),
+        builder: (context, child) {
+          final isTransitioning = (routeAnimation?.value ?? 1.0) < 1.0;
+
+          return AbsorbPointer(absorbing: isTransitioning, child: child);
         },
-        error: (error, stack) => _buildErrorBody(context, error.toString()),
-        data: (book) {
-          if (book == null) {
-            return _buildErrorBody(
-              context,
-              AppLocalizations.of(context)!.bookNotFound,
-            );
-          }
-          return _buildBookDetail(context, ref, book);
-        },
+        child: _bookDetailContent(context, ref),
       ),
+    );
+  }
+
+  Widget _bookDetailContent(BuildContext context, WidgetRef ref) {
+    // Watch book data using fileHash
+    final bookAsync = ref.watch(bookDetailProvider(bookId));
+    return bookAsync.when(
+      loading: () {
+        if (initialBook != null) {
+          // Show the detail with initial data while loading
+          return _buildBookDetail(context, ref, initialBook!);
+        }
+        // Show loading indicator if no initial data
+        return const Center(child: CircularProgressIndicator());
+      },
+      error: (error, stack) => _buildErrorBody(context, error.toString()),
+      data: (book) {
+        if (book == null) {
+          return _buildErrorBody(
+            context,
+            AppLocalizations.of(context)!.bookNotFound,
+          );
+        }
+        return _buildBookDetail(context, ref, book);
+      },
     );
   }
 

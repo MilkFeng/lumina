@@ -103,6 +103,24 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final route = ModalRoute.of(context);
+    final secondaryAnimation =
+        route?.secondaryAnimation ?? const AlwaysStoppedAnimation(0.0);
+
+    // AbsorbPointer to prevent interactions during transition
+    return AnimatedBuilder(
+      animation: secondaryAnimation,
+      builder: (context, child) {
+        final isTransitioning =
+            secondaryAnimation.value > 0.0 && secondaryAnimation.value < 1.0;
+
+        return AbsorbPointer(absorbing: isTransitioning, child: child);
+      },
+      child: _buildContentWidget(context),
+    );
+  }
+
+  Widget _buildContentWidget(BuildContext context) {
     final bookshelfState = ref.watch(bookshelfNotifierProvider);
 
     final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
