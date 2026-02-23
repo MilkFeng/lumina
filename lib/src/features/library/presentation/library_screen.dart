@@ -377,7 +377,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             mainAxisSpacing: 16,
           ),
           ViewMode.compact => const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 110.0,
+            maxCrossAxisExtent: 120.0,
             childAspectRatio: 0.68,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
