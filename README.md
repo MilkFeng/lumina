@@ -155,7 +155,6 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [ ] Cloud sync (WebDAV)
 - [ ] Search functionality
 - [ ] Annotation and bookmarking features
-- [ ] Improve consistency of page turn animations between iOS and Android, better page turn animations
 - [ ] Chinese support for error messages
 
 ## 🙏 Acknowledgements

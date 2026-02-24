@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -478,7 +479,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           child: IgnorePointer(
             ignoring: !_isImageViewerVisible,
             child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(
+                milliseconds: AppTheme.defaultAnimationDurationMs,
+              ),
               curve: Curves.easeOut,
               opacity: _isImageViewerVisible ? 1.0 : 0.0,
               child: (_currentImageUrl != null && _currentImageRect != null)

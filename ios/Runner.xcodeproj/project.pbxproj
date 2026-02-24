@@ -16,6 +16,7 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		A1B2C3D4E5F6A1B2C3D4E1F3 /* NativePickerPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B2C3D4E1F2 /* NativePickerPlugin.swift */; };
+		A1B2C3D4E5F6A1B2C3D4E1F5 /* ReaderPageTurnPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A1B2C3D4E1F4 /* ReaderPageTurnPlugin.swift */; };
 		AC5CDFC41D52ED94CD8BA11D /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 95792A75163D2F1299BEB4C8 /* Pods_Runner.framework */; };
 /* End PBXBuildFile section */
 
@@ -65,8 +66,7 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A1B2C3D4E1F2 /* NativePickerPlugin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NativePickerPlugin.swift; sourceTree = "<group>"; };
-		F882BE705AA575CB5E2FFFEE /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A1B2C3D4E1F2 /* NativePickerPlugin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NativePickerPlugin.swift; sourceTree = "<group>"; };			A1B2C3D4E5F6A1B2C3D4E1F4 /* ReaderPageTurnPlugin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReaderPageTurnPlugin.swift; sourceTree = "<group>"; };		F882BE705AA575CB5E2FFFEE /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,8 +139,7 @@
 				1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */,
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
-				A1B2C3D4E5F6A1B2C3D4E1F2 /* NativePickerPlugin.swift */,
-				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				A1B2C3D4E5F6A1B2C3D4E1F2 /* NativePickerPlugin.swift */,					A1B2C3D4E5F6A1B2C3D4E1F4 /* ReaderPageTurnPlugin.swift */,				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -380,8 +379,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
-				A1B2C3D4E5F6A1B2C3D4E1F3 /* NativePickerPlugin.swift in Sources */,
-				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
+				A1B2C3D4E5F6A1B2C3D4E1F3 /* NativePickerPlugin.swift in Sources */,					A1B2C3D4E5F6A1B2C3D4E1F5 /* ReaderPageTurnPlugin.swift in Sources */,				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

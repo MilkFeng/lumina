@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import '../providers/cover_file_provider.dart';
 
 /// Book cover widget with Riverpod-based caching and gapless playback.
@@ -46,7 +47,9 @@ class BookCover extends ConsumerWidget {
 
               return AnimatedOpacity(
                 opacity: frame == null ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(
+                  milliseconds: AppTheme.defaultLongAnimationDurationMs,
+                ),
                 curve: Curves.easeOut,
                 child: child,
               );

@@ -2,12 +2,13 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import './reader_webview.dart';
+import 'page_turn/page_turn.dart';
 
 class ReaderRendererController {
   _ReaderRendererState? _rendererState;
@@ -127,19 +128,11 @@ class ReaderRenderer extends StatefulWidget {
 
 class _ReaderRendererState extends State<ReaderRenderer>
     with TickerProviderStateMixin {
-  static const MethodChannel _nativePageTurnChannel = MethodChannel(
-    'lumina/reader_page_turn',
-  );
-
   final GlobalKey _webViewKey = GlobalKey();
   final ReaderWebViewController _webViewController = ReaderWebViewController();
 
-  late final AnimationController _animController;
-  late Animation<Offset> _slideAnimation;
-  ui.Image? _screenshotData;
-  bool _isAnimating = false;
-  bool _isForwardAnimation = true;
-  int _androidPageTurnToken = 0;
+  late final AndroidPageTurnSession _androidPageTurnSession;
+  late final IOSPageTurnSession _iosPageTurnSession;
 
   EdgeInsets get padding {
     var safePaddings = MediaQuery.paddingOf(context);
@@ -162,21 +155,19 @@ class _ReaderRendererState extends State<ReaderRenderer>
   void initState() {
     super.initState();
     widget.controller._attachState(this);
-    _animController = AnimationController(
+    _androidPageTurnSession = AndroidPageTurnSession(
       vsync: this,
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: Offset.zero,
-    ).animate(_animController);
+    _iosPageTurnSession = IOSPageTurnSession();
   }
 
   @override
   void dispose() {
-    _screenshotData?.dispose();
     widget.controller._attachState(null);
-    _animController.dispose();
+    _androidPageTurnSession.dispose();
     super.dispose();
   }
 
@@ -184,145 +175,20 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (!widget.canPerformPageTurn(isNext)) return;
 
     if (Platform.isAndroid) {
-      await _performAndroidPageTurn(isNext);
-      return;
-    }
-
-    _isAnimating = true;
-
-    try {
-      await _prepareIOSPageTurn();
-      await widget.onPerformPageTurn(isNext);
-      unawaited(_animateIOSPageTurn(isNext));
-    } finally {
-      _isAnimating = false;
-    }
-  }
-
-  Future<void> _performAndroidPageTurn(bool isNext) async {
-    final int turnToken = ++_androidPageTurnToken;
-    _isAnimating = true;
-
-    ui.Image? screenshot;
-    try {
-      screenshot = await _webViewController.takeScreenshot();
-    } catch (e) {
-      debugPrint('Error taking screenshot: $e');
-      screenshot = null;
-    }
-
-    if (screenshot == null) {
-      _screenshotData?.dispose();
-      setState(() {
-        _screenshotData = null;
-      });
-      _animController.reset();
-
-      await widget.onPerformPageTurn(isNext);
-      if (turnToken == _androidPageTurnToken) {
-        _isAnimating = false;
-      }
-      return;
-    }
-
-    if (!mounted || turnToken != _androidPageTurnToken) {
-      screenshot.dispose();
-      _isAnimating = false;
-      return;
-    }
-
-    if (_animController.isAnimating) {
-      _animController.stop();
-    }
-
-    setState(() {
-      _isForwardAnimation = isNext;
-
-      _screenshotData?.dispose();
-      _screenshotData = screenshot;
-
-      Tween<Offset> tween;
-
-      if (isNext) {
-        if (widget.isVertical) {
-          tween = Tween<Offset>(
-            begin: Offset.zero,
-            end: const Offset(1.0, 0.0),
-          );
-        } else {
-          tween = Tween<Offset>(
-            begin: Offset.zero,
-            end: const Offset(-1.0, 0.0),
-          );
-        }
-      } else {
-        if (widget.isVertical) {
-          tween = Tween<Offset>(
-            begin: const Offset(1.0, 0.0),
-            end: Offset.zero,
-          );
-        } else {
-          tween = Tween<Offset>(
-            begin: const Offset(-1.0, 0.0),
-            end: Offset.zero,
-          );
-        }
-      }
-      _slideAnimation = tween.animate(
-        CurvedAnimation(parent: _animController, curve: Curves.easeInCubic),
+      await _androidPageTurnSession.perform(
+        webViewController: _webViewController,
+        isNext: isNext,
+        isVertical: widget.isVertical,
+        onPerformPageTurn: widget.onPerformPageTurn,
+        setState: setState,
+        isMounted: () => mounted,
       );
-      _animController.reset();
-    });
-
-    await widget.onPerformPageTurn(isNext);
-
-    if (!mounted || turnToken != _androidPageTurnToken) {
-      _isAnimating = false;
-      return;
-    }
-
-    try {
-      await _animController.forward();
-    } finally {
-      if (turnToken == _androidPageTurnToken) {
-        final finishedScreenshot = _screenshotData;
-        if (mounted) {
-          setState(() {
-            _screenshotData = null;
-          });
-        } else {
-          _screenshotData = null;
-        }
-        finishedScreenshot?.dispose();
-
-        _animController.reset();
-        _isAnimating = false;
-      }
-    }
-  }
-
-  Future<void> _prepareIOSPageTurn() async {
-    if (!Platform.isIOS) return;
-    try {
-      await _nativePageTurnChannel.invokeMethod<void>('preparePageTurn');
-    } on MissingPluginException {
-      // no-op for configurations without iOS native channel
-    } catch (e) {
-      debugPrint('preparePageTurn failed: $e');
-    }
-  }
-
-  Future<void> _animateIOSPageTurn(bool isNext) async {
-    if (!Platform.isIOS) return;
-    try {
-      await _nativePageTurnChannel.invokeMethod<void>('animatePageTurn', {
-        'isNext': isNext,
-        'isVertical': widget.isVertical,
-      });
-    } on MissingPluginException {
-      // no-op for configurations without iOS native channel
-    } catch (e) {
-      debugPrint('animatePageTurn failed: $e');
+    } else {
+      await _iosPageTurnSession.perform(
+        isNext: isNext,
+        isVertical: widget.isVertical,
+        onPerformPageTurn: widget.onPerformPageTurn,
+      );
     }
   }
 
@@ -333,7 +199,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (width <= 0) return;
 
     final ratio = globalDx / width;
-    if (ratio < 0.2) {
+    if (ratio < 0.3) {
       if (widget.showControls) {
         widget.onToggleControls();
         return;
@@ -343,7 +209,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
       } else {
         _performPageTurn(false);
       }
-    } else if (ratio > 0.8) {
+    } else if (ratio > 0.7) {
       if (widget.showControls) {
         widget.onToggleControls();
         return;
@@ -359,6 +225,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   Future<void> _handleHorizontalDragEnd(DragEndDetails details) async {
+    if (widget.showControls) {
+      return;
+    }
     final velocity = details.primaryVelocity ?? 0;
 
     if (velocity < -200) {
@@ -396,30 +265,15 @@ class _ReaderRendererState extends State<ReaderRenderer>
             ? _handleLongPressStart
             : null,
         child: Platform.isAndroid
-            ? Stack(
-                children: [
-                  if (_isAnimating && !_isForwardAnimation)
-                    Positioned.fill(
-                      child: _buildScreenshotContainer(_screenshotData!),
-                    ),
-                  Positioned.fill(
-                    child: SlideTransition(
-                      position: _isAnimating && !_isForwardAnimation
-                          ? _slideAnimation
-                          : const AlwaysStoppedAnimation(Offset.zero),
-                      child: _buildWebView(),
-                    ),
-                  ),
-                  if (_isAnimating && _isForwardAnimation)
-                    Positioned.fill(
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: _buildScreenshotContainer(_screenshotData!),
-                      ),
-                    ),
-                ],
+            ? _androidPageTurnSession.buildAnimatedContainer(
+                context,
+                _buildWebView(),
+                _buildScreenshotContainer,
               )
-            : _buildWebView(),
+            : _iosPageTurnSession.buildAnimatedContainer(
+                context,
+                _buildWebView(),
+              ),
       ),
     );
   }
@@ -433,6 +287,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
                 ? Colors.black.withValues(alpha: 0.3)
                 : Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
+            offset: Offset.zero,
           ),
         ],
         color: Theme.of(context).colorScheme.surface,
