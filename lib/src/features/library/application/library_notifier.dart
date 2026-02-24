@@ -156,11 +156,6 @@ class LibraryNotifier extends _$LibraryNotifier {
       ImportableEpub? importable;
       String currentFileName = '';
 
-      yield ProgressLog(
-        'Processing file $currentFileName ($currentCount of $totalCount)',
-        ProgressLogType.info,
-      );
-
       try {
         // 1. Cache the file from URI to local temp directory
         importable = await unifiedImportService.processEpub(path);
@@ -168,6 +163,11 @@ class LibraryNotifier extends _$LibraryNotifier {
         // Assuming your ImportableEpub model has originalName property
         // If not, you might need to extract the name from the PlatformPath beforehand
         currentFileName = importable.originalName;
+
+        yield ProgressLog(
+          'Processing file $currentFileName ($currentCount of $totalCount)',
+          ProgressLogType.info,
+        );
 
         // 2. Notify UI that caching is done and actual import is starting
         yield ImportProgress(

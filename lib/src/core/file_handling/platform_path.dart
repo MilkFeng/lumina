@@ -20,7 +20,12 @@ sealed class PlatformPath {
     if (Platform.isAndroid && value.startsWith('content://')) {
       return AndroidUriPath(value);
     } else {
-      return IOSFilePath(value);
+      String filePath = value;
+      if (Platform.isIOS && value.startsWith('file://')) {
+        final decodedUri = Uri.decodeFull(value);
+        filePath = decodedUri.replaceFirst('file://', '');
+      }
+      return IOSFilePath(filePath);
     }
   }
 }
