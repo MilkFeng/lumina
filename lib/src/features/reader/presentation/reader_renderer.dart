@@ -2,15 +2,13 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/features/reader/presentation/ios_page_turn_session.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import './reader_webview.dart';
-import './android_page_turn_session.dart';
+import 'page_turn/page_turn.dart';
 
 class ReaderRendererController {
   _ReaderRendererState? _rendererState;

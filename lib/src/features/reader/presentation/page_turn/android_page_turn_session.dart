@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import './reader_webview.dart';
+import '../reader_webview.dart';
 
 class AndroidPageTurnSession {
   late final AnimationController animController;
