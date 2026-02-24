@@ -986,5 +986,10 @@
         "type": "String"
       }
     }
+  },
+
+  "authorsTooltip": "多个作者请使用英文半角逗号分隔",
+  "@authorsTooltip": {
+    "description": "作者字段的提示信息"
   }
 }

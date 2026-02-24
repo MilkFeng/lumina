@@ -976,5 +976,10 @@
         "type": "String"
       }
     }
+  },
+
+  "authorsTooltip": "Separate multiple authors with commas",
+  "@authorsTooltip": {
+    "description": "Tooltip for authors field"
   }
 }

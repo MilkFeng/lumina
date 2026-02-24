@@ -559,4 +559,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String bookSaveFailed(String error) {
     return '保存失败：$error';
   }
+
+  @override
+  String get authorsTooltip => '多个作者请使用英文半角逗号分隔';
 }

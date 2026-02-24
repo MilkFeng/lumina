@@ -575,4 +575,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String bookSaveFailed(String error) {
     return 'Failed to save: $error';
   }
+
+  @override
+  String get authorsTooltip => 'Separate multiple authors with commas';
 }

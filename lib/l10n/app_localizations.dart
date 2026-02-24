@@ -1081,6 +1081,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to save: {error}'**
   String bookSaveFailed(String error);
+
+  /// Tooltip for authors field
+  ///
+  /// In en, this message translates to:
+  /// **'Separate multiple authors with commas'**
+  String get authorsTooltip;
 }
 
 class _AppLocalizationsDelegate

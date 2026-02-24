@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
 import 'package:lumina/src/features/library/data/repositories/shelf_book_repository_provider.dart';
 import 'package:lumina/src/features/library/domain/shelf_book.dart';
@@ -122,7 +124,10 @@ class _EditBookDialogState extends ConsumerState<EditBookDialog> {
             const SizedBox(height: 16),
             TextField(
               controller: _authorsController,
-              decoration: InputDecoration(labelText: l10n.authors),
+              decoration: InputDecoration(
+                labelText: l10n.authors,
+                helperText: l10n.authorsTooltip,
+              ),
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
