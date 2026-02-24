@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
+import 'package:collection/collection.dart';
 
 /// Sorting options for shelf book list
 enum ShelfBookSortBy {
@@ -59,22 +60,36 @@ class ShelfBookRepository {
     // Cast to sortable query builder
     final sortableQuery = query as QueryBuilder<ShelfBook, ShelfBook, QSortBy>;
 
+    // Neural sort by title or author (case-insensitive)
+    List<ShelfBook> books;
+
     // Apply sorting
     switch (sortBy) {
       case ShelfBookSortBy.titleAsc:
-        return await sortableQuery.sortByTitle().findAll();
       case ShelfBookSortBy.titleDesc:
-        return await sortableQuery.sortByTitleDesc().findAll();
       case ShelfBookSortBy.authorAsc:
-        return await sortableQuery.sortByAuthor().findAll();
       case ShelfBookSortBy.authorDesc:
-        return await sortableQuery.sortByAuthorDesc().findAll();
+        books = await query.findAll();
       case ShelfBookSortBy.recentlyRead:
         return await sortableQuery.sortByLastOpenedDateDesc().findAll();
       case ShelfBookSortBy.recentlyAdded:
         return await sortableQuery.sortByImportDateDesc().findAll();
       case ShelfBookSortBy.progress:
         return await sortableQuery.sortByReadingProgressDesc().findAll();
+    }
+
+    // Neural sort for title/author
+    switch (sortBy) {
+      case ShelfBookSortBy.titleAsc:
+        return books..sort((a, b) => compareNatural(a.title, b.title));
+      case ShelfBookSortBy.titleDesc:
+        return books..sort((a, b) => compareNatural(b.title, a.title));
+      case ShelfBookSortBy.authorAsc:
+        return books..sort((a, b) => compareNatural(a.author, b.author));
+      case ShelfBookSortBy.authorDesc:
+        return books..sort((a, b) => compareNatural(b.author, a.author));
+      default:
+        return books;
     }
   }
 
