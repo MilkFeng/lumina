@@ -1087,6 +1087,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Separate multiple authors with commas'**
   String get authorsTooltip;
+
+  /// Open storage location action label
+  ///
+  /// In en, this message translates to:
+  /// **'Open Storage Location'**
+  String get openStorageLocation;
+
+  /// Subtitle for open storage location action
+  ///
+  /// In en, this message translates to:
+  /// **'Open the folder where Lumina stores its data (cache, books, etc.)'**
+  String get openStorageLocationSubtitle;
+
+  /// Error message when opening storage location fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to open storage location: {error}'**
+  String openStorageLocationFailed(String error);
 }
 
 class _AppLocalizationsDelegate

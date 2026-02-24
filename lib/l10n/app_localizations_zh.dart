@@ -562,4 +562,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authorsTooltip => '多个作者请使用英文半角逗号分隔';
+
+  @override
+  String get openStorageLocation => '打开存储位置';
+
+  @override
+  String get openStorageLocationSubtitle => '在文件管理器中打开 Lumina 的存储目录';
+
+  @override
+  String openStorageLocationFailed(String error) {
+    return '无法打开存储位置：$error';
+  }
 }

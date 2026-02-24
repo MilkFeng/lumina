@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -70,7 +72,17 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           _buildInfoSection(
             context,
             title: l10n.storage,
-            children: [_buildCleanCacheTile(context, l10n)],
+            children: [
+              _buildCleanCacheTile(context, l10n),
+              if (Platform.isAndroid)
+                _buildInfoTile(
+                  context,
+                  icon: Icons.folder_open_outlined,
+                  title: l10n.openStorageLocation,
+                  subtitle: l10n.openStorageLocationSubtitle,
+                  onTap: () => _openAndroidFolder(l10n),
+                ),
+            ],
           ),
 
           const SizedBox(height: 24),
@@ -371,5 +383,28 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     }
 
     setState(() => _isExporting = false);
+  }
+
+  Future<void> _openAndroidFolder(AppLocalizations l10n) async {
+    if (!Platform.isAndroid) return;
+
+    final packageInfo = await PackageInfo.fromPlatform();
+    final String applicationId = packageInfo.packageName;
+    final String authority = '$applicationId.documents';
+    const String rootId = 'lumina_books_root';
+    final String rootUri = 'content://$authority/root/$rootId';
+
+    final intent = AndroidIntent(
+      action: 'android.intent.action.VIEW',
+      data: rootUri,
+      type: 'vnd.android.document/root',
+      flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+    );
+
+    try {
+      await intent.launch();
+    } catch (e) {
+      ToastService.showError(l10n.openStorageLocationFailed(e.toString()));
+    }
   }
 }

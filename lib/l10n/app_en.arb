@@ -981,5 +981,25 @@
   "authorsTooltip": "Separate multiple authors with commas",
   "@authorsTooltip": {
     "description": "Tooltip for authors field"
+  },
+
+  "openStorageLocation": "Open Storage Location",
+  "@openStorageLocation": {
+    "description": "Open storage location action label"
+  },
+
+  "openStorageLocationSubtitle": "Open the folder where Lumina stores its data (cache, books, etc.)",
+  "@openStorageLocationSubtitle": {
+    "description": "Subtitle for open storage location action"
+  },
+
+  "openStorageLocationFailed": "Failed to open storage location: {error}",
+  "@openStorageLocationFailed": {
+    "description": "Error message when opening storage location fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

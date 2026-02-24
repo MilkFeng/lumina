@@ -578,4 +578,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authorsTooltip => 'Separate multiple authors with commas';
+
+  @override
+  String get openStorageLocation => 'Open Storage Location';
+
+  @override
+  String get openStorageLocationSubtitle =>
+      'Open the folder where Lumina stores its data (cache, books, etc.)';
+
+  @override
+  String openStorageLocationFailed(String error) {
+    return 'Failed to open storage location: $error';
+  }
 }
