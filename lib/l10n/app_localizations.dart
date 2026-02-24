@@ -1051,6 +1051,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to share EPUB: {error}'**
   String shareEpubFailed(String error);
+
+  /// Edit book dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Book'**
+  String get editBook;
+
+  /// Authors field label
+  ///
+  /// In en, this message translates to:
+  /// **'Authors'**
+  String get authors;
+
+  /// Book description field label
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get bookDescription;
+
+  /// Book saved success message
+  ///
+  /// In en, this message translates to:
+  /// **'Book updated'**
+  String get bookSaved;
+
+  /// Book save failure message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save: {error}'**
+  String bookSaveFailed(String error);
 }
 
 class _AppLocalizationsDelegate

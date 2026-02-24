@@ -303,10 +303,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     final result = await showDialog<String?>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          AppLocalizations.of(context)!.editCategory,
-          style: AppTheme.contentTextStyle,
-        ),
+        title: Text(AppLocalizations.of(context)!.editCategory),
         content: TextFormField(
           initialValue: group.name,
           autofocus: true,
@@ -334,7 +331,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
             },
             child: Text(l10n.delete),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, draftName.trim()),
             child: Text(AppLocalizations.of(context)!.save),
           ),

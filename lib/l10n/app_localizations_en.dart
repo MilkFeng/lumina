@@ -558,4 +558,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareEpubFailed(String error) {
     return 'Failed to share EPUB: $error';
   }
+
+  @override
+  String get editBook => 'Edit Book';
+
+  @override
+  String get authors => 'Authors';
+
+  @override
+  String get bookDescription => 'Description';
+
+  @override
+  String get bookSaved => 'Book updated';
+
+  @override
+  String bookSaveFailed(String error) {
+    return 'Failed to save: $error';
+  }
 }

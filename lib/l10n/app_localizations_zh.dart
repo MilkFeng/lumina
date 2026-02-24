@@ -542,4 +542,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String shareEpubFailed(String error) {
     return '分享 EPUB 失败：$error';
   }
+
+  @override
+  String get editBook => '编辑书籍';
+
+  @override
+  String get authors => '作者';
+
+  @override
+  String get bookDescription => '简介';
+
+  @override
+  String get bookSaved => '书籍已更新';
+
+  @override
+  String bookSaveFailed(String error) {
+    return '保存失败：$error';
+  }
 }

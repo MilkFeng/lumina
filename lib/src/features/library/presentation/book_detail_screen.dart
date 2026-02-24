@@ -7,6 +7,7 @@ import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
+import 'package:lumina/src/features/library/presentation/widgets/edit_book_dialog.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:share_plus/share_plus.dart';
 import '../domain/shelf_book.dart';
@@ -54,6 +55,12 @@ class BookDetailScreen extends ConsumerWidget {
               tooltip: AppLocalizations.of(context)!.shareEpub,
               onPressed: () => _shareEpub(context, book, ref),
             ),
+          if (book != null)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: AppLocalizations.of(context)!.editBook,
+              onPressed: () => _showEditDialog(context, ref, book),
+            ),
         ],
       ),
       body: AnimatedBuilder(
@@ -90,6 +97,13 @@ class BookDetailScreen extends ConsumerWidget {
         }
         return _buildBookDetail(context, ref, book);
       },
+    );
+  }
+
+  void _showEditDialog(BuildContext context, WidgetRef ref, ShelfBook book) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => EditBookDialog(book: book, bookId: bookId, ref: ref),
     );
   }
 
