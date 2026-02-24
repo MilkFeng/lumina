@@ -991,5 +991,25 @@
   "authorsTooltip": "多个作者请使用英文半角逗号分隔",
   "@authorsTooltip": {
     "description": "作者字段的提示信息"
+  },
+
+  "openStorageLocation": "打开存储位置",
+  "@openStorageLocation": {
+    "description": "打开存储位置操作"
+  },
+
+  "openStorageLocationSubtitle": "在文件管理器中打开 Lumina 的存储目录",
+  "@openStorageLocationSubtitle": {
+    "description": "打开存储位置的副标题"
+  },
+
+  "openStorageLocationFailed": "无法打开存储位置：{error}",
+  "@openStorageLocationFailed": {
+    "description": "打开存储位置失败的错误提示",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

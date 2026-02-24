@@ -130,10 +130,10 @@ class BookGridItem extends ConsumerWidget {
                 book.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: AppTheme.contentTextStyle.copyWith(
                   color: Colors.white,
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),

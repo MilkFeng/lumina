@@ -348,7 +348,9 @@ class _TocDrawerState extends State<TocDrawer> {
                   Text(
                     widget.book.author,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha(153),
                       fontWeight: FontWeight.w400,
                       fontFamily: AppTheme.fontFamilyContent,
                     ),

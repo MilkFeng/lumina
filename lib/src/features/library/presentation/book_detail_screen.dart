@@ -233,7 +233,7 @@ class BookDetailScreen extends ConsumerWidget {
               Text(
                 book.authors.join(AppLocalizations.of(context)!.spliter),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
                   fontFamily: AppTheme.fontFamilyContent,
                   fontWeight: FontWeight.w400,
                 ),
@@ -360,7 +360,7 @@ class BookDetailScreen extends ConsumerWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.secondary,
+          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
         ),
       ),
     );

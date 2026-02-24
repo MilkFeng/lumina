@@ -5,23 +5,6 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  // Color Palette - Strictly Monochrome (Notion-like)
-  static const Color _black = Color(0xFF000000);
-  static const Color _white = Color(0xFFFFFFFF);
-  static const Color _greySecondary = Color(0xFF9E9E9E);
-  static const Color _divider = Color(0xFFE0E0E0);
-  static const Color _red = Color(0xFFDC2626);
-  static const Color _darkRed = Color(0xFFEF4444);
-
-  static const Color _darkBg = Color(0xFF191919);
-  static const Color _darkSurface = Color(0xFF202020);
-  static const Color _darkTextPrimary = Color(0xFFECECEC);
-  static const Color _darkTextSecondary = Color(0xFFAAAAAA);
-  static const Color _darkDivider = Color(0xFF333333);
-
-  // Border Radius - Sharp, minimal
-  static const double _radiusSmall = 4.0;
-
   // Font Family - Elegant Serif for a literary feel
   static const String _fontFamily = 'AppSerif';
 
@@ -48,151 +31,80 @@ class AppTheme {
 
   /// Light Theme
   static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      pageTransitionsTheme: pageTransitionsTheme,
-      colorScheme: const ColorScheme.light(
-        primary: _black,
-        onPrimary: _white,
-        secondary: _greySecondary,
-        onSecondary: _black,
-        surface: _white,
-        onSurface: _black,
-        error: _red,
-        onError: _white,
-        outline: _divider,
+    return _buildTheme(
+      const ColorScheme.light(
+        primary: Color(0xFF2F3437),
+        onPrimary: Colors.white,
+        secondary: Color(0xFFF1F1EF),
+        onSecondary: Color(0xFF2F3437),
+        error: Color(0xFFEB5757),
+        onError: Colors.white,
+        surface: Colors.white,
+        onSurface: Color(0xFF2F3437),
+        surfaceContainerHighest: Color(0xFFF7F7F5),
+        onSurfaceVariant: Color(0xFF787774),
+        outline: Color(0xFFE9E9E7),
+        outlineVariant: Color(0xFFF3F3F2),
       ),
-      scaffoldBackgroundColor: _white,
-      textTheme: _buildTextTheme(Brightness.light),
-      appBarTheme: AppBarTheme(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: _white,
-        foregroundColor: _black,
-        centerTitle: false,
-        iconTheme: const IconThemeData(color: _black),
-        titleTextStyle: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: _black,
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: false,
-        border: const OutlineInputBorder(
-          borderSide: BorderSide(color: _divider),
-        ),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: _divider),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: _black, width: 1.5),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: _black,
-          foregroundColor: _white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radiusSmall),
-          ),
-          textStyle: TextStyle(
-            fontFamily: _fontFamily,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: _black,
-          textStyle: TextStyle(
-            fontFamily: _fontFamily,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: _black,
-          side: const BorderSide(color: _black, width: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radiusSmall),
-          ),
-          textStyle: TextStyle(
-            fontFamily: _fontFamily,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: _divider,
-        thickness: 1,
-        space: 1,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_radiusSmall),
-          side: BorderSide(color: _divider, width: 1),
-        ),
-      ),
-      splashFactory: NoSplash.splashFactory,
-      iconTheme: const IconThemeData(color: _black),
-      extensions: const [NotionStatusColors.light()],
     );
   }
 
   /// Dark Theme - Optional monochrome variant
   static ThemeData get darkTheme {
+    return _buildTheme(
+      const ColorScheme.dark(
+        primary: Color(0xFFEBEBEA),
+        onPrimary: Color(0xFF191919),
+        secondary: Color(0xFF2F2F2F),
+        onSecondary: Color(0xFFEBEBEA),
+        error: Color(0xFFFF7369),
+        onError: Colors.white,
+        surface: Color(0xFF191919),
+        onSurface: Color(0xFFD4D4D4),
+        surfaceContainerHighest: Color(0xFF252525),
+        onSurfaceVariant: Color(0xFF9B9A97),
+        outline: Color(0xFF373737),
+        outlineVariant: Color(0xFF2A2A2A),
+      ),
+    );
+  }
+
+  static ThemeData _buildTheme(ColorScheme colorScheme) {
+    final notionRadius = BorderRadius.circular(4.0);
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      colorScheme: colorScheme,
+      brightness: colorScheme.brightness,
+      scaffoldBackgroundColor: colorScheme.surface,
       pageTransitionsTheme: pageTransitionsTheme,
-      colorScheme: const ColorScheme.dark(
-        primary: _white,
-        onPrimary: _black,
-        secondary: _greySecondary,
-        onSecondary: _white,
-        surface: _darkBg,
-        onSurface: _darkTextPrimary,
-        surfaceContainer: _darkSurface,
-        error: _darkRed,
-        onError: _black,
-        outline: _darkDivider,
-      ),
-      scaffoldBackgroundColor: _darkBg,
-      textTheme: _buildTextTheme(Brightness.dark),
       appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: _darkBg,
-        foregroundColor: _darkTextPrimary,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: _white),
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
         titleTextStyle: TextStyle(
           fontFamily: _fontFamily,
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: _darkTextPrimary,
+          color: colorScheme.onSurface,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: _darkSurface,
-        border: const OutlineInputBorder(borderSide: BorderSide.none),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: _darkDivider),
+        fillColor: colorScheme.surfaceContainerHighest,
+        border: OutlineInputBorder(
+          borderRadius: notionRadius,
+          borderSide: BorderSide.none,
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: _white, width: 1.0),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: notionRadius,
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: notionRadius,
+          borderSide: BorderSide(color: colorScheme.outline, width: 1),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -202,13 +114,11 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: _white,
-          foregroundColor: _darkBg,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radiusSmall),
-          ),
-          textStyle: TextStyle(
+          shape: RoundedRectangleBorder(borderRadius: notionRadius),
+          textStyle: const TextStyle(
             fontFamily: _fontFamily,
             fontWeight: FontWeight.bold,
           ),
@@ -216,8 +126,8 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: _darkTextPrimary,
-          textStyle: TextStyle(
+          foregroundColor: colorScheme.onSurfaceVariant,
+          textStyle: const TextStyle(
             fontFamily: _fontFamily,
             fontWeight: FontWeight.w600,
           ),
@@ -225,38 +135,35 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _darkTextPrimary,
-          side: const BorderSide(color: _greySecondary, width: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_radiusSmall),
-          ),
-          textStyle: TextStyle(
+          foregroundColor: colorScheme.onSurface,
+          side: BorderSide(color: colorScheme.outline, width: 1),
+          shape: RoundedRectangleBorder(borderRadius: notionRadius),
+          textStyle: const TextStyle(
             fontFamily: _fontFamily,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: _darkDivider,
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant,
         thickness: 1,
         space: 1,
       ),
-
       cardTheme: CardThemeData(
         elevation: 0,
+        color: colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_radiusSmall),
-          side: BorderSide(color: AppTheme._darkDivider, width: 1),
+          borderRadius: notionRadius,
+          side: BorderSide(color: colorScheme.outlineVariant, width: 1),
         ),
       ),
-
+      textTheme: _buildTextTheme(colorScheme),
       splashFactory: NoSplash.splashFactory,
-      iconTheme: const IconThemeData(color: _darkTextPrimary),
-      extensions: const [NotionStatusColors.dark()],
     );
   }
 
-  static TextTheme _buildTextTheme(Brightness brightness) {
+  static TextTheme _buildTextTheme(ColorScheme colorScheme) {
+    final brightness = colorScheme.brightness;
     final baseTextTheme = brightness == Brightness.light
         ? ThemeData.light().textTheme
         : ThemeData.dark().textTheme;
@@ -266,12 +173,8 @@ class AppTheme {
       fontFamilyFallback: _defaultFallback,
     );
 
-    final mainColor = brightness == Brightness.light
-        ? _black
-        : _darkTextPrimary;
-    final mutedColor = brightness == Brightness.light
-        ? _greySecondary
-        : _darkTextSecondary;
+    final mainColor = colorScheme.primary;
+    final mutedColor = colorScheme.onSurfaceVariant;
 
     return baseWithFont.copyWith(
       displayLarge: baseWithFont.displayLarge?.copyWith(
@@ -336,39 +239,6 @@ class AppTheme {
         TargetPlatform.android: CupertinoPageTransitionsBuilder(),
         TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
       },
-    );
-  }
-}
-
-@immutable
-class NotionStatusColors extends ThemeExtension<NotionStatusColors> {
-  final Color emphasis;
-  final Color muted;
-
-  const NotionStatusColors({required this.emphasis, required this.muted});
-
-  const NotionStatusColors.light()
-    : emphasis = AppTheme._black,
-      muted = AppTheme._greySecondary;
-
-  const NotionStatusColors.dark()
-    : emphasis = AppTheme._darkTextPrimary,
-      muted = AppTheme._darkTextSecondary;
-
-  @override
-  NotionStatusColors copyWith({Color? emphasis, Color? muted}) {
-    return NotionStatusColors(
-      emphasis: emphasis ?? this.emphasis,
-      muted: muted ?? this.muted,
-    );
-  }
-
-  @override
-  NotionStatusColors lerp(ThemeExtension<NotionStatusColors>? other, double t) {
-    if (other is! NotionStatusColors) return this;
-    return NotionStatusColors(
-      emphasis: Color.lerp(emphasis, other.emphasis, t) ?? emphasis,
-      muted: Color.lerp(muted, other.muted, t) ?? muted,
     );
   }
 }

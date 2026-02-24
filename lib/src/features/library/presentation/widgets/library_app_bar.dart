@@ -86,6 +86,15 @@ class LibraryAppBar extends StatelessWidget {
                 tabAlignment: TabAlignment.start,
                 tabs: _buildTabs(context),
                 indicatorSize: TabBarIndicatorSize.label,
+                labelStyle: AppTheme.contentTextStyle.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: AppTheme.contentTextStyle.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w400,
+                ),
+                dividerColor: Theme.of(context).primaryColor,
               ),
       ),
     );
@@ -95,24 +104,10 @@ class LibraryAppBar extends StatelessWidget {
     final tabs = <Widget>[];
 
     // "All" tab
-    tabs.add(
-      Tab(
-        child: Text(
-          AppLocalizations.of(context)!.all,
-          style: AppTheme.contentTextStyle,
-        ),
-      ),
-    );
+    tabs.add(Tab(child: Text(AppLocalizations.of(context)!.all)));
 
     // "Uncategorized" tab
-    tabs.add(
-      Tab(
-        child: Text(
-          AppLocalizations.of(context)!.uncategorized,
-          style: AppTheme.contentTextStyle,
-        ),
-      ),
-    );
+    tabs.add(Tab(child: Text(AppLocalizations.of(context)!.uncategorized)));
 
     // Group tabs
     for (final group in state.availableGroups) {
@@ -125,7 +120,7 @@ class LibraryAppBar extends StatelessWidget {
               onEditGroup(group, l10n);
             },
             behavior: HitTestBehavior.opaque,
-            child: Text(group.name, style: AppTheme.contentTextStyle),
+            child: Text(group.name),
           ),
         ),
       );
