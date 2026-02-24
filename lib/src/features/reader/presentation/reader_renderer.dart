@@ -244,36 +244,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
       _screenshotData?.dispose();
       _screenshotData = screenshot;
 
-      Tween<Offset> tween;
-
-      if (isNext) {
-        if (widget.isVertical) {
-          tween = Tween<Offset>(
-            begin: Offset.zero,
-            end: const Offset(1.0, 0.0),
-          );
-        } else {
-          tween = Tween<Offset>(
-            begin: Offset.zero,
-            end: const Offset(-1.0, 0.0),
-          );
-        }
-      } else {
-        if (widget.isVertical) {
-          tween = Tween<Offset>(
-            begin: const Offset(1.0, 0.0),
-            end: Offset.zero,
-          );
-        } else {
-          tween = Tween<Offset>(
-            begin: const Offset(-1.0, 0.0),
-            end: Offset.zero,
-          );
-        }
-      }
-      _slideAnimation = tween.animate(
-        CurvedAnimation(parent: _animController, curve: Curves.easeInCubic),
-      );
+      _setupTween(isNext);
       _animController.reset();
     });
 
@@ -302,6 +273,22 @@ class _ReaderRendererState extends State<ReaderRenderer>
         _isAnimating = false;
       }
     }
+  }
+
+  void _setupTween(bool isNext) {
+    Tween<Offset> tween;
+    if (isNext) {
+      tween = Tween<Offset>(
+        begin: Offset.zero,
+        end: Offset(widget.isVertical ? 1.0 : -1.0, 0.0),
+      );
+    } else {
+      tween = Tween<Offset>(
+        begin: Offset(widget.isVertical ? 1.0 : -1.0, 0.0),
+        end: Offset.zero,
+      );
+    }
+    _slideAnimation = tween.animate(_animController);
   }
 
   Future<void> _prepareIOSPageTurn() async {

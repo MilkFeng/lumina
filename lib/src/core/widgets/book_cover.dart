@@ -48,7 +48,7 @@ class BookCover extends ConsumerWidget {
               return AnimatedOpacity(
                 opacity: frame == null ? 0.0 : 1.0,
                 duration: const Duration(
-                  milliseconds: AppTheme.defaultAnimationDurationMs,
+                  milliseconds: AppTheme.defaultLongAnimationDurationMs,
                 ),
                 curve: Curves.easeOut,
                 child: child,
