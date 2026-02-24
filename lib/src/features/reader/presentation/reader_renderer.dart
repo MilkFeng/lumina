@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
@@ -164,7 +165,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
     widget.controller._attachState(this);
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
     );
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,

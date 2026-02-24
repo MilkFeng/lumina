@@ -11,6 +11,9 @@ import WebKit
   private var pageTurnAnimator: UIViewPropertyAnimator?
   private var pageTurnAnimationToken: Int = 0
 
+  // duration for animation
+  private let pageTurnAnimationDuration: TimeInterval = 0.25
+
   // Helper to get the active window's root view controller for snapshotting.
   private var activeWindow: UIWindow? {
     return UIApplication.shared.connectedScenes
@@ -160,7 +163,7 @@ import WebKit
         snapshot.transform = .identity
         webView.transform = .identity
 
-        let animator = UIViewPropertyAnimator(duration: 0.18, curve: .easeOut) {
+        let animator = UIViewPropertyAnimator(duration: self.pageTurnAnimationDuration, curve: .easeOut) {
           if isVertical {
             snapshot.transform = CGAffineTransform(translationX: width, y: 0)
           } else {
@@ -191,7 +194,7 @@ import WebKit
         }
         snapshot.transform = .identity
 
-        let animator = UIViewPropertyAnimator(duration: 0.18, curve: .easeOut) {
+        let animator = UIViewPropertyAnimator(duration: self.pageTurnAnimationDuration, curve: .easeOut) {
           webView.transform = .identity
         }
         self.pageTurnAnimator = animator

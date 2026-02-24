@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 
 import '../data/epub_webview_handler.dart';
 import '../../../core/services/toast_service.dart';
@@ -47,7 +48,9 @@ class _ImageViewerState extends State<ImageViewer>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
     );
 
     _curve = CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart);

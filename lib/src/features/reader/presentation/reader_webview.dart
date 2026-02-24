@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/widgets/book_cover.dart';
 
 import '../data/book_session.dart';
@@ -308,7 +309,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
               child: IgnorePointer(
                 ignoring: !widget.isLoading && widget.shouldShowWebView,
                 child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 240),
+                  duration: const Duration(
+                    milliseconds: AppTheme.defaultAnimationDurationMs,
+                  ),
                   curve: Curves.easeOut,
                   opacity: (widget.isLoading || !widget.shouldShowWebView)
                       ? 1.0
@@ -407,17 +410,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       return image;
     } else {
-      // for iOS, use WebView screenshot method
-      final screenshotData = await _controller?.takeScreenshot(
-        screenshotConfiguration: ScreenshotConfiguration(
-          compressFormat: CompressFormat.JPEG,
-          quality: 70,
-        ),
+      throw UnimplementedError(
+        'Do not use screenshot on iOS, it may cause performance issues.',
       );
-      if (screenshotData == null) return null;
-      final codec = await ui.instantiateImageCodec(screenshotData);
-      final frame = await codec.getNextFrame();
-      return frame.image;
     }
   }
 

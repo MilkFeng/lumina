@@ -42,6 +42,9 @@ class AppTheme {
     'serif',
   ];
 
+  static const int defaultAnimationDurationMs = 250;
+  static const int defaultPresentationDurationMs = 3 * 1000; // 3 seconds
+
   /// Light Theme
   static ThemeData get lightTheme {
     return ThemeData(

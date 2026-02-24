@@ -140,7 +140,9 @@ class _ProgressDialogState extends State<ProgressDialog> {
             ],
 
             AnimatedSize(
-              duration: const Duration(milliseconds: 300),
+              duration: const Duration(
+                milliseconds: AppTheme.defaultAnimationDurationMs,
+              ),
               curve: Curves.easeInOutCubic,
               alignment: Alignment.topCenter,
               child: (_logs.isNotEmpty && _showDetails)

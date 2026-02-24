@@ -165,13 +165,17 @@ class _ControlPanelState extends State<ControlPanel> {
       children: [
         // Top Bar
         AnimatedPositioned(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(
+            milliseconds: AppTheme.defaultAnimationDurationMs,
+          ),
           curve: Curves.easeInOut,
           top: widget.showControls ? 0 : -100,
           left: 0,
           right: 0,
           child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 180),
+            duration: const Duration(
+              milliseconds: AppTheme.defaultAnimationDurationMs,
+            ),
             opacity: widget.showControls ? 1.0 : 0.0,
             child: Container(
               padding: EdgeInsets.only(
@@ -214,13 +218,17 @@ class _ControlPanelState extends State<ControlPanel> {
 
         // Bottom Bar
         AnimatedPositioned(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(
+            milliseconds: AppTheme.defaultAnimationDurationMs,
+          ),
           curve: Curves.easeInOut,
           bottom: widget.showControls ? 0 : -100,
           left: 0,
           right: 0,
           child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 180),
+            duration: const Duration(
+              milliseconds: AppTheme.defaultAnimationDurationMs,
+            ),
             opacity: widget.showControls ? 1.0 : 0.0,
             child: Container(
               padding: EdgeInsets.only(

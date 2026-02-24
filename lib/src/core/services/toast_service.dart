@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 
 import '../widgets/toast_bubble.dart';
 
@@ -25,7 +26,9 @@ class ToastService {
   static void _show(
     String message,
     ToastBubbleType type, {
-    Duration duration = const Duration(seconds: 3),
+    Duration duration = const Duration(
+      milliseconds: AppTheme.defaultPresentationDurationMs,
+    ),
   }) {
     debugPrint('Toast: [${type.name.toUpperCase()}] $message');
 
@@ -90,8 +93,12 @@ class _ToastOverlayState extends State<_ToastOverlay>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 220),
-      reverseDuration: const Duration(milliseconds: 180),
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
+      reverseDuration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
     );
 
     _opacity = CurvedAnimation(

@@ -56,7 +56,9 @@ class _ExpandableTextState extends State<ExpandableText> {
         }
 
         return AnimatedSize(
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(
+            milliseconds: AppTheme.defaultAnimationDurationMs,
+          ),
           curve: Curves.easeInOut,
           alignment: Alignment.topCenter,
           child: Column(
