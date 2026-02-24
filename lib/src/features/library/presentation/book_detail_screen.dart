@@ -198,11 +198,18 @@ class BookDetailScreen extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: Hero(
                 tag: 'book-cover-${book.id}',
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: 300),
-                    child: BookCover(relativePath: coverPath),
+                child: GestureDetector(
+                  onTap: () {
+                    context.push('/read/${book.fileHash}').then((value) {
+                      ref.invalidate(bookDetailProvider(bookId));
+                    });
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: 300),
+                      child: BookCover(relativePath: coverPath),
+                    ),
                   ),
                 ),
               ),
