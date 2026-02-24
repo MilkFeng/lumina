@@ -75,20 +75,22 @@ import WebKit
 
   private func handlePreparePageTurn(result: @escaping FlutterResult) {
     DispatchQueue.main.async {
-        self.pageTurnAnimationToken += 1
-        self.cancelActivePageTurnAnimation()
+      self.pageTurnAnimationToken += 1
+      self.cancelActivePageTurnAnimation()
 
-        if let existingSnapshot = self.pageTurnSnapshotView,
-           let existingWebView = self.pageTurnWebView {
-          self.cleanupAfterAnimation(snapshot: existingSnapshot, webView: existingWebView)
-        } else {
-          self.pageTurnSnapshotView?.removeFromSuperview()
-          self.pageTurnSnapshotView = nil
-          self.pageTurnWebView = nil
-        }
+      if let existingSnapshot = self.pageTurnSnapshotView,
+        let existingWebView = self.pageTurnWebView
+      {
+        self.cleanupAfterAnimation(snapshot: existingSnapshot, webView: existingWebView)
+      } else {
+        self.pageTurnSnapshotView?.removeFromSuperview()
+        self.pageTurnSnapshotView = nil
+        self.pageTurnWebView = nil
+      }
 
       guard let rootView = self.activeWindow?.rootViewController?.view,
-            let webView = self.findTopmostWKWebView(in: rootView) else {
+        let webView = self.findTopmostWKWebView(in: rootView)
+      else {
         result(FlutterError(code: "NO_WEBVIEW", message: "No WKWebView found", details: nil))
         return
       }
@@ -107,22 +109,24 @@ import WebKit
       snapshot.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
       superview.addSubview(snapshot)
-      // superview.bringSubviewToFront(snapshot)
 
       self.pageTurnSnapshotView = snapshot
       self.pageTurnWebView = webView
-      
+
       result(nil)
     }
   }
 
-  private func handleAnimatePageTurn(isNext: Bool, isVertical: Bool, result: @escaping FlutterResult) {
+  private func handleAnimatePageTurn(
+    isNext: Bool, isVertical: Bool, result: @escaping FlutterResult
+  ) {
     DispatchQueue.main.async {
       self.cancelActivePageTurnAnimation()
 
-      guard let snapshot = self.pageTurnSnapshotView, 
-            let webView = self.pageTurnWebView,
-            let superview = webView.superview else {
+      guard let snapshot = self.pageTurnSnapshotView,
+        let webView = self.pageTurnWebView,
+        let superview = webView.superview
+      else {
         result(nil)
         return
       }
@@ -147,23 +151,24 @@ import WebKit
 
       let isDarkMode = self.activeWindow?.traitCollection.userInterfaceStyle == .dark
       let shadowOpacity: Float = isDarkMode ? 0.3 : 0.15
-      
+
       shadowLayer.shadowColor = UIColor.black.cgColor
       shadowLayer.shadowOpacity = shadowOpacity
       shadowLayer.shadowRadius = 10
       shadowLayer.shadowOffset = .zero
       shadowLayer.shadowPath = UIBezierPath(rect: webView.bounds).cgPath
 
-
       if isNext {
         superview.bringSubviewToFront(snapshot)
-        
+
         // if vertical, (0, 0) -> (width, 0)
         // else (0, 0) -> (-width, 0)
         snapshot.transform = .identity
         webView.transform = .identity
 
-        let animator = UIViewPropertyAnimator(duration: self.pageTurnAnimationDuration, curve: .easeOut) {
+        let animator = UIViewPropertyAnimator(
+          duration: self.pageTurnAnimationDuration, curve: .easeOut
+        ) {
           if isVertical {
             snapshot.transform = CGAffineTransform(translationX: width, y: 0)
           } else {
@@ -174,7 +179,7 @@ import WebKit
         animator.addCompletion { _ in
           if animationToken == self.pageTurnAnimationToken {
             self.cleanupAfterAnimation(snapshot: snapshot, webView: webView)
-        }
+          }
           if self.pageTurnAnimator === animator {
             self.pageTurnAnimator = nil
           }
@@ -182,9 +187,9 @@ import WebKit
         }
         animator.startAnimation()
 
-      } else {        
+      } else {
         superview.bringSubviewToFront(webView)
-        
+
         // if vertical, (width, 0) -> (0, 0)
         // else (-width, 0) -> (0, 0)
         if isVertical {
@@ -194,7 +199,9 @@ import WebKit
         }
         snapshot.transform = .identity
 
-        let animator = UIViewPropertyAnimator(duration: self.pageTurnAnimationDuration, curve: .easeOut) {
+        let animator = UIViewPropertyAnimator(
+          duration: self.pageTurnAnimationDuration, curve: .easeOut
+        ) {
           webView.transform = .identity
         }
         self.pageTurnAnimator = animator
@@ -204,7 +211,7 @@ import WebKit
           }
           if self.pageTurnAnimator === animator {
             self.pageTurnAnimator = nil
-        }
+          }
           result(nil)
         }
         animator.startAnimation()
@@ -221,16 +228,16 @@ import WebKit
   private func cleanupAfterAnimation(snapshot: UIView, webView: WKWebView) {
     snapshot.removeFromSuperview()
     snapshot.transform = .identity
-    
+
     snapshot.layer.shadowOpacity = 0
     snapshot.layer.shadowOffset = .zero
     snapshot.layer.shadowPath = nil
     webView.layer.shadowOpacity = 0
     webView.layer.shadowOffset = .zero
     webView.layer.shadowPath = nil
-    
+
     webView.transform = .identity
-    
+
     self.pageTurnSnapshotView = nil
     self.pageTurnWebView = nil
   }
