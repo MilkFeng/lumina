@@ -257,7 +257,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
         result = groupId;
         newName = name;
       } else {
-        ToastService.showError(l10n.categoryNameCannotBeEmpty);
+        if (name != null && name.trim().isEmpty) {
+          ToastService.showError(l10n.categoryNameCannotBeEmpty);
+        }
         return;
       }
     }

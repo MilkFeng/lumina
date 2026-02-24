@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
 import 'package:lumina/src/features/library/data/repositories/shelf_book_repository_provider.dart';
 import 'package:lumina/src/features/library/domain/shelf_book.dart';
