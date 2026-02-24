@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -209,11 +211,13 @@ class _ImageViewerState extends State<ImageViewer>
     if (_imageAspectRatio == null) {
       return const SizedBox();
     }
+    final curve = Curves.easeOutQuart.transform(t);
+
     return Center(
       child: AspectRatio(
         aspectRatio: _imageAspectRatio!,
         child: Container(
-          color: Colors.white.withValues(alpha: t),
+          color: Colors.white.withValues(alpha: curve),
           child: Image.memory(
             imageData,
             fit: BoxFit.contain,

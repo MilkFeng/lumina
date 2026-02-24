@@ -323,7 +323,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (width <= 0) return;
 
     final ratio = globalDx / width;
-    if (ratio < 0.2) {
+    if (ratio < 0.3) {
       if (widget.showControls) {
         widget.onToggleControls();
         return;
@@ -333,7 +333,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
       } else {
         _performPageTurn(false);
       }
-    } else if (ratio > 0.8) {
+    } else if (ratio > 0.7) {
       if (widget.showControls) {
         widget.onToggleControls();
         return;
@@ -349,6 +349,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   Future<void> _handleHorizontalDragEnd(DragEndDetails details) async {
+    if (widget.showControls) {
+      return;
+    }
     final velocity = details.primaryVelocity ?? 0;
 
     if (velocity < -200) {
