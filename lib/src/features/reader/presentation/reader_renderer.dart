@@ -423,6 +423,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
                 ? Colors.black.withValues(alpha: 0.3)
                 : Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
+            offset: Offset.zero,
           ),
         ],
         color: Theme.of(context).colorScheme.surface,

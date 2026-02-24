@@ -21,6 +21,9 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
   private var animationToken: Int = 0
 
   private let animationDuration: TimeInterval = 0.25
+  private let shadowRadius: CGFloat = 10
+  private let shadowOpacityDarkMode: Float = 0.3
+  private let shadowOpacityLightMode: Float = 0.15
 
   // -------------------------------------------------------------------------
   // MARK: - FlutterPlugin registration
@@ -133,8 +136,8 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
       let shadowLayer: CALayer = isNext ? snapshot.layer : webView.layer
       let isDarkMode = self.activeWindow?.traitCollection.userInterfaceStyle == .dark
       shadowLayer.shadowColor = UIColor.black.cgColor
-      shadowLayer.shadowOpacity = isDarkMode ? 0.3 : 0.15
-      shadowLayer.shadowRadius = 10
+      shadowLayer.shadowOpacity = isDarkMode ? self.shadowOpacityDarkMode : self.shadowOpacityLightMode
+      shadowLayer.shadowRadius = self.shadowRadius
       shadowLayer.shadowOffset = .zero
       shadowLayer.shadowPath = UIBezierPath(rect: webView.bounds).cgPath
 
@@ -144,7 +147,7 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
         snapshot.transform = .identity
         webView.transform = .identity
 
-        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .easeOut) {
+        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .linear) {
           snapshot.transform = CGAffineTransform(
             translationX: isVertical ? width : -width, y: 0)
         }
@@ -165,7 +168,7 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
           translationX: isVertical ? width : -width, y: 0)
         snapshot.transform = .identity
 
-        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .easeOut) {
+        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .linear) {
           webView.transform = .identity
         }
         self.animator = anim
