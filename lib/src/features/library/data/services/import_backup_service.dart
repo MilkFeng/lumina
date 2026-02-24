@@ -336,6 +336,19 @@ class ImportBackupService {
     if (existingBook == null) {
       await _shelfBookRepository.saveBook(backupBook);
     } else {
+      // merge `currentChapterIndex` and `readingProgress` by `lastOpenedDate`
+      if (backupBook.lastOpenedDate != null &&
+          existingBook.lastOpenedDate != null) {
+        if (backupBook.lastOpenedDate! > existingBook.lastOpenedDate!) {
+          existingBook.currentChapterIndex = backupBook.currentChapterIndex;
+          existingBook.readingProgress = backupBook.readingProgress;
+        }
+      }
+
+      // For other fields, use `updatedAt` as the source of truth. This means
+      // that if the backup's metadata is newer, it will overwrite the existing
+      // book's metadata (title, authors, description, etc.) but keep the
+      // existing reading progress.
       if (backupBook.updatedAt > existingBook.updatedAt) {
         backupBook.id = existingBook.id;
         if (backupBook.coverPath == null && existingBook.coverPath != null) {

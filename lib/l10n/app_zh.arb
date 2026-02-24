@@ -956,5 +956,40 @@
         "type": "String"
       }
     }
+  },
+
+  "editBook": "编辑书籍",
+  "@editBook": {
+    "description": "编辑书籍对话框标题"
+  },
+
+  "authors": "作者",
+  "@authors": {
+    "description": "作者字段标签"
+  },
+
+  "bookDescription": "简介",
+  "@bookDescription": {
+    "description": "书籍简介字段标签"
+  },
+
+  "bookSaved": "书籍已更新",
+  "@bookSaved": {
+    "description": "书籍保存成功提示"
+  },
+
+  "bookSaveFailed": "保存失败：{error}",
+  "@bookSaveFailed": {
+    "description": "书籍保存失败提示",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "authorsTooltip": "多个作者请使用英文半角逗号分隔",
+  "@authorsTooltip": {
+    "description": "作者字段的提示信息"
   }
 }

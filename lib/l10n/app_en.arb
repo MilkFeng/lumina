@@ -946,5 +946,40 @@
         "type": "String"
       }
     }
+  },
+
+  "editBook": "Edit Book",
+  "@editBook": {
+    "description": "Edit book dialog title"
+  },
+
+  "authors": "Authors",
+  "@authors": {
+    "description": "Authors field label"
+  },
+
+  "bookDescription": "Description",
+  "@bookDescription": {
+    "description": "Book description field label"
+  },
+
+  "bookSaved": "Book updated",
+  "@bookSaved": {
+    "description": "Book saved success message"
+  },
+
+  "bookSaveFailed": "Failed to save: {error}",
+  "@bookSaveFailed": {
+    "description": "Book save failure message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "authorsTooltip": "Separate multiple authors with commas",
+  "@authorsTooltip": {
+    "description": "Tooltip for authors field"
   }
 }
