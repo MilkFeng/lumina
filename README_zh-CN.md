@@ -155,7 +155,6 @@ flutter build ios --release
 - [ ] 云端同步 (WebDAV)
 - [ ] 搜索功能
 - [ ] 注释和书签功能
-- [ ] 解决 iOS 和 Android 下翻页动画的一致性问题，更好的翻页动画
 - [ ] 异常消息的中文支持
 
 ## 🙏 致谢
