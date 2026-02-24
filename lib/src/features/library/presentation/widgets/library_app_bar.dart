@@ -91,9 +91,10 @@ class LibraryAppBar extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
                 unselectedLabelStyle: AppTheme.contentTextStyle.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w400,
                 ),
+                dividerColor: Theme.of(context).primaryColor,
               ),
       ),
     );
