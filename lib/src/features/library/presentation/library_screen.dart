@@ -167,7 +167,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   context,
                 ).colorScheme.scrim.withValues(alpha: 0.5),
                 child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

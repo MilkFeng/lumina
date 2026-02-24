@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/features/library/domain/shelf_book.dart';
+import 'package:lumina/src/global_share_handler.dart';
 import '../services/toast_service.dart';
 import '../../features/library/presentation/library_screen.dart';
 import '../../features/library/presentation/book_detail_screen.dart';
@@ -14,6 +15,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: ToastService.navigatorKey,
     initialLocation: '/',
     debugLogDiagnostics: true,
+    redirect: (context, state) {
+      final location = state.uri.toString();
+      print('Router intercepted system file link: $location');
+      if (location.startsWith('content://') || location.startsWith('file://')) {
+        Future.microtask(() {
+          ref.read(pendingRouteFileProvider.notifier).state = location;
+        });
+        return '/';
+      } else if (location.startsWith('/-')) {
+        return '/';
+      }
+      return null;
+    },
     routes: [
       // Library Screen (Home)
       GoRoute(
@@ -38,7 +52,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Reader Screen V2 (Stream-from-Zip)
+      // Reader Screen (Stream-from-Zip)
       GoRoute(
         path: '/read/:id',
         name: 'reader',
