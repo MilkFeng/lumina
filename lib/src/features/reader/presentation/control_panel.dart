@@ -162,27 +162,16 @@ class _ControlPanelState extends State<ControlPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final appBarHeight = AppBar().preferredSize.height;
     return Stack(
       children: [
-        // Scrim
-        AnimatedOpacity(
-          duration: const Duration(
-            milliseconds: AppTheme.defaultAnimationDurationMs,
-          ),
-          opacity: widget.showControls ? 0.15 : 0.0,
-          child: IgnorePointer(
-            ignoring: true,
-            child: Container(color: Theme.of(context).colorScheme.scrim),
-          ),
-        ),
-
         // Top Bar
         AnimatedPositioned(
           duration: const Duration(
             milliseconds: AppTheme.defaultAnimationDurationMs,
           ),
           curve: Curves.easeInOut,
-          top: widget.showControls ? 0 : -100,
+          top: widget.showControls ? 0 : -appBarHeight,
           left: 0,
           right: 0,
           child: AnimatedOpacity(
@@ -191,39 +180,29 @@ class _ControlPanelState extends State<ControlPanel> {
             ),
             opacity: widget.showControls ? 1.0 : 0.0,
             child: Container(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top,
-                left: 8,
-                right: 16,
-                bottom: 16,
-              ),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_outlined),
-                    onPressed: widget.onBack,
-                  ),
-                  Expanded(
-                    child: Text(
-                      widget.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontFamily: AppTheme.fontFamilyContent,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(30),
+                    blurRadius: 10,
+                    offset: Offset.zero,
                   ),
                 ],
+              ),
+              child: AppBar(
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_outlined),
+                  onPressed: widget.onBack,
+                ),
+                title: Text(
+                  widget.title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: AppTheme.fontFamilyContent,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ),
@@ -251,13 +230,14 @@ class _ControlPanelState extends State<ControlPanel> {
                 bottom: MediaQuery.of(context).padding.bottom + 16,
               ),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
-                    width: 1,
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(30),
+                    blurRadius: 10,
+                    offset: Offset.zero,
                   ),
-                ),
+                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -265,6 +245,7 @@ class _ControlPanelState extends State<ControlPanel> {
                   IconButton(
                     icon: const Icon(Icons.list_outlined),
                     onPressed: widget.onOpenDrawer,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -293,6 +274,10 @@ class _ControlPanelState extends State<ControlPanel> {
                               ? _handleTapLeft
                               : null,
                           onLongPress: null,
+                          color: Theme.of(context).colorScheme.primary,
+                          disabledColor: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withAlpha(100),
                         ),
                       ),
                       Column(
@@ -302,7 +287,10 @@ class _ControlPanelState extends State<ControlPanel> {
                             widget.totalSpineItems == 0
                                 ? '0/0'
                                 : '${widget.currentSpineItemIndex + 1}/${widget.totalSpineItems}',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                           ),
                           if (widget.totalPagesInChapter > 1)
                             Text(
@@ -335,6 +323,10 @@ class _ControlPanelState extends State<ControlPanel> {
                               ? _handleTapRight
                               : null,
                           onLongPress: null,
+                          color: Theme.of(context).colorScheme.primary,
+                          disabledColor: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withAlpha(100),
                         ),
                       ),
                     ],
