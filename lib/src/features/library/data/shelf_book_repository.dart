@@ -387,7 +387,6 @@ class ShelfBookRepository {
           book.readingProgress = progress;
           book.chapterScrollPosition = scrollPosition;
           book.lastOpenedDate = now;
-          book.updatedAt = now;
           await isar.shelfBooks.put(book);
         }
       });
@@ -406,7 +405,7 @@ class ShelfBookRepository {
         if (book != null) {
           book.isFinished = true;
           book.readingProgress = 1.0;
-          book.updatedAt = DateTime.now().millisecondsSinceEpoch;
+          book.lastOpenedDate = DateTime.now().millisecondsSinceEpoch;
           await isar.shelfBooks.put(book);
         }
       });

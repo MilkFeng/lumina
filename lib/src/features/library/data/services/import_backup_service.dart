@@ -342,6 +342,9 @@ class ImportBackupService {
         if (backupBook.lastOpenedDate! > existingBook.lastOpenedDate!) {
           existingBook.currentChapterIndex = backupBook.currentChapterIndex;
           existingBook.readingProgress = backupBook.readingProgress;
+          existingBook.chapterScrollPosition = backupBook.chapterScrollPosition;
+          existingBook.isFinished = backupBook.isFinished;
+          existingBook.lastOpenedDate = backupBook.lastOpenedDate;
         }
       }
 
