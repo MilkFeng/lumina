@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/presentation/ios_page_turn_session.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
@@ -129,14 +130,11 @@ class ReaderRenderer extends StatefulWidget {
 
 class _ReaderRendererState extends State<ReaderRenderer>
     with TickerProviderStateMixin {
-  static const MethodChannel _nativePageTurnChannel = MethodChannel(
-    'lumina/reader_page_turn',
-  );
-
   final GlobalKey _webViewKey = GlobalKey();
   final ReaderWebViewController _webViewController = ReaderWebViewController();
 
-  late final AndroidPageTurnSession _pageTurnSession;
+  late final AndroidPageTurnSession _androidPageTurnSession;
+  late final IOSPageTurnSession _iosPageTurnSession;
 
   EdgeInsets get padding {
     var safePaddings = MediaQuery.paddingOf(context);
@@ -159,18 +157,19 @@ class _ReaderRendererState extends State<ReaderRenderer>
   void initState() {
     super.initState();
     widget.controller._attachState(this);
-    _pageTurnSession = AndroidPageTurnSession(
+    _androidPageTurnSession = AndroidPageTurnSession(
       vsync: this,
       duration: const Duration(
         milliseconds: AppTheme.defaultAnimationDurationMs,
       ),
     );
+    _iosPageTurnSession = IOSPageTurnSession();
   }
 
   @override
   void dispose() {
     widget.controller._attachState(null);
-    _pageTurnSession.dispose();
+    _androidPageTurnSession.dispose();
     super.dispose();
   }
 
@@ -178,7 +177,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (!widget.canPerformPageTurn(isNext)) return;
 
     if (Platform.isAndroid) {
-      await _pageTurnSession.perform(
+      await _androidPageTurnSession.perform(
         webViewController: _webViewController,
         isNext: isNext,
         isVertical: widget.isVertical,
@@ -186,36 +185,12 @@ class _ReaderRendererState extends State<ReaderRenderer>
         setState: setState,
         isMounted: () => mounted,
       );
-      return;
-    }
-
-    await _prepareIOSPageTurn();
-    await widget.onPerformPageTurn(isNext);
-    unawaited(_animateIOSPageTurn(isNext));
-  }
-
-  Future<void> _prepareIOSPageTurn() async {
-    if (!Platform.isIOS) return;
-    try {
-      await _nativePageTurnChannel.invokeMethod<void>('preparePageTurn');
-    } on MissingPluginException {
-      // no-op for configurations without iOS native channel
-    } catch (e) {
-      debugPrint('preparePageTurn failed: $e');
-    }
-  }
-
-  Future<void> _animateIOSPageTurn(bool isNext) async {
-    if (!Platform.isIOS) return;
-    try {
-      await _nativePageTurnChannel.invokeMethod<void>('animatePageTurn', {
-        'isNext': isNext,
-        'isVertical': widget.isVertical,
-      });
-    } on MissingPluginException {
-      // no-op for configurations without iOS native channel
-    } catch (e) {
-      debugPrint('animatePageTurn failed: $e');
+    } else {
+      await _iosPageTurnSession.perform(
+        isNext: isNext,
+        isVertical: widget.isVertical,
+        onPerformPageTurn: widget.onPerformPageTurn,
+      );
     }
   }
 
@@ -292,12 +267,15 @@ class _ReaderRendererState extends State<ReaderRenderer>
             ? _handleLongPressStart
             : null,
         child: Platform.isAndroid
-            ? _pageTurnSession.buildAnimatedContainer(
+            ? _androidPageTurnSession.buildAnimatedContainer(
                 context,
                 _buildWebView(),
                 _buildScreenshotContainer,
               )
-            : _buildWebView(),
+            : _iosPageTurnSession.buildAnimatedContainer(
+                context,
+                _buildWebView(),
+              ),
       ),
     );
   }
