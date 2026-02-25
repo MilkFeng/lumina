@@ -329,9 +329,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,
-          onFootnoteTap: (href, epubType, innetHtml) {
+          onFootnoteTap: (href, epubType, innetHtml, rect) {
             debugPrint(
-              'Footnote tap received in Flutter: href=$href, epubType=$epubType, innerHtml=$innetHtml',
+              'Footnote tap received in Flutter: href=$href, epubType=$epubType, innerHtml=$innetHtml, rect=$rect',
             );
           },
         ),

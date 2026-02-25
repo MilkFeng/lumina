@@ -1005,14 +1005,13 @@ class EpubReader {
 
       window.flutter_inappwebview.callHandler(
         'onFootnoteTap', bestCandidate.data.href,
-        bestCandidate.data.epubType, bestCandidate.data.innerHtml
+        bestCandidate.data.epubType, bestCandidate.data.innerHtml,
+        absoluteLeft, absoluteTop, rect.width, rect.height
       );
     } else {
       // Fall back to just sending tap coordinates if no interactive element is found nearby
       window.flutter_inappwebview.callHandler('onTap', x, y);
     }
-
-    
   }
 
   checkElementAt(x, y) {
