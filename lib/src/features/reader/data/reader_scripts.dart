@@ -462,8 +462,17 @@ class EpubReader {
     const sanitizedId = String(targetId).replace(/^#/, '');
     if (!sanitizedId) return '';
 
-    const footnoteEl = doc.getElementById(sanitizedId);
+    let footnoteEl = doc.getElementById(sanitizedId);
+    if (!footnoteEl) {
+      // Fallback: some footnotes might not have an ID but can be referenced by name
+      footnoteEl = doc.querySelector('[name="' + sanitizedId + '"]');
+    }
     if (!footnoteEl) return '';
+
+    // If the footnote element is empty, try to find the next sibling that has content (some footnotes are structured this way)
+    if (footnoteEl.textContent.trim() === '' && footnoteEl.nextElementSibling) {
+      footnoteEl = footnoteEl.nextElementSibling;
+    }
 
     const container = footnoteEl.closest('li, aside, section, div, p') || footnoteEl;
     return container && container.outerHTML ? container.outerHTML : '';
@@ -551,14 +560,20 @@ class EpubReader {
 
         const href = link.getAttribute('href');
         const epubType = link.getAttribute('epub:type');
+        let innerHtml = '';
 
-        const isFootnote = (epubType === 'noteref');
-        if (!isFootnote) continue;
-
-        // find the best candidate element to represent the footnote content
-        const targetId = this._extractTargetIdFromHref(href);
-        const innerHtml = this._extractFootnoteHtml(targetId);
-
+        if (link.hasAttribute('title') && (!href || href === '#')) {
+          // Some footnotes use the link's title attribute to store the content instead of pointing to an element in the page
+          innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
+        } else {
+          if (epubType === 'noteref') {
+            // find the best candidate element to represent the footnote content
+            const targetId = this._extractTargetIdFromHref(href);
+            innerHtml = this._extractFootnoteHtml(targetId);
+          } else {
+            continue;
+          }
+        }
         const rects = link.getClientRects();
         
         for (let j = 0; j < rects.length; j++) {
