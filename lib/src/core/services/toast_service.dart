@@ -137,10 +137,16 @@ class _ToastOverlayState extends State<_ToastOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = keyboardHeight > 0 ? keyboardHeight + 16.0 : 50.0;
     return Material(
       type: MaterialType.transparency,
-      child: SafeArea(
-        minimum: const EdgeInsets.only(bottom: 50, left: 25, right: 25),
+      child: AnimatedPadding(
+        duration: const Duration(
+          milliseconds: AppTheme.defaultAnimationDurationMs,
+        ),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.only(bottom: bottomPadding, left: 25, right: 25),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: GestureDetector(

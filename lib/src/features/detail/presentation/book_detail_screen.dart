@@ -114,8 +114,8 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
 
       // Mutate the Isar object fields directly (no copyWith on Isar collections).
       book.title = newTitle.isNotEmpty ? newTitle : book.title;
-      book.authors = newAuthors.isNotEmpty ? newAuthors : book.authors;
-      book.author = book.authors.isNotEmpty ? book.authors.first : book.author;
+      book.authors = newAuthors;
+      book.author = book.authors.isNotEmpty ? book.authors.first : "";
       book.description = newDescription.isEmpty ? null : newDescription;
       book.updatedAt = DateTime.now().millisecondsSinceEpoch;
 
