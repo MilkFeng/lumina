@@ -1396,6 +1396,10 @@ code {
 }
 
 body.override-color {
+  p, h1, h2, h3, h4, h5, h6, li, span, div, section {
+    color: var(--default-text-color) !important;
+  }
+
   ::selection {
     background-color: var(--primary-container) !important;
     color: inherit !important;

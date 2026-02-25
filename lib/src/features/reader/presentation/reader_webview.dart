@@ -323,7 +323,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                       ? 1.0
                       : 0.0,
                   child: Container(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: _currentTheme.surfaceColor,
                     child: _isSubsequentLoad
                         ? null
                         : Center(

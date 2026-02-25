@@ -298,12 +298,12 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                               widget.totalSpineItems == 0
                                   ? '0/0'
                                   : '${widget.currentSpineItemIndex + 1}/${widget.totalSpineItems}',
-                              style: themeData.textTheme.bodyMedium,
+                              style: themeData.textTheme.displayMedium,
                             ),
                             if (widget.totalPagesInChapter > 1)
                               Text(
                                 'Page ${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
-                                style: themeData.textTheme.bodySmall,
+                                style: themeData.textTheme.bodyMedium,
                               ),
                           ],
                         ),
