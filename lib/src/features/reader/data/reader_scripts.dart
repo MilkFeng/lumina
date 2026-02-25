@@ -498,10 +498,28 @@ class EpubReader {
         if (!img) continue;
 
         const rect = img.getBoundingClientRect();
-        if (!rect || rect.width < 10 || rect.height < 10) continue;
+        if (!rect || rect.width < 5 || rect.height < 5) continue;
 
         const docX = rect.left + body.scrollLeft - bodyRect.left;
         const docY = rect.top + body.scrollTop - bodyRect.top;
+
+        // duokan
+        if (img.classList.contains('duokan-footnote')) {
+          const altText = img.getAttribute('alt') || img.getAttribute('title') || '';
+          
+          quadTree.insert({
+            type: 'footnote',
+            rect: {
+              x: docX,
+              y: docY,
+              width: rect.width,
+              height: rect.height,
+            },
+            data: '<div class="duokan-footnote-content">' + altText + '</div>',
+          });
+          
+          continue;
+        }
 
         let src = img.currentSrc || img.src || img.getAttribute('xlink:href') || '';
 
@@ -558,11 +576,7 @@ class EpubReader {
               width: rect.width,
               height: rect.height,
             },
-            data: {
-              href: href,
-              epubType: epubType,
-              innerHtml: innerHtml
-            },
+            data: innerHtml,
           });
         }
       }
@@ -1000,11 +1014,8 @@ class EpubReader {
       const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
       const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
 
-      console.log('Footnote tap detected at:', { x: absoluteLeft, y: absoluteTop });
-      console.log('with data:', bestCandidate.data.href, bestCandidate.data.epubType, bestCandidate.data.text);
-
       window.flutter_inappwebview.callHandler(
-        'onFootnoteTap', bestCandidate.data.innerHtml,
+        'onFootnoteTap', bestCandidate.data,
         absoluteLeft, absoluteTop, rect.width, rect.height
       );
     } else {
