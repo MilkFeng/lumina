@@ -1135,6 +1135,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Title cannot be empty'**
   String get titleRequired;
+
+  /// Reader style sheet section title for typography and layout
+  ///
+  /// In en, this message translates to:
+  /// **'Typography & Layout'**
+  String get readerTypographyLayout;
+
+  /// Reader scale / zoom sub-label
+  ///
+  /// In en, this message translates to:
+  /// **'Scale'**
+  String get readerScale;
+
+  /// Reader margins sub-label
+  ///
+  /// In en, this message translates to:
+  /// **'Margins'**
+  String get readerMargins;
+
+  /// Top margin stepper label
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get readerMarginTop;
+
+  /// Bottom margin stepper label
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get readerMarginBottom;
+
+  /// Left margin stepper label
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get readerMarginLeft;
+
+  /// Right margin stepper label
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get readerMarginRight;
+
+  /// Reader style sheet section title for appearance
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get readerAppearance;
+
+  /// Toggle label to follow the system color scheme
+  ///
+  /// In en, this message translates to:
+  /// **'Follow System Theme'**
+  String get readerFollowSystemTheme;
+
+  /// Light reader theme chip label
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get readerThemeLight;
+
+  /// Dark reader theme chip label
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get readerThemeDark;
 }
 
 class _AppLocalizationsDelegate

@@ -607,4 +607,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get titleRequired => 'Title cannot be empty';
+
+  @override
+  String get readerTypographyLayout => 'Typography & Layout';
+
+  @override
+  String get readerScale => 'Scale';
+
+  @override
+  String get readerMargins => 'Margins';
+
+  @override
+  String get readerMarginTop => 'Top';
+
+  @override
+  String get readerMarginBottom => 'Bottom';
+
+  @override
+  String get readerMarginLeft => 'Left';
+
+  @override
+  String get readerMarginRight => 'Right';
+
+  @override
+  String get readerAppearance => 'Appearance';
+
+  @override
+  String get readerFollowSystemTheme => 'Follow System Theme';
+
+  @override
+  String get readerThemeLight => 'Light';
+
+  @override
+  String get readerThemeDark => 'Dark';
 }

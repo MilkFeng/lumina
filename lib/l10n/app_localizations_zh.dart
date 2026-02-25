@@ -589,4 +589,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get titleRequired => '标题不能为空';
+
+  @override
+  String get readerTypographyLayout => '字体与排版';
+
+  @override
+  String get readerScale => '缩放';
+
+  @override
+  String get readerMargins => '边距';
+
+  @override
+  String get readerMarginTop => '上';
+
+  @override
+  String get readerMarginBottom => '下';
+
+  @override
+  String get readerMarginLeft => '左';
+
+  @override
+  String get readerMarginRight => '右';
+
+  @override
+  String get readerAppearance => '外观与主题';
+
+  @override
+  String get readerFollowSystemTheme => '跟随系统主题';
+
+  @override
+  String get readerThemeLight => '浅色';
+
+  @override
+  String get readerThemeDark => '深色';
 }

@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'widgets/reader_style_bottom_sheet.dart';
 
 class ControlPanel extends StatefulWidget {
   final bool showControls;
@@ -331,7 +331,32 @@ class _ControlPanelState extends State<ControlPanel> {
                       ),
                     ],
                   ),
-                  const SizedBox(width: 48),
+                  IconButton(
+                    icon: const Icon(Icons.tune_outlined),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        showDragHandle: true,
+                        builder: (ctx) => SafeArea(
+                          child: ReaderStyleBottomSheet(
+                            onScaleChanged: (_) {},
+                            onTopMarginChanged: (_) {},
+                            onBottomMarginChanged: (_) {},
+                            onLeftMarginChanged: (_) {},
+                            onRightMarginChanged: (_) {},
+                            onFollowSystemThemeChanged: (_) {},
+                            onReaderThemeChanged: (_) {},
+                          ),
+                        ),
+                        scrollControlDisabledMaxHeightRatio: 0.75,
+                        constraints: const BoxConstraints(
+                          maxWidth: double.infinity,
+                        ),
+                      );
+                    },
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ],
               ),
             ),
