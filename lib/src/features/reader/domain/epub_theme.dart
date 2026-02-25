@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 
 class EpubTheme {
   final double zoom;
@@ -16,6 +17,8 @@ class EpubTheme {
   bool get isDark => colorScheme.brightness == Brightness.dark;
 
   Color get surfaceColor => colorScheme.surface;
+
+  ThemeData get themeData => AppTheme.buildTheme(colorScheme);
 
   EpubTheme copyWith({
     double? zoom,

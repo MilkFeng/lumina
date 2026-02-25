@@ -109,16 +109,31 @@ class _ReaderStyleBottomSheetState
                               },
                             ),
                             _ThemeOptionChip(
-                              colorScheme: AppTheme.sepiaColorScheme,
+                              colorScheme: AppTheme.eyeCareColorScheme,
                               isSelected:
-                                  _themeMode == ReaderSettingThemeMode.sepia,
+                                  _themeMode == ReaderSettingThemeMode.eyeCare,
                               onTap: () {
                                 setState(
-                                  () =>
-                                      _themeMode = ReaderSettingThemeMode.sepia,
+                                  () => _themeMode =
+                                      ReaderSettingThemeMode.eyeCare,
                                 );
                                 _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.sepia,
+                                  ReaderSettingThemeMode.eyeCare,
+                                );
+                              },
+                            ),
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.darkEyeCareColorScheme,
+                              isSelected:
+                                  _themeMode ==
+                                  ReaderSettingThemeMode.darkEyeCare,
+                              onTap: () {
+                                setState(
+                                  () => _themeMode =
+                                      ReaderSettingThemeMode.darkEyeCare,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.darkEyeCare,
                                 );
                               },
                             ),

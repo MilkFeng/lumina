@@ -59,7 +59,7 @@ class AppTheme {
     outlineVariant: Color(0xFF2A2A2A),
   );
 
-  static const ColorScheme sepiaColorScheme = ColorScheme.light(
+  static const ColorScheme eyeCareColorScheme = ColorScheme.light(
     surface: Color(0xFFF4ECD8),
     onSurface: Color(0xFF433422),
     surfaceContainerHigh: Color(0xFFE9E0CB),
@@ -71,6 +71,20 @@ class AppTheme {
     onSecondary: Colors.white,
     error: Color(0xFFB85D5D),
     onError: Colors.white,
+  );
+
+  static const darkEyeCareColorScheme = ColorScheme.dark(
+    surface: Color(0xFF1C1A18),
+    onSurface: Color(0xFFC2B8AD),
+    surfaceContainerHigh: Color(0xFF2A2724),
+    surfaceContainerHighest: Color(0xFF383430),
+    outlineVariant: Color(0xFF4A4540),
+    primary: Color(0xFF967250),
+    onPrimary: Color(0xFF1E140A),
+    secondary: Color(0xFF75675A),
+    onSecondary: Color(0xFF1C1A18),
+    error: Color(0xFF9E5656),
+    onError: Color(0xFF1C1A18),
   );
 
   static ColorScheme colorSchemeForBrightness(Brightness brightness) {

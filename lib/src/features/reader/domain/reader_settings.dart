@@ -8,7 +8,8 @@ enum ReaderSettingThemeMode {
   dark,
 
   // More themes
-  sepia,
+  eyeCare,
+  darkEyeCare,
 }
 
 class ReaderSettings {
@@ -56,8 +57,10 @@ class ReaderSettings {
     if (followSystemTheme) {
       colorScheme = AppTheme.colorSchemeForBrightness(platformBrightness);
     } else {
-      if (themeMode == ReaderSettingThemeMode.sepia) {
-        colorScheme = AppTheme.sepiaColorScheme;
+      if (themeMode == ReaderSettingThemeMode.eyeCare) {
+        colorScheme = AppTheme.eyeCareColorScheme;
+      } else if (themeMode == ReaderSettingThemeMode.darkEyeCare) {
+        colorScheme = AppTheme.darkEyeCareColorScheme;
       } else if (themeMode == ReaderSettingThemeMode.dark) {
         colorScheme = AppTheme.darkColorScheme;
       } else {

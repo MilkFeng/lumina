@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
@@ -409,6 +410,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
 
     final epubTheme = _getEpubTheme();
+    final isDark = epubTheme.colorScheme.brightness == Brightness.dark;
+    final themeData = epubTheme.themeData;
+
+    final overlayStyle = isDark
+        ? SystemUiOverlayStyle.light.copyWith(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: themeData.colorScheme.surface,
+            systemNavigationBarIconBrightness: Brightness.light,
+          )
+        : SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: themeData.colorScheme.surface,
+            systemNavigationBarIconBrightness: Brightness.dark,
+          );
 
     ref.listen(readerSettingsNotifierProvider, (previous, next) {
       if (previous != null && previous != next) {
@@ -428,122 +443,128 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           _removeFootnoteOverlay();
         }
       },
-      child: Stack(
-        children: [
-          Scaffold(
-            key: _scaffoldKey,
-            backgroundColor: epubTheme.surfaceColor,
-            drawer: TocDrawer(
-              book: _bookSession.book!,
-              toc: _bookSession.toc,
-              activeTocItems: activeItems,
-              onTocItemSelected: _navigateToTocItem,
-              onCoverTap: _navigateToFirstTocItemFirstPage,
-            ),
-            body: Container(
-              color: epubTheme.surfaceColor,
-              child: Stack(
-                children: [
-                  ReaderRenderer(
-                    controller: _rendererController,
-                    bookSession: _bookSession,
-                    webViewHandler: _webViewHandler,
-                    fileHash: widget.fileHash,
-                    showControls: _showControls,
-                    isLoading: _isWebViewLoading || _updatingTheme,
-                    canPerformPageTurn: _canPerformPageTurn,
-                    onPerformPageTurn: _handlePageTurn,
-                    onToggleControls: _toggleControls,
-                    onInitialized: () async {
-                      await _loadCarousel();
-                    },
-                    onPageCountReady: (totalPages) async {
-                      setState(() {
-                        _totalPagesInChapter = totalPages;
-                        if (_currentPageInChapter >= _totalPagesInChapter) {
-                          _currentPageInChapter = _totalPagesInChapter - 1;
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: overlayStyle,
+        child: Stack(
+          children: [
+            Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: epubTheme.surfaceColor,
+              drawer: TocDrawer(
+                book: _bookSession.book!,
+                toc: _bookSession.toc,
+                activeTocItems: activeItems,
+                onTocItemSelected: _navigateToTocItem,
+                onCoverTap: _navigateToFirstTocItemFirstPage,
+              ),
+              body: Container(
+                color: epubTheme.surfaceColor,
+                child: Stack(
+                  children: [
+                    ReaderRenderer(
+                      controller: _rendererController,
+                      bookSession: _bookSession,
+                      webViewHandler: _webViewHandler,
+                      fileHash: widget.fileHash,
+                      showControls: _showControls,
+                      isLoading: _isWebViewLoading || _updatingTheme,
+                      canPerformPageTurn: _canPerformPageTurn,
+                      onPerformPageTurn: _handlePageTurn,
+                      onToggleControls: _toggleControls,
+                      onInitialized: () async {
+                        await _loadCarousel();
+                      },
+                      onPageCountReady: (totalPages) async {
+                        setState(() {
+                          _totalPagesInChapter = totalPages;
+                          if (_currentPageInChapter >= _totalPagesInChapter) {
+                            _currentPageInChapter = _totalPagesInChapter - 1;
+                          }
+                        });
+                        if (_initialProgressToRestore != null) {
+                          final ratio = _initialProgressToRestore ?? 0.0;
+                          _initialProgressToRestore = null;
+                          await _rendererController.restoreScrollPosition(
+                            ratio,
+                          );
                         }
-                      });
-                      if (_initialProgressToRestore != null) {
-                        final ratio = _initialProgressToRestore ?? 0.0;
-                        _initialProgressToRestore = null;
-                        await _rendererController.restoreScrollPosition(ratio);
-                      }
-                    },
-                    onPageChanged: (pageIndex) {
-                      setState(() {
-                        _currentPageInChapter = pageIndex;
-                      });
-                      _saveProgress();
-                    },
-                    onRendererInitialized: () async {
-                      setState(() {
-                        _isWebViewLoading = false;
-                      });
-                      _saveProgress();
-                    },
-                    onScrollAnchors: _handleScrollAnchors,
-                    onImageLongPress: _handleImageLongPress,
-                    onFootnoteTap: _handleFootnoteTap,
-                    shouldShowWebView: _shouldShowWebView,
-                    initializeTheme: settings.toEpubTheme(
-                      platformBrightness: Theme.of(
-                        context,
-                      ).colorScheme.brightness,
+                      },
+                      onPageChanged: (pageIndex) {
+                        setState(() {
+                          _currentPageInChapter = pageIndex;
+                        });
+                        _saveProgress();
+                      },
+                      onRendererInitialized: () async {
+                        setState(() {
+                          _isWebViewLoading = false;
+                        });
+                        _saveProgress();
+                      },
+                      onScrollAnchors: _handleScrollAnchors,
+                      onImageLongPress: _handleImageLongPress,
+                      onFootnoteTap: _handleFootnoteTap,
+                      shouldShowWebView: _shouldShowWebView,
+                      initializeTheme: settings.toEpubTheme(
+                        platformBrightness: Theme.of(
+                          context,
+                        ).colorScheme.brightness,
+                      ),
                     ),
-                  ),
 
-                  ControlPanel(
-                    showControls: _showControls,
-                    title: _bookSession.spine.isEmpty
-                        ? _bookSession.book!.title
-                        : activateTocTitle,
-                    currentSpineItemIndex: _currentSpineItemIndex,
-                    totalSpineItems: _bookSession.spine.length,
-                    currentPageInChapter: _currentPageInChapter,
-                    totalPagesInChapter: _totalPagesInChapter,
-                    direction: _bookSession.book!.direction,
-                    onBack: () {
-                      _saveProgress();
-                      context.pop();
-                    },
-                    onOpenDrawer: _openDrawer,
-                    onPreviousPage: () =>
-                        _rendererController.performPreviousPageTurn(),
-                    onFirstPage: () => _goToPage(0),
-                    onNextPage: () => _rendererController.performNextPageTurn(),
-                    onLastPage: () => _goToPage(_totalPagesInChapter - 1),
-                    onPreviousChapter: _previousSpineItemFirstPage,
-                    onNextChapter: _nextSpineItem,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          Positioned.fill(
-            child: IgnorePointer(
-              ignoring: !_isImageViewerVisible,
-              child: AnimatedOpacity(
-                duration: const Duration(
-                  milliseconds: AppTheme.defaultAnimationDurationMs,
+                    ControlPanel(
+                      showControls: _showControls,
+                      title: _bookSession.spine.isEmpty
+                          ? _bookSession.book!.title
+                          : activateTocTitle,
+                      currentSpineItemIndex: _currentSpineItemIndex,
+                      totalSpineItems: _bookSession.spine.length,
+                      currentPageInChapter: _currentPageInChapter,
+                      totalPagesInChapter: _totalPagesInChapter,
+                      direction: _bookSession.book!.direction,
+                      onBack: () {
+                        _saveProgress();
+                        context.pop();
+                      },
+                      onOpenDrawer: _openDrawer,
+                      onPreviousPage: () =>
+                          _rendererController.performPreviousPageTurn(),
+                      onFirstPage: () => _goToPage(0),
+                      onNextPage: () =>
+                          _rendererController.performNextPageTurn(),
+                      onLastPage: () => _goToPage(_totalPagesInChapter - 1),
+                      onPreviousChapter: _previousSpineItemFirstPage,
+                      onNextChapter: _nextSpineItem,
+                    ),
+                  ],
                 ),
-                curve: Curves.easeOut,
-                opacity: _isImageViewerVisible ? 1.0 : 0.0,
-                child: (_currentImageUrl != null && _currentImageRect != null)
-                    ? ImageViewer(
-                        imageUrl: _currentImageUrl!,
-                        webViewHandler: _webViewHandler,
-                        epubPath: _bookSession.book!.filePath!,
-                        fileHash: widget.fileHash,
-                        onClose: _closeImageViewer,
-                        sourceRect: _currentImageRect!,
-                      )
-                    : const SizedBox.shrink(),
               ),
             ),
-          ),
-        ],
+
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: !_isImageViewerVisible,
+                child: AnimatedOpacity(
+                  duration: const Duration(
+                    milliseconds: AppTheme.defaultAnimationDurationMs,
+                  ),
+                  curve: Curves.easeOut,
+                  opacity: _isImageViewerVisible ? 1.0 : 0.0,
+                  child: (_currentImageUrl != null && _currentImageRect != null)
+                      ? ImageViewer(
+                          imageUrl: _currentImageUrl!,
+                          webViewHandler: _webViewHandler,
+                          epubPath: _bookSession.book!.filePath!,
+                          fileHash: widget.fileHash,
+                          onClose: _closeImageViewer,
+                          sourceRect: _currentImageRect!,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
