@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
@@ -177,9 +176,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                                 height: 1.6,
                               ),
                           onTapUrl: (url) async {
-                            ToastService.showInfo(
-                              'Footnote links are not supported yet. URL: $url',
-                            );
                             return true;
                           },
                           customStylesBuilder: (element) {

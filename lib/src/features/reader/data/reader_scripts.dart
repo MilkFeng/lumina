@@ -551,6 +551,7 @@ class EpubReader {
 
       // Extract links to handle tap interactions
       const links = doc.querySelectorAll('a[href]');
+      const currentDocBaseUrl = doc.location.href.split('#')[0];
 
       for (let i = 0; i < links.length; i++) {
         const link = links[i];
@@ -568,10 +569,24 @@ class EpubReader {
             // find the best candidate element to represent the footnote content
             const targetId = this._extractTargetIdFromHref(href);
             innerHtml = this._extractFootnoteHtml(targetId);
+          } else if (href) {
+            const linkBaseUrl = link.href.split('#')[0];
+            if (linkBaseUrl === currentDocBaseUrl) {
+              // Only support extracting footnote content for same-page links to avoid cross-origin issues and complexity of handling multiple documents
+              const targetId = this._extractTargetIdFromHref(href);
+              innerHtml = this._extractFootnoteHtml(targetId);
+            } else {
+              continue;
+            }
           } else {
             continue;
           }
         }
+
+        if (!innerHtml || innerHtml.trim() === '') {
+          continue;
+        }
+
         const rects = link.getClientRects();
         
         for (let j = 0; j < rects.length; j++) {
