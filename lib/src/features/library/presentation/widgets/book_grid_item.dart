@@ -235,23 +235,9 @@ class BookGridItem extends ConsumerWidget {
                 final contentWidget = Stack(
                   fit: StackFit.expand,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: currentRadius,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: 0.1 * libraryOpacity,
-                            ),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: currentRadius,
-                        child: BookCover(relativePath: book.coverPath),
-                      ),
+                    BookCover(
+                      relativePath: book.coverPath,
+                      radius: currentRadius,
                     ),
 
                     Opacity(
@@ -275,19 +261,10 @@ class BookGridItem extends ConsumerWidget {
         fit: fit,
         children: [
           Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: BookCover(relativePath: book.coverPath),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(6)),
+            child: BookCover(
+              relativePath: book.coverPath,
+              radius: BorderRadius.circular(6),
             ),
           ),
           Positioned.fill(child: maskAndExtras),

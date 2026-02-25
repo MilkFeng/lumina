@@ -321,12 +321,12 @@ class _TocDrawerState extends State<TocDrawer> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Book Cover
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: SizedBox(
-                width: 60,
-                height: 90,
-                child: BookCover(relativePath: '${widget.book.coverPath}'),
+            SizedBox(
+              width: 60,
+              height: 90,
+              child: BookCover(
+                relativePath: '${widget.book.coverPath}',
+                radius: BorderRadius.circular(4),
               ),
             ),
 
@@ -350,9 +350,9 @@ class _TocDrawerState extends State<TocDrawer> {
                   Text(
                     widget.book.author,
                     style: widget.themeData.textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withAlpha(153),
+                      color: widget.themeData.colorScheme.onSurface.withAlpha(
+                        153,
+                      ),
                       fontWeight: FontWeight.w400,
                       fontFamily: AppTheme.fontFamilyContent,
                     ),

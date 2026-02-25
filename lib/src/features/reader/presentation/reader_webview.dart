@@ -330,12 +330,13 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                 maxHeight:
-                                    MediaQuery.of(context).size.height * 0.3,
+                                    MediaQuery.of(context).size.height * 0.4,
                                 maxWidth:
-                                    MediaQuery.of(context).size.width * 0.5,
+                                    MediaQuery.of(context).size.width * 0.6,
                               ),
                               child: BookCover(
                                 relativePath: widget.coverRelativePath,
+                                enableBorder: false,
                               ),
                             ),
                           ),

@@ -48,11 +48,11 @@ class BookDetailEditBody extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Hero(
                 tag: 'book-cover-${book.id}',
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 300),
-                    child: BookCover(relativePath: book.coverPath),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: BookCover(
+                    relativePath: book.coverPath,
+                    radius: BorderRadius.circular(8),
                   ),
                 ),
               ),
