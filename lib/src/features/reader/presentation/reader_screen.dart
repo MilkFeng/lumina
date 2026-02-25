@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
+import '../application/reader_settings_notifier.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -53,6 +56,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Rect? _currentImageRect;
 
   ThemeData? _currentTheme;
+  Timer? _themeUpdateDebouncer;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -86,6 +90,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     WidgetsBinding.instance.removeObserver(this);
     _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
     _routeAnimation = null;
+    _themeUpdateDebouncer?.cancel();
     super.dispose();
   }
 
@@ -103,9 +108,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     super.didChangeDependencies();
 
     // Update WebView theme when system theme changes
-    if (_currentTheme == null || _currentTheme != Theme.of(context)) {
+    if (_currentTheme != null && _currentTheme != Theme.of(context)) {
       _currentTheme = Theme.of(context);
-      _updateWebViewTheme();
+      _themeUpdateDebouncer?.cancel();
+      _themeUpdateDebouncer = Timer(const Duration(milliseconds: 100), () {
+        _updateWebViewTheme();
+      });
     }
   }
 
@@ -374,14 +382,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
+  EpubTheme _getEpubTheme() {
+    final settings = ref.read(readerSettingsNotifierProvider);
+    return settings.toEpubTheme(
+      platformBrightness: Theme.of(context).colorScheme.brightness,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!_bookSession.isLoaded) {
+    // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
+    final prefsAsync = ref.watch(sharedPreferencesProvider);
+    final settings = ref.watch(readerSettingsNotifierProvider);
+    if (!prefsAsync.hasValue || !_bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: Center(),
+        body: const SizedBox.shrink(),
       );
     }
+
+    ref.listen(readerSettingsNotifierProvider, (previous, next) {
+      if (previous != null && previous != next) {
+        _updateWebViewTheme();
+      }
+    });
 
     final activeItems = _resolveActiveItems();
     final activateTocTitle = activeItems.isNotEmpty
@@ -445,6 +469,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   onScrollAnchors: _handleScrollAnchors,
                   onImageLongPress: _handleImageLongPress,
                   shouldShowWebView: _shouldShowWebView,
+                  initializeTheme: settings.toEpubTheme(
+                    platformBrightness: Theme.of(
+                      context,
+                    ).colorScheme.brightness,
+                  ),
                 ),
 
                 ControlPanel(
@@ -530,12 +559,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _updatingTheme = true;
     });
 
-    await _rendererController.updateTheme(
-      Theme.of(context).colorScheme.surface,
-      Theme.of(context).brightness == Brightness.dark
-          ? Theme.of(context).colorScheme.onSurface
-          : null,
-    );
+    await _rendererController.updateTheme(_getEpubTheme());
 
     setState(() {
       _updatingTheme = false;

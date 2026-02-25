@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'widgets/reader_style_bottom_sheet.dart';
 
 class ControlPanel extends StatefulWidget {
   final bool showControls;
@@ -162,7 +162,6 @@ class _ControlPanelState extends State<ControlPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final appBarHeight = AppBar().preferredSize.height;
     return Stack(
       children: [
         // Top Bar
@@ -171,7 +170,7 @@ class _ControlPanelState extends State<ControlPanel> {
             milliseconds: AppTheme.defaultAnimationDurationMs,
           ),
           curve: Curves.easeInOut,
-          top: widget.showControls ? 0 : -appBarHeight,
+          top: widget.showControls ? 0 : -100,
           left: 0,
           right: 0,
           child: AnimatedOpacity(
@@ -331,7 +330,23 @@ class _ControlPanelState extends State<ControlPanel> {
                       ),
                     ],
                   ),
-                  const SizedBox(width: 48),
+                  IconButton(
+                    icon: const Icon(Icons.brush_outlined),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        showDragHandle: true,
+                        builder: (ctx) =>
+                            const SafeArea(child: ReaderStyleBottomSheet()),
+                        scrollControlDisabledMaxHeightRatio: 0.75,
+                        constraints: const BoxConstraints(
+                          maxWidth: double.infinity,
+                        ),
+                      );
+                    },
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ],
               ),
             ),

@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/widgets/book_cover.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
@@ -55,12 +56,8 @@ class ReaderWebViewController {
     return await _webViewState?._takeScreenshot();
   }
 
-  Future<void> updateTheme(
-    Color surfaceColor,
-    Color? onSurfaceColor,
-    EdgeInsets padding,
-  ) async {
-    await _webViewState?._updateTheme(surfaceColor, onSurfaceColor, padding);
+  Future<void> updateTheme(EpubTheme theme) async {
+    await _webViewState?._updateTheme(theme);
   }
 }
 
@@ -107,9 +104,7 @@ class ReaderWebView extends StatefulWidget {
   final EpubWebViewHandler webViewHandler;
   final String fileHash;
   final ReaderWebViewCallbacks callbacks;
-  final Color surfaceColor;
-  final Color? onSurfaceColor;
-  final EdgeInsets padding;
+  final EpubTheme initializeTheme;
   final bool isLoading;
   final ReaderWebViewController controller;
   final VoidCallback? onWebViewCreated;
@@ -123,9 +118,7 @@ class ReaderWebView extends StatefulWidget {
     required this.webViewHandler,
     required this.fileHash,
     required this.callbacks,
-    required this.padding,
-    required this.surfaceColor,
-    required this.onSurfaceColor,
+    required this.initializeTheme,
     required this.isLoading,
     required this.controller,
     this.onWebViewCreated,
@@ -222,9 +215,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       data: generateSkeletonHtml(
         width,
         height,
-        widget.surfaceColor,
-        widget.onSurfaceColor,
-        widget.padding,
+        widget.initializeTheme.surfaceColor,
+        widget.initializeTheme.onSurfaceColor,
+        widget.initializeTheme.padding,
+        widget.initializeTheme.zoom,
         widget.direction,
       ),
       baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
@@ -281,8 +275,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth - widget.padding.horizontal;
-        final height = constraints.maxHeight - widget.padding.vertical;
+        final width =
+            constraints.maxWidth - widget.initializeTheme.padding.horizontal;
+        final height =
+            constraints.maxHeight - widget.initializeTheme.padding.vertical;
         _initHeadlessWebViewIfNeeded(width, height);
 
         return Stack(
@@ -302,7 +298,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                         onWebViewCreated: _onWebViewCreated,
                         onLoadStop: _onLoadStop,
                       )
-                    : Container(color: widget.surfaceColor),
+                    : Container(color: widget.initializeTheme.surfaceColor),
               ),
             ),
             Positioned.fill(
@@ -317,7 +313,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                       ? 1.0
                       : 0.0,
                   child: Container(
-                    color: widget.surfaceColor,
+                    color: Theme.of(context).colorScheme.surface,
                     child: _isSubsequentLoad
                         ? null
                         : Center(
@@ -416,24 +412,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
-  Future<void> _updateTheme(
-    Color surfaceColor,
-    Color? onSurfaceColor,
-    EdgeInsets padding,
-  ) async {
-    final width = MediaQuery.of(context).size.width - padding.horizontal;
-    final height = MediaQuery.of(context).size.height - padding.vertical;
+  Future<void> _updateTheme(EpubTheme theme) async {
+    final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
+    final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
-    await _evaluateJavascript(
-      """window.reader.updateTheme(
+    await _evaluateJavascript("""window.reader.updateTheme(
         $width,
         $height,
-        ${padding.top},
-        ${padding.left},
-        ${padding.right},
-        ${padding.bottom},
-        '${colorToHex(surfaceColor)}',
-        ${onSurfaceColor != null ? "'${colorToHex(onSurfaceColor)}'" : 'null'})""",
-    );
+        ${theme.padding.top},
+        ${theme.padding.left},
+        ${theme.padding.right},
+        ${theme.padding.bottom},
+        '${colorToHex(theme.surfaceColor)}',
+        ${theme.onSurfaceColor != null ? "'${colorToHex(theme.onSurfaceColor!)}'" : 'null'},
+        ${theme.zoom})""");
   }
 }

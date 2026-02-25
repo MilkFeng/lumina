@@ -256,6 +256,9 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
                   onPressed: () => context.pop(),
                 ),
           // Actions: save check in edit mode; share + edit in view mode.
+          title: _isEditing
+              ? Text(AppLocalizations.of(context)!.editBook)
+              : null,
           actions: _isEditing
               ? [
                   IconButton(

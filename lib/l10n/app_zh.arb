@@ -1036,5 +1036,60 @@
   "titleRequired": "标题不能为空",
   "@titleRequired": {
     "description": "标题字段为空时保存的验证错误提示"
+  },
+
+  "readerTypographyLayout": "字体与排版",
+  "@readerTypographyLayout": {
+    "description": "阅读器样式面板排版区块标题"
+  },
+
+  "readerScale": "缩放",
+  "@readerScale": {
+    "description": "阅读器缩放滑块标签"
+  },
+
+  "readerMargins": "边距",
+  "@readerMargins": {
+    "description": "阅读器边距子标题"
+  },
+
+  "readerMarginTop": "上",
+  "@readerMarginTop": {
+    "description": "上边距步进标签"
+  },
+
+  "readerMarginBottom": "下",
+  "@readerMarginBottom": {
+    "description": "下边距步进标签"
+  },
+
+  "readerMarginLeft": "左",
+  "@readerMarginLeft": {
+    "description": "左边距步进标签"
+  },
+
+  "readerMarginRight": "右",
+  "@readerMarginRight": {
+    "description": "右边距步进标签"
+  },
+
+  "readerAppearance": "外观与主题",
+  "@readerAppearance": {
+    "description": "阅读器样式面板外观区块标题"
+  },
+
+  "readerFollowSystemTheme": "跟随系统主题",
+  "@readerFollowSystemTheme": {
+    "description": "是否跟随系统颜色方案的开关标签"
+  },
+
+  "readerThemeLight": "浅色",
+  "@readerThemeLight": {
+    "description": "浅色阅读主题选项标签"
+  },
+
+  "readerThemeDark": "深色",
+  "@readerThemeDark": {
+    "description": "深色阅读主题选项标签"
   }
 }

@@ -188,6 +188,7 @@ class EpubReader {
         direction: 0,
         padding: { top: 0, left: 0, right: 0, bottom: 0 },
         theme: {
+          zoom: 1.0,
           backgroundColor: '#FFFFFF',
           defaultTextColor: null,
           paginationCss: `$_paginationCss`,
@@ -576,11 +577,11 @@ class EpubReader {
         }
 
         this._buildInteractionMap();
-      });
-    });
 
-    requestAnimationFrame(() => {
-      this._detectActiveAnchor(iframe);
+        requestAnimationFrame(() => {
+          this._detectActiveAnchor(iframe);
+        });
+      });
     });
   }
 
@@ -612,6 +613,37 @@ class EpubReader {
         iframe.src = url;
       }
     }
+  }
+
+  // Reload the iframe to apply new theme or settings while preserving the current page index
+  _reloadFrame(iframe, pageIndexPercentage) {
+    if (!iframe || !iframe.contentDocument) return;
+    const doc = iframe.contentDocument;
+
+    if (!iframe.contentWindow) return;
+
+    requestAnimationFrame(() => {
+    console.log('Reloading frame to apply new theme/settings');
+      const pageCount = this._calculatePageCount(iframe);
+      const slot = this._slotFromFrameId(iframe.id);
+      this.state.frames[slot] = pageCount;
+
+      const pageIndex = Math.round(pageIndexPercentage * pageCount);
+      const scrollOffset = this._calculateScrollOffset(pageIndex);
+      this._scrollTo(iframe, scrollOffset);
+
+      if (iframe.id === 'frame-curr') {
+        window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
+        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+        window.flutter_inappwebview.callHandler('onRendererInitialized');
+      }
+
+      this._buildInteractionMap();
+
+      requestAnimationFrame(() => {
+        this._detectActiveAnchor(iframe);
+      });
+    });
   }
 
   jumpToPage(pageIndex) {
@@ -757,6 +789,7 @@ class EpubReader {
     const root = doc.documentElement;
     const body = doc.body;
 
+    root.style.setProperty('--zoom', this.state.config.theme.zoom);
     root.style.setProperty('--safe-width', this.state.config.safeWidth + 'px');
     root.style.setProperty('--safe-height', this.state.config.safeHeight + 'px');
     root.style.setProperty('--padding-top', this.state.config.padding.top + 'px');
@@ -781,6 +814,7 @@ class EpubReader {
   }
 
   _generateVariableStyle() {
+    const zoomItem = '--zoom: ' + this.state.config.theme.zoom + ';';
     const safeWidthItem = '--safe-width: ' + this.state.config.safeWidth + 'px;';
     const safeHeightItem = '--safe-height: ' + this.state.config.safeHeight + 'px;';
     const paddingTopItem = '--padding-top: ' + this.state.config.padding.top + 'px;';
@@ -795,6 +829,7 @@ class EpubReader {
       defaultTextColorItem = '--default-text-color: ' + this.state.config.theme.defaultTextColor + ';';
     }
     return ':root {'
+            + zoomItem
             + safeWidthItem
             + safeHeightItem
             + paddingTopItem
@@ -808,7 +843,7 @@ class EpubReader {
             + '}';
   }
 
-  updateTheme(viewWidth, viewHeight, paddingTop, paddingLeft, paddingRight, paddingBottom, backgroundColor, defaultTextColor) {
+  updateTheme(viewWidth, viewHeight, paddingTop, paddingLeft, paddingRight, paddingBottom, backgroundColor, defaultTextColor, zoom) {
     this.state.config.safeWidth = Math.floor(viewWidth);
     this.state.config.safeHeight = Math.floor(viewHeight);
     this.state.config.padding = {
@@ -819,6 +854,7 @@ class EpubReader {
     };
     this.state.config.theme.backgroundColor = backgroundColor;
     this.state.config.theme.defaultTextColor = defaultTextColor;
+    this.state.config.theme.zoom = zoom;
     this.state.config.theme.variableCss = this._generateVariableStyle();
 
     this._updateCSSVariables(document, 'skeleton-variable-style');
@@ -828,13 +864,12 @@ class EpubReader {
       const iframe = iframes[i];
       if (iframe && iframe.contentDocument) {
         const doc = iframe.contentDocument;
-        const scrollLeft = doc.body.scrollLeft;
-        const scrollTop = doc.body.scrollTop;
+        const pageIndex = this._calculateCurrentPageIndex();
+        const pageCount = this._calculatePageCount(iframe);
+        const pageIndexPercentage = pageCount > 0 ? pageIndex / pageCount : 0;
         this._updateCSSVariables(doc, 'injected-variable-style');
         requestAnimationFrame(() => {
-          setTimeout(() => {
-            doc.body.scrollTo({ left: scrollLeft, top: scrollTop, behavior: 'auto' });
-          }, 200);
+          this._reloadFrame(iframe, pageIndexPercentage);
         });
       }
     }
@@ -902,6 +937,7 @@ String _generateVariableStyle(
   Color backgroundColor,
   Color? defaultTextColor,
   EdgeInsets padding,
+  double zoom,
   int direction,
 ) {
   final safeWidth = viewWidth.floor();
@@ -909,6 +945,7 @@ String _generateVariableStyle(
 
   return '''
     :root {
+      --zoom: $zoom;
       --background-color: ${colorToHex(backgroundColor)};
       ${defaultTextColor != null ? '--default-text-color: ${colorToHex(defaultTextColor)};' : ''}
       --safe-width: ${safeWidth}px;
@@ -930,6 +967,7 @@ String generateSkeletonHtml(
   Color backgroundColor,
   Color? defaultTextColor,
   EdgeInsets padding,
+  double zoom,
   int direction,
 ) {
   final safeWidth = viewWidth.floor();
@@ -941,6 +979,7 @@ String generateSkeletonHtml(
     backgroundColor,
     defaultTextColor,
     padding,
+    zoom,
     direction,
   );
 
@@ -955,6 +994,7 @@ String generateSkeletonHtml(
     },
     'direction': direction,
     'theme': {
+      'zoom': zoom,
       'backgroundColor': colorToHex(backgroundColor),
       'defaultTextColor': defaultTextColor != null
           ? colorToHex(defaultTextColor)
@@ -1019,6 +1059,8 @@ html, body {
   font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
   line-height: 1.6;
   text-align: justify;
+
+  font-size: calc(100% * var(--zoom)) !important;
 }
 
 html, body {

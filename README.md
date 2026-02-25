@@ -150,12 +150,13 @@ This project includes the "Source Han Serif" font, licensed under the [SIL Open 
 - [x] Vertical and RTL support
 - [x] Associate with epub format for direct opening of epub files
 - [x] Edit book metadata (title, author, etc.)
-- [ ] Reading settings (font size, line spacing, background color, etc.)
+- [x] Reading settings (font size, background color, etc.)
 - [ ] Footnote support
 - [ ] Cloud sync (WebDAV)
 - [ ] Search functionality
 - [ ] Annotation and bookmarking features
 - [ ] Edit book covers
+- [ ] More reading settings options
 - [ ] Chinese support for error messages
 
 ## 🙏 Acknowledgements

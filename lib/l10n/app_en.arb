@@ -1026,5 +1026,60 @@
   "titleRequired": "Title cannot be empty",
   "@titleRequired": {
     "description": "Validation error shown below the title field when the user tries to save with an empty title"
+  },
+
+  "readerTypographyLayout": "Typography & Layout",
+  "@readerTypographyLayout": {
+    "description": "Reader style sheet section title for typography and layout"
+  },
+
+  "readerScale": "Scale",
+  "@readerScale": {
+    "description": "Reader scale / zoom sub-label"
+  },
+
+  "readerMargins": "Margins",
+  "@readerMargins": {
+    "description": "Reader margins sub-label"
+  },
+
+  "readerMarginTop": "Top",
+  "@readerMarginTop": {
+    "description": "Top margin stepper label"
+  },
+
+  "readerMarginBottom": "Bottom",
+  "@readerMarginBottom": {
+    "description": "Bottom margin stepper label"
+  },
+
+  "readerMarginLeft": "Left",
+  "@readerMarginLeft": {
+    "description": "Left margin stepper label"
+  },
+
+  "readerMarginRight": "Right",
+  "@readerMarginRight": {
+    "description": "Right margin stepper label"
+  },
+
+  "readerAppearance": "Appearance",
+  "@readerAppearance": {
+    "description": "Reader style sheet section title for appearance"
+  },
+
+  "readerFollowSystemTheme": "Follow System Theme",
+  "@readerFollowSystemTheme": {
+    "description": "Toggle label to follow the system color scheme"
+  },
+
+  "readerThemeLight": "Light",
+  "@readerThemeLight": {
+    "description": "Light reader theme chip label"
+  },
+
+  "readerThemeDark": "Dark",
+  "@readerThemeDark": {
+    "description": "Dark reader theme chip label"
   }
 }

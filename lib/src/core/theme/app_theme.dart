@@ -29,44 +29,48 @@ class AppTheme {
   static const int defaultLongAnimationDurationMs = 320;
   static const int defaultPresentationDurationMs = 3 * 1000; // 3 seconds
 
+  static const ColorScheme lightColorScheme = ColorScheme.light(
+    primary: Color(0xFF2F3437),
+    onPrimary: Colors.white,
+    secondary: Color(0xFFF1F1EF),
+    onSecondary: Color(0xFF2F3437),
+    error: Color(0xFFEB5757),
+    onError: Colors.white,
+    surface: Colors.white,
+    onSurface: Color(0xFF2F3437),
+    surfaceContainerHighest: Color(0xFFF7F7F5),
+    onSurfaceVariant: Color(0xFF787774),
+    outline: Color(0xFFE9E9E7),
+    outlineVariant: Color(0xFFF3F3F2),
+  );
+
+  static const ColorScheme darkColorScheme = ColorScheme.dark(
+    primary: Color(0xFFEBEBEA),
+    onPrimary: Color(0xFF191919),
+    secondary: Color(0xFF2F2F2F),
+    onSecondary: Color(0xFFEBEBEA),
+    error: Color(0xFFFF7369),
+    onError: Colors.white,
+    surface: Color(0xFF191919),
+    onSurface: Color(0xFFD4D4D4),
+    surfaceContainerHighest: Color(0xFF252525),
+    onSurfaceVariant: Color(0xFF9B9A97),
+    outline: Color(0xFF373737),
+    outlineVariant: Color(0xFF2A2A2A),
+  );
+
+  static ColorScheme colorSchemeForBrightness(Brightness brightness) {
+    return brightness == Brightness.light ? lightColorScheme : darkColorScheme;
+  }
+
   /// Light Theme
   static ThemeData get lightTheme {
-    return _buildTheme(
-      const ColorScheme.light(
-        primary: Color(0xFF2F3437),
-        onPrimary: Colors.white,
-        secondary: Color(0xFFF1F1EF),
-        onSecondary: Color(0xFF2F3437),
-        error: Color(0xFFEB5757),
-        onError: Colors.white,
-        surface: Colors.white,
-        onSurface: Color(0xFF2F3437),
-        surfaceContainerHighest: Color(0xFFF7F7F5),
-        onSurfaceVariant: Color(0xFF787774),
-        outline: Color(0xFFE9E9E7),
-        outlineVariant: Color(0xFFF3F3F2),
-      ),
-    );
+    return _buildTheme(lightColorScheme);
   }
 
   /// Dark Theme - Optional monochrome variant
   static ThemeData get darkTheme {
-    return _buildTheme(
-      const ColorScheme.dark(
-        primary: Color(0xFFEBEBEA),
-        onPrimary: Color(0xFF191919),
-        secondary: Color(0xFF2F2F2F),
-        onSecondary: Color(0xFFEBEBEA),
-        error: Color(0xFFFF7369),
-        onError: Colors.white,
-        surface: Color(0xFF191919),
-        onSurface: Color(0xFFD4D4D4),
-        surfaceContainerHighest: Color(0xFF252525),
-        onSurfaceVariant: Color(0xFF9B9A97),
-        outline: Color(0xFF373737),
-        outlineVariant: Color(0xFF2A2A2A),
-      ),
-    );
+    return _buildTheme(darkColorScheme);
   }
 
   static ThemeData _buildTheme(ColorScheme colorScheme) {
