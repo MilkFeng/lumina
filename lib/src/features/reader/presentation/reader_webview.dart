@@ -218,6 +218,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         widget.initializeTheme.surfaceColor,
         widget.initializeTheme.onSurfaceColor,
         widget.initializeTheme.padding,
+        widget.initializeTheme.zoom,
         widget.direction,
       ),
       baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
@@ -415,8 +416,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
-    await _evaluateJavascript(
-      """window.reader.updateTheme(
+    await _evaluateJavascript("""window.reader.updateTheme(
         $width,
         $height,
         ${theme.padding.top},
@@ -424,7 +424,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         ${theme.padding.right},
         ${theme.padding.bottom},
         '${colorToHex(theme.surfaceColor)}',
-        ${theme.onSurfaceColor != null ? "'${colorToHex(theme.onSurfaceColor!)}'" : 'null'})""",
-    );
+        ${theme.onSurfaceColor != null ? "'${colorToHex(theme.onSurfaceColor!)}'" : 'null'},
+        ${theme.zoom})""");
   }
 }

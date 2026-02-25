@@ -52,8 +52,11 @@ class ReaderSettings {
     }
 
     return EpubTheme(
+      zoom: zoom,
       surfaceColor: colorScheme.surface,
-      onSurfaceColor: colorScheme.onSurface,
+      onSurfaceColor: platformBrightness == Brightness.dark
+          ? colorScheme.onSurface
+          : null,
       padding: EdgeInsets.only(
         top: marginTop,
         bottom: marginBottom,

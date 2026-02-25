@@ -415,6 +415,7 @@ class _OptionChip extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.icon,
+    // ignore: unused_element_parameter
     this.mirrorIcon = false,
   });
 
