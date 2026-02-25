@@ -218,7 +218,6 @@ class EpubReader {
 
   init(config = {}) {
     const padding = config.padding || {};
-    const theme = config.theme || {};
 
     this.state.config.safeWidth = Math.floor(config.safeWidth ?? 0);
     this.state.config.safeHeight = Math.floor(config.safeHeight ?? 0);
@@ -229,20 +228,7 @@ class EpubReader {
       right: Number(padding.right ?? 0),
       bottom: Number(padding.bottom ?? 0)
     };
-    this.state.config.theme = {
-      paginationCss: theme.paginationCss ?? `$_paginationCss`,
-      variableCss: theme.variableCss ?? '',
-
-      backgroundColor: theme.backgroundColor ?? '#FFFFFF',
-      defaultTextColor: theme.defaultTextColor ?? '#000000',
-      shouldOverrideTextColor: theme.shouldOverrideTextColor ?? true,
-      primaryColor: theme.primaryColor ?? '#000000',
-      primaryContainer: theme.primaryContainer ?? '#000000',
-      onSurfaceVariant: theme.onSurfaceVariant ?? '#000000',
-      outlineVariant: theme.outlineVariant ?? '#000000',
-      surfaceContainer: theme.surfaceContainer ?? '#000000',
-      surfaceContainerHigh: theme.surfaceContainerHigh ?? '#000000',
-    };
+    this.state.config.theme = config.theme;
 
     this._updateCSSVariables(document, 'skeleton-variable-style');
     window.removeEventListener('resize', this._onResize);
@@ -662,23 +648,35 @@ class EpubReader {
 
     const doc = iframe.contentDocument;
 
-    const variableStyle = doc.createElement('style');
-    variableStyle.id = 'injected-variable-style';
-    variableStyle.innerHTML = this.state.config.theme.variableCss;
-    doc.head.appendChild(variableStyle);
-
-    const style = doc.createElement('style');
-    style.id = 'injected-pagination-style';
-    style.innerHTML = this.state.config.theme.paginationCss;
-    doc.head.appendChild(style);
-
-    if (this.state.config.theme.shouldOverrideTextColor) {
-      doc.body.classList.add('override-color');
+    // check if style already exists (e.g. from previous load), if so update it, otherwise create new
+    const existingVariableStyle = doc.getElementById('injected-variable-style');
+    if (existingVariableStyle) {
+      this._updateCSSVariables(doc, 'injected-variable-style');
     } else {
-      doc.body.classList.remove('override-color');
+      const variableStyle = doc.createElement('style');
+      variableStyle.id = 'injected-variable-style';
+      variableStyle.innerHTML = this.state.config.theme.variableCss;
+      doc.head.appendChild(variableStyle);
+
+      if (this.state.config.theme.defaultTextColor) {
+        doc.body.classList.add('override-color');
+      } else {
+        doc.body.classList.remove('override-color');
+      }
     }
 
-    this._polyfillCss(doc);
+    const existingPaginationStyle = doc.getElementById('injected-pagination-style');
+    if (existingPaginationStyle) {
+      existingPaginationStyle.innerHTML = this.state.config.theme.paginationCss;
+    } else {
+      const style = doc.createElement('style');
+      style.id = 'injected-pagination-style';
+      style.innerHTML = this.state.config.theme.paginationCss;
+      doc.head.appendChild(style);
+
+      // Apply polyfill for break properties to support more pagination-related CSS in WebKit-based browsers (like iOS)
+      this._polyfillCss(doc);
+    }
 
     const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
 
