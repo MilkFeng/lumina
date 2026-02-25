@@ -408,6 +408,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       );
     }
 
+    final epubTheme = _getEpubTheme();
+
     ref.listen(readerSettingsNotifierProvider, (previous, next) {
       if (previous != null && previous != next) {
         _updateWebViewTheme();
@@ -430,7 +432,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         children: [
           Scaffold(
             key: _scaffoldKey,
-            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: epubTheme.surfaceColor,
             drawer: TocDrawer(
               book: _bookSession.book!,
               toc: _bookSession.toc,
@@ -439,7 +441,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
               onCoverTap: _navigateToFirstTocItemFirstPage,
             ),
             body: Container(
-              color: Theme.of(context).colorScheme.surface,
+              color: epubTheme.surfaceColor,
               child: Stack(
                 children: [
                   ReaderRenderer(

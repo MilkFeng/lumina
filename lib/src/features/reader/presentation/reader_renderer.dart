@@ -73,11 +73,7 @@ class ReaderRendererController {
   }
 
   Future<void> updateTheme(EpubTheme theme) async {
-    await webViewController?.updateTheme(
-      theme.copyWith(
-        padding: _rendererState?.addSafeAreaToPadding(theme.padding),
-      ),
-    );
+    await _rendererState?._updateTheme(theme);
   }
 }
 
@@ -140,7 +136,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
   late final AndroidPageTurnSession _androidPageTurnSession;
   late final IOSPageTurnSession _iosPageTurnSession;
 
-  EdgeInsets addSafeAreaToPadding(EdgeInsets basePadding) {
+  late EpubTheme _currentTheme;
+
+  EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
     var safePaddings = MediaQuery.paddingOf(context);
     return EdgeInsets.fromLTRB(
       basePadding.left + safePaddings.left,
@@ -151,8 +149,15 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   EpubTheme _addSafeAreaToThemePadding(EpubTheme theme) {
-    final newPadding = addSafeAreaToPadding(theme.padding);
+    final newPadding = _addSafeAreaToPadding(theme.padding);
     return theme.copyWith(padding: newPadding);
+  }
+
+  Future<void> _updateTheme(EpubTheme theme) async {
+    _currentTheme = theme;
+    await _webViewController.updateTheme(
+      theme.copyWith(padding: _addSafeAreaToPadding(theme.padding)),
+    );
   }
 
   @override
@@ -166,6 +171,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
       ),
     );
     _iosPageTurnSession = IOSPageTurnSession();
+    _currentTheme = widget.initializeTheme;
   }
 
   @override
@@ -304,7 +310,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
             offset: Offset.zero,
           ),
         ],
-        color: Theme.of(context).colorScheme.surface,
+        color: _currentTheme.surfaceColor,
       ),
       child: Container(alignment: AlignmentGeometry.center, child: child),
     );
@@ -343,9 +349,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
   Widget _buildScreenshotContainer(ui.Image? screenshot) {
     if (screenshot == null) {
-      return _buildContentWrapper(
-        Container(color: Theme.of(context).colorScheme.surface),
-      );
+      return _buildContentWrapper(Container(color: _currentTheme.surfaceColor));
     }
     return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }

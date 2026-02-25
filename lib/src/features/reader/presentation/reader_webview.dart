@@ -149,9 +149,12 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   bool _isSubsequentLoad = false;
 
+  late EpubTheme _currentTheme;
+
   @override
   void initState() {
     super.initState();
+    _currentTheme = widget.initializeTheme;
     widget.controller._attachState(this);
   }
 
@@ -228,10 +231,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       data: generateSkeletonHtml(
         width,
         height,
-        widget.initializeTheme.surfaceColor,
-        widget.initializeTheme.onSurfaceColor,
-        widget.initializeTheme.padding,
-        widget.initializeTheme.zoom,
+        _currentTheme.surfaceColor,
+        _currentTheme.onSurfaceColor,
+        _currentTheme.padding,
+        _currentTheme.zoom,
         widget.direction,
       ),
       baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
@@ -288,10 +291,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width =
-            constraints.maxWidth - widget.initializeTheme.padding.horizontal;
-        final height =
-            constraints.maxHeight - widget.initializeTheme.padding.vertical;
+        final width = constraints.maxWidth - _currentTheme.padding.horizontal;
+        final height = constraints.maxHeight - _currentTheme.padding.vertical;
         _initHeadlessWebViewIfNeeded(width, height);
 
         return Stack(
@@ -311,7 +312,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                         onWebViewCreated: _onWebViewCreated,
                         onLoadStop: _onLoadStop,
                       )
-                    : Container(color: widget.initializeTheme.surfaceColor),
+                    : Container(color: _currentTheme.surfaceColor),
               ),
             ),
             Positioned.fill(
@@ -456,6 +457,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
+    _currentTheme = theme;
     await _evaluateJavascript("""window.reader.updateTheme(
         $width,
         $height,
