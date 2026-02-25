@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../application/reader_settings_notifier.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
@@ -54,7 +55,65 @@ class _ReaderStyleBottomSheetState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Section 1: Typography & Layout ─────────────────────────────
+            // ── Section 1: Appearance ───────────────────────────────────────
+            _SectionTitle(label: l10n.readerAppearance),
+            const SizedBox(height: 12),
+
+            // Reader Theme – only shown when Follow System is off
+            AnimatedSize(
+              duration: const Duration(
+                milliseconds: AppTheme.defaultAnimationDurationMs,
+              ),
+              curve: Curves.easeInOut,
+              child: _followSystemTheme
+                  ? const SizedBox(height: 0, width: double.infinity)
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 12,
+                          children: [
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.colorSchemeForBrightness(
+                                Brightness.light,
+                              ),
+                              isSelected: _themeMode == ThemeMode.light,
+                              onTap: () {
+                                setState(() => _themeMode = ThemeMode.light);
+                                _notifier.setThemeMode(ThemeMode.light);
+                              },
+                            ),
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.colorSchemeForBrightness(
+                                Brightness.dark,
+                              ),
+                              isSelected: _themeMode == ThemeMode.dark,
+                              onTap: () {
+                                setState(() => _themeMode = ThemeMode.dark);
+                                _notifier.setThemeMode(ThemeMode.dark);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+
+            // Follow System Theme
+            _FollowSystemSwitch(
+              label: l10n.readerFollowSystemTheme,
+              value: _followSystemTheme,
+              onChanged: (v) {
+                setState(() => _followSystemTheme = v);
+                _notifier.setFollowSystemTheme(v);
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Section 2: Typography & Layout ─────────────────────────────
             _SectionTitle(label: l10n.readerTypographyLayout),
             const SizedBox(height: 16),
 
@@ -136,57 +195,6 @@ class _ReaderStyleBottomSheetState
                   ),
                 ),
               ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // ── Section 2: Appearance ───────────────────────────────────────
-            _SectionTitle(label: l10n.readerAppearance),
-            const SizedBox(height: 12),
-
-            // Follow System Theme
-            _FollowSystemSwitch(
-              label: l10n.readerFollowSystemTheme,
-              value: _followSystemTheme,
-              onChanged: (v) {
-                setState(() => _followSystemTheme = v);
-                _notifier.setFollowSystemTheme(v);
-              },
-            ),
-
-            // Reader Theme – only shown when Follow System is off
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              child: _followSystemTheme
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _OptionChip(
-                            icon: Icons.light_mode_outlined,
-                            label: l10n.readerThemeLight,
-                            isSelected: _themeMode == ThemeMode.light,
-                            onTap: () {
-                              setState(() => _themeMode = ThemeMode.light);
-                              _notifier.setThemeMode(ThemeMode.light);
-                            },
-                          ),
-                          _OptionChip(
-                            icon: Icons.dark_mode_outlined,
-                            label: l10n.readerThemeDark,
-                            isSelected: _themeMode == ThemeMode.dark,
-                            onTap: () {
-                              setState(() => _themeMode = ThemeMode.dark);
-                              _notifier.setThemeMode(ThemeMode.dark);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
             ),
           ],
         ),
@@ -408,73 +416,41 @@ class _FollowSystemSwitch extends StatelessWidget {
   }
 }
 
-/// Custom rounded-rectangle chip (mirrors StyleBottomSheet's _OptionChip).
-class _OptionChip extends StatelessWidget {
-  const _OptionChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.icon,
-    // ignore: unused_element_parameter
-    this.mirrorIcon = false,
-  });
-
-  final String label;
+class _ThemeOptionChip extends StatelessWidget {
+  final ColorScheme colorScheme;
   final bool isSelected;
   final VoidCallback onTap;
-  final IconData? icon;
 
-  /// Horizontally mirrors the icon (reserved for future use).
-  final bool mirrorIcon;
+  const _ThemeOptionChip({
+    required this.colorScheme,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final bgColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.15)
-        : colorScheme.surfaceContainerHighest;
-
-    final borderColor = isSelected
-        ? colorScheme.primary.withValues(alpha: 0.5)
-        : colorScheme.secondary.withValues(alpha: 0.3);
-
-    final contentColor = isSelected
-        ? colorScheme.primary
-        : colorScheme.onSurface.withValues(alpha: 0.8);
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
-          color: bgColor,
+          color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: 1.5),
+          border: Border.all(
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+                : Theme.of(
+                    context,
+                  ).colorScheme.secondary.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Transform.scale(
-                scaleX: mirrorIcon ? -1 : 1,
-                child: Icon(icon, size: 18, color: contentColor),
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: contentColor,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+        child: Icon(
+          isSelected ? Icons.check : Icons.text_format_outlined,
+          size: 32,
+          color: colorScheme.primary,
         ),
       ),
     );
