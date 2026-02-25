@@ -173,6 +173,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     final epubTheme = settings.toEpubTheme(
       platformBrightness: Theme.of(context).colorScheme.brightness,
     );
+    final isDark = epubTheme.isDark;
     final themeData = AppTheme.buildTheme(epubTheme.colorScheme);
     return Theme(
       data: themeData,
@@ -343,9 +344,70 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          showDragHandle: true,
-                          builder: (ctx) =>
-                              const SafeArea(child: ReaderStyleBottomSheet()),
+                          builder: (ctx) {
+                            return Consumer(
+                              builder: (context, ref, child) {
+                                final currentSettings = ref.watch(
+                                  readerSettingsNotifierProvider,
+                                );
+                                final currentEpubTheme = currentSettings
+                                    .toEpubTheme(
+                                      platformBrightness:
+                                          MediaQuery.platformBrightnessOf(
+                                            context,
+                                          ),
+                                    );
+                                final activeTheme = AppTheme.buildTheme(
+                                  currentEpubTheme.colorScheme,
+                                );
+
+                                return Theme(
+                                  data: activeTheme,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: activeTheme
+                                          .colorScheme
+                                          .surfaceContainerLow,
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(28),
+                                      ),
+                                    ),
+                                    child: SafeArea(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Center(
+                                            child: Container(
+                                              margin: const EdgeInsets.only(
+                                                top: 24,
+                                                bottom: 16,
+                                              ),
+                                              height: 4,
+                                              width: 32,
+                                              decoration: BoxDecoration(
+                                                color: activeTheme
+                                                    .colorScheme
+                                                    .onSurfaceVariant
+                                                    .withAlpha(100),
+                                                borderRadius:
+                                                    BorderRadius.circular(2),
+                                              ),
+                                            ),
+                                          ),
+                                          const ReaderStyleBottomSheet(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          barrierColor: Colors.black.withAlpha(
+                            isDark ? 150 : 80,
+                          ),
                           scrollControlDisabledMaxHeightRatio: 0.75,
                           constraints: const BoxConstraints(
                             maxWidth: double.infinity,

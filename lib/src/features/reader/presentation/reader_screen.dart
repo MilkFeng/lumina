@@ -456,6 +456,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 activeTocItems: activeItems,
                 onTocItemSelected: _navigateToTocItem,
                 onCoverTap: _navigateToFirstTocItemFirstPage,
+                themeData: themeData,
               ),
               body: Container(
                 color: epubTheme.surfaceColor,
