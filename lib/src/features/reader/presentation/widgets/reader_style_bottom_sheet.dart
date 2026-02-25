@@ -244,7 +244,7 @@ class _SectionTitle extends StatelessWidget {
       label,
       style: TextStyle(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.bold,
         color: Theme.of(context).colorScheme.primary,
       ),
     );
@@ -261,11 +261,7 @@ class _SubLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-      ),
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
     );
   }
 }
