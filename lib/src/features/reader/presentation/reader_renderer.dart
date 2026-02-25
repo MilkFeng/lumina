@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';

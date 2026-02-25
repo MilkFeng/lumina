@@ -7,34 +7,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/widgets/book_cover.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
-
-class EpubTheme {
-  final Color surfaceColor;
-  final Color? onSurfaceColor;
-  final EdgeInsets padding;
-
-  EpubTheme({
-    required this.surfaceColor,
-    this.onSurfaceColor,
-    required this.padding,
-  });
-
-  EpubTheme copyWith({
-    Color? surfaceColor,
-    Color? onSurfaceColor,
-    EdgeInsets? padding,
-  }) {
-    return EpubTheme(
-      surfaceColor: surfaceColor ?? this.surfaceColor,
-      onSurfaceColor: onSurfaceColor ?? this.onSurfaceColor,
-      padding: padding ?? this.padding,
-    );
-  }
-}
 
 /// Controller for ReaderWebView that provides methods to control the WebView
 class ReaderWebViewController {
