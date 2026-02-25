@@ -145,13 +145,13 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                         color: widget.epubTheme.colorScheme.surfaceContainerHigh
                             .withValues(alpha: 0.75),
                         border: Border(
-                          left: _slideFromLeft
+                          left: !_slideFromLeft
                               ? BorderSide(
                                   color: widget.epubTheme.colorScheme.primary,
                                   width: 4,
                                 )
                               : BorderSide.none,
-                          right: !_slideFromLeft
+                          right: _slideFromLeft
                               ? BorderSide(
                                   color: widget.epubTheme.colorScheme.primary,
                                   width: 4,

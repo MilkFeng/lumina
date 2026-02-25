@@ -79,15 +79,15 @@ class AppTheme {
 
   /// Light Theme
   static ThemeData get lightTheme {
-    return _buildTheme(lightColorScheme);
+    return buildTheme(lightColorScheme);
   }
 
   /// Dark Theme - Optional monochrome variant
   static ThemeData get darkTheme {
-    return _buildTheme(darkColorScheme);
+    return buildTheme(darkColorScheme);
   }
 
-  static ThemeData _buildTheme(ColorScheme colorScheme) {
+  static ThemeData buildTheme(ColorScheme colorScheme) {
     final notionRadius = BorderRadius.circular(4.0);
     return ThemeData(
       useMaterial3: true,
@@ -182,71 +182,64 @@ class AppTheme {
 
   static TextTheme _buildTextTheme(ColorScheme colorScheme) {
     final brightness = colorScheme.brightness;
+
     final baseTextTheme = brightness == Brightness.light
         ? ThemeData.light().textTheme
         : ThemeData.dark().textTheme;
 
-    final baseWithFont = baseTextTheme.apply(
+    final mainColor = colorScheme.onSurface;
+    final mutedColor = colorScheme.onSurfaceVariant;
+    // final primaryColor = colorScheme.primary;
+
+    final baseWithFontAndColor = baseTextTheme.apply(
       fontFamily: _fontFamily,
       fontFamilyFallback: _defaultFallback,
+      bodyColor: mainColor,
+      displayColor: mainColor,
     );
 
-    final mainColor = colorScheme.primary;
-    final mutedColor = colorScheme.onSurfaceVariant;
-
-    return baseWithFont.copyWith(
-      displayLarge: baseWithFont.displayLarge?.copyWith(
+    return baseWithFontAndColor.copyWith(
+      displayLarge: baseWithFontAndColor.displayLarge?.copyWith(
         fontWeight: FontWeight.w900,
-        color: mainColor,
       ),
-      displayMedium: baseWithFont.displayMedium?.copyWith(
+      displayMedium: baseWithFontAndColor.displayMedium?.copyWith(
         fontWeight: FontWeight.w900,
-        color: mainColor,
       ),
-      displaySmall: baseWithFont.displaySmall?.copyWith(
+      displaySmall: baseWithFontAndColor.displaySmall?.copyWith(
         fontWeight: FontWeight.bold,
-        color: mainColor,
       ),
-      headlineLarge: baseWithFont.headlineLarge?.copyWith(
+      headlineLarge: baseWithFontAndColor.headlineLarge?.copyWith(
         fontWeight: FontWeight.bold,
-        color: mainColor,
       ),
-      headlineMedium: baseWithFont.headlineMedium?.copyWith(
+      headlineMedium: baseWithFontAndColor.headlineMedium?.copyWith(
         fontWeight: FontWeight.w600, // SemiBold
-        color: mainColor,
       ),
-      headlineSmall: baseWithFont.headlineSmall?.copyWith(
+      headlineSmall: baseWithFontAndColor.headlineSmall?.copyWith(
         fontWeight: FontWeight.w600,
-        color: mainColor,
       ),
-      titleLarge: baseWithFont.titleLarge?.copyWith(
+      titleLarge: baseWithFontAndColor.titleLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: mainColor,
       ),
-      titleMedium: baseWithFont.titleMedium?.copyWith(
+      titleMedium: baseWithFontAndColor.titleMedium?.copyWith(
         fontWeight: FontWeight.w500, // Medium
-        color: mainColor,
       ),
-      titleSmall: baseWithFont.titleSmall?.copyWith(
+      titleSmall: baseWithFontAndColor.titleSmall?.copyWith(
         fontWeight: FontWeight.w500,
-        color: mainColor,
       ),
-      bodyLarge: baseWithFont.bodyLarge?.copyWith(
+      bodyLarge: baseWithFontAndColor.bodyLarge?.copyWith(
         fontWeight: FontWeight.w400,
-        color: mainColor,
       ),
-      bodyMedium: baseWithFont.bodyMedium?.copyWith(
+      bodyMedium: baseWithFontAndColor.bodyMedium?.copyWith(
         fontWeight: FontWeight.w400,
-        color: mainColor,
       ),
-      bodySmall: baseWithFont.bodySmall?.copyWith(
+      bodySmall: baseWithFontAndColor.bodySmall?.copyWith(
         fontWeight: FontWeight.w300,
         color: mutedColor,
       ),
-      labelLarge: baseWithFont.labelLarge?.copyWith(
+      labelLarge: baseWithFontAndColor.labelLarge?.copyWith(
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
-        color: mainColor,
+        // color: primaryColor,
       ),
     );
   }
