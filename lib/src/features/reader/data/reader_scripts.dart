@@ -1386,47 +1386,58 @@ a:visited {
   opacity: 1 !important;
 }
 
-body.override-color {
-  p, h1, h2, h3, h4, h5, h6, li, span, div, section {
-    color: var(--default-text-color);
-  }
+body.override-color p,
+body.override-color h1,
+body.override-color h2,
+body.override-color h3,
+body.override-color h4,
+body.override-color h5,
+body.override-color h6,
+body.override-color li,
+body.override-color span,
+body.override-color div,
+body.override-color section {
+  color: var(--default-text-color);
+}
 
-  ::selection {
-    background-color: var(--primary-container) !important;
-    color: inherit !important;
-  }
+body.override-color ::selection {
+  background-color: var(--primary-container) !important;
+  color: inherit !important;
+}
 
-  a, a:link, a:visited, a:active {
-    color: var(--primary-color);
-  }
+body.override-color a,
+body.override-color a:link,
+body.override-color a:visited,
+body.override-color a:active {
+  color: var(--primary-color);
+}
 
-  blockquote {
-    background-color: var(--surface-container) !important;
-    border-color: var(--primary-color) !important;
-    color: var(--on-surface-variant) !important;
-  }
+body.override-color blockquote {
+  background-color: var(--surface-container) !important;
+  border-color: var(--primary-color) !important;
+  color: var(--on-surface-variant) !important;
+}
 
-  hr {
-    background-color: var(--outline-variant) !important;
-  }
+body.override-color hr {
+  background-color: var(--outline-variant) !important;
+}
 
-  code {
-    background-color: var(--surface-container-high) !important;
-    color: var(--primary-color) !important;
-  }
+body.override-color code {
+  background-color: var(--surface-container-high) !important;
+  color: var(--primary-color) !important;
+}
 
-  pre {
-    background-color: var(--surface-container) !important;
-    border: 1px solid var(--outline-variant) !important;
-  }
+body.override-color pre {
+  background-color: var(--surface-container) !important;
+  border: 1px solid var(--outline-variant) !important;
+}
 
-  pre code {
-    color: var(--on-surface-variant) !important;
-  }
+body.override-color pre code {
+  color: var(--on-surface-variant) !important;
+}
 
-  figcaption {
-    color: var(--on-surface-variant) !important;
-  }
+body.override-color figcaption {
+  color: var(--on-surface-variant) !important;
 }
 
 aside[epub\\:type~="footnote"],
