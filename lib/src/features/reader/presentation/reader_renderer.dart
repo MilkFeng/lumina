@@ -97,6 +97,8 @@ class ReaderRenderer extends StatefulWidget {
   final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
+  final Function(String href, String epubType, String innerHtml, Rect rect)
+  onFootnoteTap;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
 
@@ -117,6 +119,7 @@ class ReaderRenderer extends StatefulWidget {
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
+    required this.onFootnoteTap,
     required this.shouldShowWebView,
     required this.initializeTheme,
   });
@@ -329,11 +332,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,
-          onFootnoteTap: (href, epubType, innetHtml, rect) {
-            debugPrint(
-              'Footnote tap received in Flutter: href=$href, epubType=$epubType, innerHtml=$innetHtml, rect=$rect',
-            );
-          },
+          onFootnoteTap: widget.onFootnoteTap,
         ),
         shouldShowWebView: widget.shouldShowWebView,
         coverRelativePath: widget.bookSession.book?.coverPath,

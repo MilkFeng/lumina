@@ -468,6 +468,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   },
                   onScrollAnchors: _handleScrollAnchors,
                   onImageLongPress: _handleImageLongPress,
+                  onFootnoteTap: _handleFootnoteTap,
                   shouldShowWebView: _shouldShowWebView,
                   initializeTheme: settings.toEpubTheme(
                     platformBrightness: Theme.of(
@@ -588,5 +589,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _currentImageRect = rect;
       _isImageViewerVisible = true;
     });
+  }
+
+  void _handleFootnoteTap(
+    String href,
+    String epubType,
+    String innerHtml,
+    Rect rect,
+  ) {
+    debugPrint(
+      'Footnote tap received in ReaderScreen: href=$href, epubType=$epubType, innerHtml=$innerHtml, rect=$rect',
+    );
   }
 }
