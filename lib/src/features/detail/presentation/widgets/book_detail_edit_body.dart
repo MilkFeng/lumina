@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
-import '../../domain/shelf_book.dart';
+import '../../../library/domain/shelf_book.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../../l10n/app_localizations.dart';
 

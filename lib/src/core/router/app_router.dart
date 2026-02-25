@@ -5,7 +5,7 @@ import 'package:lumina/src/features/library/domain/shelf_book.dart';
 import 'package:lumina/src/global_share_handler.dart';
 import '../services/toast_service.dart';
 import '../../features/library/presentation/library_screen.dart';
-import '../../features/library/presentation/book_detail_screen.dart';
+import '../../features/detail/presentation/book_detail_screen.dart';
 import '../../features/reader/presentation/reader_screen.dart';
 import '../../features/about/presentation/about_screen.dart';
 

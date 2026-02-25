@@ -5,11 +5,11 @@ import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
 import 'package:lumina/src/features/library/data/repositories/shelf_book_repository_provider.dart';
-import 'package:lumina/src/features/library/presentation/book_detail_helpers.dart';
-import 'package:lumina/src/features/library/presentation/widgets/book_detail_edit_body.dart';
-import 'package:lumina/src/features/library/presentation/widgets/book_detail_view_body.dart';
+import 'package:lumina/src/features/detail/presentation/book_detail_helpers.dart';
+import 'package:lumina/src/features/detail/presentation/widgets/book_detail_edit_body.dart';
+import 'package:lumina/src/features/detail/presentation/widgets/book_detail_view_body.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../domain/shelf_book.dart';
+import '../../library/domain/shelf_book.dart';
 import '../../../../l10n/app_localizations.dart';
 
 part 'book_detail_screen.g.dart';

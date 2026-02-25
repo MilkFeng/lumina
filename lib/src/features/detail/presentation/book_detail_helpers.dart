@@ -6,7 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
-import '../domain/shelf_book.dart';
+import '../../library/domain/shelf_book.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Copies the book's EPUB source file to a sanitised temporary path, opens
