@@ -1,0 +1,207 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+
+class FootnotePopupOverlay extends StatefulWidget {
+  final Rect anchorRect;
+  final String rawHtml;
+  final VoidCallback onDismiss;
+
+  const FootnotePopupOverlay({
+    super.key,
+    required this.anchorRect,
+    required this.rawHtml,
+    required this.onDismiss,
+  });
+
+  @override
+  State<FootnotePopupOverlay> createState() => FootnotePopupOverlayState();
+}
+
+class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+
+  late bool _slideFromLeft;
+
+  Future<void> playReverseAnimation() async {
+    if (mounted) {
+      await _animationController.reverse();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
+    );
+    _slideFromLeft = true;
+    if (!_animationController.isAnimating &&
+        !_animationController.isCompleted) {
+      _animationController.forward();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final screenWidth = MediaQuery.of(context).size.width;
+    _slideFromLeft = widget.anchorRect.center.dx < (screenWidth / 2);
+    _slideAnimation =
+        Tween<Offset>(
+          begin: Offset(_slideFromLeft ? -1.0 : 1.0, 0.0),
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
+    const double maxPopupHeight = 150.0;
+    final double bookmarkWidth = screenSize.width * 0.8;
+
+    final spaceBelow = screenSize.height - widget.anchorRect.bottom;
+    final spaceAbove = widget.anchorRect.top;
+
+    final bool showBelow =
+        spaceBelow >= maxPopupHeight || spaceBelow > spaceAbove;
+
+    final double topPosition = showBelow ? widget.anchorRect.bottom + 6.0 : -1;
+    final double bottomPosition = !showBelow
+        ? (screenSize.height - widget.anchorRect.top) + 6.0
+        : -1;
+
+    final borderRadius = BorderRadius.horizontal(
+      left: _slideFromLeft ? Radius.zero : const Radius.circular(8),
+      right: _slideFromLeft ? const Radius.circular(8) : Radius.zero,
+    );
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: widget.onDismiss,
+            behavior: HitTestBehavior.opaque,
+            child: Container(color: Colors.transparent),
+          ),
+        ),
+        Positioned(
+          top: topPosition != -1 ? topPosition : null,
+          bottom: bottomPosition != -1 ? bottomPosition : null,
+          left: _slideFromLeft ? 0 : null,
+          right: !_slideFromLeft ? 0 : null,
+          width: bookmarkWidth,
+          child: Material(
+            color: Colors.transparent,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: borderRadius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(isDark ? 50 : 25),
+                      blurRadius: 16,
+                      offset: Offset(_slideFromLeft ? 4 : -4, 6),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: borderRadius,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        maxHeight: maxPopupHeight,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHigh
+                            .withValues(alpha: 0.75),
+                        border: Border(
+                          left: _slideFromLeft
+                              ? BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 4,
+                                )
+                              : BorderSide.none,
+                          right: !_slideFromLeft
+                              ? BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 4,
+                                )
+                              : BorderSide.none,
+                          top: BorderSide(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                          bottom: BorderSide(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        child: HtmlWidget(
+                          widget.rawHtml,
+                          textStyle: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontFamily: AppTheme.fontFamilyContent,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                height: 1.6,
+                              ),
+                          onTapUrl: (url) async {
+                            ToastService.showInfo(
+                              'Footnote links are not supported yet. URL: $url',
+                            );
+                            return true;
+                          },
+                          customStylesBuilder: (element) {
+                            if (element.localName == 'ol' ||
+                                element.localName == 'ul') {
+                              return {'padding-left': '20px', 'margin': '0'};
+                            }
+                            if (element.localName == 'p') {
+                              return {'margin': '0 0 8px 0'};
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -73,11 +73,7 @@ class ReaderRendererController {
   }
 
   Future<void> updateTheme(EpubTheme theme) async {
-    await webViewController?.updateTheme(
-      theme.copyWith(
-        padding: _rendererState?.addSafeAreaToPadding(theme.padding),
-      ),
-    );
+    await _rendererState?._updateTheme(theme);
   }
 }
 
@@ -97,6 +93,8 @@ class ReaderRenderer extends StatefulWidget {
   final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
+  final Function(String href, String epubType, String innerHtml, Rect rect)
+  onFootnoteTap;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
 
@@ -117,6 +115,7 @@ class ReaderRenderer extends StatefulWidget {
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
+    required this.onFootnoteTap,
     required this.shouldShowWebView,
     required this.initializeTheme,
   });
@@ -137,7 +136,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
   late final AndroidPageTurnSession _androidPageTurnSession;
   late final IOSPageTurnSession _iosPageTurnSession;
 
-  EdgeInsets addSafeAreaToPadding(EdgeInsets basePadding) {
+  late EpubTheme _currentTheme;
+
+  EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
     var safePaddings = MediaQuery.paddingOf(context);
     return EdgeInsets.fromLTRB(
       basePadding.left + safePaddings.left,
@@ -148,8 +149,15 @@ class _ReaderRendererState extends State<ReaderRenderer>
   }
 
   EpubTheme _addSafeAreaToThemePadding(EpubTheme theme) {
-    final newPadding = addSafeAreaToPadding(theme.padding);
+    final newPadding = _addSafeAreaToPadding(theme.padding);
     return theme.copyWith(padding: newPadding);
+  }
+
+  Future<void> _updateTheme(EpubTheme theme) async {
+    _currentTheme = theme;
+    await _webViewController.updateTheme(
+      theme.copyWith(padding: _addSafeAreaToPadding(theme.padding)),
+    );
   }
 
   @override
@@ -163,6 +171,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
       ),
     );
     _iosPageTurnSession = IOSPageTurnSession();
+    _currentTheme = widget.initializeTheme;
   }
 
   @override
@@ -193,13 +202,23 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
-  void _handleTapZone(TapUpDetails details) {
-    final globalDx = details.globalPosition.dx;
+  void _handleTap(TapUpDetails details) {
+    if (widget.showControls) {
+      widget.onToggleControls();
+      return;
+    } else {
+      _webViewController.checkTapElementAt(
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+      );
+    }
+  }
 
+  void _handleTapZone(double x, double y) {
     final width = MediaQuery.of(context).size.width;
     if (width <= 0) return;
 
-    final ratio = globalDx / width;
+    final ratio = x / width;
     if (ratio < 0.3) {
       if (widget.showControls) {
         widget.onToggleControls();
@@ -258,7 +277,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapUp: widget.shouldShowWebView ? _handleTapZone : null,
+        onTapUp: widget.shouldShowWebView ? _handleTap : null,
         onHorizontalDragEnd: widget.shouldShowWebView
             ? _handleHorizontalDragEnd
             : null,
@@ -291,7 +310,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
             offset: Offset.zero,
           ),
         ],
-        color: Theme.of(context).colorScheme.surface,
+        color: _currentTheme.surfaceColor,
       ),
       child: Container(alignment: AlignmentGeometry.center, child: child),
     );
@@ -318,6 +337,8 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onRendererInitialized: widget.onRendererInitialized,
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
+          onTap: _handleTapZone,
+          onFootnoteTap: widget.onFootnoteTap,
         ),
         shouldShowWebView: widget.shouldShowWebView,
         coverRelativePath: widget.bookSession.book?.coverPath,
@@ -328,9 +349,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
   Widget _buildScreenshotContainer(ui.Image? screenshot) {
     if (screenshot == null) {
-      return _buildContentWrapper(
-        Container(color: Theme.of(context).colorScheme.surface),
-      );
+      return _buildContentWrapper(Container(color: _currentTheme.surfaceColor));
     }
     return _buildContentWrapper(RawImage(image: screenshot, fit: BoxFit.cover));
   }

@@ -52,6 +52,10 @@ class ReaderWebViewController {
     await _webViewState?._checkElementAt(x, y);
   }
 
+  Future<void> checkTapElementAt(double x, double y) async {
+    await _webViewState?._checkTapElementAt(x, y);
+  }
+
   Future<ui.Image?> takeScreenshot() async {
     return await _webViewState?._takeScreenshot();
   }
@@ -87,6 +91,9 @@ class ReaderWebViewCallbacks {
   final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
+  final Function(double x, double y) onTap;
+  final Function(String href, String epubType, String innerHtml, Rect rect)
+  onFootnoteTap;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -95,6 +102,8 @@ class ReaderWebViewCallbacks {
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
+    required this.onTap,
+    required this.onFootnoteTap,
   });
 }
 
@@ -140,9 +149,12 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   bool _isSubsequentLoad = false;
 
+  late EpubTheme _currentTheme;
+
   @override
   void initState() {
     super.initState();
+    _currentTheme = widget.initializeTheme;
     widget.controller._attachState(this);
   }
 
@@ -210,15 +222,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     await _evaluateJavascript("window.reader.checkElementAt($x, $y)");
   }
 
+  Future<void> _checkTapElementAt(double x, double y) async {
+    await _evaluateJavascript("window.reader.checkTapElementAt($x, $y)");
+  }
+
   InAppWebViewInitialData _generateInitialData(double width, double height) {
     return InAppWebViewInitialData(
       data: generateSkeletonHtml(
         width,
         height,
-        widget.initializeTheme.surfaceColor,
-        widget.initializeTheme.onSurfaceColor,
-        widget.initializeTheme.padding,
-        widget.initializeTheme.zoom,
+        _currentTheme.surfaceColor,
+        _currentTheme.onSurfaceColor,
+        _currentTheme.padding,
+        _currentTheme.zoom,
         widget.direction,
       ),
       baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
@@ -275,10 +291,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width =
-            constraints.maxWidth - widget.initializeTheme.padding.horizontal;
-        final height =
-            constraints.maxHeight - widget.initializeTheme.padding.vertical;
+        final width = constraints.maxWidth - _currentTheme.padding.horizontal;
+        final height = constraints.maxHeight - _currentTheme.padding.vertical;
         _initHeadlessWebViewIfNeeded(width, height);
 
         return Stack(
@@ -298,7 +312,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                         onWebViewCreated: _onWebViewCreated,
                         onLoadStop: _onLoadStop,
                       )
-                    : Container(color: widget.initializeTheme.surfaceColor),
+                    : Container(color: _currentTheme.surfaceColor),
               ),
             ),
             Positioned.fill(
@@ -377,6 +391,33 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
+      handlerName: 'onTap',
+      callback: (args) {
+        if (args.isEmpty) return;
+        final x = (args[0] as num).toDouble();
+        final y = (args[1] as num).toDouble();
+        widget.callbacks.onTap(x, y);
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onFootnoteTap',
+      callback: (args) {
+        if (args.isEmpty) return;
+        final href = args[0] as String;
+        final epubType = args[1] as String;
+        final innerHtml = args[2] as String;
+        final rect = Rect.fromLTWH(
+          (args[3] as num).toDouble(),
+          (args[4] as num).toDouble(),
+          (args[5] as num).toDouble(),
+          (args[6] as num).toDouble(),
+        );
+        widget.callbacks.onFootnoteTap(href, epubType, innerHtml, rect);
+      },
+    );
+
+    controller.addJavaScriptHandler(
       handlerName: 'onImageLongPress',
       callback: (args) {
         if (args.length >= 5 && args[0] is String) {
@@ -416,6 +457,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
+    _currentTheme = theme;
     await _evaluateJavascript("""window.reader.updateTheme(
         $width,
         $height,

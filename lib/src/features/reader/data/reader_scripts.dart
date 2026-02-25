@@ -489,6 +489,7 @@ class EpubReader {
       const height = Math.max(1, body.scrollHeight);
       const quadTree = new QuadTree(new Rect(0, 0, width, height), 4);
 
+      // Extract images and their positions to build the quad tree for hit testing
       const images = doc.querySelectorAll('img, image');
       const bodyRect = body.getBoundingClientRect();
 
@@ -519,6 +520,51 @@ class EpubReader {
           },
           data: src,
         });
+      }
+
+      this.state.quadTree = quadTree;
+
+      // Extract links to handle tap interactions
+      const links = doc.querySelectorAll('a[href]');
+
+      for (let i = 0; i < links.length; i++) {
+        const link = links[i];
+        if (!link) continue;
+
+        const href = link.getAttribute('href');
+        const epubType = link.getAttribute('epub:type');
+
+        const isFootnote = (epubType === 'noteref');
+        if (!isFootnote) continue;
+
+        // find the best candidate element to represent the footnote content
+        const targetId = this._extractTargetIdFromHref(href);
+        const innerHtml = this._extractFootnoteHtml(targetId);
+
+        const rects = link.getClientRects();
+        
+        for (let j = 0; j < rects.length; j++) {
+          const rect = rects[j];
+          if (!rect || rect.width < 5 || rect.height < 5) continue;
+
+          const docX = rect.left + body.scrollLeft - bodyRect.left;
+          const docY = rect.top + body.scrollTop - bodyRect.top;
+
+          quadTree.insert({
+            type: 'footnote',
+            rect: {
+              x: docX,
+              y: docY,
+              width: rect.width,
+              height: rect.height,
+            },
+            data: {
+              href: href,
+              epubType: epubType,
+              innerHtml: innerHtml
+            },
+          });
+        }
       }
 
       this.state.quadTree = quadTree;
@@ -879,7 +925,7 @@ class EpubReader {
     }, 220);
   }
 
-  checkElementAt(x, y) {
+  _checkElementAt(x, y, checkIfAllowed) {
     const relX = x - this.state.config.padding.left;
     const relY = y - this.state.config.padding.top;
 
@@ -893,13 +939,18 @@ class EpubReader {
     const docX = relX + body.scrollLeft;
     const docY = relY + body.scrollTop;
 
-    const radius = 5;
+    // HIG
+    const radius = 20;
     const queryRect = new Rect(docX - radius, docY - radius, radius * 2, radius * 2);
     const candidates = this.state.quadTree.query(queryRect, []);
+
+    let bestCandidate = null;
+    let minDistance = Infinity;
 
     for (let i = candidates.length - 1; i >= 0; i--) {
       const candidate = candidates[i];
       if (!candidate || !candidate.rect) continue;
+      if (checkIfAllowed && !checkIfAllowed(candidate)) continue;
 
       const rect = new Rect(
         candidate.rect.x,
@@ -908,22 +959,88 @@ class EpubReader {
         candidate.rect.height,
       );
 
-      if (!rect.contains({ x: docX, y: docY })) continue;
+      // Calculate distance from the tap point to the center of the candidate rect
+      let distance;
+      if (rect.contains({ x: docX, y: docY })) {
+        distance = 0; 
+      } else {
+        const centerX = rect.x + rect.width / 2;
+        const centerY = rect.y + rect.height / 2;
+        const dx = docX - centerX;
+        const dy = docY - centerY;
+        distance = Math.sqrt(dx * dx + dy * dy);
+      }
 
+      // Prioritize candidates based on distance to the tap point
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestCandidate = candidate;
+      }
+    }
+
+    return bestCandidate;
+  }
+
+  checkTapElementAt(x, y) {
+    const bestCandidate = this._checkElementAt(x, y, (candidate) => {
+      if (candidate.type === 'footnote') {
+        return true;
+      }
+      return false;
+    });
+
+    if (bestCandidate) {
+      const iframe = this._frameElement('curr');
+      if (!iframe || !iframe.contentDocument) return;
+      const doc = iframe.contentDocument;
+      const body = doc.body;
+      if (!body) return;
+
+      const rect = bestCandidate.rect;
       const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
       const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
 
+      console.log('Footnote tap detected at:', { x: absoluteLeft, y: absoluteTop });
+      console.log('with data:', bestCandidate.data.href, bestCandidate.data.epubType, bestCandidate.data.text);
+
+      window.flutter_inappwebview.callHandler(
+        'onFootnoteTap', bestCandidate.data.href,
+        bestCandidate.data.epubType, bestCandidate.data.innerHtml,
+        absoluteLeft, absoluteTop, rect.width, rect.height
+      );
+    } else {
+      // Fall back to just sending tap coordinates if no interactive element is found nearby
+      window.flutter_inappwebview.callHandler('onTap', x, y);
+    }
+  }
+
+  checkElementAt(x, y) {
+    const bestCandidate = this._checkElementAt(x, y, (candidate) => {
       if (candidate.type === 'image') {
-        window.flutter_inappwebview.callHandler(
-          'onImageLongPress',
-          candidate.data,
-          absoluteLeft,
-          absoluteTop,
-          rect.width,
-          rect.height,
-        );
-        return;
+        return true;
       }
+      return false;
+    });
+
+    if (bestCandidate) {
+      const iframe = this._frameElement('curr');
+      if (!iframe || !iframe.contentDocument) return;
+      const doc = iframe.contentDocument;
+      const body = doc.body;
+      if (!body) return;
+
+      const rect = bestCandidate.rect;
+      const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
+      const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
+
+      window.flutter_inappwebview.callHandler(
+        'onImageLongPress',
+        bestCandidate.data,
+        absoluteLeft,
+        absoluteTop,
+        rect.width,
+        rect.height,
+      );
     }
   }
 }
@@ -1061,6 +1178,9 @@ html, body {
   text-align: justify;
 
   font-size: calc(100% * var(--zoom)) !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
 }
 
 html, body {
@@ -1134,5 +1254,29 @@ body.override-color {
   p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
     color: var(--default-text-color) !important;
   }
+}
+
+aside[epub\\:type~="footnote"],
+aside[epub\\:type~="endnote"],
+div[epub\\:type~="footnote"] {
+  display: none !important;
+}
+
+[role~="doc-footnote"],
+[role~="doc-endnote"] {
+  display: none !important;
+}
+
+.duokan-footnote-content,
+.footnotes,
+.footnote-container,
+.endnotes,
+.noteText {
+  display: none !important;
+}
+
+a[epub\\:type~="noteref"],
+a[role~="doc-noteref"] {
+  display: inline !important;
 }
 ''';
