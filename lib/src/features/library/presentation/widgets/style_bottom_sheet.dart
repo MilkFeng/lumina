@@ -126,7 +126,7 @@ class _SectionTitle extends StatelessWidget {
       label,
       style: TextStyle(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.bold,
         color: Theme.of(context).colorScheme.primary,
       ),
     );

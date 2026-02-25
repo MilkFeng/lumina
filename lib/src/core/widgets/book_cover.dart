@@ -7,9 +7,16 @@ import '../providers/cover_file_provider.dart';
 /// Parent should handle clipping with ClipRRect if rounded corners are needed.
 class BookCover extends ConsumerWidget {
   final String? relativePath;
+  final BorderRadius radius;
+  final bool enableBorder;
   static const int globalCacheHeight = 900;
 
-  const BookCover({super.key, required this.relativePath});
+  const BookCover({
+    super.key,
+    required this.relativePath,
+    this.radius = BorderRadius.zero,
+    this.enableBorder = true,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,14 +31,19 @@ class BookCover extends ConsumerWidget {
           return _buildPlaceholder(context);
         }
 
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
         return Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-              width: 1,
-            ),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(borderRadius: radius),
+          foregroundDecoration: BoxDecoration(
+            borderRadius: radius,
+            border: enableBorder
+                ? Border.all(
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.3),
+                    width: 1,
+                  )
+                : null,
           ),
           child: Image.file(
             file,

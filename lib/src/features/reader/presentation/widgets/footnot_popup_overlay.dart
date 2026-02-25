@@ -1,20 +1,23 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:lumina/src/features/reader/data/reader_scripts.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 class FootnotePopupOverlay extends StatefulWidget {
   final Rect anchorRect;
   final String rawHtml;
   final VoidCallback onDismiss;
+  final EpubTheme epubTheme;
 
   const FootnotePopupOverlay({
     super.key,
     required this.anchorRect,
     required this.rawHtml,
     required this.onDismiss,
+    required this.epubTheme,
   });
 
   @override
@@ -80,7 +83,8 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
     final screenSize = MediaQuery.of(context).size;
 
     const double maxPopupHeight = 150.0;
-    final double bookmarkWidth = screenSize.width * 0.8;
+    const double minBookmarkWidth = 150;
+    final double maxBookmarkWidth = screenSize.width * 0.8;
 
     final spaceBelow = screenSize.height - widget.anchorRect.bottom;
     final spaceAbove = widget.anchorRect.top;
@@ -94,11 +98,11 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
         : -1;
 
     final borderRadius = BorderRadius.horizontal(
-      left: _slideFromLeft ? Radius.zero : const Radius.circular(8),
-      right: _slideFromLeft ? const Radius.circular(8) : Radius.zero,
+      left: _slideFromLeft ? Radius.zero : const Radius.circular(4),
+      right: _slideFromLeft ? const Radius.circular(4) : Radius.zero,
     );
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = widget.epubTheme.isDark;
 
     return Stack(
       children: [
@@ -114,7 +118,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
           bottom: bottomPosition != -1 ? bottomPosition : null,
           left: _slideFromLeft ? 0 : null,
           right: !_slideFromLeft ? 0 : null,
-          width: bookmarkWidth,
           child: Material(
             color: Colors.transparent,
             child: SlideTransition(
@@ -135,33 +138,33 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
                     child: Container(
-                      constraints: const BoxConstraints(
+                      constraints: BoxConstraints(
                         maxHeight: maxPopupHeight,
+                        maxWidth: maxBookmarkWidth,
+                        minWidth: minBookmarkWidth,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHigh
+                        color: widget.epubTheme.colorScheme.surfaceContainerHigh
                             .withValues(alpha: 0.75),
                         border: Border(
-                          left: _slideFromLeft
+                          left: !_slideFromLeft
                               ? BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: widget.epubTheme.colorScheme.primary,
                                   width: 4,
                                 )
                               : BorderSide.none,
-                          right: !_slideFromLeft
+                          right: _slideFromLeft
                               ? BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: widget.epubTheme.colorScheme.primary,
                                   width: 4,
                                 )
                               : BorderSide.none,
                           top: BorderSide(
-                            color: Theme.of(context).colorScheme.outlineVariant,
+                            color: widget.epubTheme.colorScheme.outlineVariant,
                             width: 1,
                           ),
                           bottom: BorderSide(
-                            color: Theme.of(context).colorScheme.outlineVariant,
+                            color: widget.epubTheme.colorScheme.outlineVariant,
                             width: 1,
                           ),
                         ),
@@ -173,24 +176,38 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           textStyle: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 fontFamily: AppTheme.fontFamilyContent,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: widget.epubTheme.colorScheme.onSurface,
                                 height: 1.6,
                               ),
                           onTapUrl: (url) async {
-                            ToastService.showInfo(
-                              'Footnote links are not supported yet. URL: $url',
-                            );
                             return true;
                           },
+                          renderMode: RenderMode.column,
+                          onErrorBuilder: (context, element, error) {
+                            return Text(
+                              'Error loading content',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontFamily: AppTheme.fontFamilyContent,
+                                    color:
+                                        widget.epubTheme.colorScheme.onSurface,
+                                  ),
+                            );
+                          },
                           customStylesBuilder: (element) {
-                            if (element.localName == 'ol' ||
-                                element.localName == 'ul') {
-                              return {'padding-left': '20px', 'margin': '0'};
+                            Map<String, String> styles = {};
+                            if (widget.epubTheme.shouldOverrideTextColor) {
+                              styles['color'] = colorToHex(
+                                widget.epubTheme.colorScheme.onSurface,
+                              );
                             }
-                            if (element.localName == 'p') {
-                              return {'margin': '0 0 8px 0'};
+                            if (element.localName == 'a') {
+                              styles['color'] = colorToHex(
+                                widget.epubTheme.colorScheme.primary,
+                              );
+                              styles['text-decoration'] = 'none';
                             }
-                            return null;
+                            return styles;
                           },
                         ),
                       ),

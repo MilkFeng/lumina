@@ -2,10 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
+enum ReaderSettingThemeMode {
+  system,
+  light,
+  dark,
+
+  // More themes
+  eyeCare,
+  darkEyeCare,
+}
+
 class ReaderSettings {
   final double zoom;
   final bool followSystemTheme;
-  final ThemeMode themeMode;
+  final ReaderSettingThemeMode themeMode;
   final double marginTop;
   final double marginBottom;
   final double marginLeft;
@@ -14,7 +24,7 @@ class ReaderSettings {
   const ReaderSettings({
     this.zoom = 1.0,
     this.followSystemTheme = true,
-    this.themeMode = ThemeMode.light,
+    this.themeMode = ReaderSettingThemeMode.light,
     this.marginTop = 16.0,
     this.marginBottom = 16.0,
     this.marginLeft = 16.0,
@@ -24,7 +34,7 @@ class ReaderSettings {
   ReaderSettings copyWith({
     double? zoom,
     bool? followSystemTheme,
-    ThemeMode? themeMode,
+    ReaderSettingThemeMode? themeMode,
     double? marginTop,
     double? marginBottom,
     double? marginLeft,
@@ -43,23 +53,26 @@ class ReaderSettings {
 
   EpubTheme toEpubTheme({required Brightness platformBrightness}) {
     ColorScheme colorScheme;
-    Brightness effectiveBrightness = followSystemTheme
-        ? platformBrightness
-        : (themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
+    bool shouldOverrideTextColor = true;
     if (followSystemTheme) {
       colorScheme = AppTheme.colorSchemeForBrightness(platformBrightness);
     } else {
-      colorScheme = AppTheme.colorSchemeForBrightness(
-        themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light,
-      );
+      if (themeMode == ReaderSettingThemeMode.eyeCare) {
+        colorScheme = AppTheme.eyeCareColorScheme;
+      } else if (themeMode == ReaderSettingThemeMode.darkEyeCare) {
+        colorScheme = AppTheme.darkEyeCareColorScheme;
+      } else if (themeMode == ReaderSettingThemeMode.dark) {
+        colorScheme = AppTheme.darkColorScheme;
+      } else {
+        colorScheme = AppTheme.lightColorScheme;
+        shouldOverrideTextColor = false; // Light theme uses default text color
+      }
     }
 
     return EpubTheme(
       zoom: zoom,
-      surfaceColor: colorScheme.surface,
-      onSurfaceColor: effectiveBrightness == Brightness.dark
-          ? colorScheme.onSurface
-          : null,
+      shouldOverrideTextColor: shouldOverrideTextColor,
+      colorScheme: colorScheme,
       padding: EdgeInsets.only(
         top: marginTop,
         bottom: marginBottom,

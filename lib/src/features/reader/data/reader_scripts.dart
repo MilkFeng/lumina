@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 String colorToHex(Color color) {
   final argb = color.toARGB32();
@@ -189,10 +190,17 @@ class EpubReader {
         padding: { top: 0, left: 0, right: 0, bottom: 0 },
         theme: {
           zoom: 1.0,
-          backgroundColor: '#FFFFFF',
-          defaultTextColor: null,
           paginationCss: `$_paginationCss`,
           variableCss: '',
+          backgroundColor: '#FFFFFF',
+          defaultTextColor: '#000000',
+          shouldOverrideTextColor: true,
+          primaryColor: '#000000',
+          primaryContainer: '#000000',
+          onSurfaceVariant: '#000000',
+          outlineVariant: '#000000',
+          surfaceContainer: '#000000',
+          surfaceContainerHigh: '#000000',
         }
       }
     };
@@ -222,10 +230,18 @@ class EpubReader {
       bottom: Number(padding.bottom ?? 0)
     };
     this.state.config.theme = {
-      backgroundColor: theme.backgroundColor ?? '#FFFFFF',
-      defaultTextColor: theme.defaultTextColor ?? null,
       paginationCss: theme.paginationCss ?? `$_paginationCss`,
       variableCss: theme.variableCss ?? '',
+
+      backgroundColor: theme.backgroundColor ?? '#FFFFFF',
+      defaultTextColor: theme.defaultTextColor ?? '#000000',
+      shouldOverrideTextColor: theme.shouldOverrideTextColor ?? true,
+      primaryColor: theme.primaryColor ?? '#000000',
+      primaryContainer: theme.primaryContainer ?? '#000000',
+      onSurfaceVariant: theme.onSurfaceVariant ?? '#000000',
+      outlineVariant: theme.outlineVariant ?? '#000000',
+      surfaceContainer: theme.surfaceContainer ?? '#000000',
+      surfaceContainerHigh: theme.surfaceContainerHigh ?? '#000000',
     };
 
     this._updateCSSVariables(document, 'skeleton-variable-style');
@@ -462,8 +478,17 @@ class EpubReader {
     const sanitizedId = String(targetId).replace(/^#/, '');
     if (!sanitizedId) return '';
 
-    const footnoteEl = doc.getElementById(sanitizedId);
+    let footnoteEl = doc.getElementById(sanitizedId);
+    if (!footnoteEl) {
+      // Fallback: some footnotes might not have an ID but can be referenced by name
+      footnoteEl = doc.querySelector('[name="' + sanitizedId + '"]');
+    }
     if (!footnoteEl) return '';
+
+    // If the footnote element is empty, try to find the next sibling that has content (some footnotes are structured this way)
+    if (footnoteEl.textContent.trim() === '' && footnoteEl.nextElementSibling) {
+      footnoteEl = footnoteEl.nextElementSibling;
+    }
 
     const container = footnoteEl.closest('li, aside, section, div, p') || footnoteEl;
     return container && container.outerHTML ? container.outerHTML : '';
@@ -498,10 +523,28 @@ class EpubReader {
         if (!img) continue;
 
         const rect = img.getBoundingClientRect();
-        if (!rect || rect.width < 10 || rect.height < 10) continue;
+        if (!rect || rect.width < 5 || rect.height < 5) continue;
 
         const docX = rect.left + body.scrollLeft - bodyRect.left;
         const docY = rect.top + body.scrollTop - bodyRect.top;
+
+        // duokan
+        if (img.classList.contains('duokan-footnote')) {
+          const altText = img.getAttribute('alt') || img.getAttribute('title') || '';
+          
+          quadTree.insert({
+            type: 'footnote',
+            rect: {
+              x: docX,
+              y: docY,
+              width: rect.width,
+              height: rect.height,
+            },
+            data: '<div class="duokan-footnote-content">' + altText + '</div>',
+          });
+          
+          continue;
+        }
 
         let src = img.currentSrc || img.src || img.getAttribute('xlink:href') || '';
 
@@ -522,10 +565,9 @@ class EpubReader {
         });
       }
 
-      this.state.quadTree = quadTree;
-
       // Extract links to handle tap interactions
       const links = doc.querySelectorAll('a[href]');
+      const currentDocBaseUrl = doc.location.href.split('#')[0];
 
       for (let i = 0; i < links.length; i++) {
         const link = links[i];
@@ -533,13 +575,33 @@ class EpubReader {
 
         const href = link.getAttribute('href');
         const epubType = link.getAttribute('epub:type');
+        let innerHtml = '';
 
-        const isFootnote = (epubType === 'noteref');
-        if (!isFootnote) continue;
+        if (link.hasAttribute('title') && (!href || href === '#')) {
+          // Some footnotes use the link's title attribute to store the content instead of pointing to an element in the page
+          innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
+        } else {
+          if (epubType === 'noteref') {
+            // find the best candidate element to represent the footnote content
+            const targetId = this._extractTargetIdFromHref(href);
+            innerHtml = this._extractFootnoteHtml(targetId);
+          } else if (href) {
+            const linkBaseUrl = link.href.split('#')[0];
+            if (linkBaseUrl === currentDocBaseUrl) {
+              // Only support extracting footnote content for same-page links to avoid cross-origin issues and complexity of handling multiple documents
+              const targetId = this._extractTargetIdFromHref(href);
+              innerHtml = this._extractFootnoteHtml(targetId);
+            } else {
+              continue;
+            }
+          } else {
+            continue;
+          }
+        }
 
-        // find the best candidate element to represent the footnote content
-        const targetId = this._extractTargetIdFromHref(href);
-        const innerHtml = this._extractFootnoteHtml(targetId);
+        if (!innerHtml || innerHtml.trim() === '') {
+          continue;
+        }
 
         const rects = link.getClientRects();
         
@@ -558,11 +620,35 @@ class EpubReader {
               width: rect.width,
               height: rect.height,
             },
-            data: {
-              href: href,
-              epubType: epubType,
-              innerHtml: innerHtml
+            data: innerHtml,
+          });
+        }
+      }
+
+      // Aozora Bunko style footnotes
+      const aozoraNotes = doc.querySelectorAll('span.notes, .notes');
+      for (let i = 0; i < aozoraNotes.length; i++) {
+        const noteSpan = aozoraNotes[i];
+        if (!noteSpan) continue;
+        const innerHtml = '<div class="aozora-footnote-content">' + noteSpan.innerHTML + '</div>';
+        const rects = noteSpan.getClientRects();
+        
+        for (let j = 0; j < rects.length; j++) {
+          const rect = rects[j];
+          if (!rect || rect.width < 5 || rect.height < 5) continue;
+
+          const docX = rect.left + body.scrollLeft - bodyRect.left;
+          const docY = rect.top + body.scrollTop - bodyRect.top;
+
+          quadTree.insert({
+            type: 'footnote',
+            rect: {
+              x: docX,
+              y: docY,
+              width: rect.width,
+              height: rect.height,
             },
+            data: innerHtml,
           });
         }
       }
@@ -586,7 +672,7 @@ class EpubReader {
     style.innerHTML = this.state.config.theme.paginationCss;
     doc.head.appendChild(style);
 
-    if (this.state.config.theme.defaultTextColor) {
+    if (this.state.config.theme.shouldOverrideTextColor) {
       doc.body.classList.add('override-color');
     } else {
       doc.body.classList.remove('override-color');
@@ -669,7 +755,6 @@ class EpubReader {
     if (!iframe.contentWindow) return;
 
     requestAnimationFrame(() => {
-    console.log('Reloading frame to apply new theme/settings');
       const pageCount = this._calculatePageCount(iframe);
       const slot = this._slotFromFrameId(iframe.id);
       this.state.frames[slot] = pageCount;
@@ -842,15 +927,22 @@ class EpubReader {
     root.style.setProperty('--padding-left', this.state.config.padding.left + 'px');
     root.style.setProperty('--padding-right', this.state.config.padding.right + 'px');
     root.style.setProperty('--padding-bottom', this.state.config.padding.bottom + 'px');
-    root.style.setProperty('--background-color', this.state.config.theme.backgroundColor);
     root.style.setProperty('--reader-overflow-x', this._isVertical() ? 'hidden' : 'auto');
     root.style.setProperty('--reader-overflow-y', this._isVertical() ? 'auto' : 'hidden');
-    if (this.state.config.theme.defaultTextColor) {
+
+    root.style.setProperty('--background-color', this.state.config.theme.backgroundColor);
+    root.style.setProperty('--default-text-color', this.state.config.theme.defaultTextColor);
+    root.style.setProperty('--primary-color', this.state.config.theme.primaryColor);
+    root.style.setProperty('--primary-container', this.state.config.theme.primaryContainer);
+    root.style.setProperty('--on-surface-variant', this.state.config.theme.onSurfaceVariant);
+    root.style.setProperty('--outline-variant', this.state.config.theme.outlineVariant);
+    root.style.setProperty('--surface-container', this.state.config.theme.surfaceContainer);
+    root.style.setProperty('--surface-container-high', this.state.config.theme.surfaceContainerHigh);
+
+    if (this.state.config.theme.shouldOverrideTextColor) {
       body.classList.add('override-color');
-      root.style.setProperty('--default-text-color', this.state.config.theme.defaultTextColor);
     } else {
       body.classList.remove('override-color');
-      root.style.removeProperty('--default-text-color');
     }
 
     const existingStyle = doc.getElementById(styleId);
@@ -867,13 +959,18 @@ class EpubReader {
     const paddingLeftItem = '--padding-left: ' + this.state.config.padding.left + 'px;';
     const paddingRightItem = '--padding-right: ' + this.state.config.padding.right + 'px;';
     const paddingBottomItem = '--padding-bottom: ' + this.state.config.padding.bottom + 'px;';
-    const backgroundColorItem = '--background-color: ' + this.state.config.theme.backgroundColor + ';';
     const readerOverflowXItem = '--reader-overflow-x: ' + (this._isVertical() ? 'hidden' : 'auto') + ';';
     const readerOverflowYItem = '--reader-overflow-y: ' + (this._isVertical() ? 'auto' : 'hidden') + ';';
-    let defaultTextColorItem = '';
-    if (this.state.config.theme.defaultTextColor) {
-      defaultTextColorItem = '--default-text-color: ' + this.state.config.theme.defaultTextColor + ';';
-    }
+    
+    const backgroundColorItem = '--background-color: ' + this.state.config.theme.backgroundColor + ';';
+    const defaultTextColorItem = '--default-text-color: ' + this.state.config.theme.defaultTextColor + ';';
+    const primaryColorItem = '--primary-color: ' + this.state.config.theme.primaryColor + ';';
+    const primaryContainerItem = '--primary-container: ' + this.state.config.theme.primaryContainer + ';';
+    const onSurfaceVariantItem = '--on-surface-variant: ' + this.state.config.theme.onSurfaceVariant + ';';
+    const outlineVariantItem = '--outline-variant: ' + this.state.config.theme.outlineVariant + ';';
+    const surfaceContainerItem = '--surface-container: ' + this.state.config.theme.surfaceContainer + ';';
+    const surfaceContainerHighItem = '--surface-container-high: ' + this.state.config.theme.surfaceContainerHigh + ';';
+
     return ':root {'
             + zoomItem
             + safeWidthItem
@@ -882,14 +979,37 @@ class EpubReader {
             + paddingLeftItem
             + paddingRightItem
             + paddingBottomItem
-            + backgroundColorItem
-            + defaultTextColorItem
             + readerOverflowXItem
             + readerOverflowYItem
+            + backgroundColorItem
+            + defaultTextColorItem
+            + primaryColorItem
+            + primaryContainerItem
+            + onSurfaceVariantItem
+            + outlineVariantItem
+            + surfaceContainerItem
+            + surfaceContainerHighItem
             + '}';
   }
 
-  updateTheme(viewWidth, viewHeight, paddingTop, paddingLeft, paddingRight, paddingBottom, backgroundColor, defaultTextColor, zoom) {
+  updateTheme(
+    viewWidth,
+    viewHeight,
+    paddingTop,
+    paddingLeft,
+    paddingRight,
+    paddingBottom,
+    zoom,
+    backgroundColor,
+    defaultTextColor,
+    shouldOverrideTextColor,
+    primaryColor,
+    primaryContainer,
+    onSurfaceVariant,
+    outlineVariant,
+    surfaceContainer,
+    surfaceContainerHigh
+  ) {
     this.state.config.safeWidth = Math.floor(viewWidth);
     this.state.config.safeHeight = Math.floor(viewHeight);
     this.state.config.padding = {
@@ -898,9 +1018,18 @@ class EpubReader {
       right: paddingRight,
       bottom: paddingBottom,
     };
+    this.state.config.theme.zoom = zoom;
+    
     this.state.config.theme.backgroundColor = backgroundColor;
     this.state.config.theme.defaultTextColor = defaultTextColor;
-    this.state.config.theme.zoom = zoom;
+    this.state.config.theme.shouldOverrideTextColor = shouldOverrideTextColor;
+    this.state.config.theme.primaryColor = primaryColor;
+    this.state.config.theme.primaryContainer = primaryContainer;
+    this.state.config.theme.onSurfaceVariant = onSurfaceVariant;
+    this.state.config.theme.outlineVariant = outlineVariant;
+    this.state.config.theme.surfaceContainer = surfaceContainer;
+    this.state.config.theme.surfaceContainerHigh = surfaceContainerHigh;
+
     this.state.config.theme.variableCss = this._generateVariableStyle();
 
     this._updateCSSVariables(document, 'skeleton-variable-style');
@@ -1000,12 +1129,8 @@ class EpubReader {
       const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
       const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
 
-      console.log('Footnote tap detected at:', { x: absoluteLeft, y: absoluteTop });
-      console.log('with data:', bestCandidate.data.href, bestCandidate.data.epubType, bestCandidate.data.text);
-
       window.flutter_inappwebview.callHandler(
-        'onFootnoteTap', bestCandidate.data.href,
-        bestCandidate.data.epubType, bestCandidate.data.innerHtml,
+        'onFootnoteTap', bestCandidate.data,
         absoluteLeft, absoluteTop, rect.width, rect.height
       );
     } else {
@@ -1051,20 +1176,18 @@ window.reader = new EpubReader();
 String _generateVariableStyle(
   double viewWidth,
   double viewHeight,
-  Color backgroundColor,
-  Color? defaultTextColor,
-  EdgeInsets padding,
-  double zoom,
+  EpubTheme theme,
   int direction,
 ) {
   final safeWidth = viewWidth.floor();
   final safeHeight = viewHeight.floor();
 
+  final padding = theme.padding;
+  final colorScheme = theme.colorScheme;
+
   return '''
     :root {
-      --zoom: $zoom;
-      --background-color: ${colorToHex(backgroundColor)};
-      ${defaultTextColor != null ? '--default-text-color: ${colorToHex(defaultTextColor)};' : ''}
+      --zoom: ${theme.zoom};
       --safe-width: ${safeWidth}px;
       --safe-height: ${safeHeight}px;
       --padding-top: ${padding.top}px;
@@ -1073,6 +1196,16 @@ String _generateVariableStyle(
       --padding-bottom: ${padding.bottom}px;
       --reader-overflow-x: ${direction == 1 ? 'hidden' : 'auto'};
       --reader-overflow-y: ${direction == 1 ? 'auto' : 'hidden'};
+      
+      --background-color: ${colorToHex(colorScheme.surface)};
+      --default-text-color: ${colorToHex(colorScheme.onSurface)};
+
+      --primary-color: ${colorToHex(colorScheme.primary)};
+      --primary-container: ${colorToHex(colorScheme.primaryContainer)};
+      --on-surface-variant: ${colorToHex(colorScheme.onSurfaceVariant)};
+      --outline-variant: ${colorToHex(colorScheme.outlineVariant)};
+      --surface-container: ${colorToHex(colorScheme.surfaceContainer)};
+      --surface-container-high: ${colorToHex(colorScheme.surfaceContainerHigh)};
     }
   ''';
 }
@@ -1081,10 +1214,7 @@ String _generateVariableStyle(
 String generateSkeletonHtml(
   double viewWidth,
   double viewHeight,
-  Color backgroundColor,
-  Color? defaultTextColor,
-  EdgeInsets padding,
-  double zoom,
+  EpubTheme theme,
   int direction,
 ) {
   final safeWidth = viewWidth.floor();
@@ -1093,31 +1223,38 @@ String generateSkeletonHtml(
   final variableStyle = _generateVariableStyle(
     viewWidth,
     viewHeight,
-    backgroundColor,
-    defaultTextColor,
-    padding,
-    zoom,
+    theme,
     direction,
   );
+
+  final colorScheme = theme.colorScheme;
 
   final initialConfigJson = jsonEncode({
     'safeWidth': safeWidth,
     'safeHeight': safeHeight,
     'padding': {
-      'top': padding.top,
-      'left': padding.left,
-      'right': padding.right,
-      'bottom': padding.bottom,
+      'top': theme.padding.top,
+      'left': theme.padding.left,
+      'right': theme.padding.right,
+      'bottom': theme.padding.bottom,
     },
     'direction': direction,
     'theme': {
-      'zoom': zoom,
-      'backgroundColor': colorToHex(backgroundColor),
-      'defaultTextColor': defaultTextColor != null
-          ? colorToHex(defaultTextColor)
-          : null,
+      'zoom': theme.zoom,
       'paginationCss': _paginationCss,
       'variableCss': variableStyle,
+
+      'backgroundColor': colorToHex(colorScheme.surface),
+      'defaultTextColor': colorToHex(colorScheme.onSurface),
+
+      'shouldOverrideTextColor': theme.shouldOverrideTextColor,
+
+      'primaryColor': colorToHex(colorScheme.primary),
+      'primaryContainer': colorToHex(colorScheme.primaryContainer),
+      'onSurfaceVariant': colorToHex(colorScheme.onSurfaceVariant),
+      'outlineVariant': colorToHex(colorScheme.outlineVariant),
+      'surfaceContainer': colorToHex(colorScheme.surfaceContainer),
+      'surfaceContainerHigh': colorToHex(colorScheme.surfaceContainerHigh),
     },
   });
 
@@ -1243,16 +1380,61 @@ a {
   cursor: default !important;
 }
 
-a:visited {
+a, a:link, a:visited, a:active {
   color: currentColor !important;
   text-decoration: inherit !important;
   border-bottom: inherit !important;
   opacity: 1 !important;
 }
 
+blockquote {
+  font-style: normal;
+}
+
+code {
+  font-family: monospace;
+}
+
 body.override-color {
-  p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code, span, div, section {
+  p, h1, h2, h3, h4, h5, h6, li, span, div, section {
     color: var(--default-text-color) !important;
+  }
+
+  ::selection {
+    background-color: var(--primary-container) !important;
+    color: inherit !important;
+  }
+
+  a, a:link, a:visited, a:active {
+    color: var(--primary-color) !important;
+  }
+
+  blockquote {
+    background-color: var(--surface-container) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--on-surface-variant) !important;
+  }
+
+  hr {
+    background-color: var(--outline-variant) !important;
+  }
+
+  code {
+    background-color: var(--surface-container-high) !important;
+    color: var(--primary-color) !important;
+  }
+
+  pre {
+    background-color: var(--surface-container) !important;
+    border: 1px solid var(--outline-variant) !important;
+  }
+
+  pre code {
+    color: var(--on-surface-variant) !important;
+  }
+
+  figcaption {
+    color: var(--on-surface-variant) !important;
   }
 }
 
@@ -1278,5 +1460,11 @@ div[epub\\:type~="footnote"] {
 a[epub\\:type~="noteref"],
 a[role~="doc-noteref"] {
   display: inline !important;
+}
+
+span.notes, .notes {
+  opacity: 0.7;
+  text-decoration: underline dotted !important;
+  cursor: pointer;
 }
 ''';

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,8 +25,9 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
           data: (prefs) => ReaderSettings(
             zoom: prefs.getDouble(_kZoom) ?? 1.0,
             followSystemTheme: prefs.getBool(_kFollowSystem) ?? true,
-            themeMode: ThemeMode
-                .values[prefs.getInt(_kThemeMode) ?? ThemeMode.light.index],
+            themeMode:
+                ReaderSettingThemeMode.values[prefs.getInt(_kThemeMode) ??
+                    ReaderSettingThemeMode.system.index],
             marginTop: prefs.getDouble(_kMarginTop) ?? 16.0,
             marginBottom: prefs.getDouble(_kMarginBottom) ?? 16.0,
             marginLeft: prefs.getDouble(_kMarginLeft) ?? 16.0,
@@ -58,7 +58,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
     state = state.copyWith(followSystemTheme: follow);
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
+  Future<void> setThemeMode(ReaderSettingThemeMode mode) async {
     await _prefs.setInt(_kThemeMode, mode.index);
     state = state.copyWith(themeMode: mode);
   }

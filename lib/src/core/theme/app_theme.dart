@@ -59,21 +59,49 @@ class AppTheme {
     outlineVariant: Color(0xFF2A2A2A),
   );
 
+  static const ColorScheme eyeCareColorScheme = ColorScheme.light(
+    surface: Color(0xFFF4ECD8),
+    onSurface: Color(0xFF433422),
+    surfaceContainerHigh: Color(0xFFE9E0CB),
+    surfaceContainerHighest: Color(0xFFDFD5BD),
+    outlineVariant: Color(0xFFD3C5A9),
+    primary: Color(0xFFAD7B46),
+    onPrimary: Colors.white,
+    secondary: Color(0xFF8A7359),
+    onSecondary: Colors.white,
+    error: Color(0xFFB85D5D),
+    onError: Colors.white,
+  );
+
+  static const darkEyeCareColorScheme = ColorScheme.dark(
+    surface: Color(0xFF1C1A18),
+    onSurface: Color(0xFFC2B8AD),
+    surfaceContainerHigh: Color(0xFF2A2724),
+    surfaceContainerHighest: Color(0xFF383430),
+    outlineVariant: Color(0xFF4A4540),
+    primary: Color(0xFF967250),
+    onPrimary: Color(0xFF1E140A),
+    secondary: Color(0xFF75675A),
+    onSecondary: Color(0xFF1C1A18),
+    error: Color(0xFF9E5656),
+    onError: Color(0xFF1C1A18),
+  );
+
   static ColorScheme colorSchemeForBrightness(Brightness brightness) {
     return brightness == Brightness.light ? lightColorScheme : darkColorScheme;
   }
 
   /// Light Theme
   static ThemeData get lightTheme {
-    return _buildTheme(lightColorScheme);
+    return buildTheme(lightColorScheme);
   }
 
   /// Dark Theme - Optional monochrome variant
   static ThemeData get darkTheme {
-    return _buildTheme(darkColorScheme);
+    return buildTheme(darkColorScheme);
   }
 
-  static ThemeData _buildTheme(ColorScheme colorScheme) {
+  static ThemeData buildTheme(ColorScheme colorScheme) {
     final notionRadius = BorderRadius.circular(4.0);
     return ThemeData(
       useMaterial3: true,
@@ -168,71 +196,64 @@ class AppTheme {
 
   static TextTheme _buildTextTheme(ColorScheme colorScheme) {
     final brightness = colorScheme.brightness;
+
     final baseTextTheme = brightness == Brightness.light
         ? ThemeData.light().textTheme
         : ThemeData.dark().textTheme;
 
-    final baseWithFont = baseTextTheme.apply(
+    final mainColor = colorScheme.onSurface;
+    final mutedColor = colorScheme.onSurfaceVariant;
+    // final primaryColor = colorScheme.primary;
+
+    final baseWithFontAndColor = baseTextTheme.apply(
       fontFamily: _fontFamily,
       fontFamilyFallback: _defaultFallback,
+      bodyColor: mainColor,
+      displayColor: mainColor,
     );
 
-    final mainColor = colorScheme.primary;
-    final mutedColor = colorScheme.onSurfaceVariant;
-
-    return baseWithFont.copyWith(
-      displayLarge: baseWithFont.displayLarge?.copyWith(
+    return baseWithFontAndColor.copyWith(
+      displayLarge: baseWithFontAndColor.displayLarge?.copyWith(
         fontWeight: FontWeight.w900,
-        color: mainColor,
       ),
-      displayMedium: baseWithFont.displayMedium?.copyWith(
+      displayMedium: baseWithFontAndColor.displayMedium?.copyWith(
         fontWeight: FontWeight.w900,
-        color: mainColor,
       ),
-      displaySmall: baseWithFont.displaySmall?.copyWith(
+      displaySmall: baseWithFontAndColor.displaySmall?.copyWith(
         fontWeight: FontWeight.bold,
-        color: mainColor,
       ),
-      headlineLarge: baseWithFont.headlineLarge?.copyWith(
+      headlineLarge: baseWithFontAndColor.headlineLarge?.copyWith(
         fontWeight: FontWeight.bold,
-        color: mainColor,
       ),
-      headlineMedium: baseWithFont.headlineMedium?.copyWith(
+      headlineMedium: baseWithFontAndColor.headlineMedium?.copyWith(
         fontWeight: FontWeight.w600, // SemiBold
-        color: mainColor,
       ),
-      headlineSmall: baseWithFont.headlineSmall?.copyWith(
+      headlineSmall: baseWithFontAndColor.headlineSmall?.copyWith(
         fontWeight: FontWeight.w600,
-        color: mainColor,
       ),
-      titleLarge: baseWithFont.titleLarge?.copyWith(
+      titleLarge: baseWithFontAndColor.titleLarge?.copyWith(
         fontWeight: FontWeight.w600,
-        color: mainColor,
       ),
-      titleMedium: baseWithFont.titleMedium?.copyWith(
+      titleMedium: baseWithFontAndColor.titleMedium?.copyWith(
         fontWeight: FontWeight.w500, // Medium
-        color: mainColor,
       ),
-      titleSmall: baseWithFont.titleSmall?.copyWith(
+      titleSmall: baseWithFontAndColor.titleSmall?.copyWith(
         fontWeight: FontWeight.w500,
-        color: mainColor,
       ),
-      bodyLarge: baseWithFont.bodyLarge?.copyWith(
+      bodyLarge: baseWithFontAndColor.bodyLarge?.copyWith(
         fontWeight: FontWeight.w400,
-        color: mainColor,
       ),
-      bodyMedium: baseWithFont.bodyMedium?.copyWith(
+      bodyMedium: baseWithFontAndColor.bodyMedium?.copyWith(
         fontWeight: FontWeight.w400,
-        color: mainColor,
       ),
-      bodySmall: baseWithFont.bodySmall?.copyWith(
+      bodySmall: baseWithFontAndColor.bodySmall?.copyWith(
         fontWeight: FontWeight.w300,
         color: mutedColor,
       ),
-      labelLarge: baseWithFont.labelLarge?.copyWith(
+      labelLarge: baseWithFontAndColor.labelLarge?.copyWith(
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
-        color: mainColor,
+        // color: primaryColor,
       ),
     );
   }

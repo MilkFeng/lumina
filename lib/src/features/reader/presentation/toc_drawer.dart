@@ -26,6 +26,7 @@ class TocDrawer extends StatefulWidget {
   final Set<TocItem> activeTocItems;
   final Function(TocItem) onTocItemSelected;
   final Function() onCoverTap;
+  final ThemeData themeData;
 
   const TocDrawer({
     super.key,
@@ -34,6 +35,7 @@ class TocDrawer extends StatefulWidget {
     required this.activeTocItems,
     required this.onTocItemSelected,
     required this.onCoverTap,
+    required this.themeData,
   });
 
   @override
@@ -192,10 +194,10 @@ class _TocDrawerState extends State<TocDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = widget.themeData.brightness == Brightness.dark;
 
     return Drawer(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: widget.themeData.scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           children: [
@@ -274,7 +276,7 @@ class _TocDrawerState extends State<TocDrawer> {
                   item.label,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: widget.themeData.textTheme.bodyMedium?.copyWith(
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                     color: isActive
                         ? (isDark ? Colors.white : Colors.black)
@@ -289,7 +291,7 @@ class _TocDrawerState extends State<TocDrawer> {
                 Icon(
                   Icons.circle_outlined,
                   size: 8,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: widget.themeData.colorScheme.primary,
                 ),
             ],
           ),
@@ -302,10 +304,10 @@ class _TocDrawerState extends State<TocDrawer> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: widget.themeData.colorScheme.surface,
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline,
+            color: widget.themeData.colorScheme.outline,
             width: 1,
           ),
         ),
@@ -319,12 +321,12 @@ class _TocDrawerState extends State<TocDrawer> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Book Cover
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: SizedBox(
-                width: 60,
-                height: 90,
-                child: BookCover(relativePath: '${widget.book.coverPath}'),
+            SizedBox(
+              width: 60,
+              height: 90,
+              child: BookCover(
+                relativePath: '${widget.book.coverPath}',
+                radius: BorderRadius.circular(4),
               ),
             ),
 
@@ -337,7 +339,7 @@ class _TocDrawerState extends State<TocDrawer> {
                 children: [
                   Text(
                     widget.book.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: widget.themeData.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w400,
                       fontFamily: AppTheme.fontFamilyContent,
                     ),
@@ -347,10 +349,10 @@ class _TocDrawerState extends State<TocDrawer> {
                   const SizedBox(height: 4),
                   Text(
                     widget.book.author,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withAlpha(153),
+                    style: widget.themeData.textTheme.bodySmall?.copyWith(
+                      color: widget.themeData.colorScheme.onSurface.withAlpha(
+                        153,
+                      ),
                       fontWeight: FontWeight.w400,
                       fontFamily: AppTheme.fontFamilyContent,
                     ),
@@ -362,7 +364,7 @@ class _TocDrawerState extends State<TocDrawer> {
                     AppLocalizations.of(
                       context,
                     )!.chaptersCount(widget.book.totalChapters),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    style: widget.themeData.textTheme.bodySmall?.copyWith(
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 11,
                     ),

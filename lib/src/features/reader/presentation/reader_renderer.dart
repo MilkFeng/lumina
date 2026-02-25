@@ -93,8 +93,7 @@ class ReaderRenderer extends StatefulWidget {
   final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
-  final Function(String href, String epubType, String innerHtml, Rect rect)
-  onFootnoteTap;
+  final Function(String innerHtml, Rect rect) onFootnoteTap;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
 
@@ -139,7 +138,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
   late EpubTheme _currentTheme;
 
   EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
-    var safePaddings = MediaQuery.paddingOf(context);
+    final safePaddings = MediaQuery.paddingOf(context);
     return EdgeInsets.fromLTRB(
       basePadding.left + safePaddings.left,
       basePadding.top + safePaddings.top,
