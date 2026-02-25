@@ -1004,8 +1004,7 @@ class EpubReader {
       console.log('with data:', bestCandidate.data.href, bestCandidate.data.epubType, bestCandidate.data.text);
 
       window.flutter_inappwebview.callHandler(
-        'onFootnoteTap', bestCandidate.data.href,
-        bestCandidate.data.epubType, bestCandidate.data.innerHtml,
+        'onFootnoteTap', bestCandidate.data.innerHtml,
         absoluteLeft, absoluteTop, rect.width, rect.height
       );
     } else {

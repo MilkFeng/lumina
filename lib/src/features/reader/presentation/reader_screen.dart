@@ -608,12 +608,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     });
   }
 
-  void _handleFootnoteTap(
-    String href,
-    String epubType,
-    String innerHtml,
-    Rect rect,
-  ) {
+  void _handleFootnoteTap(String innerHtml, Rect rect) {
     _removeFootnoteOverlay();
     final overlayState = Overlay.of(context);
     setState(() {

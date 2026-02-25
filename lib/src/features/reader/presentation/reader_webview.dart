@@ -92,8 +92,7 @@ class ReaderWebViewCallbacks {
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
-  final Function(String href, String epubType, String innerHtml, Rect rect)
-  onFootnoteTap;
+  final Function(String innerHtml, Rect rect) onFootnoteTap;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -404,16 +403,14 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       handlerName: 'onFootnoteTap',
       callback: (args) {
         if (args.isEmpty) return;
-        final href = args[0] as String;
-        final epubType = args[1] as String;
-        final innerHtml = args[2] as String;
+        final innerHtml = args[0] as String;
         final rect = Rect.fromLTWH(
+          (args[1] as num).toDouble(),
+          (args[2] as num).toDouble(),
           (args[3] as num).toDouble(),
           (args[4] as num).toDouble(),
-          (args[5] as num).toDouble(),
-          (args[6] as num).toDouble(),
         );
-        widget.callbacks.onFootnoteTap(href, epubType, innerHtml, rect);
+        widget.callbacks.onFootnoteTap(innerHtml, rect);
       },
     );
 
