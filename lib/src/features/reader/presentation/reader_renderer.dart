@@ -71,12 +71,10 @@ class ReaderRendererController {
     await webViewController?.loadFrame('prev', url, anchorsJson);
   }
 
-  Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
+  Future<void> updateTheme(EpubTheme theme) async {
     await webViewController?.updateTheme(
-      EpubTheme(
-        surfaceColor: surfaceColor,
-        onSurfaceColor: onSurfaceColor,
-        padding: _rendererState!.padding,
+      theme.copyWith(
+        padding: _rendererState?.addSafeAreaToPadding(theme.padding),
       ),
     );
   }
@@ -99,6 +97,7 @@ class ReaderRenderer extends StatefulWidget {
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final bool shouldShowWebView;
+  final EpubTheme initializeTheme;
 
   const ReaderRenderer({
     super.key,
@@ -118,6 +117,7 @@ class ReaderRenderer extends StatefulWidget {
     required this.onScrollAnchors,
     required this.onImageLongPress,
     required this.shouldShowWebView,
+    required this.initializeTheme,
   });
 
   bool get isVertical {
@@ -136,20 +136,13 @@ class _ReaderRendererState extends State<ReaderRenderer>
   late final AndroidPageTurnSession _androidPageTurnSession;
   late final IOSPageTurnSession _iosPageTurnSession;
 
-  EdgeInsets get padding {
+  EdgeInsets addSafeAreaToPadding(EdgeInsets basePadding) {
     var safePaddings = MediaQuery.paddingOf(context);
-    double topPadding = safePaddings.top;
-    double leftPadding = safePaddings.left;
-    double rightPadding = safePaddings.right;
-    double bottomPadding = safePaddings.bottom;
-
-    const padding = 16.0;
-
     return EdgeInsets.fromLTRB(
-      padding + leftPadding,
-      padding + topPadding,
-      padding + rightPadding,
-      padding + bottomPadding,
+      basePadding.left + safePaddings.left,
+      basePadding.top + safePaddings.top,
+      basePadding.right + safePaddings.right,
+      basePadding.bottom + safePaddings.bottom,
     );
   }
 
@@ -305,11 +298,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
         bookSession: widget.bookSession,
         webViewHandler: widget.webViewHandler,
         fileHash: widget.fileHash,
-        surfaceColor: Theme.of(context).colorScheme.surface,
-        onSurfaceColor: Theme.of(context).brightness == Brightness.dark
-            ? Theme.of(context).colorScheme.onSurface
-            : null,
-        padding: padding,
+        initializeTheme: widget.initializeTheme,
         isLoading: widget.isLoading,
         controller: _webViewController,
         callbacks: ReaderWebViewCallbacks(

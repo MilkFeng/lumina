@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -374,6 +375,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
+  EpubTheme _buildEpubTheme() {
+    return EpubTheme(
+      surfaceColor: Theme.of(context).colorScheme.surface,
+      onSurfaceColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).colorScheme.onSurface
+          : null,
+      padding: const EdgeInsets.all(16.0),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_bookSession.isLoaded) {
@@ -445,6 +456,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   onScrollAnchors: _handleScrollAnchors,
                   onImageLongPress: _handleImageLongPress,
                   shouldShowWebView: _shouldShowWebView,
+                  initializeTheme: _buildEpubTheme(),
                 ),
 
                 ControlPanel(
@@ -530,12 +542,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _updatingTheme = true;
     });
 
-    await _rendererController.updateTheme(
-      Theme.of(context).colorScheme.surface,
-      Theme.of(context).brightness == Brightness.dark
-          ? Theme.of(context).colorScheme.onSurface
-          : null,
-    );
+    await _rendererController.updateTheme(_buildEpubTheme());
 
     setState(() {
       _updatingTheme = false;

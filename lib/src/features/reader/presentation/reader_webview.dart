@@ -22,6 +22,18 @@ class EpubTheme {
     this.onSurfaceColor,
     required this.padding,
   });
+
+  EpubTheme copyWith({
+    Color? surfaceColor,
+    Color? onSurfaceColor,
+    EdgeInsets? padding,
+  }) {
+    return EpubTheme(
+      surfaceColor: surfaceColor ?? this.surfaceColor,
+      onSurfaceColor: onSurfaceColor ?? this.onSurfaceColor,
+      padding: padding ?? this.padding,
+    );
+  }
 }
 
 /// Controller for ReaderWebView that provides methods to control the WebView
@@ -115,9 +127,7 @@ class ReaderWebView extends StatefulWidget {
   final EpubWebViewHandler webViewHandler;
   final String fileHash;
   final ReaderWebViewCallbacks callbacks;
-  final Color surfaceColor;
-  final Color? onSurfaceColor;
-  final EdgeInsets padding;
+  final EpubTheme initializeTheme;
   final bool isLoading;
   final ReaderWebViewController controller;
   final VoidCallback? onWebViewCreated;
@@ -131,9 +141,7 @@ class ReaderWebView extends StatefulWidget {
     required this.webViewHandler,
     required this.fileHash,
     required this.callbacks,
-    required this.padding,
-    required this.surfaceColor,
-    required this.onSurfaceColor,
+    required this.initializeTheme,
     required this.isLoading,
     required this.controller,
     this.onWebViewCreated,
@@ -230,9 +238,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       data: generateSkeletonHtml(
         width,
         height,
-        widget.surfaceColor,
-        widget.onSurfaceColor,
-        widget.padding,
+        widget.initializeTheme.surfaceColor,
+        widget.initializeTheme.onSurfaceColor,
+        widget.initializeTheme.padding,
         widget.direction,
       ),
       baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
@@ -289,8 +297,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth - widget.padding.horizontal;
-        final height = constraints.maxHeight - widget.padding.vertical;
+        final width =
+            constraints.maxWidth - widget.initializeTheme.padding.horizontal;
+        final height =
+            constraints.maxHeight - widget.initializeTheme.padding.vertical;
         _initHeadlessWebViewIfNeeded(width, height);
 
         return Stack(
@@ -310,7 +320,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                         onWebViewCreated: _onWebViewCreated,
                         onLoadStop: _onLoadStop,
                       )
-                    : Container(color: widget.surfaceColor),
+                    : Container(color: widget.initializeTheme.surfaceColor),
               ),
             ),
             Positioned.fill(
@@ -325,7 +335,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                       ? 1.0
                       : 0.0,
                   child: Container(
-                    color: widget.surfaceColor,
+                    color: widget.initializeTheme.surfaceColor,
                     child: _isSubsequentLoad
                         ? null
                         : Center(
