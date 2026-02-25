@@ -73,9 +73,11 @@ class ReaderRendererController {
 
   Future<void> updateTheme(Color surfaceColor, Color? onSurfaceColor) async {
     await webViewController?.updateTheme(
-      surfaceColor,
-      onSurfaceColor,
-      _rendererState!.padding,
+      EpubTheme(
+        surfaceColor: surfaceColor,
+        onSurfaceColor: onSurfaceColor,
+        padding: _rendererState!.padding,
+      ),
     );
   }
 }

@@ -12,6 +12,18 @@ import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
 
+class EpubTheme {
+  final Color surfaceColor;
+  final Color? onSurfaceColor;
+  final EdgeInsets padding;
+
+  EpubTheme({
+    required this.surfaceColor,
+    this.onSurfaceColor,
+    required this.padding,
+  });
+}
+
 /// Controller for ReaderWebView that provides methods to control the WebView
 class ReaderWebViewController {
   _ReaderWebViewState? _webViewState;
@@ -55,12 +67,8 @@ class ReaderWebViewController {
     return await _webViewState?._takeScreenshot();
   }
 
-  Future<void> updateTheme(
-    Color surfaceColor,
-    Color? onSurfaceColor,
-    EdgeInsets padding,
-  ) async {
-    await _webViewState?._updateTheme(surfaceColor, onSurfaceColor, padding);
+  Future<void> updateTheme(EpubTheme theme) async {
+    await _webViewState?._updateTheme(theme);
   }
 }
 
@@ -416,24 +424,20 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
-  Future<void> _updateTheme(
-    Color surfaceColor,
-    Color? onSurfaceColor,
-    EdgeInsets padding,
-  ) async {
-    final width = MediaQuery.of(context).size.width - padding.horizontal;
-    final height = MediaQuery.of(context).size.height - padding.vertical;
+  Future<void> _updateTheme(EpubTheme theme) async {
+    final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
+    final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
     await _evaluateJavascript(
       """window.reader.updateTheme(
         $width,
         $height,
-        ${padding.top},
-        ${padding.left},
-        ${padding.right},
-        ${padding.bottom},
-        '${colorToHex(surfaceColor)}',
-        ${onSurfaceColor != null ? "'${colorToHex(onSurfaceColor)}'" : 'null'})""",
+        ${theme.padding.top},
+        ${theme.padding.left},
+        ${theme.padding.right},
+        ${theme.padding.bottom},
+        '${colorToHex(theme.surfaceColor)}',
+        ${theme.onSurfaceColor != null ? "'${colorToHex(theme.onSurfaceColor!)}'" : 'null'})""",
     );
   }
 }
