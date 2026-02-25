@@ -59,6 +59,20 @@ class AppTheme {
     outlineVariant: Color(0xFF2A2A2A),
   );
 
+  static const ColorScheme sepiaColorScheme = ColorScheme.light(
+    surface: Color(0xFFF4ECD8),
+    onSurface: Color(0xFF433422),
+    surfaceContainerHigh: Color(0xFFE9E0CB),
+    surfaceContainerHighest: Color(0xFFDFD5BD),
+    outlineVariant: Color(0xFFD3C5A9),
+    primary: Color(0xFFAD7B46),
+    onPrimary: Colors.white,
+    secondary: Color(0xFF8A7359),
+    onSecondary: Colors.white,
+    error: Color(0xFFB85D5D),
+    onError: Colors.white,
+  );
+
   static ColorScheme colorSchemeForBrightness(Brightness brightness) {
     return brightness == Brightness.light ? lightColorScheme : darkColorScheme;
   }

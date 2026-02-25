@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
@@ -21,7 +22,7 @@ class _ReaderStyleBottomSheetState
   late int _leftMargin;
   late int _rightMargin;
   late bool _followSystemTheme;
-  late ThemeMode _themeMode;
+  late ReaderSettingThemeMode _themeMode;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -79,20 +80,46 @@ class _ReaderStyleBottomSheetState
                               colorScheme: AppTheme.colorSchemeForBrightness(
                                 Brightness.light,
                               ),
-                              isSelected: _themeMode == ThemeMode.light,
+                              isSelected:
+                                  _themeMode == ReaderSettingThemeMode.light,
                               onTap: () {
-                                setState(() => _themeMode = ThemeMode.light);
-                                _notifier.setThemeMode(ThemeMode.light);
+                                setState(
+                                  () =>
+                                      _themeMode = ReaderSettingThemeMode.light,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.light,
+                                );
                               },
                             ),
                             _ThemeOptionChip(
                               colorScheme: AppTheme.colorSchemeForBrightness(
                                 Brightness.dark,
                               ),
-                              isSelected: _themeMode == ThemeMode.dark,
+                              isSelected:
+                                  _themeMode == ReaderSettingThemeMode.dark,
                               onTap: () {
-                                setState(() => _themeMode = ThemeMode.dark);
-                                _notifier.setThemeMode(ThemeMode.dark);
+                                setState(
+                                  () =>
+                                      _themeMode = ReaderSettingThemeMode.dark,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.dark,
+                                );
+                              },
+                            ),
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.sepiaColorScheme,
+                              isSelected:
+                                  _themeMode == ReaderSettingThemeMode.sepia,
+                              onTap: () {
+                                setState(
+                                  () =>
+                                      _themeMode = ReaderSettingThemeMode.sepia,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.sepia,
+                                );
                               },
                             ),
                           ],

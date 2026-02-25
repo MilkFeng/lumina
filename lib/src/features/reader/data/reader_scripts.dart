@@ -739,7 +739,6 @@ class EpubReader {
     if (!iframe.contentWindow) return;
 
     requestAnimationFrame(() => {
-    console.log('Reloading frame to apply new theme/settings');
       const pageCount = this._calculatePageCount(iframe);
       const slot = this._slotFromFrameId(iframe.id);
       this.state.frames[slot] = pageCount;
