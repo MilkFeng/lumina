@@ -549,8 +549,6 @@ class EpubReader {
         });
       }
 
-      this.state.quadTree = quadTree;
-
       // Extract links to handle tap interactions
       const links = doc.querySelectorAll('a[href]');
 
@@ -575,6 +573,34 @@ class EpubReader {
           }
         }
         const rects = link.getClientRects();
+        
+        for (let j = 0; j < rects.length; j++) {
+          const rect = rects[j];
+          if (!rect || rect.width < 5 || rect.height < 5) continue;
+
+          const docX = rect.left + body.scrollLeft - bodyRect.left;
+          const docY = rect.top + body.scrollTop - bodyRect.top;
+
+          quadTree.insert({
+            type: 'footnote',
+            rect: {
+              x: docX,
+              y: docY,
+              width: rect.width,
+              height: rect.height,
+            },
+            data: innerHtml,
+          });
+        }
+      }
+
+      // Aozora Bunko style footnotes
+      const aozoraNotes = doc.querySelectorAll('span.notes, .notes');
+      for (let i = 0; i < aozoraNotes.length; i++) {
+        const noteSpan = aozoraNotes[i];
+        if (!noteSpan) continue;
+        const innerHtml = '<div class="aozora-footnote-content">' + noteSpan.innerHTML + '</div>';
+        const rects = noteSpan.getClientRects();
         
         for (let j = 0; j < rects.length; j++) {
           const rect = rects[j];
@@ -1303,5 +1329,11 @@ div[epub\\:type~="footnote"] {
 a[epub\\:type~="noteref"],
 a[role~="doc-noteref"] {
   display: inline !important;
+}
+
+span.notes, .notes {
+  opacity: 0.7;
+  text-decoration: underline dotted !important;
+  cursor: pointer;
 }
 ''';
