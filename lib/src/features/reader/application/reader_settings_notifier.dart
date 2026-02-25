@@ -27,7 +27,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
             followSystemTheme: prefs.getBool(_kFollowSystem) ?? true,
             themeMode:
                 ReaderSettingThemeMode.values[prefs.getInt(_kThemeMode) ??
-                    ReaderSettingThemeMode.system.index],
+                    ReaderSettingThemeMode.light.index],
             marginTop: prefs.getDouble(_kMarginTop) ?? 16.0,
             marginBottom: prefs.getDouble(_kMarginBottom) ?? 16.0,
             marginLeft: prefs.getDouble(_kMarginLeft) ?? 16.0,
