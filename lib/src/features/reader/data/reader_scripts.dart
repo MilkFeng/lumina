@@ -1061,6 +1061,9 @@ html, body {
   text-align: justify;
 
   font-size: calc(100% * var(--zoom)) !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
 }
 
 html, body {
