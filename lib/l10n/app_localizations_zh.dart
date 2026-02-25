@@ -573,4 +573,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String openStorageLocationFailed(String error) {
     return '无法打开存储位置：$error';
   }
+
+  @override
+  String get unsavedChangesTitle => '未保存的修改';
+
+  @override
+  String get unsavedChangesMessage => '您有未保存的修改，请选择操作。';
+
+  @override
+  String get discard => '放弃修改';
+
+  @override
+  String get titleRequired => '标题不能为空';
 }

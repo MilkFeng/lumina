@@ -1105,6 +1105,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to open storage location: {error}'**
   String openStorageLocationFailed(String error);
+
+  /// Title of the dialog shown when the user tries to leave edit mode with unsaved changes
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved Changes'**
+  String get unsavedChangesTitle;
+
+  /// Body of the dialog shown when the user tries to leave edit mode with unsaved changes
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. What would you like to do?'**
+  String get unsavedChangesMessage;
+
+  /// Discard button label — discards unsaved changes
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// Validation error shown below the title field when the user tries to save with an empty title
+  ///
+  /// In en, this message translates to:
+  /// **'Title cannot be empty'**
+  String get titleRequired;
 }
 
 class _AppLocalizationsDelegate

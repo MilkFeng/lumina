@@ -1011,5 +1011,25 @@
         "type": "String"
       }
     }
+  },
+
+  "unsavedChangesTitle": "未保存的修改",
+  "@unsavedChangesTitle": {
+    "description": "退出编辑模式时提示有未保存修改的对话框标题"
+  },
+
+  "unsavedChangesMessage": "您有未保存的修改，请选择操作。",
+  "@unsavedChangesMessage": {
+    "description": "退出编辑模式时提示有未保存修改的对话框正文"
+  },
+
+  "discard": "放弃修改",
+  "@discard": {
+    "description": "放弃未保存修改的按钮标签"
+  },
+
+  "titleRequired": "标题不能为空",
+  "@titleRequired": {
+    "description": "标题字段为空时保存的验证错误提示"
   }
 }
