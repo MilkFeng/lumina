@@ -29,22 +29,22 @@ class _SystemHash {
   }
 }
 
-/// Provider to fetch a single book by file hash
+/// Provider to fetch a single book by file hash.
 ///
 /// Copied from [bookDetail].
 @ProviderFor(bookDetail)
 const bookDetailProvider = BookDetailFamily();
 
-/// Provider to fetch a single book by file hash
+/// Provider to fetch a single book by file hash.
 ///
 /// Copied from [bookDetail].
 class BookDetailFamily extends Family<AsyncValue<ShelfBook?>> {
-  /// Provider to fetch a single book by file hash
+  /// Provider to fetch a single book by file hash.
   ///
   /// Copied from [bookDetail].
   const BookDetailFamily();
 
-  /// Provider to fetch a single book by file hash
+  /// Provider to fetch a single book by file hash.
   ///
   /// Copied from [bookDetail].
   BookDetailProvider call(
@@ -79,11 +79,11 @@ class BookDetailFamily extends Family<AsyncValue<ShelfBook?>> {
   String? get name => r'bookDetailProvider';
 }
 
-/// Provider to fetch a single book by file hash
+/// Provider to fetch a single book by file hash.
 ///
 /// Copied from [bookDetail].
 class BookDetailProvider extends AutoDisposeFutureProvider<ShelfBook?> {
-  /// Provider to fetch a single book by file hash
+  /// Provider to fetch a single book by file hash.
   ///
   /// Copied from [bookDetail].
   BookDetailProvider(
