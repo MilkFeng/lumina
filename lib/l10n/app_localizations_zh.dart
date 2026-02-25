@@ -573,4 +573,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String openStorageLocationFailed(String error) {
     return '无法打开存储位置：$error';
   }
+
+  @override
+  String get openStorageLocationIOSMessage =>
+      '请在文件应用中打开“我的 iPhone/iPad”下的“Lumina”文件夹来访问存储位置';
+
+  @override
+  String get unsavedChangesTitle => '未保存的修改';
+
+  @override
+  String get unsavedChangesMessage => '您有未保存的修改，请选择操作。';
+
+  @override
+  String get discard => '放弃修改';
+
+  @override
+  String get titleRequired => '标题不能为空';
 }

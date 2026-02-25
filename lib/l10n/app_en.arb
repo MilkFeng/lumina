@@ -1001,5 +1001,30 @@
         "type": "String"
       }
     }
+  },
+
+  "openStorageLocationIOSMessage": "Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.",
+  "@openStorageLocationIOSMessage": {
+    "description": "Message shown on iOS when user tries to open storage location, since it's not possible to open it directly"
+  },
+
+  "unsavedChangesTitle": "Unsaved Changes",
+  "@unsavedChangesTitle": {
+    "description": "Title of the dialog shown when the user tries to leave edit mode with unsaved changes"
+  },
+
+  "unsavedChangesMessage": "You have unsaved changes. What would you like to do?",
+  "@unsavedChangesMessage": {
+    "description": "Body of the dialog shown when the user tries to leave edit mode with unsaved changes"
+  },
+
+  "discard": "Discard",
+  "@discard": {
+    "description": "Discard button label — discards unsaved changes"
+  },
+
+  "titleRequired": "Title cannot be empty",
+  "@titleRequired": {
+    "description": "Validation error shown below the title field when the user tries to save with an empty title"
   }
 }

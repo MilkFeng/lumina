@@ -590,4 +590,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String openStorageLocationFailed(String error) {
     return 'Failed to open storage location: $error';
   }
+
+  @override
+  String get openStorageLocationIOSMessage =>
+      'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.';
+
+  @override
+  String get unsavedChangesTitle => 'Unsaved Changes';
+
+  @override
+  String get unsavedChangesMessage =>
+      'You have unsaved changes. What would you like to do?';
+
+  @override
+  String get discard => 'Discard';
+
+  @override
+  String get titleRequired => 'Title cannot be empty';
 }

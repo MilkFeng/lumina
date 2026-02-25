@@ -94,7 +94,7 @@ class LibraryAppBar extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w400,
                 ),
-                dividerColor: Theme.of(context).primaryColor,
+                dividerColor: Theme.of(context).colorScheme.primary,
               ),
       ),
     );
