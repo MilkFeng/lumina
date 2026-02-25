@@ -231,7 +231,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         width,
         height,
         _currentTheme.surfaceColor,
-        _currentTheme.onSurfaceColor,
+        _currentTheme.textColorForWeb,
         _currentTheme.padding,
         _currentTheme.zoom,
         widget.direction,
@@ -463,7 +463,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         ${theme.padding.right},
         ${theme.padding.bottom},
         '${colorToHex(theme.surfaceColor)}',
-        ${theme.onSurfaceColor != null ? "'${colorToHex(theme.onSurfaceColor!)}'" : 'null'},
+        ${theme.textColorForWeb != null ? "'${colorToHex(theme.textColorForWeb!)}'" : 'null'},
         ${theme.zoom})""");
   }
 }

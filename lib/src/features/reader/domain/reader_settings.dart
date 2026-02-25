@@ -43,9 +43,6 @@ class ReaderSettings {
 
   EpubTheme toEpubTheme({required Brightness platformBrightness}) {
     ColorScheme colorScheme;
-    Brightness effectiveBrightness = followSystemTheme
-        ? platformBrightness
-        : (themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
     if (followSystemTheme) {
       colorScheme = AppTheme.colorSchemeForBrightness(platformBrightness);
     } else {
@@ -56,10 +53,7 @@ class ReaderSettings {
 
     return EpubTheme(
       zoom: zoom,
-      surfaceColor: colorScheme.surface,
-      onSurfaceColor: effectiveBrightness == Brightness.dark
-          ? colorScheme.onSurface
-          : null,
+      colorScheme: colorScheme,
       padding: EdgeInsets.only(
         top: marginTop,
         bottom: marginBottom,

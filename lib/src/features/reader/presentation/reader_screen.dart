@@ -618,6 +618,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           anchorRect: rect,
           rawHtml: innerHtml,
           onDismiss: () => _removeFootnoteOverlay(),
+          epubTheme: _getEpubTheme(),
         ),
       );
     });

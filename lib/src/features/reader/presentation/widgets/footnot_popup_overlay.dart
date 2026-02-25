@@ -3,17 +3,21 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:lumina/src/features/reader/data/reader_scripts.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 class FootnotePopupOverlay extends StatefulWidget {
   final Rect anchorRect;
   final String rawHtml;
   final VoidCallback onDismiss;
+  final EpubTheme epubTheme;
 
   const FootnotePopupOverlay({
     super.key,
     required this.anchorRect,
     required this.rawHtml,
     required this.onDismiss,
+    required this.epubTheme,
   });
 
   @override
@@ -97,7 +101,7 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
       right: _slideFromLeft ? const Radius.circular(8) : Radius.zero,
     );
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = widget.epubTheme.isDark;
 
     return Stack(
       children: [
@@ -138,29 +142,27 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                         maxHeight: maxPopupHeight,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHigh
+                        color: widget.epubTheme.colorScheme.surfaceContainerHigh
                             .withValues(alpha: 0.75),
                         border: Border(
                           left: _slideFromLeft
                               ? BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: widget.epubTheme.colorScheme.primary,
                                   width: 4,
                                 )
                               : BorderSide.none,
                           right: !_slideFromLeft
                               ? BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: widget.epubTheme.colorScheme.primary,
                                   width: 4,
                                 )
                               : BorderSide.none,
                           top: BorderSide(
-                            color: Theme.of(context).colorScheme.outlineVariant,
+                            color: widget.epubTheme.colorScheme.outlineVariant,
                             width: 1,
                           ),
                           bottom: BorderSide(
-                            color: Theme.of(context).colorScheme.outlineVariant,
+                            color: widget.epubTheme.colorScheme.outlineVariant,
                             width: 1,
                           ),
                         ),
@@ -172,21 +174,43 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           textStyle: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 fontFamily: AppTheme.fontFamilyContent,
-                                color: Theme.of(context).colorScheme.onSurface,
+                                color: widget.epubTheme.colorScheme.onSurface,
                                 height: 1.6,
                               ),
                           onTapUrl: (url) async {
                             return true;
                           },
+                          renderMode: RenderMode.column,
+                          onErrorBuilder: (context, element, error) {
+                            return Text(
+                              'Error loading content',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontFamily: AppTheme.fontFamilyContent,
+                                    color:
+                                        widget.epubTheme.colorScheme.onSurface,
+                                  ),
+                            );
+                          },
                           customStylesBuilder: (element) {
+                            Map<String, String> styles = {};
+                            if (widget.epubTheme.textColorForWeb != null) {
+                              styles['color'] = colorToHex(
+                                widget.epubTheme.textColorForWeb!,
+                              );
+                            }
+
                             if (element.localName == 'ol' ||
                                 element.localName == 'ul') {
-                              return {'padding-left': '20px', 'margin': '0'};
+                              styles.addAll({
+                                'padding-left': '20px',
+                                'margin': '0',
+                              });
                             }
                             if (element.localName == 'p') {
-                              return {'margin': '0 0 8px 0'};
+                              styles.addAll({'margin': '0 0 8px 0'});
                             }
-                            return null;
+                            return styles;
                           },
                         ),
                       ),
