@@ -83,7 +83,8 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
     final screenSize = MediaQuery.of(context).size;
 
     const double maxPopupHeight = 150.0;
-    final double bookmarkWidth = screenSize.width * 0.8;
+    const double minBookmarkWidth = 150;
+    final double maxBookmarkWidth = screenSize.width * 0.8;
 
     final spaceBelow = screenSize.height - widget.anchorRect.bottom;
     final spaceAbove = widget.anchorRect.top;
@@ -97,8 +98,8 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
         : -1;
 
     final borderRadius = BorderRadius.horizontal(
-      left: _slideFromLeft ? Radius.zero : const Radius.circular(8),
-      right: _slideFromLeft ? const Radius.circular(8) : Radius.zero,
+      left: _slideFromLeft ? Radius.zero : const Radius.circular(4),
+      right: _slideFromLeft ? const Radius.circular(4) : Radius.zero,
     );
 
     final isDark = widget.epubTheme.isDark;
@@ -117,7 +118,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
           bottom: bottomPosition != -1 ? bottomPosition : null,
           left: _slideFromLeft ? 0 : null,
           right: !_slideFromLeft ? 0 : null,
-          width: bookmarkWidth,
           child: Material(
             color: Colors.transparent,
             child: SlideTransition(
@@ -138,8 +138,10 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
                     child: Container(
-                      constraints: const BoxConstraints(
+                      constraints: BoxConstraints(
                         maxHeight: maxPopupHeight,
+                        maxWidth: maxBookmarkWidth,
+                        minWidth: minBookmarkWidth,
                       ),
                       decoration: BoxDecoration(
                         color: widget.epubTheme.colorScheme.surfaceContainerHigh
@@ -194,21 +196,16 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           },
                           customStylesBuilder: (element) {
                             Map<String, String> styles = {};
-                            if (widget.epubTheme.textColorForWeb != null) {
+                            if (widget.epubTheme.shouldOverrideTextColor) {
                               styles['color'] = colorToHex(
-                                widget.epubTheme.textColorForWeb!,
+                                widget.epubTheme.colorScheme.onSurface,
                               );
                             }
-
-                            if (element.localName == 'ol' ||
-                                element.localName == 'ul') {
-                              styles.addAll({
-                                'padding-left': '20px',
-                                'margin': '0',
-                              });
-                            }
-                            if (element.localName == 'p') {
-                              styles.addAll({'margin': '0 0 8px 0'});
+                            if (element.localName == 'a') {
+                              styles['color'] = colorToHex(
+                                widget.epubTheme.colorScheme.primary,
+                              );
+                              styles['text-decoration'] = 'none';
                             }
                             return styles;
                           },

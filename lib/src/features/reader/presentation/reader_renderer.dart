@@ -138,7 +138,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
   late EpubTheme _currentTheme;
 
   EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
-    var safePaddings = MediaQuery.paddingOf(context);
+    final safePaddings = MediaQuery.paddingOf(context);
     return EdgeInsets.fromLTRB(
       basePadding.left + safePaddings.left,
       basePadding.top + safePaddings.top,
