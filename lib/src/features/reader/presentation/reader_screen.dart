@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
-import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
+import '../application/reader_settings_notifier.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -377,21 +378,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   EpubTheme _buildEpubTheme() {
-    return EpubTheme(
-      surfaceColor: Theme.of(context).colorScheme.surface,
-      onSurfaceColor: Theme.of(context).brightness == Brightness.dark
-          ? Theme.of(context).colorScheme.onSurface
-          : null,
-      padding: const EdgeInsets.all(16.0),
+    final settings = ref.read(readerSettingsNotifierProvider);
+    return settings.toEpubTheme(
+      platformBrightness: Theme.of(context).colorScheme.brightness,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_bookSession.isLoaded) {
+    // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
+    final prefsAsync = ref.watch(sharedPreferencesProvider);
+    final settings = ref.watch(readerSettingsNotifierProvider);
+    if (!prefsAsync.hasValue || !_bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: Center(),
+        body: const SizedBox.shrink(),
       );
     }
 
@@ -457,7 +458,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   onScrollAnchors: _handleScrollAnchors,
                   onImageLongPress: _handleImageLongPress,
                   shouldShowWebView: _shouldShowWebView,
-                  initializeTheme: _buildEpubTheme(),
+                  initializeTheme: settings.toEpubTheme(
+                    platformBrightness: Theme.of(
+                      context,
+                    ).colorScheme.brightness,
+                  ),
                 ),
 
                 ControlPanel(

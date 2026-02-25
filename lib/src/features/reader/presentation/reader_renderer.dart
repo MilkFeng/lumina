@@ -147,6 +147,11 @@ class _ReaderRendererState extends State<ReaderRenderer>
     );
   }
 
+  EpubTheme _addSafeAreaToThemePadding(EpubTheme theme) {
+    final newPadding = addSafeAreaToPadding(theme.padding);
+    return theme.copyWith(padding: newPadding);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -299,7 +304,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
         bookSession: widget.bookSession,
         webViewHandler: widget.webViewHandler,
         fileHash: widget.fileHash,
-        initializeTheme: widget.initializeTheme,
+        initializeTheme: _addSafeAreaToThemePadding(widget.initializeTheme),
         isLoading: widget.isLoading,
         controller: _webViewController,
         callbacks: ReaderWebViewCallbacks(

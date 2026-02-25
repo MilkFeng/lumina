@@ -1,5 +1,5 @@
-// lib/src/features/reader/domain/reader_settings.dart
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 class ReaderSettings {
@@ -41,7 +41,16 @@ class ReaderSettings {
     );
   }
 
-  EpubTheme toEpubTheme(ColorScheme colorScheme) {
+  EpubTheme toEpubTheme({required Brightness platformBrightness}) {
+    ColorScheme colorScheme;
+    if (followSystemTheme) {
+      colorScheme = AppTheme.colorSchemeForBrightness(platformBrightness);
+    } else {
+      colorScheme = AppTheme.colorSchemeForBrightness(
+        themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light,
+      );
+    }
+
     return EpubTheme(
       surfaceColor: colorScheme.surface,
       onSurfaceColor: colorScheme.onSurface,
