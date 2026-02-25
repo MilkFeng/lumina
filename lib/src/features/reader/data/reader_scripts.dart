@@ -1378,26 +1378,19 @@ figure {
 a {
   pointer-events: none !important;
   cursor: default !important;
+  text-decoration: none;
 }
 
-a, a:link, a:visited, a:active {
+a:visited {
   color: currentColor !important;
   text-decoration: inherit !important;
   border-bottom: inherit !important;
   opacity: 1 !important;
 }
 
-blockquote {
-  font-style: normal;
-}
-
-code {
-  font-family: monospace;
-}
-
 body.override-color {
   p, h1, h2, h3, h4, h5, h6, li, span, div, section {
-    color: var(--default-text-color) !important;
+    color: var(--default-text-color);
   }
 
   ::selection {
@@ -1406,7 +1399,7 @@ body.override-color {
   }
 
   a, a:link, a:visited, a:active {
-    color: var(--primary-color) !important;
+    color: var(--primary-color);
   }
 
   blockquote {

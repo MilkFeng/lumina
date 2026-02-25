@@ -56,6 +56,9 @@ class ReaderSettings {
     bool shouldOverrideTextColor = true;
     if (followSystemTheme) {
       colorScheme = AppTheme.colorSchemeForBrightness(platformBrightness);
+      if (platformBrightness == Brightness.light) {
+        shouldOverrideTextColor = false; // Light theme uses default text color
+      }
     } else {
       if (themeMode == ReaderSettingThemeMode.eyeCare) {
         colorScheme = AppTheme.eyeCareColorScheme;
