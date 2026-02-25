@@ -1,59 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
-
-/// Enum representing the reader's color theme when not following the system.
-enum ReaderThemeMode { light, dark }
+import '../../application/reader_settings_notifier.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
-class ReaderStyleBottomSheet extends StatefulWidget {
-  // ── Initial values ──────────────────────────────────────────────────────────
-  final double initialScale;
-  final int initialTopMargin;
-  final int initialBottomMargin;
-  final int initialLeftMargin;
-  final int initialRightMargin;
-  final bool initialFollowSystemTheme;
-  final ReaderThemeMode initialReaderTheme;
-
-  // ── Callbacks ───────────────────────────────────────────────────────────────
-  final ValueChanged<double> onScaleChanged;
-  final ValueChanged<int> onTopMarginChanged;
-  final ValueChanged<int> onBottomMarginChanged;
-  final ValueChanged<int> onLeftMarginChanged;
-  final ValueChanged<int> onRightMarginChanged;
-  final ValueChanged<bool> onFollowSystemThemeChanged;
-  final ValueChanged<ReaderThemeMode> onReaderThemeChanged;
-
-  const ReaderStyleBottomSheet({
-    super.key,
-    this.initialScale = 1.0,
-    this.initialTopMargin = 0,
-    this.initialBottomMargin = 0,
-    this.initialLeftMargin = 0,
-    this.initialRightMargin = 0,
-    this.initialFollowSystemTheme = true,
-    this.initialReaderTheme = ReaderThemeMode.light,
-    required this.onScaleChanged,
-    required this.onTopMarginChanged,
-    required this.onBottomMarginChanged,
-    required this.onLeftMarginChanged,
-    required this.onRightMarginChanged,
-    required this.onFollowSystemThemeChanged,
-    required this.onReaderThemeChanged,
-  });
+class ReaderStyleBottomSheet extends ConsumerStatefulWidget {
+  const ReaderStyleBottomSheet({super.key});
 
   @override
-  State<ReaderStyleBottomSheet> createState() => _ReaderStyleBottomSheetState();
+  ConsumerState<ReaderStyleBottomSheet> createState() =>
+      _ReaderStyleBottomSheetState();
 }
 
-class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
+class _ReaderStyleBottomSheetState
+    extends ConsumerState<ReaderStyleBottomSheet> {
   late double _scale;
   late int _topMargin;
   late int _bottomMargin;
   late int _leftMargin;
   late int _rightMargin;
   late bool _followSystemTheme;
-  late ReaderThemeMode _readerTheme;
+  late ThemeMode _themeMode;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -62,26 +29,18 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _scale = widget.initialScale;
-    _topMargin = widget.initialTopMargin;
-    _bottomMargin = widget.initialBottomMargin;
-    _leftMargin = widget.initialLeftMargin;
-    _rightMargin = widget.initialRightMargin;
-    _followSystemTheme = widget.initialFollowSystemTheme;
-    _readerTheme = widget.initialReaderTheme;
+    final s = ref.read(readerSettingsNotifierProvider);
+    _scale = s.zoom;
+    _topMargin = s.marginTop.toInt();
+    _bottomMargin = s.marginBottom.toInt();
+    _leftMargin = s.marginLeft.toInt();
+    _rightMargin = s.marginRight.toInt();
+    _followSystemTheme = s.followSystemTheme;
+    _themeMode = s.themeMode;
   }
 
-  void _handleValueChanged<T>(
-    T newValue,
-    ValueChanged<T> callback,
-    bool Function(T) checker,
-  ) {
-    Future.delayed(const Duration(milliseconds: 50), () {
-      if (checker(newValue)) {
-        callback(newValue);
-      }
-    });
-  }
+  ReaderSettingsNotifier get _notifier =>
+      ref.read(readerSettingsNotifierProvider.notifier);
 
   @override
   Widget build(BuildContext context) {
@@ -106,11 +65,7 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
               value: _scale,
               onChanged: (v) {
                 setState(() => _scale = v);
-                _handleValueChanged<double>(
-                  v,
-                  widget.onScaleChanged,
-                  (val) => val == _scale,
-                );
+                _notifier.setZoom(v);
               },
             ),
 
@@ -130,11 +85,7 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _topMargin = v);
-                      _handleValueChanged<int>(
-                        v,
-                        widget.onTopMarginChanged,
-                        (val) => val == _topMargin,
-                      );
+                      _notifier.setMarginTop(v.toDouble());
                     },
                   ),
                 ),
@@ -148,11 +99,7 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _bottomMargin = v);
-                      _handleValueChanged<int>(
-                        v,
-                        widget.onBottomMarginChanged,
-                        (val) => val == _bottomMargin,
-                      );
+                      _notifier.setMarginBottom(v.toDouble());
                     },
                   ),
                 ),
@@ -170,11 +117,7 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _leftMargin = v);
-                      _handleValueChanged<int>(
-                        v,
-                        widget.onLeftMarginChanged,
-                        (val) => val == _leftMargin,
-                      );
+                      _notifier.setMarginLeft(v.toDouble());
                     },
                   ),
                 ),
@@ -188,11 +131,7 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _rightMargin = v);
-                      _handleValueChanged<int>(
-                        v,
-                        widget.onRightMarginChanged,
-                        (val) => val == _rightMargin,
-                      );
+                      _notifier.setMarginRight(v.toDouble());
                     },
                   ),
                 ),
@@ -211,7 +150,7 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
               value: _followSystemTheme,
               onChanged: (v) {
                 setState(() => _followSystemTheme = v);
-                widget.onFollowSystemThemeChanged(v);
+                _notifier.setFollowSystemTheme(v);
               },
             ),
 
@@ -230,25 +169,19 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                           _OptionChip(
                             icon: Icons.light_mode_outlined,
                             label: l10n.readerThemeLight,
-                            isSelected: _readerTheme == ReaderThemeMode.light,
+                            isSelected: _themeMode == ThemeMode.light,
                             onTap: () {
-                              setState(
-                                () => _readerTheme = ReaderThemeMode.light,
-                              );
-                              widget.onReaderThemeChanged(
-                                ReaderThemeMode.light,
-                              );
+                              setState(() => _themeMode = ThemeMode.light);
+                              _notifier.setThemeMode(ThemeMode.light);
                             },
                           ),
                           _OptionChip(
                             icon: Icons.dark_mode_outlined,
                             label: l10n.readerThemeDark,
-                            isSelected: _readerTheme == ReaderThemeMode.dark,
+                            isSelected: _themeMode == ThemeMode.dark,
                             onTap: () {
-                              setState(
-                                () => _readerTheme = ReaderThemeMode.dark,
-                              );
-                              widget.onReaderThemeChanged(ReaderThemeMode.dark);
+                              setState(() => _themeMode = ThemeMode.dark);
+                              _notifier.setThemeMode(ThemeMode.dark);
                             },
                           ),
                         ],

@@ -338,17 +338,8 @@ class _ControlPanelState extends State<ControlPanel> {
                         context: context,
                         isScrollControlled: true,
                         showDragHandle: true,
-                        builder: (ctx) => SafeArea(
-                          child: ReaderStyleBottomSheet(
-                            onScaleChanged: (_) {},
-                            onTopMarginChanged: (_) {},
-                            onBottomMarginChanged: (_) {},
-                            onLeftMarginChanged: (_) {},
-                            onRightMarginChanged: (_) {},
-                            onFollowSystemThemeChanged: (_) {},
-                            onReaderThemeChanged: (_) {},
-                          ),
-                        ),
+                        builder: (ctx) =>
+                            const SafeArea(child: ReaderStyleBottomSheet()),
                         scrollControlDisabledMaxHeightRatio: 0.75,
                         constraints: const BoxConstraints(
                           maxWidth: double.infinity,
