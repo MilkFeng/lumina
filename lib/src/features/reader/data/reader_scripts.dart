@@ -1255,4 +1255,28 @@ body.override-color {
     color: var(--default-text-color) !important;
   }
 }
+
+aside[epub\\:type~="footnote"],
+aside[epub\\:type~="endnote"],
+div[epub\\:type~="footnote"] {
+  display: none !important;
+}
+
+[role~="doc-footnote"],
+[role~="doc-endnote"] {
+  display: none !important;
+}
+
+.duokan-footnote-content,
+.footnotes,
+.footnote-container,
+.endnotes,
+.noteText {
+  display: none !important;
+}
+
+a[epub\\:type~="noteref"],
+a[role~="doc-noteref"] {
+  display: inline !important;
+}
 ''';

@@ -47,7 +47,8 @@ dependencies:
   
   # Reader
   flutter_inappwebview: ^6.1.5
-  
+  flutter_widget_from_html_core: ^0.17.0
+
   # File Picking & Permissions
   path: ^1.9.1
   

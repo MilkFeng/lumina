@@ -1,5 +1,9 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
 class FootnotePopupOverlay extends StatefulWidget {
   final Rect anchorRect;
@@ -76,7 +80,7 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
     final screenSize = MediaQuery.of(context).size;
 
     const double maxPopupHeight = 150.0;
-    final double bookmarkWidth = screenSize.width * 0.85;
+    final double bookmarkWidth = screenSize.width * 0.8;
 
     final spaceBelow = screenSize.height - widget.anchorRect.bottom;
     final spaceAbove = widget.anchorRect.top;
@@ -88,6 +92,13 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
     final double bottomPosition = !showBelow
         ? (screenSize.height - widget.anchorRect.top) + 6.0
         : -1;
+
+    final borderRadius = BorderRadius.horizontal(
+      left: _slideFromLeft ? Radius.zero : const Radius.circular(8),
+      right: _slideFromLeft ? const Radius.circular(8) : Radius.zero,
+    );
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Stack(
       children: [
@@ -109,25 +120,80 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
             child: SlideTransition(
               position: _slideAnimation,
               child: Container(
-                constraints: const BoxConstraints(maxHeight: maxPopupHeight),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  borderRadius: borderRadius,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(25),
-                      blurRadius: 12,
-                      offset: Offset.zero,
+                      color: Colors.black.withAlpha(isDark ? 50 : 25),
+                      blurRadius: 16,
+                      offset: Offset(_slideFromLeft ? 4 : -4, 6),
                     ),
                   ],
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                  child: Text(
-                    widget.rawHtml,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: AppTheme.fontFamilyContent,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      height: 1.6,
+                child: ClipRRect(
+                  borderRadius: borderRadius,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        maxHeight: maxPopupHeight,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHigh
+                            .withValues(alpha: 0.75),
+                        border: Border(
+                          left: _slideFromLeft
+                              ? BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 4,
+                                )
+                              : BorderSide.none,
+                          right: !_slideFromLeft
+                              ? BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 4,
+                                )
+                              : BorderSide.none,
+                          top: BorderSide(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                          bottom: BorderSide(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        child: HtmlWidget(
+                          widget.rawHtml,
+                          textStyle: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontFamily: AppTheme.fontFamilyContent,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                height: 1.6,
+                              ),
+                          onTapUrl: (url) async {
+                            ToastService.showInfo(
+                              'Footnote links are not supported yet. URL: $url',
+                            );
+                            return true;
+                          },
+                          customStylesBuilder: (element) {
+                            if (element.localName == 'ol' ||
+                                element.localName == 'ul') {
+                              return {'padding-left': '20px', 'margin': '0'};
+                            }
+                            if (element.localName == 'p') {
+                              return {'margin': '0 0 8px 0'};
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ),
