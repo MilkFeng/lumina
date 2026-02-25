@@ -52,6 +52,10 @@ class ReaderWebViewController {
     await _webViewState?._checkElementAt(x, y);
   }
 
+  Future<void> checkTapElementAt(double x, double y) async {
+    await _webViewState?._checkTapElementAt(x, y);
+  }
+
   Future<ui.Image?> takeScreenshot() async {
     return await _webViewState?._takeScreenshot();
   }
@@ -87,6 +91,8 @@ class ReaderWebViewCallbacks {
   final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
+  final Function(double x, double y) onTap;
+  final Function(String href, String epubType, String innerHtml) onFootnoteTap;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -95,6 +101,8 @@ class ReaderWebViewCallbacks {
     required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
+    required this.onTap,
+    required this.onFootnoteTap,
   });
 }
 
@@ -208,6 +216,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   Future<void> _checkElementAt(double x, double y) async {
     await _evaluateJavascript("window.reader.checkElementAt($x, $y)");
+  }
+
+  Future<void> _checkTapElementAt(double x, double y) async {
+    await _evaluateJavascript("window.reader.checkTapElementAt($x, $y)");
   }
 
   InAppWebViewInitialData _generateInitialData(double width, double height) {
@@ -373,6 +385,27 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         if (args.isEmpty) return;
         final List<String> anchors = List<String>.from(args[0] as List);
         widget.callbacks.onScrollAnchors(anchors);
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onTap',
+      callback: (args) {
+        if (args.isEmpty) return;
+        final x = (args[0] as num).toDouble();
+        final y = (args[1] as num).toDouble();
+        widget.callbacks.onTap(x, y);
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onFootnoteTap',
+      callback: (args) {
+        if (args.isEmpty) return;
+        final href = args[0] as String;
+        final epubType = args[1] as String;
+        final innerHtml = args[2] as String;
+        widget.callbacks.onFootnoteTap(href, epubType, innerHtml);
       },
     );
 

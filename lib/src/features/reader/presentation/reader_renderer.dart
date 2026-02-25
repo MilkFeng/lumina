@@ -193,13 +193,23 @@ class _ReaderRendererState extends State<ReaderRenderer>
     }
   }
 
-  void _handleTapZone(TapUpDetails details) {
-    final globalDx = details.globalPosition.dx;
+  void _handleTap(TapUpDetails details) {
+    if (widget.showControls) {
+      widget.onToggleControls();
+      return;
+    } else {
+      _webViewController.checkTapElementAt(
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+      );
+    }
+  }
 
+  void _handleTapZone(double x, double y) {
     final width = MediaQuery.of(context).size.width;
     if (width <= 0) return;
 
-    final ratio = globalDx / width;
+    final ratio = x / width;
     if (ratio < 0.3) {
       if (widget.showControls) {
         widget.onToggleControls();
@@ -258,7 +268,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapUp: widget.shouldShowWebView ? _handleTapZone : null,
+        onTapUp: widget.shouldShowWebView ? _handleTap : null,
         onHorizontalDragEnd: widget.shouldShowWebView
             ? _handleHorizontalDragEnd
             : null,
@@ -318,6 +328,12 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onRendererInitialized: widget.onRendererInitialized,
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
+          onTap: _handleTapZone,
+          onFootnoteTap: (href, epubType, innetHtml) {
+            debugPrint(
+              'Footnote tap received in Flutter: href=$href, epubType=$epubType, innerHtml=$innetHtml',
+            );
+          },
         ),
         shouldShowWebView: widget.shouldShowWebView,
         coverRelativePath: widget.bookSession.book?.coverPath,
