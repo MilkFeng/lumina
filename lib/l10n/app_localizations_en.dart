@@ -592,6 +592,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get openStorageLocationIOSMessage =>
+      'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.';
+
+  @override
   String get unsavedChangesTitle => 'Unsaved Changes';
 
   @override

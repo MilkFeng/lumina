@@ -1106,6 +1106,12 @@ abstract class AppLocalizations {
   /// **'Failed to open storage location: {error}'**
   String openStorageLocationFailed(String error);
 
+  /// Message shown on iOS when user tries to open storage location, since it's not possible to open it directly
+  ///
+  /// In en, this message translates to:
+  /// **'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.'**
+  String get openStorageLocationIOSMessage;
+
   /// Title of the dialog shown when the user tries to leave edit mode with unsaved changes
   ///
   /// In en, this message translates to:

@@ -575,6 +575,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get openStorageLocationIOSMessage =>
+      '请在文件应用中打开“我的 iPhone/iPad”下的“Lumina”文件夹来访问存储位置';
+
+  @override
   String get unsavedChangesTitle => '未保存的修改';
 
   @override

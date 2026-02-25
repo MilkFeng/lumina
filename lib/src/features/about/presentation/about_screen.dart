@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
 import 'package:lumina/src/features/library/data/services/export_backup_service_provider.dart';
 import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
@@ -74,14 +73,15 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             title: l10n.storage,
             children: [
               _buildCleanCacheTile(context, l10n),
-              if (Platform.isAndroid)
-                _buildInfoTile(
-                  context,
-                  icon: Icons.folder_open_outlined,
-                  title: l10n.openStorageLocation,
-                  subtitle: l10n.openStorageLocationSubtitle,
-                  onTap: () => _openAndroidFolder(l10n),
-                ),
+              _buildInfoTile(
+                context,
+                icon: Icons.folder_open_outlined,
+                title: l10n.openStorageLocation,
+                subtitle: l10n.openStorageLocationSubtitle,
+                onTap: () => Platform.isAndroid
+                    ? _openAndroidFolder(l10n)
+                    : _openIOSFolder(l10n),
+              ),
             ],
           ),
 
@@ -172,7 +172,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         if (_version.isNotEmpty)
           Text(
             'v$_version',
-            style: AppTheme.contentTextStyle.copyWith(
+            style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
               fontSize: 14,
             ),
@@ -217,13 +217,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         icon,
         color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
       ),
-      title: Text(
-        title,
-        style: AppTheme.contentTextStyle.copyWith(fontWeight: FontWeight.w500),
-      ),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
       subtitle: Text(
         subtitle,
-        style: AppTheme.contentTextStyle.copyWith(
+        style: TextStyle(
           fontSize: 13,
           color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
         ),
@@ -246,7 +243,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       ),
       title: Text(
         tip,
-        style: AppTheme.contentTextStyle.copyWith(
+        style: TextStyle(
           fontSize: 14,
           color: Theme.of(context).colorScheme.onSurface.withAlpha(204),
         ),
@@ -264,11 +261,11 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       ),
       title: Text(
         l10n.cleanCache,
-        style: AppTheme.contentTextStyle.copyWith(fontWeight: FontWeight.w500),
+        style: TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
         l10n.cleanCacheSubtitle,
-        style: AppTheme.contentTextStyle.copyWith(
+        style: TextStyle(
           fontSize: 13,
           color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
         ),
@@ -294,11 +291,11 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       ),
       title: Text(
         l10n.backupLibrary,
-        style: AppTheme.contentTextStyle.copyWith(fontWeight: FontWeight.w500),
+        style: TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
         l10n.backupLibraryDescription,
-        style: AppTheme.contentTextStyle.copyWith(
+        style: TextStyle(
           fontSize: 13,
           color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
         ),
@@ -330,7 +327,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         ? l10n.cleanCacheSuccess
         : l10n.cleanCacheSuccessWithCount(deletedCount);
 
-    ToastService.showInfo(message);
+    ToastService.showSuccess(message);
   }
 
   Future<void> _launchUrl(String url) async {
@@ -386,7 +383,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   }
 
   Future<void> _openAndroidFolder(AppLocalizations l10n) async {
-    if (!Platform.isAndroid) return;
+    if (!Platform.isAndroid) {
+      return;
+    }
 
     final packageInfo = await PackageInfo.fromPlatform();
     final String applicationId = packageInfo.packageName;
@@ -406,5 +405,21 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     } catch (e) {
       ToastService.showError(l10n.openStorageLocationFailed(e.toString()));
     }
+  }
+
+  Future<void> _openIOSFolder(AppLocalizations l10n) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.openStorageLocation),
+        content: Text(l10n.openStorageLocationIOSMessage),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
   }
 }

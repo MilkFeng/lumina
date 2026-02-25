@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
@@ -195,7 +196,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
             onPressed: () => Navigator.pop(context, false),
             child: Text(AppLocalizations.of(context)!.cancel),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(AppLocalizations.of(context)!.delete),
           ),
@@ -315,6 +316,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
           ),
           onChanged: (value) => draftName = value,
           onFieldSubmitted: (value) => Navigator.pop(context, value.trim()),
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'[\n\r]')),
+          ],
         ),
         actions: [
           TextButton(
@@ -477,13 +481,16 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
           onChanged: (value) => draftName = value,
           onSubmitted: (value) => Navigator.pop(context, value.trim()),
           style: AppTheme.contentTextStyle,
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'[\n\r]')),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(AppLocalizations.of(context)!.cancel),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, draftName.trim()),
             child: Text(AppLocalizations.of(context)!.create),
           ),
