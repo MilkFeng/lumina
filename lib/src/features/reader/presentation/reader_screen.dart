@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
+import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import '../application/reader_settings_notifier.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
@@ -58,6 +59,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   ThemeData? _currentTheme;
   Timer? _themeUpdateDebouncer;
 
+  OverlayEntry? _footnoteOverlayEntry;
+  final GlobalKey<FootnotePopupOverlayState> _footnoteKey =
+      GlobalKey<FootnotePopupOverlayState>();
+  bool _isClosingFootnote = false;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
@@ -91,6 +97,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
     _routeAnimation = null;
     _themeUpdateDebouncer?.cancel();
+    _removeFootnoteOverlay(animate: false);
     super.dispose();
   }
 
@@ -411,123 +418,131 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final activateTocTitle = activeItems.isNotEmpty
         ? activeItems.last.label
         : _bookSession.book!.title;
-
-    return Stack(
-      children: [
-        Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          drawer: TocDrawer(
-            book: _bookSession.book!,
-            toc: _bookSession.toc,
-            activeTocItems: activeItems,
-            onTocItemSelected: _navigateToTocItem,
-            onCoverTap: _navigateToFirstTocItemFirstPage,
-          ),
-          body: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: Stack(
-              children: [
-                ReaderRenderer(
-                  controller: _rendererController,
-                  bookSession: _bookSession,
-                  webViewHandler: _webViewHandler,
-                  fileHash: widget.fileHash,
-                  showControls: _showControls,
-                  isLoading: _isWebViewLoading || _updatingTheme,
-                  canPerformPageTurn: _canPerformPageTurn,
-                  onPerformPageTurn: _handlePageTurn,
-                  onToggleControls: _toggleControls,
-                  onInitialized: () async {
-                    await _loadCarousel();
-                  },
-                  onPageCountReady: (totalPages) async {
-                    setState(() {
-                      _totalPagesInChapter = totalPages;
-                      if (_currentPageInChapter >= _totalPagesInChapter) {
-                        _currentPageInChapter = _totalPagesInChapter - 1;
+    return PopScope(
+      canPop: _footnoteOverlayEntry == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_footnoteOverlayEntry != null) {
+          _removeFootnoteOverlay();
+        }
+      },
+      child: Stack(
+        children: [
+          Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            drawer: TocDrawer(
+              book: _bookSession.book!,
+              toc: _bookSession.toc,
+              activeTocItems: activeItems,
+              onTocItemSelected: _navigateToTocItem,
+              onCoverTap: _navigateToFirstTocItemFirstPage,
+            ),
+            body: Container(
+              color: Theme.of(context).colorScheme.surface,
+              child: Stack(
+                children: [
+                  ReaderRenderer(
+                    controller: _rendererController,
+                    bookSession: _bookSession,
+                    webViewHandler: _webViewHandler,
+                    fileHash: widget.fileHash,
+                    showControls: _showControls,
+                    isLoading: _isWebViewLoading || _updatingTheme,
+                    canPerformPageTurn: _canPerformPageTurn,
+                    onPerformPageTurn: _handlePageTurn,
+                    onToggleControls: _toggleControls,
+                    onInitialized: () async {
+                      await _loadCarousel();
+                    },
+                    onPageCountReady: (totalPages) async {
+                      setState(() {
+                        _totalPagesInChapter = totalPages;
+                        if (_currentPageInChapter >= _totalPagesInChapter) {
+                          _currentPageInChapter = _totalPagesInChapter - 1;
+                        }
+                      });
+                      if (_initialProgressToRestore != null) {
+                        final ratio = _initialProgressToRestore ?? 0.0;
+                        _initialProgressToRestore = null;
+                        await _rendererController.restoreScrollPosition(ratio);
                       }
-                    });
-                    if (_initialProgressToRestore != null) {
-                      final ratio = _initialProgressToRestore ?? 0.0;
-                      _initialProgressToRestore = null;
-                      await _rendererController.restoreScrollPosition(ratio);
-                    }
-                  },
-                  onPageChanged: (pageIndex) {
-                    setState(() {
-                      _currentPageInChapter = pageIndex;
-                    });
-                    _saveProgress();
-                  },
-                  onRendererInitialized: () async {
-                    setState(() {
-                      _isWebViewLoading = false;
-                    });
-                    _saveProgress();
-                  },
-                  onScrollAnchors: _handleScrollAnchors,
-                  onImageLongPress: _handleImageLongPress,
-                  onFootnoteTap: _handleFootnoteTap,
-                  shouldShowWebView: _shouldShowWebView,
-                  initializeTheme: settings.toEpubTheme(
-                    platformBrightness: Theme.of(
-                      context,
-                    ).colorScheme.brightness,
+                    },
+                    onPageChanged: (pageIndex) {
+                      setState(() {
+                        _currentPageInChapter = pageIndex;
+                      });
+                      _saveProgress();
+                    },
+                    onRendererInitialized: () async {
+                      setState(() {
+                        _isWebViewLoading = false;
+                      });
+                      _saveProgress();
+                    },
+                    onScrollAnchors: _handleScrollAnchors,
+                    onImageLongPress: _handleImageLongPress,
+                    onFootnoteTap: _handleFootnoteTap,
+                    shouldShowWebView: _shouldShowWebView,
+                    initializeTheme: settings.toEpubTheme(
+                      platformBrightness: Theme.of(
+                        context,
+                      ).colorScheme.brightness,
+                    ),
                   ),
-                ),
 
-                ControlPanel(
-                  showControls: _showControls,
-                  title: _bookSession.spine.isEmpty
-                      ? _bookSession.book!.title
-                      : activateTocTitle,
-                  currentSpineItemIndex: _currentSpineItemIndex,
-                  totalSpineItems: _bookSession.spine.length,
-                  currentPageInChapter: _currentPageInChapter,
-                  totalPagesInChapter: _totalPagesInChapter,
-                  direction: _bookSession.book!.direction,
-                  onBack: () {
-                    _saveProgress();
-                    context.pop();
-                  },
-                  onOpenDrawer: _openDrawer,
-                  onPreviousPage: () =>
-                      _rendererController.performPreviousPageTurn(),
-                  onFirstPage: () => _goToPage(0),
-                  onNextPage: () => _rendererController.performNextPageTurn(),
-                  onLastPage: () => _goToPage(_totalPagesInChapter - 1),
-                  onPreviousChapter: _previousSpineItemFirstPage,
-                  onNextChapter: _nextSpineItem,
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        Positioned.fill(
-          child: IgnorePointer(
-            ignoring: !_isImageViewerVisible,
-            child: AnimatedOpacity(
-              duration: const Duration(
-                milliseconds: AppTheme.defaultAnimationDurationMs,
+                  ControlPanel(
+                    showControls: _showControls,
+                    title: _bookSession.spine.isEmpty
+                        ? _bookSession.book!.title
+                        : activateTocTitle,
+                    currentSpineItemIndex: _currentSpineItemIndex,
+                    totalSpineItems: _bookSession.spine.length,
+                    currentPageInChapter: _currentPageInChapter,
+                    totalPagesInChapter: _totalPagesInChapter,
+                    direction: _bookSession.book!.direction,
+                    onBack: () {
+                      _saveProgress();
+                      context.pop();
+                    },
+                    onOpenDrawer: _openDrawer,
+                    onPreviousPage: () =>
+                        _rendererController.performPreviousPageTurn(),
+                    onFirstPage: () => _goToPage(0),
+                    onNextPage: () => _rendererController.performNextPageTurn(),
+                    onLastPage: () => _goToPage(_totalPagesInChapter - 1),
+                    onPreviousChapter: _previousSpineItemFirstPage,
+                    onNextChapter: _nextSpineItem,
+                  ),
+                ],
               ),
-              curve: Curves.easeOut,
-              opacity: _isImageViewerVisible ? 1.0 : 0.0,
-              child: (_currentImageUrl != null && _currentImageRect != null)
-                  ? ImageViewer(
-                      imageUrl: _currentImageUrl!,
-                      webViewHandler: _webViewHandler,
-                      epubPath: _bookSession.book!.filePath!,
-                      fileHash: widget.fileHash,
-                      onClose: _closeImageViewer,
-                      sourceRect: _currentImageRect!,
-                    )
-                  : const SizedBox.shrink(),
             ),
           ),
-        ),
-      ],
+
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: !_isImageViewerVisible,
+              child: AnimatedOpacity(
+                duration: const Duration(
+                  milliseconds: AppTheme.defaultAnimationDurationMs,
+                ),
+                curve: Curves.easeOut,
+                opacity: _isImageViewerVisible ? 1.0 : 0.0,
+                child: (_currentImageUrl != null && _currentImageRect != null)
+                    ? ImageViewer(
+                        imageUrl: _currentImageUrl!,
+                        webViewHandler: _webViewHandler,
+                        epubPath: _bookSession.book!.filePath!,
+                        fileHash: widget.fileHash,
+                        onClose: _closeImageViewer,
+                        sourceRect: _currentImageRect!,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -597,8 +612,35 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     String innerHtml,
     Rect rect,
   ) {
-    debugPrint(
-      'Footnote tap received in ReaderScreen: href=$href, epubType=$epubType, innerHtml=$innerHtml, rect=$rect',
-    );
+    _removeFootnoteOverlay();
+    final overlayState = Overlay.of(context);
+    setState(() {
+      _footnoteOverlayEntry = OverlayEntry(
+        builder: (context) => FootnotePopupOverlay(
+          key: _footnoteKey,
+          anchorRect: rect,
+          rawHtml: innerHtml,
+          onDismiss: () => _removeFootnoteOverlay(),
+        ),
+      );
+    });
+    overlayState.insert(_footnoteOverlayEntry!);
+  }
+
+  Future<void> _removeFootnoteOverlay({bool animate = true}) async {
+    if (_footnoteOverlayEntry == null || _isClosingFootnote) return;
+
+    if (animate) {
+      _isClosingFootnote = true;
+      if (_footnoteKey.currentState != null) {
+        await _footnoteKey.currentState!.playReverseAnimation();
+      }
+    }
+
+    _footnoteOverlayEntry?.remove();
+    setState(() {
+      _footnoteOverlayEntry = null;
+      _isClosingFootnote = false;
+    });
   }
 }
