@@ -332,7 +332,7 @@ class _ControlPanelState extends State<ControlPanel> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.tune_outlined),
+                    icon: const Icon(Icons.brush_outlined),
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,

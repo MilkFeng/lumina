@@ -71,6 +71,18 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
     _readerTheme = widget.initialReaderTheme;
   }
 
+  void _handleValueChanged<T>(
+    T newValue,
+    ValueChanged<T> callback,
+    bool Function(T) checker,
+  ) {
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (checker(newValue)) {
+        callback(newValue);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -94,7 +106,11 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
               value: _scale,
               onChanged: (v) {
                 setState(() => _scale = v);
-                widget.onScaleChanged(v);
+                _handleValueChanged<double>(
+                  v,
+                  widget.onScaleChanged,
+                  (val) => val == _scale,
+                );
               },
             ),
 
@@ -114,7 +130,11 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _topMargin = v);
-                      widget.onTopMarginChanged(v);
+                      _handleValueChanged<int>(
+                        v,
+                        widget.onTopMarginChanged,
+                        (val) => val == _topMargin,
+                      );
                     },
                   ),
                 ),
@@ -128,7 +148,11 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _bottomMargin = v);
-                      widget.onBottomMarginChanged(v);
+                      _handleValueChanged<int>(
+                        v,
+                        widget.onBottomMarginChanged,
+                        (val) => val == _bottomMargin,
+                      );
                     },
                   ),
                 ),
@@ -146,7 +170,11 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _leftMargin = v);
-                      widget.onLeftMarginChanged(v);
+                      _handleValueChanged<int>(
+                        v,
+                        widget.onLeftMarginChanged,
+                        (val) => val == _leftMargin,
+                      );
                     },
                   ),
                 ),
@@ -160,7 +188,11 @@ class _ReaderStyleBottomSheetState extends State<ReaderStyleBottomSheet> {
                     step: _marginStep,
                     onChanged: (v) {
                       setState(() => _rightMargin = v);
-                      widget.onRightMarginChanged(v);
+                      _handleValueChanged<int>(
+                        v,
+                        widget.onRightMarginChanged,
+                        (val) => val == _rightMargin,
+                      );
                     },
                   ),
                 ),
