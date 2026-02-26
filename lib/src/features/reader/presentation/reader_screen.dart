@@ -209,7 +209,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   Future<void> _previousSpineItem() async {
     if (_currentSpineItemIndex <= 0) {
-      ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
+      ToastService.showError(
+        AppLocalizations.of(context)!.firstChapterOfBook,
+        theme: _getEpubTheme().themeData,
+      );
       return;
     }
 
@@ -226,7 +229,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   Future<void> _previousSpineItemFirstPage() async {
     if (_currentSpineItemIndex <= 0) {
-      ToastService.showError(AppLocalizations.of(context)!.firstChapterOfBook);
+      ToastService.showError(
+        AppLocalizations.of(context)!.firstChapterOfBook,
+        theme: _getEpubTheme().themeData,
+      );
       return;
     }
 
@@ -244,7 +250,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   Future<void> _nextSpineItem() async {
     if (_currentSpineItemIndex >= _bookSession.spine.length - 1) {
-      ToastService.showError(AppLocalizations.of(context)!.lastChapterOfBook);
+      ToastService.showError(
+        AppLocalizations.of(context)!.lastChapterOfBook,
+        theme: _getEpubTheme().themeData,
+      );
       return;
     }
 
@@ -370,12 +379,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     if (isNext) {
       if (_currentPageInChapter >= _totalPagesInChapter - 1 &&
           _currentSpineItemIndex >= _bookSession.spine.length - 1) {
-        ToastService.showError(AppLocalizations.of(context)!.lastPageOfBook);
+        ToastService.showError(
+          AppLocalizations.of(context)!.lastPageOfBook,
+          theme: _getEpubTheme().themeData,
+        );
         return false;
       }
     } else {
       if (_currentPageInChapter <= 0 && _currentSpineItemIndex <= 0) {
-        ToastService.showError(AppLocalizations.of(context)!.firstPageOfBook);
+        ToastService.showError(
+          AppLocalizations.of(context)!.firstPageOfBook,
+          theme: _getEpubTheme().themeData,
+        );
         return false;
       }
     }
@@ -559,6 +574,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           fileHash: widget.fileHash,
                           onClose: _closeImageViewer,
                           sourceRect: _currentImageRect!,
+                          epubTheme: _getEpubTheme(),
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -574,7 +590,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final targetHref = _bookSession.findFirstValidHref(item);
 
     if (targetHref == null) {
-      ToastService.showError(AppLocalizations.of(context)!.chapterHasNoContent);
+      ToastService.showError(
+        AppLocalizations.of(context)!.chapterHasNoContent,
+        theme: _getEpubTheme().themeData,
+      );
       return;
     }
 

@@ -1,9 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 import '../data/epub_webview_handler.dart';
 import '../../../core/services/toast_service.dart';
@@ -15,6 +14,7 @@ class ImageViewer extends StatefulWidget {
   final String fileHash;
   final VoidCallback onClose;
   final Rect sourceRect;
+  final EpubTheme epubTheme;
 
   const ImageViewer({
     super.key,
@@ -24,6 +24,7 @@ class ImageViewer extends StatefulWidget {
     required this.fileHash,
     required this.onClose,
     required this.sourceRect,
+    required this.epubTheme,
   });
 
   @override
@@ -94,6 +95,7 @@ class _ImageViewerState extends State<ImageViewer>
   }
 
   Future<void> _loadImage() async {
+    final themeData = widget.epubTheme.themeData;
     try {
       final uri = WebUri(widget.imageUrl);
       final response = await widget.webViewHandler.handleRequest(
@@ -127,7 +129,7 @@ class _ImageViewerState extends State<ImageViewer>
       } else {
         HapticFeedback.lightImpact();
         if (mounted) {
-          ToastService.showError('Failed to load image');
+          ToastService.showError('Failed to load image', theme: themeData);
           await _handleClose();
         }
       }
@@ -135,7 +137,7 @@ class _ImageViewerState extends State<ImageViewer>
       debugPrint('Error loading zoomed image: $e');
       HapticFeedback.lightImpact();
       if (mounted) {
-        ToastService.showError('Error loading image');
+        ToastService.showError('Error loading image', theme: themeData);
         await _handleClose();
       }
     }
@@ -152,56 +154,60 @@ class _ImageViewerState extends State<ImageViewer>
     );
     final Rect targetEndRect = _dynamicCloseRect ?? fullscreenRect;
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        await _handleClose();
-      },
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final double t = _curve.value;
-          final Rect currentRect = Rect.lerp(
-            widget.sourceRect,
-            targetEndRect,
-            t,
-          )!;
+    return Theme(
+      data: widget.epubTheme.themeData,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          await _handleClose();
+        },
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final double t = _curve.value;
+            final Rect currentRect = Rect.lerp(
+              widget.sourceRect,
+              targetEndRect,
+              t,
+            )!;
 
-          final bool isExpanded = t == 1.0;
-          final bool canZoom = isExpanded && !_isLoading && _imageData != null;
+            final bool isExpanded = t == 1.0;
+            final bool canZoom =
+                isExpanded && !_isLoading && _imageData != null;
 
-          final double bgOpacity = 0.9 * t;
+            final double bgOpacity = 0.9 * t;
 
-          return Stack(
-            children: [
-              if (_imageData != null)
-                GestureDetector(
-                  onTap: _handleClose,
-                  child: Container(
-                    color: Colors.black.withValues(alpha: bgOpacity),
-                  ),
-                ),
-
-              if (_imageData != null)
-                Positioned.fromRect(
-                  rect: currentRect,
-                  child: GestureDetector(
+            return Stack(
+              children: [
+                if (_imageData != null)
+                  GestureDetector(
                     onTap: _handleClose,
                     child: Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: const BoxDecoration(
-                        color: Colors.transparent,
-                      ),
-                      child: canZoom
-                          ? _buildInteractiveViewer()
-                          : Opacity(opacity: t, child: _buildStaticImage()),
+                      color: Colors.black.withValues(alpha: bgOpacity),
                     ),
                   ),
-                ),
-            ],
-          );
-        },
+
+                if (_imageData != null)
+                  Positioned.fromRect(
+                    rect: currentRect,
+                    child: GestureDetector(
+                      onTap: _handleClose,
+                      child: Container(
+                        clipBehavior: Clip.antiAlias,
+                        decoration: const BoxDecoration(
+                          color: Colors.transparent,
+                        ),
+                        child: canZoom
+                            ? _buildInteractiveViewer()
+                            : Opacity(opacity: t, child: _buildStaticImage()),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

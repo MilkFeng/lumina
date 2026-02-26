@@ -44,21 +44,21 @@ class EpubTheme {
     return {
       'zoom': zoom,
       'shouldOverrideTextColor': shouldOverrideTextColor,
-      'colorScheme': {
-        'primary': colorToHex(colorScheme.primary),
-        'onPrimary': colorToHex(colorScheme.onPrimary),
-        'secondary': colorToHex(colorScheme.secondary),
-        'onSecondary': colorToHex(colorScheme.onSecondary),
-        'error': colorToHex(colorScheme.error),
-        'onError': colorToHex(colorScheme.onError),
-        'surface': colorToHex(colorScheme.surface),
-        'onSurface': colorToHex(colorScheme.onSurface),
-        'primaryContainer': colorToHex(colorScheme.primaryContainer),
-        'onSurfaceVariant': colorToHex(colorScheme.onSurfaceVariant),
-        'outlineVariant': colorToHex(colorScheme.outlineVariant),
-        'surfaceContainer': colorToHex(colorScheme.surfaceContainer),
-        'surfaceContainerHigh': colorToHex(colorScheme.surfaceContainerHigh),
-      },
+
+      'primaryColor': colorToHex(colorScheme.primary),
+      'onPrimaryColor': colorToHex(colorScheme.onPrimary),
+      'secondaryColor': colorToHex(colorScheme.secondary),
+      'onSecondaryColor': colorToHex(colorScheme.onSecondary),
+      'errorColor': colorToHex(colorScheme.error),
+      'onErrorColor': colorToHex(colorScheme.onError),
+      'backgroundColor': colorToHex(colorScheme.surface),
+      'defaultTextColor': colorToHex(colorScheme.onSurface),
+      'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
+      'onSurfaceVariantColor': colorToHex(colorScheme.onSurfaceVariant),
+      'outlineVariantColor': colorToHex(colorScheme.outlineVariant),
+      'surfaceContainerColor': colorToHex(colorScheme.surfaceContainer),
+      'surfaceContainerHighColor': colorToHex(colorScheme.surfaceContainerHigh),
+
       'overridePrimaryColor': overridePrimaryColor != null
           ? colorToHex(overridePrimaryColor!)
           : null,
