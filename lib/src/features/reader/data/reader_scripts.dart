@@ -34,16 +34,14 @@ String _generateVariableStyle(
       --padding-bottom: ${padding.bottom}px;
       --reader-overflow-x: ${direction == 1 ? 'hidden' : 'auto'};
       --reader-overflow-y: ${direction == 1 ? 'auto' : 'hidden'};
-      
-      --background-color: ${colorToHex(colorScheme.surface)};
-      --default-text-color: ${colorToHex(colorScheme.onSurface)};
-
       --primary-color: ${colorToHex(primaryColor)};
-      --primary-container: ${colorToHex(colorScheme.primaryContainer)};
-      --on-surface-variant: ${colorToHex(colorScheme.onSurfaceVariant)};
-      --outline-variant: ${colorToHex(colorScheme.outlineVariant)};
-      --surface-container: ${colorToHex(colorScheme.surfaceContainer)};
-      --surface-container-high: ${colorToHex(colorScheme.surfaceContainerHigh)};
+      --primary-container-color: ${colorToHex(colorScheme.primaryContainer)};
+      --surface-color: ${colorToHex(colorScheme.surface)};
+      --on-surface-color: ${colorToHex(colorScheme.onSurface)};
+      --on-surface-variant-color: ${colorToHex(colorScheme.onSurfaceVariant)};
+      --outline-variant-color: ${colorToHex(colorScheme.outlineVariant)};
+      --surface-container-color: ${colorToHex(colorScheme.surfaceContainer)};
+      --surface-container-high-color: ${colorToHex(colorScheme.surfaceContainerHigh)};
     }
   ''';
 }
@@ -66,6 +64,7 @@ String generateSkeletonHtml(
   );
 
   final colorScheme = theme.colorScheme;
+  final primaryColor = theme.overridePrimaryColor ?? colorScheme.primary;
 
   final initialConfigJson = jsonEncode({
     'safeWidth': safeWidth,
@@ -81,18 +80,15 @@ String generateSkeletonHtml(
       'zoom': theme.zoom,
       'paginationCss': kPaginationCss,
       'variableCss': variableStyle,
-
-      'backgroundColor': colorToHex(colorScheme.surface),
-      'defaultTextColor': colorToHex(colorScheme.onSurface),
-
       'shouldOverrideTextColor': theme.shouldOverrideTextColor,
-
-      'primaryColor': colorToHex(colorScheme.primary),
-      'primaryContainer': colorToHex(colorScheme.primaryContainer),
-      'onSurfaceVariant': colorToHex(colorScheme.onSurfaceVariant),
-      'outlineVariant': colorToHex(colorScheme.outlineVariant),
-      'surfaceContainer': colorToHex(colorScheme.surfaceContainer),
-      'surfaceContainerHigh': colorToHex(colorScheme.surfaceContainerHigh),
+      'primaryColor': colorToHex(primaryColor),
+      'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
+      'surfaceColor': colorToHex(colorScheme.surface),
+      'onSurfaceColor': colorToHex(colorScheme.onSurface),
+      'onSurfaceVariantColor': colorToHex(colorScheme.onSurfaceVariant),
+      'outlineVariantColor': colorToHex(colorScheme.outlineVariant),
+      'surfaceContainerColor': colorToHex(colorScheme.surfaceContainer),
+      'surfaceContainerHighColor': colorToHex(colorScheme.surfaceContainerHigh),
     },
   });
 
