@@ -141,6 +141,10 @@ body.override-color a:active {
   color: var(--primary-color);
 }
 
+body.override-color a:visited {
+  color: var(--primary-color) !important;
+}
+
 body.override-color blockquote {
   background-color: var(--surface-container-color) !important;
   border-color: var(--primary-color) !important;
