@@ -572,15 +572,6 @@ class EpubReader {
             // find the best candidate element to represent the footnote content
             const targetId = this._extractTargetIdFromHref(href);
             innerHtml = this._extractFootnoteHtml(targetId);
-          } else if (href) {
-            const linkBaseUrl = link.href.split('#')[0];
-            if (linkBaseUrl === currentDocBaseUrl) {
-              // Only support extracting footnote content for same-page links to avoid cross-origin issues and complexity of handling multiple documents
-              const targetId = this._extractTargetIdFromHref(href);
-              innerHtml = this._extractFootnoteHtml(targetId);
-            } else {
-              continue;
-            }
           } else {
             continue;
           }
