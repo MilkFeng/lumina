@@ -37,6 +37,7 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
+  background-color: var(--background-color, #FFFFFF) !important;
 }
 
 /* Prev iframe: hidden, low z-index */
@@ -658,10 +659,16 @@ class EpubReader {
       variableStyle.innerHTML = this.state.config.theme.variableCss;
       doc.head.appendChild(variableStyle);
 
-      if (this.state.config.theme.defaultTextColor) {
+      if (this.state.config.theme.shouldOverrideTextColor) {
         doc.body.classList.add('override-color');
       } else {
         doc.body.classList.remove('override-color');
+      }
+
+      if (this._isVertical()) {
+        doc.body.classList.add('is-vertical');
+      } else {
+        doc.body.classList.remove('is-vertical');
       }
     }
 
@@ -1309,7 +1316,6 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 
   font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
-  line-height: 1.6;
   text-align: justify;
 
   font-size: calc(100% * var(--zoom)) !important;
@@ -1331,10 +1337,19 @@ body {
 }
 
 body * {
-  max-width: var(--safe-width) !important;
-
   orphans: 1;
   widows: 1;
+
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+}
+
+body.is-vertical * {
+  max-height: var(--safe-height) !important;
+}
+
+body:not(.is-vertical) * {
+  max-width: var(--safe-width) !important;
 }
 
 ::-webkit-scrollbar, 
