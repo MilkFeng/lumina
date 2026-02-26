@@ -198,8 +198,8 @@ class EpubReader {
     if (!iframe || !iframe.contentWindow) return;
 
     const scrollOptions = this._isVertical()
-        ? { top: offset, left: 0, behavior: 'auto' }
-        : { top: 0, left: offset, behavior: 'auto' };
+      ? { top: offset, left: 0, behavior: 'auto' }
+      : { top: 0, left: offset, behavior: 'auto' };
 
     const doc = iframe.contentDocument;
     doc.body.scrollTo(scrollOptions);
@@ -263,39 +263,40 @@ class EpubReader {
     }
   }
 
-  _polyfillCss(doc) {
-    for (let i = 0; i < doc.styleSheets.length; i++) {
-      const sheet = doc.styleSheets[i];
+  _applyRules(style) {
+    if (style.fontSize && !style.fontSize.includes('calc')) {
+      const match = style.fontSize.trim().toLowerCase().match(/^(\\d+(?:\\.\\d+)?)(px|pt)\$/);
+      if (match) {
+        style.setProperty(
+          'font-size',
+          `calc(\${match[0]} * var(--zoom))`,
+          style.getPropertyPriority('font-size')
+        );
+      }
+    }
+
+    if (style.breakBefore) style.webkitColumnBreakBefore = this._convertToColumnBreak(style.breakBefore);
+    if (style.pageBreakBefore) style.webkitColumnBreakBefore = this._convertToColumnBreak(style.pageBreakBefore);
+    if (style.breakAfter && style.breakAfter !== 'auto') style.webkitColumnBreakAfter = this._convertToColumnBreak(style.breakAfter);
+    if (style.pageBreakAfter && style.pageBreakAfter !== 'auto') style.webkitColumnBreakAfter = this._convertToColumnBreak(style.pageBreakAfter);
+  }
+
+  _polyfillCssSheets(doc) {
+    for (let sheet of doc.styleSheets) {
       try {
         const rules = sheet.cssRules || sheet.rules;
         if (!rules) continue;
-
-        for (let j = 0; j < rules.length; j++) {
-          const rule = rules[j];
-          if (rule.type === 1) {
-            const style = rule.style;
-
-            if (style.breakBefore) {
-              style.webkitColumnBreakBefore = this._convertToColumnBreak(style.breakBefore);
-            }
-
-            if (style.pageBreakBefore) {
-              style.webkitColumnBreakBefore = this._convertToColumnBreak(style.pageBreakBefore);
-            }
-
-            if (style.breakAfter && style.breakAfter !== 'auto') {
-              style.webkitColumnBreakAfter = this._convertToColumnBreak(style.breakAfter);
-            }
-
-            if (style.pageBreakAfter && style.pageBreakAfter !== 'auto') {
-              style.webkitColumnBreakAfter = this._convertToColumnBreak(style.pageBreakAfter);
-            }
-          }
+        for (let rule of rules) {
+          if (rule.type === 1) this._applyRules(rule.style); // 1 = CSSStyleRule
         }
       } catch (e) {
         console.error('Access to stylesheet blocked: ' + e);
       }
     }
+  }
+
+  _polyfillCss(doc) {
+    this._polyfillCssSheets(doc);
   }
 
   _detectActiveAnchor(iframe) {
@@ -455,7 +456,7 @@ class EpubReader {
         // duokan
         if (img.classList.contains('duokan-footnote')) {
           const altText = img.getAttribute('alt') || img.getAttribute('title') || '';
-          
+
           quadTree.insert({
             type: 'footnote',
             rect: {
@@ -466,7 +467,7 @@ class EpubReader {
             },
             data: '<div class="duokan-footnote-content">' + altText + '</div>',
           });
-          
+
           continue;
         }
 
@@ -519,7 +520,7 @@ class EpubReader {
         }
 
         const rects = link.getClientRects();
-        
+
         for (let j = 0; j < rects.length; j++) {
           const rect = rects[j];
           if (!rect || rect.width < 5 || rect.height < 5) continue;
@@ -547,7 +548,7 @@ class EpubReader {
         if (!noteSpan) continue;
         const innerHtml = '<div class="aozora-footnote-content">' + noteSpan.innerHTML + '</div>';
         const rects = noteSpan.getClientRects();
-        
+
         for (let j = 0; j < rects.length; j++) {
           const rect = rects[j];
           if (!rect || rect.width < 5 || rect.height < 5) continue;
@@ -894,7 +895,7 @@ class EpubReader {
     const paddingBottomItem = '--padding-bottom: ' + this.state.config.padding.bottom + 'px;';
     const readerOverflowXItem = '--reader-overflow-x: ' + (this._isVertical() ? 'hidden' : 'auto') + ';';
     const readerOverflowYItem = '--reader-overflow-y: ' + (this._isVertical() ? 'auto' : 'hidden') + ';';
-    
+
     const backgroundColorItem = '--background-color: ' + this.state.config.theme.backgroundColor + ';';
     const defaultTextColorItem = '--default-text-color: ' + this.state.config.theme.defaultTextColor + ';';
     const primaryColorItem = '--primary-color: ' + this.state.config.theme.primaryColor + ';';
@@ -905,24 +906,24 @@ class EpubReader {
     const surfaceContainerHighItem = '--surface-container-high: ' + this.state.config.theme.surfaceContainerHigh + ';';
 
     return ':root {'
-            + zoomItem
-            + safeWidthItem
-            + safeHeightItem
-            + paddingTopItem
-            + paddingLeftItem
-            + paddingRightItem
-            + paddingBottomItem
-            + readerOverflowXItem
-            + readerOverflowYItem
-            + backgroundColorItem
-            + defaultTextColorItem
-            + primaryColorItem
-            + primaryContainerItem
-            + onSurfaceVariantItem
-            + outlineVariantItem
-            + surfaceContainerItem
-            + surfaceContainerHighItem
-            + '}';
+      + zoomItem
+      + safeWidthItem
+      + safeHeightItem
+      + paddingTopItem
+      + paddingLeftItem
+      + paddingRightItem
+      + paddingBottomItem
+      + readerOverflowXItem
+      + readerOverflowYItem
+      + backgroundColorItem
+      + defaultTextColorItem
+      + primaryColorItem
+      + primaryContainerItem
+      + onSurfaceVariantItem
+      + outlineVariantItem
+      + surfaceContainerItem
+      + surfaceContainerHighItem
+      + '}';
   }
 
   updateTheme(
@@ -952,7 +953,7 @@ class EpubReader {
       bottom: paddingBottom,
     };
     this.state.config.theme.zoom = zoom;
-    
+
     this.state.config.theme.backgroundColor = backgroundColor;
     this.state.config.theme.defaultTextColor = defaultTextColor;
     this.state.config.theme.shouldOverrideTextColor = shouldOverrideTextColor;
@@ -1024,7 +1025,7 @@ class EpubReader {
       // Calculate distance from the tap point to the center of the candidate rect
       let distance;
       if (rect.contains({ x: docX, y: docY })) {
-        distance = 0; 
+        distance = 0;
       } else {
         const centerX = rect.x + rect.width / 2;
         const centerY = rect.y + rect.height / 2;
@@ -1107,7 +1108,8 @@ window.reader = new EpubReader();
 ''';
 
 const String kPaginationCss = r'''
-html, body {
+html,
+body {
   margin: 0 !important;
   padding: 0 !important;
   width: var(--safe-width) !important;
@@ -1119,7 +1121,7 @@ html, body {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  
+
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 
@@ -1132,7 +1134,8 @@ html, body {
   text-size-adjust: none !important;
 }
 
-html, body {
+html,
+body {
   overflow-x: var(--reader-overflow-x) !important;
   overflow-y: var(--reader-overflow-y) !important;
 }
@@ -1160,8 +1163,8 @@ body:not(.is-vertical) * {
   max-width: var(--safe-width) !important;
 }
 
-::-webkit-scrollbar, 
-::-webkit-scrollbar:horizontal, 
+::-webkit-scrollbar,
+::-webkit-scrollbar:horizontal,
 ::-webkit-scrollbar:vertical {
   -webkit-appearance: none !important;
   background-color: transparent !important;
@@ -1170,8 +1173,8 @@ body:not(.is-vertical) * {
   width: 0 !important;
 }
 
-body::-webkit-scrollbar, 
-body::-webkit-scrollbar:horizontal, 
+body::-webkit-scrollbar,
+body::-webkit-scrollbar:horizontal,
 body::-webkit-scrollbar:vertical {
   -webkit-appearance: none !important;
   background-color: transparent !important;
@@ -1180,8 +1183,21 @@ body::-webkit-scrollbar:vertical {
   width: 0 !important;
 }
 
-img, svg, video {
+body.is-vertical img,
+body.is-vertical svg,
+body.is-vertical video {
+  max-width: var(--safe-width) !important;
+}
+
+body:not(.is-vertical) img,
+body:not(.is-vertical) svg,
+body:not(.is-vertical) video {
   max-height: var(--safe-height) !important;
+}
+
+img,
+svg,
+video {
   object-fit: contain;
   height: auto !important;
 
@@ -1287,7 +1303,8 @@ a[role~="doc-noteref"] {
   display: inline !important;
 }
 
-span.notes, .notes {
+span.notes,
+.notes {
   opacity: 0.7;
   text-decoration: underline dotted !important;
   cursor: pointer;
@@ -1296,7 +1313,8 @@ span.notes, .notes {
 
 const String kSkeletonCss = r'''
 /* Full viewport, no margins */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100vw;

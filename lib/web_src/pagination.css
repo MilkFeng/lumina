@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   margin: 0 !important;
   padding: 0 !important;
   width: var(--safe-width) !important;
@@ -10,7 +11,7 @@ html, body {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  
+
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 
@@ -23,7 +24,8 @@ html, body {
   text-size-adjust: none !important;
 }
 
-html, body {
+html,
+body {
   overflow-x: var(--reader-overflow-x) !important;
   overflow-y: var(--reader-overflow-y) !important;
 }
@@ -51,8 +53,8 @@ body:not(.is-vertical) * {
   max-width: var(--safe-width) !important;
 }
 
-::-webkit-scrollbar, 
-::-webkit-scrollbar:horizontal, 
+::-webkit-scrollbar,
+::-webkit-scrollbar:horizontal,
 ::-webkit-scrollbar:vertical {
   -webkit-appearance: none !important;
   background-color: transparent !important;
@@ -61,8 +63,8 @@ body:not(.is-vertical) * {
   width: 0 !important;
 }
 
-body::-webkit-scrollbar, 
-body::-webkit-scrollbar:horizontal, 
+body::-webkit-scrollbar,
+body::-webkit-scrollbar:horizontal,
 body::-webkit-scrollbar:vertical {
   -webkit-appearance: none !important;
   background-color: transparent !important;
@@ -71,8 +73,21 @@ body::-webkit-scrollbar:vertical {
   width: 0 !important;
 }
 
-img, svg, video {
+body.is-vertical img,
+body.is-vertical svg,
+body.is-vertical video {
+  max-width: var(--safe-width) !important;
+}
+
+body:not(.is-vertical) img,
+body:not(.is-vertical) svg,
+body:not(.is-vertical) video {
   max-height: var(--safe-height) !important;
+}
+
+img,
+svg,
+video {
   object-fit: contain;
   height: auto !important;
 
@@ -178,7 +193,8 @@ a[role~="doc-noteref"] {
   display: inline !important;
 }
 
-span.notes, .notes {
+span.notes,
+.notes {
   opacity: 0.7;
   text-decoration: underline dotted !important;
   cursor: pointer;
