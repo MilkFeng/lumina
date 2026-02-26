@@ -53,6 +53,7 @@ class ReaderSettings {
   EpubTheme toEpubTheme({required Brightness platformBrightness}) {
     ColorScheme colorScheme;
     bool shouldOverrideTextColor = true;
+    Color? overridePrimaryColor;
     if (followSystemTheme) {
       colorScheme = AppTheme.colorSchemeForBrightness(platformBrightness);
       if (platformBrightness == Brightness.light) {
@@ -65,6 +66,7 @@ class ReaderSettings {
         colorScheme = AppTheme.darkEyeCareColorScheme;
       } else if (themeMode == ReaderSettingThemeMode.dark) {
         colorScheme = AppTheme.darkColorScheme;
+        overridePrimaryColor = const Color(0xFF7B9CAE);
       } else {
         colorScheme = AppTheme.lightColorScheme;
         shouldOverrideTextColor = false; // Light theme uses default text color
@@ -75,6 +77,7 @@ class ReaderSettings {
       zoom: zoom,
       shouldOverrideTextColor: shouldOverrideTextColor,
       colorScheme: colorScheme,
+      overridePrimaryColor: overridePrimaryColor,
       padding: EdgeInsets.only(
         top: marginTop,
         bottom: marginBottom,

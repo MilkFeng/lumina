@@ -21,6 +21,8 @@ String _generateVariableStyle(
   final padding = theme.padding;
   final colorScheme = theme.colorScheme;
 
+  final primaryColor = theme.overridePrimaryColor ?? colorScheme.primary;
+
   return '''
     :root {
       --zoom: ${theme.zoom};
@@ -36,7 +38,7 @@ String _generateVariableStyle(
       --background-color: ${colorToHex(colorScheme.surface)};
       --default-text-color: ${colorToHex(colorScheme.onSurface)};
 
-      --primary-color: ${colorToHex(colorScheme.primary)};
+      --primary-color: ${colorToHex(primaryColor)};
       --primary-container: ${colorToHex(colorScheme.primaryContainer)};
       --on-surface-variant: ${colorToHex(colorScheme.onSurfaceVariant)};
       --outline-variant: ${colorToHex(colorScheme.outlineVariant)};

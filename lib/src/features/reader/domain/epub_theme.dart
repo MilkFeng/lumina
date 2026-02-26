@@ -5,12 +5,14 @@ class EpubTheme {
   final double zoom;
   final bool shouldOverrideTextColor;
   final ColorScheme colorScheme;
+  final Color? overridePrimaryColor;
   final EdgeInsets padding;
 
   EpubTheme({
     required this.zoom,
     required this.shouldOverrideTextColor,
     required this.colorScheme,
+    this.overridePrimaryColor,
     required this.padding,
   });
 
@@ -24,6 +26,7 @@ class EpubTheme {
     double? zoom,
     bool? shouldOverrideTextColor,
     ColorScheme? colorScheme,
+    Color? overridePrimaryColor,
     EdgeInsets? padding,
   }) {
     return EpubTheme(
@@ -31,6 +34,7 @@ class EpubTheme {
       shouldOverrideTextColor:
           shouldOverrideTextColor ?? this.shouldOverrideTextColor,
       colorScheme: colorScheme ?? this.colorScheme,
+      overridePrimaryColor: overridePrimaryColor ?? this.overridePrimaryColor,
       padding: padding ?? this.padding,
     );
   }
