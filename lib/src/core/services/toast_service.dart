@@ -11,21 +11,22 @@ class ToastService {
 
   static OverlayEntry? _currentEntry;
 
-  static void showSuccess(String message) {
-    _show(message, ToastBubbleType.success);
+  static void showSuccess(String message, {ThemeData? theme}) {
+    _show(message, ToastBubbleType.success, theme: theme);
   }
 
-  static void showError(String message) {
-    _show(message, ToastBubbleType.error);
+  static void showError(String message, {ThemeData? theme}) {
+    _show(message, ToastBubbleType.error, theme: theme);
   }
 
-  static void showInfo(String message) {
-    _show(message, ToastBubbleType.info);
+  static void showInfo(String message, {ThemeData? theme}) {
+    _show(message, ToastBubbleType.info, theme: theme);
   }
 
   static void _show(
     String message,
     ToastBubbleType type, {
+    ThemeData? theme,
     Duration duration = const Duration(
       milliseconds: AppTheme.defaultPresentationDurationMs,
     ),
@@ -50,6 +51,7 @@ class ToastService {
             _removeCurrent();
           }
         },
+        theme: theme,
       ),
     );
 
@@ -68,12 +70,14 @@ class _ToastOverlay extends StatefulWidget {
   final ToastBubbleType type;
   final Duration duration;
   final VoidCallback onDismissed;
+  final ThemeData? theme;
 
   const _ToastOverlay({
     required this.message,
     required this.type,
     required this.duration,
     required this.onDismissed,
+    this.theme,
   });
 
   @override
@@ -139,34 +143,36 @@ class _ToastOverlayState extends State<_ToastOverlay>
   Widget build(BuildContext context) {
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final bottomPadding = keyboardHeight > 0 ? keyboardHeight + 16.0 : 50.0;
-    return Material(
-      type: MaterialType.transparency,
-      child: AnimatedPadding(
-        duration: const Duration(
-          milliseconds: AppTheme.defaultAnimationDurationMs,
-        ),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.only(bottom: bottomPadding, left: 25, right: 25),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: GestureDetector(
-            onTap: _dismiss,
-            child: FadeTransition(
-              opacity: _opacity,
-              child: SlideTransition(
-                position: _slide,
-                child: ScaleTransition(
-                  scale: _scale,
-                  child: ToastBubble(
-                    message: widget.message,
-                    type: widget.type,
-                  ),
-                ),
+
+    final content = AnimatedPadding(
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.only(bottom: bottomPadding, left: 25, right: 25),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: GestureDetector(
+          onTap: _dismiss,
+          child: FadeTransition(
+            opacity: _opacity,
+            child: SlideTransition(
+              position: _slide,
+              child: ScaleTransition(
+                scale: _scale,
+                child: ToastBubble(message: widget.message, type: widget.type),
               ),
             ),
           ),
         ),
       ),
+    );
+
+    return Material(
+      type: MaterialType.transparency,
+      child: widget.theme != null
+          ? Theme(data: widget.theme!, child: content)
+          : content,
     );
   }
 }

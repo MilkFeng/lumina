@@ -205,7 +205,7 @@ class _TocDrawerState extends State<TocDrawer> {
             Divider(
               height: 1,
               thickness: 1,
-              color: isDark ? Colors.grey[800] : Colors.grey[300],
+              color: widget.themeData.colorScheme.outlineVariant,
             ),
             Expanded(
               // Optimization: ListView.builder only builds items on screen
@@ -263,7 +263,7 @@ class _TocDrawerState extends State<TocDrawer> {
                         ? Icons.expand_more_outlined
                         : Icons.chevron_right_outlined,
                     size: 20,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: widget.themeData.colorScheme.onSurfaceVariant,
                   ),
                 )
               else
@@ -279,8 +279,8 @@ class _TocDrawerState extends State<TocDrawer> {
                   style: widget.themeData.textTheme.bodyMedium?.copyWith(
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                     color: isActive
-                        ? (isDark ? Colors.white : Colors.black)
-                        : (isDark ? Colors.grey[400] : Colors.grey[700]),
+                        ? widget.themeData.colorScheme.onSurface
+                        : widget.themeData.colorScheme.onSurfaceVariant,
                     fontFamily: AppTheme.fontFamilyContent,
                   ),
                 ),
@@ -291,7 +291,7 @@ class _TocDrawerState extends State<TocDrawer> {
                 Icon(
                   Icons.circle_outlined,
                   size: 8,
-                  color: widget.themeData.colorScheme.primary,
+                  color: widget.themeData.colorScheme.onSurface,
                 ),
             ],
           ),
@@ -346,26 +346,26 @@ class _TocDrawerState extends State<TocDrawer> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.book.author,
-                    style: widget.themeData.textTheme.bodySmall?.copyWith(
-                      color: widget.themeData.colorScheme.onSurface.withAlpha(
-                        153,
+                  if (widget.book.author.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.book.author,
+                      style: widget.themeData.textTheme.bodySmall?.copyWith(
+                        color: widget.themeData.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: AppTheme.fontFamilyContent,
                       ),
-                      fontWeight: FontWeight.w400,
-                      fontFamily: AppTheme.fontFamilyContent,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                   const SizedBox(height: 8),
                   Text(
                     AppLocalizations.of(
                       context,
                     )!.chaptersCount(widget.book.totalChapters),
                     style: widget.themeData.textTheme.bodySmall?.copyWith(
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: widget.themeData.colorScheme.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
