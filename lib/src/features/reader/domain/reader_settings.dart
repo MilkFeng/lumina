@@ -3,7 +3,6 @@ import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 enum ReaderSettingThemeMode {
-  system,
   light,
   dark,
 

@@ -103,7 +103,7 @@ class BookSession {
         ..anchor = 'top')
       ..id = -1;
     _tocItemFallback.clear();
-    for (final spineItem in _manifest!.spine) {
+    for (final spineItem in _spine) {
       final anchors = _spineToAnchorsMap[spineItem.href] ?? [];
       _tocItemFallback.add(toc);
       if (anchors.isNotEmpty) {
@@ -132,9 +132,9 @@ class BookSession {
     }
 
     var progress = 0.0;
-    if (_manifest!.spine.isNotEmpty) {
-      final delta = 1.0 / _manifest!.spine.length;
-      progress = (currentChapterIndex + 1) / _manifest!.spine.length;
+    if (_spine.isNotEmpty) {
+      final delta = 1.0 / _spine.length;
+      progress = (currentChapterIndex + 1) / _spine.length;
       if (totalPagesInChapter > 0) {
         progress -= delta;
         progress += delta * ((currentPageInChapter + 1) / totalPagesInChapter);
@@ -162,11 +162,11 @@ class BookSession {
 
   /// Generate activated href keys from current spine item and active anchors
   Set<Href> generateActivatedHrefKeys(int currentSpineItemIndex) {
-    if (_manifest == null || currentSpineItemIndex >= _manifest!.spine.length) {
+    if (_manifest == null || currentSpineItemIndex >= _spine.length) {
       return {};
     }
 
-    final path = _manifest!.spine[currentSpineItemIndex].href;
+    final path = _spine[currentSpineItemIndex].href;
     return _activeAnchors
         .map(
           (anchor) => Href()
@@ -219,12 +219,12 @@ class BookSession {
 
   /// Get URL for a spine item with optional anchor
   String getSpineItemUrl(int index, [String anchor = 'top']) {
-    if (_manifest == null || index >= _manifest!.spine.length) {
+    if (_manifest == null || index >= _spine.length) {
       return '';
     }
 
     final href = Href()
-      ..path = _manifest!.spine[index].href
+      ..path = _spine[index].href
       ..anchor = anchor;
     return EpubWebViewHandler.getFileUrl(fileHash, href);
   }
@@ -236,7 +236,7 @@ class BookSession {
       return null;
     }
 
-    final index = _manifest!.spine.indexWhere((s) => s.href == targetHref.path);
+    final index = _spine.indexWhere((s) => s.href == targetHref.path);
     return index != -1 ? index : null;
   }
 
