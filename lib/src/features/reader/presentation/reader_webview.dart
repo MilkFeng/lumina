@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -453,24 +454,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
     _currentTheme = theme;
-    final ColorScheme colorScheme = theme.colorScheme;
+    final themeJson = jsonEncode(theme.toMap());
     await _evaluateJavascript("""window.reader.updateTheme(
       $width,
       $height,
-      ${theme.padding.top},
-      ${theme.padding.left},
-      ${theme.padding.right},
-      ${theme.padding.bottom},
-      ${theme.zoom},
-      '${colorToHex(colorScheme.surface)}',
-      '${colorToHex(colorScheme.onSurface)}',
-      ${theme.shouldOverrideTextColor},
-      '${colorToHex(colorScheme.primary)}',
-      '${colorToHex(colorScheme.primaryContainer)}',
-      '${colorToHex(colorScheme.onSurfaceVariant)}',
-      '${colorToHex(colorScheme.outlineVariant)}',
-      '${colorToHex(colorScheme.surfaceContainer)}',
-      '${colorToHex(colorScheme.surfaceContainerHigh)}'
+      $themeJson,
     )""");
   }
 }

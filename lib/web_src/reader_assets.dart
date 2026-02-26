@@ -926,43 +926,29 @@ class EpubReader {
       + '}';
   }
 
-  updateTheme(
-    viewWidth,
-    viewHeight,
-    paddingTop,
-    paddingLeft,
-    paddingRight,
-    paddingBottom,
-    zoom,
-    backgroundColor,
-    defaultTextColor,
-    shouldOverrideTextColor,
-    primaryColor,
-    primaryContainer,
-    onSurfaceVariant,
-    outlineVariant,
-    surfaceContainer,
-    surfaceContainerHigh
-  ) {
+  updateTheme(viewWidth, viewHeight, newTheme) {
     this.state.config.safeWidth = Math.floor(viewWidth);
     this.state.config.safeHeight = Math.floor(viewHeight);
     this.state.config.padding = {
-      top: paddingTop,
-      left: paddingLeft,
-      right: paddingRight,
-      bottom: paddingBottom,
+      top: newTheme.padding.top,
+      left: newTheme.padding.left,
+      right: newTheme.padding.right,
+      bottom: newTheme.padding.bottom,
     };
-    this.state.config.theme.zoom = zoom;
+    this.state.config.theme.zoom = newTheme.zoom;
 
-    this.state.config.theme.backgroundColor = backgroundColor;
-    this.state.config.theme.defaultTextColor = defaultTextColor;
-    this.state.config.theme.shouldOverrideTextColor = shouldOverrideTextColor;
-    this.state.config.theme.primaryColor = primaryColor;
-    this.state.config.theme.primaryContainer = primaryContainer;
-    this.state.config.theme.onSurfaceVariant = onSurfaceVariant;
-    this.state.config.theme.outlineVariant = outlineVariant;
-    this.state.config.theme.surfaceContainer = surfaceContainer;
-    this.state.config.theme.surfaceContainerHigh = surfaceContainerHigh;
+    this.state.config.theme.backgroundColor = newTheme.backgroundColor;
+    this.state.config.theme.defaultTextColor = newTheme.defaultTextColor;
+    this.state.config.theme.shouldOverrideTextColor = newTheme.shouldOverrideTextColor;
+    this.state.config.theme.primaryColor = newTheme.primaryColor;
+    if (newTheme.overridePrimaryColor) {
+      this.state.config.theme.primaryColor = newTheme.overridePrimaryColor;
+    }
+    this.state.config.theme.primaryContainer = newTheme.primaryContainer;
+    this.state.config.theme.onSurfaceVariant = newTheme.onSurfaceVariant;
+    this.state.config.theme.outlineVariant = newTheme.outlineVariant;
+    this.state.config.theme.surfaceContainer = newTheme.surfaceContainer;
+    this.state.config.theme.surfaceContainerHigh = newTheme.surfaceContainerHigh;
 
     this.state.config.theme.variableCss = this._generateVariableStyle();
 
