@@ -802,10 +802,16 @@ class EpubReader {
     if (iframeId === 'frame-curr') {
       window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
       window.flutter_inappwebview.callHandler('onPageChanged', this._calculateCurrentPageIndex());
+    } else if (iframeId === 'frame-prev') {
+      // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
+      this.jumpToLastPageOfFrame('prev');
+    } else if (iframeId === 'frame-next') {
+      // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
+      this.jumpToPageFor('next', 0);
     }
   }
 
-  cycleFrames(direction) {
+  async cycleFrames(direction) {
     const elPrev = this._frameElement('prev');
     const elCurr = this._frameElement('curr');
     const elNext = this._frameElement('next');
@@ -830,7 +836,6 @@ class EpubReader {
       recycled.style.zIndex = '1';
       recycled.style.opacity = '0';
       recycled.style.pointerEvents = 'none';
-      recycled.src = 'about:blank';
 
       const tempAnchors = this.state.anchors.prev;
       this.state.anchors.prev = this.state.anchors.curr;
@@ -854,7 +859,6 @@ class EpubReader {
       recycled.style.zIndex = '1';
       recycled.style.opacity = '0';
       recycled.style.pointerEvents = 'none';
-      recycled.src = 'about:blank';
 
       const tempAnchors = this.state.anchors.next;
       this.state.anchors.next = this.state.anchors.curr;
@@ -871,6 +875,9 @@ class EpubReader {
       this._detectActiveAnchor(elNext);
       this._buildInteractionMap();
     });
+
+    // Wait for 100ms
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   jumpToLastPageOfFrame(slot) {

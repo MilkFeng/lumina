@@ -30,7 +30,7 @@ class GroupSelectionDialog extends StatelessWidget {
               leading: const Icon(Icons.create_new_folder_outlined),
               title: Text(
                 AppLocalizations.of(context)!.createNewCategory,
-                style: const TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
               onTap: () => Navigator.pop(context, createGroupResult),
             ),

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
@@ -37,12 +39,7 @@ class BookCover extends ConsumerWidget {
           foregroundDecoration: BoxDecoration(
             borderRadius: radius,
             border: enableBorder
-                ? Border.all(
-                    color: Theme.of(
-                      context,
-                    ).dividerColor.withValues(alpha: 0.3),
-                    width: 1,
-                  )
+                ? Border.all(color: Theme.of(context).dividerColor, width: 1)
                 : null,
           ),
           child: Image.file(
@@ -76,20 +73,39 @@ class BookCover extends ConsumerWidget {
   }
 
   Widget _buildPlaceholder(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return AspectRatio(
       aspectRatio: 210 / 297,
       child: Container(
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey[900] : Colors.grey[200],
+          borderRadius: radius,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
-        child: Center(
-          child: Icon(
-            Icons.book_outlined,
-            size: 48,
-            color: isDark ? Colors.grey[700] : Colors.grey,
-          ),
+        foregroundDecoration: BoxDecoration(
+          borderRadius: radius,
+          border: enableBorder
+              ? Border.all(color: Theme.of(context).dividerColor, width: 1)
+              : null,
+        ),
+        constraints: BoxConstraints(
+          maxHeight: globalCacheHeight.toDouble(),
+          maxWidth: globalCacheHeight.toDouble() * (210 / 297),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxSize = math.min(
+              constraints.maxWidth,
+              constraints.maxHeight,
+            );
+            final iconSize = maxSize * 0.35;
+            return Center(
+              child: Icon(
+                Icons.menu_book_outlined,
+                size: iconSize,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            );
+          },
         ),
       ),
     );

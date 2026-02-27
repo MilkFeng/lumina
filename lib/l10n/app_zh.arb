@@ -271,7 +271,7 @@
     "description": "已删除徽章标签"
   },
   
-  "moveTo": "移动到……",
+  "moveTo": "移动到",
   "@moveTo": {
     "description": "移动到对话框标题"
   },
@@ -291,12 +291,12 @@
     "description": "创建按钮标签"
   },
   
-  "deleteBooks": "删除图书",
+  "deleteBooks": "删除书籍",
   "@deleteBooks": {
     "description": "删除图书对话框标题"
   },
   
-  "deleteBooksConfirm": "永久删除所选图书？",
+  "deleteBooksConfirm": "永久删除所选书籍？",
   "@deleteBooksConfirm": {
     "description": "删除图书确认消息"
   },
@@ -326,7 +326,7 @@
     "description": "无效文件错误消息"
   },
   
-  "importing": "导入中……",
+  "importing": "导入中",
   "@importing": {
     "description": "导入进度消息"
   },
@@ -872,7 +872,7 @@
     "description": "备份书库功能描述"
   },
 
-  "restoringBackup": "正在恢复备份…",
+  "restoringBackup": "正在恢复备份",
   "@restoringBackup": {
     "description": "恢复进行中时显示的标题"
   },
@@ -902,7 +902,7 @@
     }
   },
 
-  "restoring": "正在恢复…",
+  "restoring": "正在恢复",
   "@restoring": {
     "description": "正在恢复时显示的标题"
   },
