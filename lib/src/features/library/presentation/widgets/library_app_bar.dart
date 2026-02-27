@@ -56,7 +56,7 @@ class LibraryAppBar extends StatelessWidget {
                 )
               : SvgPicture.asset(
                   logoSvgPath,
-                  height: 18,
+                  height: 16,
                   colorFilter: ColorFilter.mode(
                     Theme.of(context).colorScheme.onSurface,
                     BlendMode.srcIn,
