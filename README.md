@@ -16,7 +16,7 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
 
 - 📚 **EPUB Reading** - Supports EPUB 2.0/3.0 formats with smooth page turning, automatic reading progress saving, and complete EPUB rendering based on WebView
 - 🗂️ **Bookshelf Management** - Custom grouping, multi-dimensional sorting, and batch operations
-- 🎨 **Elegant Interface** - Light/dark theme switching, built-in Source Han Serif font for comfortable reading experience
+- 🎨 **Elegant Interface** - Light/dark theme switching for comfortable reading experience
 - ⚡ **Efficient Architecture** - Streaming loading of EPUB compressed files for fast startup
 
 ## 📱 Screenshots
@@ -82,20 +82,7 @@ cd lumina
 flutter pub get
 ```
 
-3. **Font Subsetting (Optional)**
-
-To optimize font file size, you can run the font subsetting script:
-
-```bash
-cd scripts
-python generate_subsets.py
-```
-
-> Note: Requires Python 3 and the fonttools library (`pip install fonttools brotli`)
-
-The project uses Source Han Serif font by default. To use other fonts, modify `./scripts/generate_subsets.py` for subsetting.
-
-4. **Run the App**
+3. **Run the App**
 
 ```bash
 flutter run
@@ -119,9 +106,6 @@ flutter build ios --release
 ```
 
 ## ⚠️ Important Notes
-
-### Custom Font License
-This project includes the "Source Han Serif" font, licensed under the [SIL Open Font License 1.1](./assets/fonts/LICENSE.txt).
 
 ### EPUB Format Support
 - Supports standard EPUB 2.0 and EPUB 3.0 formats
@@ -167,7 +151,6 @@ This project uses the following excellent open-source projects:
 - [Flutter](https://flutter.dev) - Google's UI toolkit
 - [Riverpod](https://riverpod.dev) - Reactive state management
 - [Isar](https://isar.dev) - High-performance NoSQL database
-- [Source Han Serif](https://github.com/adobe-fonts/source-han-serif) - Adobe open-source font
 
 Thanks to all contributors for their support!
 
