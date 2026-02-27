@@ -867,13 +867,15 @@ class EpubReader {
     }
 
     requestAnimationFrame(() => {
-      this._updatePageState('frame-curr');
-      this._updatePageState('frame-prev');
-      this._updatePageState('frame-next');
-      this._detectActiveAnchor(elPrev);
-      this._detectActiveAnchor(elCurr);
-      this._detectActiveAnchor(elNext);
-      this._buildInteractionMap();
+      requestAnimationFrame(() => {
+        this._updatePageState('frame-curr');
+        this._updatePageState('frame-prev');
+        this._updatePageState('frame-next');
+        this._detectActiveAnchor(elPrev);
+        this._detectActiveAnchor(elCurr);
+        this._detectActiveAnchor(elNext);
+        this._buildInteractionMap();
+      });
     });
   }
 
@@ -1390,6 +1392,8 @@ iframe {
   height: 100%;
   border: none;
   background-color: var(--lumina-surface-color, #FFFFFF) !important;
+  will-change: opacity;
+  transition: none;
 }
 
 /* Prev iframe: hidden, low z-index */

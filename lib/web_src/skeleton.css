@@ -28,6 +28,8 @@ iframe {
   height: 100%;
   border: none;
   background-color: var(--lumina-surface-color, #FFFFFF) !important;
+  will-change: opacity;
+  transition: none;
 }
 
 /* Prev iframe: hidden, low z-index */
