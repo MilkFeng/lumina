@@ -259,6 +259,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                     IconButton(
                       icon: const Icon(Icons.list_outlined),
                       onPressed: widget.onOpenDrawer,
+                      color: themeData.colorScheme.onSurface,
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -287,8 +288,8 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                 ? _handleTapLeft
                                 : null,
                             onLongPress: null,
-                            disabledColor: themeData.colorScheme.onSurface
-                                .withAlpha(100),
+                            disabledColor: themeData.disabledColor,
+                            color: themeData.colorScheme.onSurface,
                           ),
                         ),
                         Column(
@@ -331,8 +332,8 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                 ? _handleTapRight
                                 : null,
                             onLongPress: null,
-                            disabledColor: themeData.colorScheme.onSurface
-                                .withAlpha(100),
+                            disabledColor: themeData.disabledColor,
+                            color: themeData.colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -413,6 +414,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                           ),
                         );
                       },
+                      color: themeData.colorScheme.onSurface,
                     ),
                   ],
                 ),
