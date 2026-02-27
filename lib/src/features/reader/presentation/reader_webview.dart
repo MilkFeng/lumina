@@ -196,17 +196,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     _isHeadlessInitialized = true;
   }
 
-  Future<void> _waitForFlutterFrames(int frames) async {
-    for (int i = 0; i < frames; i++) {
-      final completer = Completer<void>();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        completer.complete();
-      });
-      WidgetsBinding.instance.scheduleFrame();
-      await completer.future;
-    }
-  }
-
   Future<void> _waitForWebviewRender() async {
     if (_controller == null) return;
 
@@ -231,7 +220,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   Future<void> _waitForRender() async {
     await _waitForWebviewRender();
-    await _waitForFlutterFrames(2);
   }
 
   // JavaScript methods
