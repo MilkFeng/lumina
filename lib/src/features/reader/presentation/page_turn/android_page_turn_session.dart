@@ -8,7 +8,7 @@ import '../reader_webview.dart';
 class AndroidPageTurnSession {
   late final AnimationController _animController;
   late Animation<Offset> _slideAnimation;
-  ui.Image? screenshotData;
+  ui.Image? _screenshotData;
   bool _isAnimating = false;
   bool _isForwardAnimation = true;
   int _pageTurnToken = 0;
@@ -25,7 +25,7 @@ class AndroidPageTurnSession {
   }
 
   void dispose() {
-    screenshotData?.dispose();
+    _screenshotData?.dispose();
     _animController.dispose();
   }
 
@@ -45,6 +45,19 @@ class AndroidPageTurnSession {
     _slideAnimation = tween.animate(_animController);
   }
 
+  Future<ui.Image?> _takeScreenshot(
+    ReaderWebViewController webViewController,
+  ) async {
+    ui.Image? screenshot;
+    try {
+      screenshot = await webViewController.takeScreenshot();
+    } catch (e) {
+      debugPrint('Error taking screenshot: $e');
+      screenshot = null;
+    }
+    return screenshot;
+  }
+
   Future<void> perform({
     required ReaderWebViewController webViewController,
     required bool isNext,
@@ -55,63 +68,49 @@ class AndroidPageTurnSession {
   }) async {
     final int turnToken = ++_pageTurnToken;
 
-    ui.Image? screenshot;
-    try {
-      screenshot = await webViewController.takeScreenshot();
-    } catch (e) {
-      debugPrint('Error taking screenshot: $e');
-      screenshot = null;
-    }
+    final screenshot = await _takeScreenshot(webViewController);
 
+    // If screenshot fails, just perform the page turn without animation
     if (screenshot == null) {
-      screenshotData?.dispose();
-      setState(() {
-        screenshotData = null;
-      });
+      _screenshotData?.dispose();
+      _screenshotData = null;
       _animController.reset();
-
       await onPerformPageTurn(isNext);
       return;
     }
 
+    // If the widget has been unmounted or a new page turn has started, dispose the screenshot and exit
     if (!isMounted() || turnToken != _pageTurnToken) {
       screenshot.dispose();
       return;
     }
 
-    if (_animController.isAnimating) {
-      _animController.stop();
-    }
-
+    // Start the animation
     setState(() {
       _isForwardAnimation = isNext;
 
-      screenshotData?.dispose();
-      screenshotData = screenshot;
+      _screenshotData?.dispose();
+      _screenshotData = screenshot;
       _isAnimating = true;
 
       _setupTween(isNext, isVertical);
       _animController.reset();
     });
 
-    await onPerformPageTurn(isNext);
-
-    if (!isMounted() || turnToken != _pageTurnToken) {
-      _isAnimating = false;
-      return;
-    }
+    // Perform the page turn in parallel with the animation
+    onPerformPageTurn(isNext);
 
     try {
       await _animController.forward();
     } finally {
       if (turnToken == _pageTurnToken) {
-        final finishedScreenshot = screenshotData;
+        final finishedScreenshot = _screenshotData;
         if (isMounted()) {
           setState(() {
-            screenshotData = null;
+            _screenshotData = null;
           });
         } else {
-          screenshotData = null;
+          _screenshotData = null;
         }
         finishedScreenshot?.dispose();
 
@@ -130,8 +129,8 @@ class AndroidPageTurnSession {
       children: [
         // Backward animation: show the current page as the background
         if (_isAnimating && !_isForwardAnimation)
-          Positioned.fill(child: buildScreenshotContainer(screenshotData)),
-        // Backward animation: slide the previous page in from the left
+          Positioned.fill(child: buildScreenshotContainer(_screenshotData)),
+        // Webview page: slide it in from the left for backward animation, or keep it static for forward animation
         Positioned.fill(
           child: SlideTransition(
             position: _isAnimating && !_isForwardAnimation
@@ -145,7 +144,7 @@ class AndroidPageTurnSession {
           Positioned.fill(
             child: SlideTransition(
               position: _slideAnimation,
-              child: buildScreenshotContainer(screenshotData),
+              child: buildScreenshotContainer(_screenshotData),
             ),
           ),
       ],
