@@ -65,7 +65,7 @@ class LibraryAppBar extends StatelessWidget {
         ),
         actions: [
           if (isSelectionMode)
-            TextButton(
+            IconButton(
               onPressed: () {
                 if (state.selectedCount == state.books.length) {
                   onClearSelection();
@@ -73,15 +73,15 @@ class LibraryAppBar extends StatelessWidget {
                   onSelectAll();
                 }
               },
-              child: Text(
+              icon: Icon(
                 state.selectedCount == state.books.length
-                    ? AppLocalizations.of(context)!.deselectAll
-                    : AppLocalizations.of(context)!.selectAll,
+                    ? Icons.deselect_outlined
+                    : Icons.select_all_outlined,
               ),
             )
           else ...[
             IconButton(
-              icon: const Icon(Icons.style_outlined),
+              icon: const Icon(Icons.grid_view_outlined),
               onPressed: onSortPressed,
             ),
           ],
