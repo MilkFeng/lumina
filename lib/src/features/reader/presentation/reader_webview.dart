@@ -202,6 +202,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         completer.complete();
       });
+      WidgetsBinding.instance.scheduleFrame();
       await completer.future;
     }
   }
