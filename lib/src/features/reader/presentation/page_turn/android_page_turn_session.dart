@@ -85,10 +85,8 @@ class AndroidPageTurnSession {
       return;
     }
 
-    // Start the animation
     setState(() {
       _isForwardAnimation = isNext;
-
       _screenshotData?.dispose();
       _screenshotData = screenshot;
       _isAnimating = true;
@@ -98,7 +96,12 @@ class AndroidPageTurnSession {
     });
 
     // Perform the page turn in parallel with the animation
-    onPerformPageTurn(isNext);
+    await onPerformPageTurn(isNext);
+
+    // Start the animation
+    if (!isMounted() || turnToken != _pageTurnToken) {
+      return;
+    }
 
     try {
       await _animController.forward();
@@ -108,9 +111,11 @@ class AndroidPageTurnSession {
         if (isMounted()) {
           setState(() {
             _screenshotData = null;
+            _isAnimating = false;
           });
         } else {
           _screenshotData = null;
+          _isAnimating = false;
         }
         finishedScreenshot?.dispose();
 
