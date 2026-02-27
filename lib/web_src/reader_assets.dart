@@ -1212,6 +1212,10 @@ a:visited {
   opacity: 1 !important;
 }
 
+body.override-color {
+  color: var(--on-surface-color) !important;
+}
+
 body.override-color p,
 body.override-color h1,
 body.override-color h2,
