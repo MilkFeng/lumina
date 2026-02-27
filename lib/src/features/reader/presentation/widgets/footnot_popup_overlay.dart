@@ -196,15 +196,26 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           },
                           customStylesBuilder: (element) {
                             Map<String, String> styles = {};
+                            final fontSize =
+                                (widget
+                                        .epubTheme
+                                        .themeData
+                                        .textTheme
+                                        .labelMedium
+                                        ?.fontSize ??
+                                    14.0) *
+                                widget.epubTheme.zoom;
+                            styles['font-size'] = '${fontSize}px';
                             if (widget.epubTheme.shouldOverrideTextColor) {
                               styles['color'] = colorToHex(
                                 widget.epubTheme.colorScheme.onSurface,
                               );
                             }
                             if (element.localName == 'a') {
-                              styles['color'] = colorToHex(
-                                widget.epubTheme.colorScheme.primary,
-                              );
+                              final color =
+                                  widget.epubTheme.overridePrimaryColor ??
+                                  widget.epubTheme.colorScheme.primary;
+                              styles['color'] = colorToHex(color);
                               styles['text-decoration'] = 'none';
                             }
                             return styles;
