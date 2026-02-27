@@ -2,11 +2,15 @@
 
 # Lumina
 
+<p align="center">
+  <img src="docs/icon.png" width="128px" />
+</p>
+
+A lightweight EPUB e-book reader built with Flutter, supporting both Android and iOS platforms.
+
 [![Flutter](https://img.shields.io/badge/Flutter-3.41.2-blue.svg)](https://flutter.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg)]()
-
-> A lightweight EPUB e-book reader built with Flutter, supporting both Android and iOS platforms.
 
 ## 🚧 Early Development Stage
 
