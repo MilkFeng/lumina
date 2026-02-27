@@ -6,27 +6,27 @@ import 'package:flutter/material.dart';
 import '../reader_webview.dart';
 
 class AndroidPageTurnSession {
-  late final AnimationController animController;
-  late Animation<Offset> slideAnimation;
+  late final AnimationController _animController;
+  late Animation<Offset> _slideAnimation;
   ui.Image? screenshotData;
-  bool isAnimating = false;
-  bool isForwardAnimation = true;
+  bool _isAnimating = false;
+  bool _isForwardAnimation = true;
   int _pageTurnToken = 0;
 
   AndroidPageTurnSession({
     required TickerProvider vsync,
     required Duration duration,
   }) {
-    animController = AnimationController(vsync: vsync, duration: duration);
-    slideAnimation = Tween<Offset>(
+    _animController = AnimationController(vsync: vsync, duration: duration);
+    _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
-    ).animate(animController);
+    ).animate(_animController);
   }
 
   void dispose() {
     screenshotData?.dispose();
-    animController.dispose();
+    _animController.dispose();
   }
 
   void _setupTween(bool isNext, bool isVertical) {
@@ -42,7 +42,7 @@ class AndroidPageTurnSession {
         end: Offset.zero,
       );
     }
-    slideAnimation = tween.animate(animController);
+    _slideAnimation = tween.animate(_animController);
   }
 
   Future<void> perform({
@@ -54,7 +54,7 @@ class AndroidPageTurnSession {
     required bool Function() isMounted,
   }) async {
     final int turnToken = ++_pageTurnToken;
-    isAnimating = true;
+    _isAnimating = true;
 
     ui.Image? screenshot;
     try {
@@ -69,44 +69,44 @@ class AndroidPageTurnSession {
       setState(() {
         screenshotData = null;
       });
-      animController.reset();
+      _animController.reset();
 
       await onPerformPageTurn(isNext);
       if (turnToken == _pageTurnToken) {
-        isAnimating = false;
+        _isAnimating = false;
       }
       return;
     }
 
     if (!isMounted() || turnToken != _pageTurnToken) {
       screenshot.dispose();
-      isAnimating = false;
+      _isAnimating = false;
       return;
     }
 
-    if (animController.isAnimating) {
-      animController.stop();
+    if (_animController.isAnimating) {
+      _animController.stop();
     }
 
     setState(() {
-      isForwardAnimation = isNext;
+      _isForwardAnimation = isNext;
 
       screenshotData?.dispose();
       screenshotData = screenshot;
 
       _setupTween(isNext, isVertical);
-      animController.reset();
+      _animController.reset();
     });
 
     await onPerformPageTurn(isNext);
 
     if (!isMounted() || turnToken != _pageTurnToken) {
-      isAnimating = false;
+      _isAnimating = false;
       return;
     }
 
     try {
-      await animController.forward();
+      await _animController.forward();
     } finally {
       if (turnToken == _pageTurnToken) {
         final finishedScreenshot = screenshotData;
@@ -119,8 +119,8 @@ class AndroidPageTurnSession {
         }
         finishedScreenshot?.dispose();
 
-        animController.reset();
-        isAnimating = false;
+        _animController.reset();
+        _isAnimating = false;
       }
     }
   }
@@ -132,20 +132,20 @@ class AndroidPageTurnSession {
   ) {
     return Stack(
       children: [
-        if (isAnimating && !isForwardAnimation)
+        if (_isAnimating && !_isForwardAnimation)
           Positioned.fill(child: buildScreenshotContainer(screenshotData)),
         Positioned.fill(
           child: SlideTransition(
-            position: isAnimating && !isForwardAnimation
-                ? slideAnimation
+            position: _isAnimating && !_isForwardAnimation
+                ? _slideAnimation
                 : const AlwaysStoppedAnimation(Offset.zero),
             child: child,
           ),
         ),
-        if (isAnimating && isForwardAnimation)
+        if (_isAnimating && _isForwardAnimation)
           Positioned.fill(
             child: SlideTransition(
-              position: slideAnimation,
+              position: _slideAnimation,
               child: buildScreenshotContainer(screenshotData),
             ),
           ),
