@@ -25,55 +25,66 @@ class ReaderRendererController {
 
   Future<void> performPreviousPageTurn() async {
     await _rendererState?._performPageTurn(false);
+    await webViewController?.waitForRender();
   }
 
   Future<void> performNextPageTurn() async {
     await _rendererState?._performPageTurn(true);
+    await webViewController?.waitForRender();
   }
 
   Future<void> jumpToPage(int pageIndex) async {
     await webViewController?.jumpToPage(pageIndex);
+    await webViewController?.waitForRender();
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
     await webViewController?.restoreScrollPosition(ratio);
+    await webViewController?.waitForRender();
   }
 
   Future<void> jumpToPreviousChapterLastPage() async {
     await webViewController?.jumpToLastPageOfFrame('prev');
     await webViewController?.cycleFrames('prev');
+    await webViewController?.waitForRender();
   }
 
   Future<void> jumpToPreviousChapterFirstPage() async {
     await webViewController?.jumpToPageFor('prev', 0);
     await webViewController?.cycleFrames('prev');
+    await webViewController?.waitForRender();
   }
 
   Future<void> jumpToNextChapter() async {
     await webViewController?.jumpToPageFor('next', 0);
     await webViewController?.cycleFrames('next');
+    await webViewController?.waitForRender();
   }
 
   Future<void> preloadCurrentChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
     await webViewController?.loadFrame('curr', url, anchorsJson);
+    await webViewController?.waitForRender();
   }
 
   Future<void> preloadNextChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
     await webViewController?.loadFrame('next', url, anchorsJson);
+    await webViewController?.waitForRender();
   }
 
   Future<void> preloadPreviousChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
     await webViewController?.loadFrame('prev', url, anchorsJson);
+    await webViewController?.waitForRender();
   }
 
   Future<void> updateTheme(EpubTheme theme) async {
     await _rendererState?._updateTheme(theme);
+    await webViewController?.waitForRender();
   }
 }
 

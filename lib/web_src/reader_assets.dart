@@ -811,7 +811,7 @@ class EpubReader {
     }
   }
 
-  async cycleFrames(direction) {
+  cycleFrames(direction) {
     const elPrev = this._frameElement('prev');
     const elCurr = this._frameElement('curr');
     const elNext = this._frameElement('next');
@@ -875,9 +875,6 @@ class EpubReader {
       this._detectActiveAnchor(elNext);
       this._buildInteractionMap();
     });
-
-    // Wait for 100ms
-    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   jumpToLastPageOfFrame(slot) {
@@ -1132,6 +1129,14 @@ class EpubReader {
         rect.height,
       );
     }
+  }
+
+  waitForRender(token) {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        window.flutter_inappwebview.callHandler('onRendered', token);
+      });
+    });
   }
 }
 
