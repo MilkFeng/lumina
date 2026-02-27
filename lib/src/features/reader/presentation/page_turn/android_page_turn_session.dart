@@ -6,27 +6,27 @@ import 'package:flutter/material.dart';
 import '../reader_webview.dart';
 
 class AndroidPageTurnSession {
-  late final AnimationController animController;
-  late Animation<Offset> slideAnimation;
-  ui.Image? screenshotData;
-  bool isAnimating = false;
-  bool isForwardAnimation = true;
+  late final AnimationController _animController;
+  late Animation<Offset> _slideAnimation;
+  ui.Image? _screenshotData;
+  bool _isAnimating = false;
+  bool _isForwardAnimation = true;
   int _pageTurnToken = 0;
 
   AndroidPageTurnSession({
     required TickerProvider vsync,
     required Duration duration,
   }) {
-    animController = AnimationController(vsync: vsync, duration: duration);
-    slideAnimation = Tween<Offset>(
+    _animController = AnimationController(vsync: vsync, duration: duration);
+    _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: Offset.zero,
-    ).animate(animController);
+    ).animate(_animController);
   }
 
   void dispose() {
-    screenshotData?.dispose();
-    animController.dispose();
+    _screenshotData?.dispose();
+    _animController.dispose();
   }
 
   void _setupTween(bool isNext, bool isVertical) {
@@ -42,7 +42,20 @@ class AndroidPageTurnSession {
         end: Offset.zero,
       );
     }
-    slideAnimation = tween.animate(animController);
+    _slideAnimation = tween.animate(_animController);
+  }
+
+  Future<ui.Image?> _takeScreenshot(
+    ReaderWebViewController webViewController,
+  ) async {
+    ui.Image? screenshot;
+    try {
+      screenshot = await webViewController.takeScreenshot();
+    } catch (e) {
+      debugPrint('Error taking screenshot: $e');
+      screenshot = null;
+    }
+    return screenshot;
   }
 
   Future<void> perform({
@@ -54,73 +67,60 @@ class AndroidPageTurnSession {
     required bool Function() isMounted,
   }) async {
     final int turnToken = ++_pageTurnToken;
-    isAnimating = true;
 
-    ui.Image? screenshot;
-    try {
-      screenshot = await webViewController.takeScreenshot();
-    } catch (e) {
-      debugPrint('Error taking screenshot: $e');
-      screenshot = null;
-    }
+    final screenshot = await _takeScreenshot(webViewController);
 
+    // If screenshot fails, just perform the page turn without animation
     if (screenshot == null) {
-      screenshotData?.dispose();
-      setState(() {
-        screenshotData = null;
-      });
-      animController.reset();
-
+      _screenshotData?.dispose();
+      _screenshotData = null;
+      _animController.reset();
       await onPerformPageTurn(isNext);
-      if (turnToken == _pageTurnToken) {
-        isAnimating = false;
-      }
       return;
     }
 
+    // If the widget has been unmounted or a new page turn has started, dispose the screenshot and exit
     if (!isMounted() || turnToken != _pageTurnToken) {
       screenshot.dispose();
-      isAnimating = false;
       return;
-    }
-
-    if (animController.isAnimating) {
-      animController.stop();
     }
 
     setState(() {
-      isForwardAnimation = isNext;
-
-      screenshotData?.dispose();
-      screenshotData = screenshot;
+      _isForwardAnimation = isNext;
+      _screenshotData?.dispose();
+      _screenshotData = screenshot;
+      _isAnimating = true;
 
       _setupTween(isNext, isVertical);
-      animController.reset();
+      _animController.reset();
     });
 
+    // Perform the page turn in parallel with the animation
     await onPerformPageTurn(isNext);
 
+    // Start the animation
     if (!isMounted() || turnToken != _pageTurnToken) {
-      isAnimating = false;
       return;
     }
 
     try {
-      await animController.forward();
+      await _animController.forward();
     } finally {
       if (turnToken == _pageTurnToken) {
-        final finishedScreenshot = screenshotData;
+        final finishedScreenshot = _screenshotData;
         if (isMounted()) {
           setState(() {
-            screenshotData = null;
+            _screenshotData = null;
+            _isAnimating = false;
           });
         } else {
-          screenshotData = null;
+          _screenshotData = null;
+          _isAnimating = false;
         }
         finishedScreenshot?.dispose();
 
-        animController.reset();
-        isAnimating = false;
+        _animController.reset();
+        _isAnimating = false;
       }
     }
   }
@@ -132,21 +132,24 @@ class AndroidPageTurnSession {
   ) {
     return Stack(
       children: [
-        if (isAnimating && !isForwardAnimation)
-          Positioned.fill(child: buildScreenshotContainer(screenshotData)),
+        // Backward animation: show the current page as the background
+        if (_isAnimating && !_isForwardAnimation)
+          Positioned.fill(child: buildScreenshotContainer(_screenshotData)),
+        // Webview page: slide it in from the left for backward animation, or keep it static for forward animation
         Positioned.fill(
           child: SlideTransition(
-            position: isAnimating && !isForwardAnimation
-                ? slideAnimation
+            position: _isAnimating && !_isForwardAnimation
+                ? _slideAnimation
                 : const AlwaysStoppedAnimation(Offset.zero),
             child: child,
           ),
         ),
-        if (isAnimating && isForwardAnimation)
+        // Forward animation: slide the current page out to the right
+        if (_isAnimating && _isForwardAnimation)
           Positioned.fill(
             child: SlideTransition(
-              position: slideAnimation,
-              child: buildScreenshotContainer(screenshotData),
+              position: _slideAnimation,
+              child: buildScreenshotContainer(_screenshotData),
             ),
           ),
       ],

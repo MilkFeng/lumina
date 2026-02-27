@@ -61,6 +61,10 @@ class ReaderWebViewController {
     return await _webViewState?._takeScreenshot();
   }
 
+  Future<void> waitForRender() async {
+    await _webViewState?._waitForRender();
+  }
+
   Future<void> updateTheme(EpubTheme theme) async {
     await _webViewState?._updateTheme(theme);
   }
@@ -155,6 +159,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   late EpubTheme _currentTheme;
 
+  int _currentToken = 0;
+  final Map<int, Completer<void>> _renderCompleters = {};
+
   @override
   void initState() {
     super.initState();
@@ -187,6 +194,32 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
     _headlessWebView?.run();
     _isHeadlessInitialized = true;
+  }
+
+  Future<void> _waitForWebviewRender() async {
+    if (_controller == null) return;
+
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _renderCompleters[token] = completer;
+
+    await _evaluateJavascript("window.reader.waitForRender($token)");
+
+    return completer.future.timeout(
+      const Duration(milliseconds: 1000),
+      onTimeout: () {
+        if (_renderCompleters.containsKey(token)) {
+          _renderCompleters.remove(token);
+          debugPrint('waitForRender timeout for token: $token');
+        }
+      },
+    );
+  }
+
+  Future<void> _waitForRender() async {
+    await _waitForWebviewRender();
   }
 
   // JavaScript methods
@@ -461,6 +494,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       handlerName: 'onViewportResize',
       callback: (args) {
         _updateTheme(_currentTheme);
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onRendered',
+      callback: (args) {
+        if (args.isNotEmpty) {
+          final int returnedToken = args[0] as int;
+          if (_renderCompleters.containsKey(returnedToken)) {
+            _renderCompleters[returnedToken]?.complete();
+            _renderCompleters.remove(returnedToken);
+          }
+        }
       },
     );
   }

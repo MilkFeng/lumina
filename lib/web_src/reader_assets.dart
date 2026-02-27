@@ -639,34 +639,33 @@ class EpubReader {
       if (!iframe.contentWindow) return;
 
       requestAnimationFrame(() => {
-        const pageCount = this._calculatePageCount(iframe);
-        const slot = this._slotFromFrameId(iframe.id);
-        this.state.frames[slot] = pageCount;
-
-        let pageIndex = 0;
-        const url = iframe.src;
-        if (url && url.includes('#')) {
-          const anchor = url.split('#')[1];
-          pageIndex = this._calculatePageIndexOfAnchor(iframe, anchor);
-          const offset = this._calculateScrollOffset(pageIndex);
-          this._scrollTo(iframe, offset);
-        }
-
-        if (iframe.id === 'frame-curr') {
-          window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-          window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-          window.flutter_inappwebview.callHandler('onRendererInitialized');
-        } else if (iframe.id === 'frame-prev') {
-          // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
-          this.jumpToLastPageOfFrame('prev');
-        } else if (iframe.id === 'frame-next') {
-          // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
-          this.jumpToPageFor('next', 0);
-        }
-
-        this._buildInteractionMap();
-
         requestAnimationFrame(() => {
+          const pageCount = this._calculatePageCount(iframe);
+          const slot = this._slotFromFrameId(iframe.id);
+          this.state.frames[slot] = pageCount;
+
+          let pageIndex = 0;
+          const url = iframe.src;
+          if (url && url.includes('#')) {
+            const anchor = url.split('#')[1];
+            pageIndex = this._calculatePageIndexOfAnchor(iframe, anchor);
+            const offset = this._calculateScrollOffset(pageIndex);
+            this._scrollTo(iframe, offset);
+          }
+
+          if (iframe.id === 'frame-curr') {
+            window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
+            window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+            window.flutter_inappwebview.callHandler('onRendererInitialized');
+          } else if (iframe.id === 'frame-prev') {
+            // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
+            this.jumpToLastPageOfFrame('prev');
+          } else if (iframe.id === 'frame-next') {
+            // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
+            this.jumpToPageFor('next', 0);
+          }
+
+          this._buildInteractionMap();
           this._detectActiveAnchor(iframe);
         });
       });
@@ -711,29 +710,28 @@ class EpubReader {
     if (!iframe.contentWindow) return;
 
     requestAnimationFrame(() => {
-      const pageCount = this._calculatePageCount(iframe);
-      const slot = this._slotFromFrameId(iframe.id);
-      this.state.frames[slot] = pageCount;
-
-      const pageIndex = Math.round(pageIndexPercentage * pageCount);
-      const scrollOffset = this._calculateScrollOffset(pageIndex);
-      this._scrollTo(iframe, scrollOffset);
-
-      if (iframe.id === 'frame-curr') {
-        window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-        window.flutter_inappwebview.callHandler('onRendererInitialized');
-      } else if (iframe.id === 'frame-prev') {
-        // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
-        this.jumpToLastPageOfFrame(iframe);
-      } else if (iframe.id === 'frame-next') {
-        // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
-        this.jumpToPageFor('next', 0);
-      }
-
-      this._buildInteractionMap();
-
       requestAnimationFrame(() => {
+        const pageCount = this._calculatePageCount(iframe);
+        const slot = this._slotFromFrameId(iframe.id);
+        this.state.frames[slot] = pageCount;
+
+        const pageIndex = Math.round(pageIndexPercentage * pageCount);
+        const scrollOffset = this._calculateScrollOffset(pageIndex);
+        this._scrollTo(iframe, scrollOffset);
+
+        if (iframe.id === 'frame-curr') {
+          window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
+          window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+          window.flutter_inappwebview.callHandler('onRendererInitialized');
+        } else if (iframe.id === 'frame-prev') {
+          // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
+          this.jumpToLastPageOfFrame('prev');
+        } else if (iframe.id === 'frame-next') {
+          // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
+          this.jumpToPageFor('next', 0);
+        }
+
+        this._buildInteractionMap();
         this._detectActiveAnchor(iframe);
       });
     });
@@ -747,8 +745,10 @@ class EpubReader {
     this._scrollTo(iframe, scrollOffset);
 
     requestAnimationFrame(() => {
-      window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-      this._detectActiveAnchor(iframe);
+      requestAnimationFrame(() => {
+        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+        this._detectActiveAnchor(iframe);
+      });
     });
   }
 
@@ -760,10 +760,12 @@ class EpubReader {
     this._scrollTo(iframe, scrollOffset);
 
     requestAnimationFrame(() => {
-      if (iframe.id === 'frame-curr') {
-        window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-      }
-      this._detectActiveAnchor(iframe);
+      requestAnimationFrame(() => {
+        if (iframe.id === 'frame-curr') {
+          window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+        }
+        this._detectActiveAnchor(iframe);
+      });
     });
   }
 
@@ -811,7 +813,7 @@ class EpubReader {
     }
   }
 
-  async cycleFrames(direction) {
+  cycleFrames(direction) {
     const elPrev = this._frameElement('prev');
     const elCurr = this._frameElement('curr');
     const elNext = this._frameElement('next');
@@ -824,18 +826,15 @@ class EpubReader {
       elNext.id = 'frame-curr';
       elNext.style.zIndex = '2';
       elNext.style.opacity = '1';
-      elNext.style.pointerEvents = 'auto';
 
       elCurr.id = 'frame-prev';
       elCurr.style.zIndex = '1';
       elCurr.style.opacity = '0';
-      elCurr.style.pointerEvents = 'none';
 
       const recycled = document.getElementById('frame-temp');
       recycled.id = 'frame-next';
       recycled.style.zIndex = '1';
       recycled.style.opacity = '0';
-      recycled.style.pointerEvents = 'none';
 
       const tempAnchors = this.state.anchors.prev;
       this.state.anchors.prev = this.state.anchors.curr;
@@ -847,18 +846,15 @@ class EpubReader {
       elPrev.id = 'frame-curr';
       elPrev.style.zIndex = '2';
       elPrev.style.opacity = '1';
-      elPrev.style.pointerEvents = 'auto';
 
       elCurr.id = 'frame-next';
       elCurr.style.zIndex = '1';
       elCurr.style.opacity = '0';
-      elCurr.style.pointerEvents = 'none';
 
       const recycled = document.getElementById('frame-temp');
       recycled.id = 'frame-prev';
       recycled.style.zIndex = '1';
       recycled.style.opacity = '0';
-      recycled.style.pointerEvents = 'none';
 
       const tempAnchors = this.state.anchors.next;
       this.state.anchors.next = this.state.anchors.curr;
@@ -867,17 +863,16 @@ class EpubReader {
     }
 
     requestAnimationFrame(() => {
-      this._updatePageState('frame-curr');
-      this._updatePageState('frame-prev');
-      this._updatePageState('frame-next');
-      this._detectActiveAnchor(elPrev);
-      this._detectActiveAnchor(elCurr);
-      this._detectActiveAnchor(elNext);
-      this._buildInteractionMap();
+      requestAnimationFrame(() => {
+        this._updatePageState('frame-curr');
+        this._updatePageState('frame-prev');
+        this._updatePageState('frame-next');
+        this._detectActiveAnchor(elPrev);
+        this._detectActiveAnchor(elCurr);
+        this._detectActiveAnchor(elNext);
+        this._buildInteractionMap();
+      });
     });
-
-    // Wait for 100ms
-    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   jumpToLastPageOfFrame(slot) {
@@ -1133,6 +1128,14 @@ class EpubReader {
       );
     }
   }
+
+  waitForRender(token) {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        window.flutter_inappwebview.callHandler('onRendered', token);
+      });
+    });
+  }
 }
 
 window.reader = new EpubReader();
@@ -1385,26 +1388,8 @@ iframe {
   height: 100%;
   border: none;
   background-color: var(--lumina-surface-color, #FFFFFF) !important;
-}
-
-/* Prev iframe: hidden, low z-index */
-#frame-prev {
-  z-index: 1;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Current iframe: visible, high z-index */
-#frame-curr {
-  z-index: 2;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Next iframe: hidden, low z-index */
-#frame-next {
-  z-index: 1;
-  opacity: 0;
+  will-change: opacity;
+  transition: none;
   pointer-events: none;
 }
 ''';

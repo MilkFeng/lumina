@@ -116,9 +116,9 @@ String generateSkeletonHtml(
 </head>
 <body>
   <div id="frame-container">
-    <iframe id="frame-prev" scrolling="no"></iframe>
-    <iframe id="frame-curr" scrolling="no"></iframe>
-    <iframe id="frame-next" scrolling="no"></iframe>
+    <iframe id="frame-prev" scrolling="no" style="z-index: 1; opacity: 0;"></iframe>
+    <iframe id="frame-curr" scrolling="no" style="z-index: 2; opacity: 1;"></iframe>
+    <iframe id="frame-next" scrolling="no" style="z-index: 1; opacity: 0;"></iframe>
   </div>
 </body>
 </html>
