@@ -213,7 +213,6 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                     widget.title,
                     style: themeData.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontFamily: AppTheme.fontFamilyContent,
                       fontSize: 16,
                     ),
                     overflow: TextOverflow.ellipsis,

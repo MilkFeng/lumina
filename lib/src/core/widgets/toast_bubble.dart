@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 
 enum ToastBubbleType { success, error, info }
 
@@ -53,7 +52,6 @@ class ToastBubble extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: contentColor,
                 height: 1.2,
-                fontFamily: AppTheme.fontFamilyContent,
                 fontWeight: FontWeight.w400,
               ),
             ),

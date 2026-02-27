@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../domain/shelf_group.dart';
@@ -86,11 +85,11 @@ class LibraryAppBar extends StatelessWidget {
                 tabAlignment: TabAlignment.start,
                 tabs: _buildTabs(context),
                 indicatorSize: TabBarIndicatorSize.label,
-                labelStyle: AppTheme.contentTextStyle.copyWith(
+                labelStyle: TextStyle(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w700,
                 ),
-                unselectedLabelStyle: AppTheme.contentTextStyle.copyWith(
+                unselectedLabelStyle: TextStyle(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w400,
                 ),

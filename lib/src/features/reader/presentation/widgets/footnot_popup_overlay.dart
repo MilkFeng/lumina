@@ -184,7 +184,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           widget.rawHtml,
                           textStyle: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                fontFamily: AppTheme.fontFamilyContent,
                                 color: widget.epubTheme.colorScheme.onSurface,
                                 height: 1.6,
                               ),
@@ -197,7 +196,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                               'Error loading content',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    fontFamily: AppTheme.fontFamilyContent,
                                     color:
                                         widget.epubTheme.colorScheme.onSurface,
                                   ),

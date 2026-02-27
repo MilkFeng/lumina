@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/presentation/widgets/progress_dialog.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
@@ -480,7 +479,6 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
           ),
           onChanged: (value) => draftName = value,
           onSubmitted: (value) => Navigator.pop(context, value.trim()),
-          style: AppTheme.contentTextStyle,
           inputFormatters: [
             FilteringTextInputFormatter.deny(RegExp(r'[\n\r]')),
           ],

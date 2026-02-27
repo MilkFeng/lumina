@@ -5,26 +5,6 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  // Font Family - Elegant Serif for a literary feel
-  static const String _fontFamily = 'AppSerif';
-
-  // Content Font Family - Slightly softer serif for body text
-  static const String fontFamilyContent = 'AppSerifContent';
-  static const TextStyle contentTextStyle = TextStyle(
-    fontFamily: fontFamilyContent,
-    fontWeight: FontWeight.w400,
-  );
-
-  static const List<String> _defaultFallback = [
-    "AppSerifContent",
-    "Songti SC",
-    "STSong",
-    "Noto Serif CJK SC",
-    "Source Han Serif SC",
-    'SimSun',
-    'serif',
-  ];
-
   static const int defaultAnimationDurationMs = 250;
   static const int defaultLongAnimationDurationMs = 320;
   static const int defaultPresentationDurationMs = 3 * 1000; // 3 seconds
@@ -123,7 +103,6 @@ class AppTheme {
         centerTitle: false,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
         titleTextStyle: TextStyle(
-          fontFamily: _fontFamily,
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: colorScheme.onSurface,
@@ -156,19 +135,13 @@ class AppTheme {
           foregroundColor: colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: notionRadius),
-          textStyle: const TextStyle(
-            fontFamily: _fontFamily,
-            fontWeight: FontWeight.bold,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.onSurfaceVariant,
-          textStyle: const TextStyle(
-            fontFamily: _fontFamily,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -176,10 +149,7 @@ class AppTheme {
           foregroundColor: colorScheme.onSurface,
           side: BorderSide(color: colorScheme.outline, width: 1),
           shape: RoundedRectangleBorder(borderRadius: notionRadius),
-          textStyle: const TextStyle(
-            fontFamily: _fontFamily,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -212,8 +182,6 @@ class AppTheme {
     // final primaryColor = colorScheme.primary;
 
     final baseWithFontAndColor = baseTextTheme.apply(
-      fontFamily: _fontFamily,
-      fontFamilyFallback: _defaultFallback,
       bodyColor: mainColor,
       displayColor: mainColor,
     );

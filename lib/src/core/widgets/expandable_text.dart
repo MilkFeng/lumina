@@ -34,10 +34,9 @@ class _ExpandableTextState extends State<ExpandableText> {
             text: widget.text,
             style:
                 widget.style ??
-                Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: AppTheme.fontFamilyContent,
-                  fontWeight: FontWeight.w400,
-                ),
+                Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w400),
           );
 
           final tp = TextPainter(
@@ -69,7 +68,6 @@ class _ExpandableTextState extends State<ExpandableText> {
                 style:
                     widget.style ??
                     Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: AppTheme.fontFamilyContent,
                       fontWeight: FontWeight.w400,
                     ),
                 maxLines: _isExpanded ? null : widget.maxLines,

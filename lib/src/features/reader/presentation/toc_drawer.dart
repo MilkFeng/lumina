@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/domain/book_manifest.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../../core/widgets/book_cover.dart';
@@ -281,7 +280,6 @@ class _TocDrawerState extends State<TocDrawer> {
                     color: isActive
                         ? widget.themeData.colorScheme.onSurface
                         : widget.themeData.colorScheme.onSurfaceVariant,
-                    fontFamily: AppTheme.fontFamilyContent,
                   ),
                 ),
               ),
@@ -341,7 +339,6 @@ class _TocDrawerState extends State<TocDrawer> {
                     widget.book.title,
                     style: widget.themeData.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w400,
-                      fontFamily: AppTheme.fontFamilyContent,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -353,7 +350,6 @@ class _TocDrawerState extends State<TocDrawer> {
                       style: widget.themeData.textTheme.bodySmall?.copyWith(
                         color: widget.themeData.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w400,
-                        fontFamily: AppTheme.fontFamilyContent,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
