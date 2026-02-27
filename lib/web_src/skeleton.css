@@ -6,16 +6,16 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--surface-color, #FFFFFF) !important;
+  background-color: var(--lumina-surface-color, #FFFFFF) !important;
 }
 
 /* Container for iframes */
 #frame-container {
   position: absolute;
-  top: var(--padding-top, 0px);
-  left: var(--padding-left, 0px);
-  right: var(--padding-right, 0px);
-  bottom: var(--padding-bottom, 0px);
+  top: var(--lumina-padding-top, 0px);
+  left: var(--lumina-padding-left, 0px);
+  right: var(--lumina-padding-right, 0px);
+  bottom: var(--lumina-padding-bottom, 0px);
   overflow: hidden;
 }
 
@@ -27,7 +27,7 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
-  background-color: var(--surface-color, #FFFFFF) !important;
+  background-color: var(--lumina-surface-color, #FFFFFF) !important;
 }
 
 /* Prev iframe: hidden, low z-index */
