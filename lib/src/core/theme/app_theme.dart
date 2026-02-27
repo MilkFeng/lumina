@@ -178,58 +178,13 @@ class AppTheme {
         : ThemeData.dark().textTheme;
 
     final mainColor = colorScheme.onSurface;
-    final mutedColor = colorScheme.onSurfaceVariant;
-    // final primaryColor = colorScheme.primary;
 
     final baseWithFontAndColor = baseTextTheme.apply(
       bodyColor: mainColor,
       displayColor: mainColor,
     );
 
-    return baseWithFontAndColor.copyWith(
-      displayLarge: baseWithFontAndColor.displayLarge?.copyWith(
-        fontWeight: FontWeight.w900,
-      ),
-      displayMedium: baseWithFontAndColor.displayMedium?.copyWith(
-        fontWeight: FontWeight.w900,
-      ),
-      displaySmall: baseWithFontAndColor.displaySmall?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
-      headlineLarge: baseWithFontAndColor.headlineLarge?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
-      headlineMedium: baseWithFontAndColor.headlineMedium?.copyWith(
-        fontWeight: FontWeight.w600, // SemiBold
-      ),
-      headlineSmall: baseWithFontAndColor.headlineSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
-      titleLarge: baseWithFontAndColor.titleLarge?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
-      titleMedium: baseWithFontAndColor.titleMedium?.copyWith(
-        fontWeight: FontWeight.w500, // Medium
-      ),
-      titleSmall: baseWithFontAndColor.titleSmall?.copyWith(
-        fontWeight: FontWeight.w500,
-      ),
-      bodyLarge: baseWithFontAndColor.bodyLarge?.copyWith(
-        fontWeight: FontWeight.w400,
-      ),
-      bodyMedium: baseWithFontAndColor.bodyMedium?.copyWith(
-        fontWeight: FontWeight.w400,
-      ),
-      bodySmall: baseWithFontAndColor.bodySmall?.copyWith(
-        fontWeight: FontWeight.w300,
-        color: mutedColor,
-      ),
-      labelLarge: baseWithFontAndColor.labelLarge?.copyWith(
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
-        // color: primaryColor,
-      ),
-    );
+    return baseWithFontAndColor;
   }
 
   static PageTransitionsTheme get pageTransitionsTheme {

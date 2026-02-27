@@ -176,10 +176,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get create => '创建';
 
   @override
-  String get deleteBooks => '删除图书';
+  String get deleteBooks => '删除书籍';
 
   @override
-  String get deleteBooksConfirm => '永久删除所选图书？';
+  String get deleteBooksConfirm => '永久删除所选书籍？';
 
   @override
   String movedTo(String name) {

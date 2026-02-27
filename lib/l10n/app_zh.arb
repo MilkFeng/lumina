@@ -291,12 +291,12 @@
     "description": "创建按钮标签"
   },
   
-  "deleteBooks": "删除图书",
+  "deleteBooks": "删除书籍",
   "@deleteBooks": {
     "description": "删除图书对话框标题"
   },
   
-  "deleteBooksConfirm": "永久删除所选图书？",
+  "deleteBooksConfirm": "永久删除所选书籍？",
   "@deleteBooksConfirm": {
     "description": "删除图书确认消息"
   },
