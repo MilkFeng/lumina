@@ -499,23 +499,26 @@ class EpubReader {
         if (!link) continue;
 
         const href = link.getAttribute('href');
+        const fullHref = link.href;
         const epubType = link.getAttribute('epub:type');
         let innerHtml = '';
+
+        let isFootnote = false;
 
         if (link.hasAttribute('title') && (!href || href === '#')) {
           // Some footnotes use the link's title attribute to store the content instead of pointing to an element in the page
           innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
+          isFootnote = true;
+        } else if (epubType === 'noteref') {
+          // find the best candidate element to represent the footnote content
+          const targetId = this._extractTargetIdFromHref(href);
+          innerHtml = this._extractFootnoteHtml(targetId);
+          isFootnote = true;
         } else {
-          if (epubType === 'noteref') {
-            // find the best candidate element to represent the footnote content
-            const targetId = this._extractTargetIdFromHref(href);
-            innerHtml = this._extractFootnoteHtml(targetId);
-          } else {
-            continue;
-          }
+          // Regular link
         }
 
-        if (!innerHtml || innerHtml.trim() === '') {
+        if (isFootnote && (!innerHtml || innerHtml.trim() === '')) {
           continue;
         }
 
@@ -528,16 +531,29 @@ class EpubReader {
           const docX = rect.left + body.scrollLeft - bodyRect.left;
           const docY = rect.top + body.scrollTop - bodyRect.top;
 
-          quadTree.insert({
-            type: 'footnote',
-            rect: {
-              x: docX,
-              y: docY,
-              width: rect.width,
-              height: rect.height,
-            },
-            data: innerHtml,
-          });
+          if (isFootnote) {
+            quadTree.insert({
+              type: 'footnote',
+              rect: {
+                x: docX,
+                y: docY,
+                width: rect.width,
+                height: rect.height,
+              },
+              data: innerHtml,
+            });
+          } else {
+            quadTree.insert({
+              type: 'link',
+              rect: {
+                x: docX,
+                y: docY,
+                width: rect.width,
+                height: rect.height,
+              },
+              data: fullHref,
+            });
+          }
         }
       }
 
@@ -1045,7 +1061,7 @@ class EpubReader {
 
   checkTapElementAt(x, y) {
     const bestCandidate = this._checkElementAt(x, y, (candidate) => {
-      if (candidate.type === 'footnote') {
+      if (candidate.type === 'footnote' || candidate.type === 'link') {
         return true;
       }
       return false;
@@ -1062,10 +1078,19 @@ class EpubReader {
       const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
       const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
 
-      window.flutter_inappwebview.callHandler(
-        'onFootnoteTap', bestCandidate.data,
-        absoluteLeft, absoluteTop, rect.width, rect.height
-      );
+      if (bestCandidate.type === 'footnote') {
+        window.flutter_inappwebview.callHandler(
+          'onFootnoteTap', bestCandidate.data,
+          absoluteLeft, absoluteTop, rect.width, rect.height
+        );
+      } else if (bestCandidate.type === 'link') {
+        window.flutter_inappwebview.callHandler(
+          'onLinkTap', bestCandidate.data,
+          absoluteLeft, absoluteTop, rect.width, rect.height
+        );
+      } else {
+        window.flutter_inappwebview.callHandler('onTap', x, y);
+      }
     } else {
       // Fall back to just sending tap coordinates if no interactive element is found nearby
       window.flutter_inappwebview.callHandler('onTap', x, y);

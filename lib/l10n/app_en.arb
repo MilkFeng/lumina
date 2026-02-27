@@ -1081,5 +1081,35 @@
   "readerThemeDark": "Dark",
   "@readerThemeDark": {
     "description": "Dark reader theme chip label"
+  },
+
+  "cannotOpenLink": "Cannot open this link: {url}",
+  "@cannotOpenLink": {
+    "description": "Error message shown when the user tries to open a link that cannot be handled by the system",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+
+  "openExternalLink": "Open External Link",
+  "@openExternalLink": {
+    "description": "Label for the action to open a link in the system browser"
+  },
+
+  "openExternalLinkConfirmation": "This link will be opened in your browser: {url}\n\nDo you want to proceed?",
+  "@openExternalLinkConfirmation": {
+    "description": "Confirmation message shown before opening an external link",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+
+  "open": "Open",
+  "@open": {
+    "description": "Open button label for opening external links"
   }
 }

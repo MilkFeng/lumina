@@ -240,6 +240,28 @@ class BookSession {
     return index != -1 ? index : null;
   }
 
+  int? findSpineIndexByUrl(String url) {
+    if (_manifest == null) return null;
+
+    // Check if URL is full url with epub://localhost/book/{fileHash}/path(#anchor)
+    // If so, extract the path, no need to extract anchor because spine only cares about path
+    String path;
+    if (url.startsWith(EpubWebViewHandler.virtualScheme)) {
+      final uri = Uri.parse(url);
+      path = uri.pathSegments.skip(2).join('/'); // Skip 'book' and '{fileHash}'
+    } else {
+      // Otherwise, treat it as a relative path (e.g. from TOC)
+      path = url.split('#')[0];
+    }
+
+    final index = _spine.indexWhere((s) => s.href == path);
+    if (index != -1) {
+      return index;
+    }
+
+    return null;
+  }
+
   /// Get initial reading position
   int get initialChapterIndex => _book?.currentChapterIndex ?? 0;
   double? get initialScrollPosition => _book?.chapterScrollPosition;

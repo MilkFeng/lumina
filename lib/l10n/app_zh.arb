@@ -1091,5 +1091,35 @@
   "readerThemeDark": "深色",
   "@readerThemeDark": {
     "description": "深色阅读主题选项标签"
+  },
+
+  "cannotOpenLink": "无法打开链接：{url}",
+  "@cannotOpenLink": {
+    "description": "无法打开链接的错误提示",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+
+  "openExternalLink": "打开外部链接",
+  "@openExternalLink": {
+    "description": "打开外部链接的确认对话框标题"
+  },
+
+  "openExternalLinkConfirmation": "您正在尝试打开一个外部链接：{url}\n\n是否继续？",
+  "@openExternalLinkConfirmation": {
+    "description": "打开外部链接的确认对话框内容",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+
+  "open": "打开",
+  "@open": {
+    "description": "打开链接的按钮标签"
   }
 }

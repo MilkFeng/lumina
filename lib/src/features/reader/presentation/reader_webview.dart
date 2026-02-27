@@ -94,6 +94,8 @@ class ReaderWebViewCallbacks {
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
   final Function(String innerHtml, Rect rect) onFootnoteTap;
+  final Function(String url, Rect rect) onLinkTap;
+  final bool Function(String url, Rect rect) shouldHandleLinkTap;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -104,6 +106,8 @@ class ReaderWebViewCallbacks {
     required this.onImageLongPress,
     required this.onTap,
     required this.onFootnoteTap,
+    required this.onLinkTap,
+    required this.shouldHandleLinkTap,
   });
 }
 
@@ -410,6 +414,25 @@ class _ReaderWebViewState extends State<ReaderWebView> {
           (args[4] as num).toDouble(),
         );
         widget.callbacks.onFootnoteTap(innerHtml, rect);
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onLinkTap',
+      callback: (args) {
+        if (args.isEmpty) return;
+        final url = args[0] as String;
+        final rect = Rect.fromLTWH(
+          (args[1] as num).toDouble(),
+          (args[2] as num).toDouble(),
+          (args[3] as num).toDouble(),
+          (args[4] as num).toDouble(),
+        );
+        if (widget.callbacks.shouldHandleLinkTap(url, rect)) {
+          widget.callbacks.onLinkTap(url, rect);
+        } else {
+          widget.callbacks.onTap(rect.center.dx, rect.center.dy);
+        }
       },
     );
 
