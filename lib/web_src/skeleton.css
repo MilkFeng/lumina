@@ -30,25 +30,5 @@ iframe {
   background-color: var(--lumina-surface-color, #FFFFFF) !important;
   will-change: opacity;
   transition: none;
-}
-
-/* Prev iframe: hidden, low z-index */
-#frame-prev {
-  z-index: 1;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Current iframe: visible, high z-index */
-#frame-curr {
-  z-index: 2;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Next iframe: hidden, low z-index */
-#frame-next {
-  z-index: 1;
-  opacity: 0;
   pointer-events: none;
 }
