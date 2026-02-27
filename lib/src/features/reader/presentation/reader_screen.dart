@@ -8,7 +8,9 @@ import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../application/reader_settings_notifier.dart';
+import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -297,7 +299,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
-  Future<void> _loadCarousel([String anchor = 'top']) async {
+  Future<void> _loadCarousel([
+    String anchor = 'top',
+    int? overrideSpineIndex,
+  ]) async {
     if (_bookSession.spine.isEmpty) return;
     if (mounted) {
       setState(() {
@@ -306,6 +311,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
 
     // Get paths for current, previous, and next chapters
+    if (overrideSpineIndex != null &&
+        overrideSpineIndex >= 0 &&
+        overrideSpineIndex < _bookSession.spine.length) {
+      _currentSpineItemIndex = overrideSpineIndex;
+    }
     final currIndex = _currentSpineItemIndex;
     final prevIndex = currIndex > 0 ? currIndex - 1 : null;
     final nextIndex = currIndex < _bookSession.spine.length - 1
@@ -402,6 +412,88 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       await _nextPage();
     } else {
       await _previousPage();
+    }
+  }
+
+  Future<void> _handleLinkTap(String url, Rect rect) async {
+    if (url.startsWith('epub://')) {
+      final index = _bookSession.findSpineIndexByUrl(url);
+      if (index != null) {
+        String anchor = 'top';
+        if (url.contains('#')) {
+          anchor = url.split('#').last;
+        }
+        await _loadCarousel(anchor, index);
+      }
+    } else {
+      final linkHandling = ref
+          .read(readerSettingsNotifierProvider)
+          .linkHandling;
+
+      final uri = Uri.tryParse(url);
+
+      // For non-epub links, you might want to open in external browser
+      if (uri != null && await canLaunchUrl(uri)) {
+        if (linkHandling == ReaderLinkHandling.always) {
+          await launchUrl(uri);
+        } else if (linkHandling == ReaderLinkHandling.ask) {
+          // Open a dialog to confirm opening external link
+          if (mounted && context.mounted) {
+            final themeData = _getEpubTheme().themeData;
+            final shouldOpen =
+                await showDialog<bool>(
+                  context: context,
+                  builder: (context) => Theme(
+                    data: themeData,
+                    child: AlertDialog(
+                      title: Text(
+                        AppLocalizations.of(context)!.openExternalLink,
+                      ),
+                      content: Text(
+                        AppLocalizations.of(
+                          context,
+                        )!.openExternalLinkConfirmation(url),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(AppLocalizations.of(context)!.cancel),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: Text(AppLocalizations.of(context)!.open),
+                        ),
+                      ],
+                    ),
+                  ),
+                ) ??
+                false;
+
+            if (shouldOpen) {
+              await launchUrl(uri);
+            }
+          }
+        }
+        // ReaderLinkHandling.never: do nothing
+      } else {
+        if (mounted && context.mounted) {
+          ToastService.showError(
+            AppLocalizations.of(context)!.cannotOpenLink(url),
+            theme: _getEpubTheme().themeData,
+          );
+        }
+      }
+    }
+  }
+
+  bool _shouldHandleLinkTap(String url, Rect rect) {
+    final settings = ref.read(readerSettingsNotifierProvider);
+    if (url.startsWith('epub://')) {
+      if (!settings.handleIntraLink) return false;
+      final index = _bookSession.findSpineIndexByUrl(url);
+      return index != null;
+    } else {
+      return settings.linkHandling != ReaderLinkHandling.never;
     }
   }
 
@@ -521,6 +613,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onScrollAnchors: _handleScrollAnchors,
                       onImageLongPress: _handleImageLongPress,
                       onFootnoteTap: _handleFootnoteTap,
+                      onLinkTap: _handleLinkTap,
+                      shouldHandleLinkTap: _shouldHandleLinkTap,
                       shouldShowWebView: _shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(
                         platformBrightness: Theme.of(
@@ -642,6 +736,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   /// Handle image long-press event from WebView
   void _handleImageLongPress(String imageUrl, Rect rect) {
     if (!_bookSession.isLoaded) return;
+
+    if (_showControls) {
+      return;
+    }
 
     setState(() {
       _currentImageUrl = imageUrl;

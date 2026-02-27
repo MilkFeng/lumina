@@ -303,7 +303,7 @@ class BookGridItem extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: const Icon(
-        Icons.check_circle_outline,
+        Icons.check_circle_outlined,
         size: 16,
         color: Colors.white,
       ),
@@ -328,7 +328,7 @@ class BookGridItem extends ConsumerWidget {
       ),
       child: isSelected
           ? Icon(
-              Icons.check,
+              Icons.check_outlined,
               size: 16,
               color: Theme.of(context).colorScheme.onPrimary,
             )

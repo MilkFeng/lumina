@@ -11,6 +11,18 @@ enum ReaderSettingThemeMode {
   darkEyeCare,
 }
 
+/// Controls how the reader handles external link taps.
+enum ReaderLinkHandling {
+  /// Show a confirmation dialog before opening external links.
+  ask,
+
+  /// Open external links directly without asking.
+  always,
+
+  /// Ignore external link taps entirely.
+  never,
+}
+
 class ReaderSettings {
   final double zoom;
   final bool followSystemTheme;
@@ -19,6 +31,8 @@ class ReaderSettings {
   final double marginBottom;
   final double marginLeft;
   final double marginRight;
+  final ReaderLinkHandling linkHandling;
+  final bool handleIntraLink;
 
   const ReaderSettings({
     this.zoom = 1.0,
@@ -28,6 +42,8 @@ class ReaderSettings {
     this.marginBottom = 16.0,
     this.marginLeft = 16.0,
     this.marginRight = 16.0,
+    this.linkHandling = ReaderLinkHandling.ask,
+    this.handleIntraLink = true,
   });
 
   ReaderSettings copyWith({
@@ -38,6 +54,8 @@ class ReaderSettings {
     double? marginBottom,
     double? marginLeft,
     double? marginRight,
+    ReaderLinkHandling? linkHandling,
+    bool? handleIntraLink,
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
@@ -47,6 +65,8 @@ class ReaderSettings {
       marginBottom: marginBottom ?? this.marginBottom,
       marginLeft: marginLeft ?? this.marginLeft,
       marginRight: marginRight ?? this.marginRight,
+      linkHandling: linkHandling ?? this.linkHandling,
+      handleIntraLink: handleIntraLink ?? this.handleIntraLink,
     );
   }
 

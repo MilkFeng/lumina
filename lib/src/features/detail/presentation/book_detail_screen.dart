@@ -245,7 +245,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
           // Leading: back arrow in view mode, close icon in edit mode.
           leading: _isEditing
               ? IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close_outlined),
                   onPressed: _isSaving
                       ? null
                       : () => _handleCancelEdit(isPop: false, book: book),
@@ -261,7 +261,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
           actions: _isEditing
               ? [
                   IconButton(
-                    icon: const Icon(Icons.check),
+                    icon: const Icon(Icons.check_outlined),
                     tooltip: AppLocalizations.of(context)!.save,
                     onPressed: book != null ? () => _save(book) : null,
                   ),

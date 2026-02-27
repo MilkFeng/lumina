@@ -149,7 +149,7 @@ class EpubReader {
         clearTimeout(this._resizeDebounceTimer);
       }
       this._resizeDebounceTimer = setTimeout(() => {
-        this._buildInteractionMap();
+        window.flutter_inappwebview.callHandler('onViewportResize');
       }, 120);
     };
   }
@@ -365,19 +365,19 @@ class EpubReader {
     const element = doc.getElementById(anchorId);
     if (!element) return 0;
 
+    const bodyRect = doc.body.getBoundingClientRect();
+    const rects = element.getClientRects();
+    const elementRect = rects.length > 0 ? rects[0] : element.getBoundingClientRect();
+
     if (this._isVertical()) {
       const viewportHeight = this._getHeight();
-      const elementRect = element.getBoundingClientRect();
-      const bodyRect = doc.body.getBoundingClientRect();
-      const absoluteTop = elementRect.top + doc.body.scrollTop - bodyRect.top + (elementRect.height / 5);
-      const pageIndex = Math.round((absoluteTop + 128) / (viewportHeight + 128));
+      const absoluteTop = elementRect.top + doc.body.scrollTop - bodyRect.top + (elementRect.height / 5) + 1;
+      const pageIndex = Math.floor((absoluteTop + 128) / (viewportHeight + 128));
       return pageIndex;
     } else {
       const viewportWidth = this._getWidth();
-      const elementRect = element.getBoundingClientRect();
-      const bodyRect = doc.body.getBoundingClientRect();
-      const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width / 5);
-      const pageIndex = Math.round((absoluteLeft + 128) / (viewportWidth + 128));
+      const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width / 5) + 1;
+      const pageIndex = Math.floor((absoluteLeft + 128) / (viewportWidth + 128));
       return pageIndex;
     }
   }
@@ -499,23 +499,26 @@ class EpubReader {
         if (!link) continue;
 
         const href = link.getAttribute('href');
+        const fullHref = link.href;
         const epubType = link.getAttribute('epub:type');
         let innerHtml = '';
+
+        let isFootnote = false;
 
         if (link.hasAttribute('title') && (!href || href === '#')) {
           // Some footnotes use the link's title attribute to store the content instead of pointing to an element in the page
           innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
+          isFootnote = true;
+        } else if (epubType === 'noteref') {
+          // find the best candidate element to represent the footnote content
+          const targetId = this._extractTargetIdFromHref(href);
+          innerHtml = this._extractFootnoteHtml(targetId);
+          isFootnote = true;
         } else {
-          if (epubType === 'noteref') {
-            // find the best candidate element to represent the footnote content
-            const targetId = this._extractTargetIdFromHref(href);
-            innerHtml = this._extractFootnoteHtml(targetId);
-          } else {
-            continue;
-          }
+          // Regular link
         }
 
-        if (!innerHtml || innerHtml.trim() === '') {
+        if (isFootnote && (!innerHtml || innerHtml.trim() === '')) {
           continue;
         }
 
@@ -528,16 +531,29 @@ class EpubReader {
           const docX = rect.left + body.scrollLeft - bodyRect.left;
           const docY = rect.top + body.scrollTop - bodyRect.top;
 
-          quadTree.insert({
-            type: 'footnote',
-            rect: {
-              x: docX,
-              y: docY,
-              width: rect.width,
-              height: rect.height,
-            },
-            data: innerHtml,
-          });
+          if (isFootnote) {
+            quadTree.insert({
+              type: 'footnote',
+              rect: {
+                x: docX,
+                y: docY,
+                width: rect.width,
+                height: rect.height,
+              },
+              data: innerHtml,
+            });
+          } else {
+            quadTree.insert({
+              type: 'link',
+              rect: {
+                x: docX,
+                y: docY,
+                width: rect.width,
+                height: rect.height,
+              },
+              data: fullHref,
+            });
+          }
         }
       }
 
@@ -642,7 +658,7 @@ class EpubReader {
           window.flutter_inappwebview.callHandler('onRendererInitialized');
         } else if (iframe.id === 'frame-prev') {
           // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
-          this.jumpToLastPageOfFrame(iframe);
+          this.jumpToLastPageOfFrame('prev');
         } else if (iframe.id === 'frame-next') {
           // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
           this.jumpToPageFor('next', 0);
@@ -1045,7 +1061,7 @@ class EpubReader {
 
   checkTapElementAt(x, y) {
     const bestCandidate = this._checkElementAt(x, y, (candidate) => {
-      if (candidate.type === 'footnote') {
+      if (candidate.type === 'footnote' || candidate.type === 'link') {
         return true;
       }
       return false;
@@ -1062,10 +1078,19 @@ class EpubReader {
       const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
       const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
 
-      window.flutter_inappwebview.callHandler(
-        'onFootnoteTap', bestCandidate.data,
-        absoluteLeft, absoluteTop, rect.width, rect.height
-      );
+      if (bestCandidate.type === 'footnote') {
+        window.flutter_inappwebview.callHandler(
+          'onFootnoteTap', bestCandidate.data,
+          absoluteLeft, absoluteTop, rect.width, rect.height
+        );
+      } else if (bestCandidate.type === 'link') {
+        window.flutter_inappwebview.callHandler(
+          'onLinkTap', bestCandidate.data,
+          absoluteLeft, absoluteTop, rect.width, rect.height
+        );
+      } else {
+        window.flutter_inappwebview.callHandler('onTap', x, y);
+      }
     } else {
       // Fall back to just sending tap coordinates if no interactive element is found nearby
       window.flutter_inappwebview.callHandler('onTap', x, y);
@@ -1150,7 +1175,7 @@ body * {
   orphans: 1;
   widows: 1;
 
-  word-break: break-all !important;
+  word-break: break-word !important;
   overflow-wrap: break-word !important;
 }
 

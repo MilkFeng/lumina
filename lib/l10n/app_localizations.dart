@@ -1201,6 +1201,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dark'**
   String get readerThemeDark;
+
+  /// Reader style sheet section title for link handling
+  ///
+  /// In en, this message translates to:
+  /// **'Link Handling'**
+  String get readerLinkHandlingSection;
+
+  /// Link handling option: ask before opening
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get readerLinkHandlingAsk;
+
+  /// Link handling option: always open without asking
+  ///
+  /// In en, this message translates to:
+  /// **'Always open'**
+  String get readerLinkHandlingAlways;
+
+  /// Link handling option: never open external links
+  ///
+  /// In en, this message translates to:
+  /// **'Never open'**
+  String get readerLinkHandlingNever;
+
+  /// Switch label to enable/disable following intra-book (epub://) links
+  ///
+  /// In en, this message translates to:
+  /// **'Follow in-book links'**
+  String get readerHandleIntraLink;
+
+  /// Error message shown when the user tries to open a link that cannot be handled by the system
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot open this link: {url}'**
+  String cannotOpenLink(String url);
+
+  /// Label for the action to open a link in the system browser
+  ///
+  /// In en, this message translates to:
+  /// **'Open External Link'**
+  String get openExternalLink;
+
+  /// Confirmation message shown before opening an external link
+  ///
+  /// In en, this message translates to:
+  /// **'This link will be opened in your browser: {url}\n\nDo you want to proceed?'**
+  String openExternalLinkConfirmation(String url);
+
+  /// Open button label for opening external links
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get open;
 }
 
 class _AppLocalizationsDelegate

@@ -94,6 +94,8 @@ class ReaderWebViewCallbacks {
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
   final Function(String innerHtml, Rect rect) onFootnoteTap;
+  final Function(String url, Rect rect) onLinkTap;
+  final bool Function(String url, Rect rect) shouldHandleLinkTap;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -104,6 +106,8 @@ class ReaderWebViewCallbacks {
     required this.onImageLongPress,
     required this.onTap,
     required this.onFootnoteTap,
+    required this.onLinkTap,
+    required this.shouldHandleLinkTap,
   });
 }
 
@@ -316,9 +320,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
               child: IgnorePointer(
                 ignoring: !widget.isLoading && widget.shouldShowWebView,
                 child: AnimatedOpacity(
-                  duration: const Duration(
-                    milliseconds: AppTheme.defaultAnimationDurationMs,
-                  ),
+                  duration: (widget.isLoading || !widget.shouldShowWebView)
+                      ? Duration.zero
+                      : const Duration(
+                          milliseconds: AppTheme.defaultAnimationDurationMs,
+                        ),
                   curve: Curves.easeOut,
                   opacity: (widget.isLoading || !widget.shouldShowWebView)
                       ? 1.0
@@ -414,6 +420,25 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
+      handlerName: 'onLinkTap',
+      callback: (args) {
+        if (args.isEmpty) return;
+        final url = args[0] as String;
+        final rect = Rect.fromLTWH(
+          (args[1] as num).toDouble(),
+          (args[2] as num).toDouble(),
+          (args[3] as num).toDouble(),
+          (args[4] as num).toDouble(),
+        );
+        if (widget.callbacks.shouldHandleLinkTap(url, rect)) {
+          widget.callbacks.onLinkTap(url, rect);
+        } else {
+          widget.callbacks.onTap(rect.center.dx, rect.center.dy);
+        }
+      },
+    );
+
+    controller.addJavaScriptHandler(
       handlerName: 'onImageLongPress',
       callback: (args) {
         if (args.length >= 5 && args[0] is String) {
@@ -426,6 +451,13 @@ class _ReaderWebViewState extends State<ReaderWebView> {
           );
           widget.callbacks.onImageLongPress(imageUrl, rect);
         }
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onViewportResize',
+      callback: (args) {
+        _updateTheme(_currentTheme);
       },
     );
   }

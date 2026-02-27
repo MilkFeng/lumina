@@ -94,6 +94,8 @@ class ReaderRenderer extends StatefulWidget {
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(String innerHtml, Rect rect) onFootnoteTap;
+  final Function(String url, Rect rect) onLinkTap;
+  final bool Function(String url, Rect rect) shouldHandleLinkTap;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
 
@@ -115,6 +117,8 @@ class ReaderRenderer extends StatefulWidget {
     required this.onScrollAnchors,
     required this.onImageLongPress,
     required this.onFootnoteTap,
+    required this.onLinkTap,
+    required this.shouldHandleLinkTap,
     required this.shouldShowWebView,
     required this.initializeTheme,
   });
@@ -338,6 +342,8 @@ class _ReaderRendererState extends State<ReaderRenderer>
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,
           onFootnoteTap: widget.onFootnoteTap,
+          onLinkTap: widget.onLinkTap,
+          shouldHandleLinkTap: widget.shouldHandleLinkTap,
         ),
         shouldShowWebView: widget.shouldShowWebView,
         coverRelativePath: widget.bookSession.book?.coverPath,
