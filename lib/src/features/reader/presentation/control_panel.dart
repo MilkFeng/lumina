@@ -212,7 +212,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   title: Text(
                     widget.title,
                     style: themeData.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       fontSize: 16,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -302,7 +302,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                             ),
                             if (widget.totalPagesInChapter > 1)
                               Text(
-                                'Page ${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
+                                '${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
                                 style: themeData.textTheme.bodyMedium,
                               ),
                           ],
