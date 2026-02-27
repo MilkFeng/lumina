@@ -1202,6 +1202,36 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get readerThemeDark;
 
+  /// Reader style sheet section title for link handling
+  ///
+  /// In en, this message translates to:
+  /// **'Link Handling'**
+  String get readerLinkHandlingSection;
+
+  /// Link handling option: ask before opening
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get readerLinkHandlingAsk;
+
+  /// Link handling option: always open without asking
+  ///
+  /// In en, this message translates to:
+  /// **'Always open'**
+  String get readerLinkHandlingAlways;
+
+  /// Link handling option: never open external links
+  ///
+  /// In en, this message translates to:
+  /// **'Never open'**
+  String get readerLinkHandlingNever;
+
+  /// Switch label to enable/disable following intra-book (epub://) links
+  ///
+  /// In en, this message translates to:
+  /// **'Follow in-book links'**
+  String get readerHandleIntraLink;
+
   /// Error message shown when the user tries to open a link that cannot be handled by the system
   ///
   /// In en, this message translates to:

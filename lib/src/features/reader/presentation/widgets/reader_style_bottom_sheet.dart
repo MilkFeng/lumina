@@ -23,6 +23,8 @@ class _ReaderStyleBottomSheetState
   late int _rightMargin;
   late bool _followSystemTheme;
   late ReaderSettingThemeMode _themeMode;
+  late ReaderLinkHandling _linkHandling;
+  late bool _handleIntraLink;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -39,6 +41,8 @@ class _ReaderStyleBottomSheetState
     _rightMargin = s.marginRight.toInt();
     _followSystemTheme = s.followSystemTheme;
     _themeMode = s.themeMode;
+    _linkHandling = s.linkHandling;
+    _handleIntraLink = s.handleIntraLink;
   }
 
   ReaderSettingsNotifier get _notifier =>
@@ -238,6 +242,32 @@ class _ReaderStyleBottomSheetState
                 ),
               ],
             ),
+
+            const SizedBox(height: 24),
+
+            // ── Section 3: Links ──────────────────────────────────────────
+            _SectionTitle(label: l10n.readerLinkHandlingSection),
+            const SizedBox(height: 12),
+            _LinkHandlingSelector(
+              value: _linkHandling,
+              onChanged: (v) {
+                setState(() => _linkHandling = v);
+                _notifier.setLinkHandling(v);
+              },
+              askLabel: l10n.readerLinkHandlingAsk,
+              alwaysLabel: l10n.readerLinkHandlingAlways,
+              neverLabel: l10n.readerLinkHandlingNever,
+            ),
+            const SizedBox(height: 12),
+            _FollowSystemSwitch(
+              label: l10n.readerHandleIntraLink,
+              value: _handleIntraLink,
+              icon: Icons.link,
+              onChanged: (v) {
+                setState(() => _handleIntraLink = v);
+                _notifier.setHandleIntraLink(v);
+              },
+            ),
           ],
         ),
       ),
@@ -393,11 +423,13 @@ class _FollowSystemSwitch extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    this.icon = Icons.brightness_auto_outlined,
   });
 
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -414,11 +446,7 @@ class _FollowSystemSwitch extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.brightness_auto_outlined,
-            size: 18,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -473,6 +501,89 @@ class _ThemeOptionChip extends StatelessWidget {
           color: colorScheme.primary,
         ),
       ),
+    );
+  }
+}
+
+/// Segmented selector for external link-handling behaviour.
+class _LinkHandlingSelector extends StatelessWidget {
+  const _LinkHandlingSelector({
+    required this.value,
+    required this.onChanged,
+    required this.askLabel,
+    required this.alwaysLabel,
+    required this.neverLabel,
+  });
+
+  final ReaderLinkHandling value;
+  final ValueChanged<ReaderLinkHandling> onChanged;
+  final String askLabel;
+  final String alwaysLabel;
+  final String neverLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    Widget _chip(ReaderLinkHandling option, IconData icon, String label) {
+      final selected = value == option;
+      return Expanded(
+        child: InkWell(
+          onTap: () => onChanged(option),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: selected
+                  ? colorScheme.primaryContainer
+                  : colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected
+                    ? colorScheme.primary.withValues(alpha: 0.5)
+                    : colorScheme.secondary.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: selected
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: selected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurfaceVariant,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        _chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
+        const SizedBox(width: 8),
+        _chip(ReaderLinkHandling.always, Icons.open_in_new, alwaysLabel),
+        const SizedBox(width: 8),
+        _chip(ReaderLinkHandling.never, Icons.link_off, neverLabel),
+      ],
     );
   }
 }

@@ -624,6 +624,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerThemeDark => '深色';
 
   @override
+  String get readerLinkHandlingSection => '链接处理';
+
+  @override
+  String get readerLinkHandlingAsk => '打开前询问';
+
+  @override
+  String get readerLinkHandlingAlways => '总是打开';
+
+  @override
+  String get readerLinkHandlingNever => '从不打开';
+
+  @override
+  String get readerHandleIntraLink => '跟随书内链接';
+
+  @override
   String cannotOpenLink(String url) {
     return '无法打开链接：$url';
   }

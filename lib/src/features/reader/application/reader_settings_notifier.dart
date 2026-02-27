@@ -15,6 +15,8 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   static const _kMarginBottom = 'reader_margin_bottom';
   static const _kMarginLeft = 'reader_margin_left';
   static const _kMarginRight = 'reader_margin_right';
+  static const _kLinkHandling = 'reader_link_handling';
+  static const _kHandleIntraLink = 'reader_handle_intra_link';
 
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
@@ -32,6 +34,10 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
             marginBottom: prefs.getDouble(_kMarginBottom) ?? 16.0,
             marginLeft: prefs.getDouble(_kMarginLeft) ?? 16.0,
             marginRight: prefs.getDouble(_kMarginRight) ?? 16.0,
+            linkHandling:
+                ReaderLinkHandling.values[prefs.getInt(_kLinkHandling) ??
+                    ReaderLinkHandling.ask.index],
+            handleIntraLink: prefs.getBool(_kHandleIntraLink) ?? true,
           ),
           loading: () => const ReaderSettings(),
           error: (_, __) => const ReaderSettings(),
@@ -81,5 +87,15 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setMarginRight(double value) async {
     await _prefs.setDouble(_kMarginRight, value);
     state = state.copyWith(marginRight: value);
+  }
+
+  Future<void> setLinkHandling(ReaderLinkHandling value) async {
+    await _prefs.setInt(_kLinkHandling, value.index);
+    state = state.copyWith(linkHandling: value);
+  }
+
+  Future<void> setHandleIntraLink(bool value) async {
+    await _prefs.setBool(_kHandleIntraLink, value);
+    state = state.copyWith(handleIntraLink: value);
   }
 }

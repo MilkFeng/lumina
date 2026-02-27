@@ -10,6 +10,7 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../application/reader_settings_notifier.dart';
+import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
 import './image_viewer.dart';
@@ -425,42 +426,53 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         await _loadCarousel(anchor, index);
       }
     } else {
+      final linkHandling = ref
+          .read(readerSettingsNotifierProvider)
+          .linkHandling;
+
       // For non-epub links, you might want to open in external browser
       if (await canLaunchUrl(Uri.parse(url))) {
-        // Open a dialog to confirm opening external link
-        if (mounted && context.mounted) {
-          final themeData = _getEpubTheme().themeData;
-          final shouldOpen =
-              await showDialog<bool>(
-                context: context,
-                builder: (context) => Theme(
-                  data: themeData,
-                  child: AlertDialog(
-                    title: Text(AppLocalizations.of(context)!.openExternalLink),
-                    content: Text(
-                      AppLocalizations.of(
-                        context,
-                      )!.openExternalLinkConfirmation(url),
+        if (linkHandling == ReaderLinkHandling.always) {
+          await launchUrl(Uri.parse(url));
+        } else if (linkHandling == ReaderLinkHandling.ask) {
+          // Open a dialog to confirm opening external link
+          if (mounted && context.mounted) {
+            final themeData = _getEpubTheme().themeData;
+            final shouldOpen =
+                await showDialog<bool>(
+                  context: context,
+                  builder: (context) => Theme(
+                    data: themeData,
+                    child: AlertDialog(
+                      title: Text(
+                        AppLocalizations.of(context)!.openExternalLink,
+                      ),
+                      content: Text(
+                        AppLocalizations.of(
+                          context,
+                        )!.openExternalLinkConfirmation(url),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(AppLocalizations.of(context)!.cancel),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: Text(AppLocalizations.of(context)!.open),
+                        ),
+                      ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: Text(AppLocalizations.of(context)!.cancel),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: Text(AppLocalizations.of(context)!.open),
-                      ),
-                    ],
                   ),
-                ),
-              ) ??
-              false;
+                ) ??
+                false;
 
-          if (shouldOpen) {
-            await launchUrl(Uri.parse(url));
+            if (shouldOpen) {
+              await launchUrl(Uri.parse(url));
+            }
           }
         }
+        // ReaderLinkHandling.never: do nothing
       } else {
         if (mounted && context.mounted) {
           ToastService.showError(
@@ -473,11 +485,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   bool _shouldHandleLinkTap(String url, Rect rect) {
+    final settings = ref.read(readerSettingsNotifierProvider);
     if (url.startsWith('epub://')) {
+      if (!settings.handleIntraLink) return false;
       final index = _bookSession.findSpineIndexByUrl(url);
       return index != null;
     } else {
-      return true;
+      return settings.linkHandling != ReaderLinkHandling.never;
     }
   }
 

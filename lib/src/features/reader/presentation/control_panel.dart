@@ -376,6 +376,11 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                         top: Radius.circular(28),
                                       ),
                                     ),
+                                    constraints: BoxConstraints(
+                                      maxHeight:
+                                          MediaQuery.sizeOf(context).height *
+                                          0.75,
+                                    ),
                                     child: SafeArea(
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
@@ -398,7 +403,9 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                               ),
                                             ),
                                           ),
-                                          const ReaderStyleBottomSheet(),
+                                          const Flexible(
+                                            child: ReaderStyleBottomSheet(),
+                                          ),
                                         ],
                                       ),
                                     ),

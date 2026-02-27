@@ -1093,6 +1093,31 @@
     "description": "深色阅读主题选项标签"
   },
 
+  "readerLinkHandlingSection": "链接处理",
+  "@readerLinkHandlingSection": {
+    "description": "阅读器样式面板链接处理区块标题"
+  },
+
+  "readerLinkHandlingAsk": "打开前询问",
+  "@readerLinkHandlingAsk": {
+    "description": "链接处理选项：打开前询问"
+  },
+
+  "readerLinkHandlingAlways": "总是打开",
+  "@readerLinkHandlingAlways": {
+    "description": "链接处理选项：总是直接打开"
+  },
+
+  "readerLinkHandlingNever": "从不打开",
+  "@readerLinkHandlingNever": {
+    "description": "链接处理选项：从不打开外部链接"
+  },
+
+  "readerHandleIntraLink": "跟随书内链接",
+  "@readerHandleIntraLink": {
+    "description": "是否跟随书内（epub://）链接跳转的开关标签"
+  },
+
   "cannotOpenLink": "无法打开链接：{url}",
   "@cannotOpenLink": {
     "description": "无法打开链接的错误提示",

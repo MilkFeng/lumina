@@ -1083,6 +1083,31 @@
     "description": "Dark reader theme chip label"
   },
 
+  "readerLinkHandlingSection": "Link Handling",
+  "@readerLinkHandlingSection": {
+    "description": "Reader style sheet section title for link handling"
+  },
+
+  "readerLinkHandlingAsk": "Ask",
+  "@readerLinkHandlingAsk": {
+    "description": "Link handling option: ask before opening"
+  },
+
+  "readerLinkHandlingAlways": "Always open",
+  "@readerLinkHandlingAlways": {
+    "description": "Link handling option: always open without asking"
+  },
+
+  "readerLinkHandlingNever": "Never open",
+  "@readerLinkHandlingNever": {
+    "description": "Link handling option: never open external links"
+  },
+
+  "readerHandleIntraLink": "Follow in-book links",
+  "@readerHandleIntraLink": {
+    "description": "Switch label to enable/disable following intra-book (epub://) links"
+  },
+
   "cannotOpenLink": "Cannot open this link: {url}",
   "@cannotOpenLink": {
     "description": "Error message shown when the user tries to open a link that cannot be handled by the system",

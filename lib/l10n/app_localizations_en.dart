@@ -642,6 +642,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerThemeDark => 'Dark';
 
   @override
+  String get readerLinkHandlingSection => 'Link Handling';
+
+  @override
+  String get readerLinkHandlingAsk => 'Ask';
+
+  @override
+  String get readerLinkHandlingAlways => 'Always open';
+
+  @override
+  String get readerLinkHandlingNever => 'Never open';
+
+  @override
+  String get readerHandleIntraLink => 'Follow in-book links';
+
+  @override
   String cannotOpenLink(String url) {
     return 'Cannot open this link: $url';
   }
