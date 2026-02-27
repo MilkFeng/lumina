@@ -362,7 +362,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           child: Text(
             AppLocalizations.of(context)!.noItemsInCategory,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
