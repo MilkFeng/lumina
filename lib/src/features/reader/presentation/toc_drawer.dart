@@ -350,6 +350,7 @@ class _TocDrawerState extends State<TocDrawer> {
                       style: widget.themeData.textTheme.bodySmall?.copyWith(
                         color: widget.themeData.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w400,
+                        fontSize: 12,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

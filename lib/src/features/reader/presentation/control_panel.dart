@@ -304,7 +304,9 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                             if (widget.totalPagesInChapter > 1)
                               Text(
                                 '${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
-                                style: themeData.textTheme.bodyMedium,
+                                style: themeData.textTheme.bodyMedium?.copyWith(
+                                  fontSize: 10,
+                                ),
                               ),
                           ],
                         ),
