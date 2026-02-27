@@ -430,10 +430,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           .read(readerSettingsNotifierProvider)
           .linkHandling;
 
+      final uri = Uri.tryParse(url);
+
       // For non-epub links, you might want to open in external browser
-      if (await canLaunchUrl(Uri.parse(url))) {
+      if (uri != null && await canLaunchUrl(uri)) {
         if (linkHandling == ReaderLinkHandling.always) {
-          await launchUrl(Uri.parse(url));
+          await launchUrl(uri);
         } else if (linkHandling == ReaderLinkHandling.ask) {
           // Open a dialog to confirm opening external link
           if (mounted && context.mounted) {
@@ -468,7 +470,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 false;
 
             if (shouldOpen) {
-              await launchUrl(Uri.parse(url));
+              await launchUrl(uri);
             }
           }
         }
@@ -734,6 +736,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   /// Handle image long-press event from WebView
   void _handleImageLongPress(String imageUrl, Rect rect) {
     if (!_bookSession.isLoaded) return;
+
+    if (_showControls) {
+      return;
+    }
 
     setState(() {
       _currentImageUrl = imageUrl;
