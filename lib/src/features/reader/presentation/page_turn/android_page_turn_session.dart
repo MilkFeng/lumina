@@ -54,7 +54,6 @@ class AndroidPageTurnSession {
     required bool Function() isMounted,
   }) async {
     final int turnToken = ++_pageTurnToken;
-    _isAnimating = true;
 
     ui.Image? screenshot;
     try {
@@ -72,15 +71,11 @@ class AndroidPageTurnSession {
       _animController.reset();
 
       await onPerformPageTurn(isNext);
-      if (turnToken == _pageTurnToken) {
-        _isAnimating = false;
-      }
       return;
     }
 
     if (!isMounted() || turnToken != _pageTurnToken) {
       screenshot.dispose();
-      _isAnimating = false;
       return;
     }
 
@@ -93,6 +88,7 @@ class AndroidPageTurnSession {
 
       screenshotData?.dispose();
       screenshotData = screenshot;
+      _isAnimating = true;
 
       _setupTween(isNext, isVertical);
       _animController.reset();
@@ -132,8 +128,10 @@ class AndroidPageTurnSession {
   ) {
     return Stack(
       children: [
+        // Backward animation: show the current page as the background
         if (_isAnimating && !_isForwardAnimation)
           Positioned.fill(child: buildScreenshotContainer(screenshotData)),
+        // Backward animation: slide the previous page in from the left
         Positioned.fill(
           child: SlideTransition(
             position: _isAnimating && !_isForwardAnimation
@@ -142,6 +140,7 @@ class AndroidPageTurnSession {
             child: child,
           ),
         ),
+        // Forward animation: slide the current page out to the right
         if (_isAnimating && _isForwardAnimation)
           Positioned.fill(
             child: SlideTransition(
