@@ -262,7 +262,7 @@ class _ReaderStyleBottomSheetState
             _FollowSystemSwitch(
               label: l10n.readerHandleIntraLink,
               value: _handleIntraLink,
-              icon: Icons.link,
+              icon: Icons.link_outlined,
               onChanged: (v) {
                 setState(() => _handleIntraLink = v);
                 _notifier.setHandleIntraLink(v);
@@ -385,7 +385,7 @@ class _MarginStepper extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.remove, size: 16),
+                icon: const Icon(Icons.remove_outlined, size: 16),
                 onPressed: value > min ? () => onChanged(value - step) : null,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -401,7 +401,7 @@ class _MarginStepper extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.add, size: 16),
+                icon: const Icon(Icons.add_outlined, size: 16),
                 onPressed: value < max ? () => onChanged(value + step) : null,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -496,7 +496,7 @@ class _ThemeOptionChip extends StatelessWidget {
           ),
         ),
         child: Icon(
-          isSelected ? Icons.check : Icons.text_format_outlined,
+          isSelected ? Icons.check_outlined : Icons.text_format_outlined,
           size: 32,
           color: colorScheme.primary,
         ),
@@ -580,9 +580,13 @@ class _LinkHandlingSelector extends StatelessWidget {
       children: [
         _chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
         const SizedBox(width: 8),
-        _chip(ReaderLinkHandling.always, Icons.open_in_new, alwaysLabel),
+        _chip(
+          ReaderLinkHandling.always,
+          Icons.open_in_new_outlined,
+          alwaysLabel,
+        ),
         const SizedBox(width: 8),
-        _chip(ReaderLinkHandling.never, Icons.link_off, neverLabel),
+        _chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
       ],
     );
   }
