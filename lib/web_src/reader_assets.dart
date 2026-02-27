@@ -1246,6 +1246,10 @@ body.override-color a:visited {
   color: var(--primary-color) !important;
 }
 
+body.override-color a * {
+  color: inherit !important;
+}
+
 body.override-color blockquote {
   background-color: var(--surface-container-color) !important;
   border-color: var(--primary-color) !important;
