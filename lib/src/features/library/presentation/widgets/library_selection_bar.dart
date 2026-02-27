@@ -82,7 +82,7 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: enabled
                     ? Theme.of(context).colorScheme.onSurface
                     : Theme.of(context).colorScheme.onSurfaceVariant,

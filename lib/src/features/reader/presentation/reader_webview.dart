@@ -341,9 +341,12 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                                 maxWidth:
                                     MediaQuery.of(context).size.width * 0.6,
                               ),
-                              child: BookCover(
-                                relativePath: widget.coverRelativePath,
-                                enableBorder: false,
+                              child: Theme(
+                                data: _currentTheme.themeData,
+                                child: BookCover(
+                                  relativePath: widget.coverRelativePath,
+                                  radius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),

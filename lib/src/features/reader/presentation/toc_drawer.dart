@@ -322,9 +322,12 @@ class _TocDrawerState extends State<TocDrawer> {
             SizedBox(
               width: 60,
               height: 90,
-              child: BookCover(
-                relativePath: '${widget.book.coverPath}',
-                radius: BorderRadius.circular(4),
+              child: Theme(
+                data: widget.themeData,
+                child: BookCover(
+                  relativePath: '${widget.book.coverPath}',
+                  radius: BorderRadius.circular(4),
+                ),
               ),
             ),
 
