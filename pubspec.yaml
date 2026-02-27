@@ -95,3 +95,4 @@ flutter:
 
   assets:
     - assets/icons/icon.svg
+    - assets/logos/logo.svg

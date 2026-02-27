@@ -142,6 +142,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
   Widget _buildAppHeader(BuildContext context, AppLocalizations l10n) {
     const appSvgPath = 'assets/icons/icon.svg';
+    const logoSvgPath = 'assets/logos/logo.svg';
 
     return Column(
       children: [
@@ -159,11 +160,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         const SizedBox(height: 16),
 
         // App Name
-        Text(
-          l10n.appName,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+        SvgPicture.asset(
+          logoSvgPath,
+          height: 20,
+          colorFilter: ColorFilter.mode(
+            Theme.of(context).colorScheme.onSurface,
+            BlendMode.srcIn,
+          ),
         ),
 
         const SizedBox(height: 8),

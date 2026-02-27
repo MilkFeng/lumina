@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
@@ -29,6 +30,7 @@ class LibraryAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelectionMode = state.isSelectionMode;
+    final logoSvgPath = 'assets/logos/logo.svg';
 
     return SliverOverlapAbsorber(
       handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
@@ -48,11 +50,18 @@ class LibraryAppBar extends StatelessWidget {
               : () {
                   context.push('/about');
                 },
-          child: Text(
-            isSelectionMode
-                ? AppLocalizations.of(context)!.selected(state.selectedCount)
-                : AppLocalizations.of(context)!.appName,
-          ),
+          child: isSelectionMode
+              ? Text(
+                  AppLocalizations.of(context)!.selected(state.selectedCount),
+                )
+              : SvgPicture.asset(
+                  logoSvgPath,
+                  height: 18,
+                  colorFilter: ColorFilter.mode(
+                    Theme.of(context).colorScheme.onSurface,
+                    BlendMode.srcIn,
+                  ),
+                ),
         ),
         actions: [
           if (isSelectionMode)
