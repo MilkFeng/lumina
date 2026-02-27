@@ -162,7 +162,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         // App Name
         SvgPicture.asset(
           logoSvgPath,
-          height: 20,
+          width: 96,
           colorFilter: ColorFilter.mode(
             Theme.of(context).colorScheme.onSurface,
             BlendMode.srcIn,
