@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/shelf_book.dart';
 import '../../../../core/widgets/book_cover.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../application/bookshelf_notifier.dart';
 
 /// Book grid item widget – displays a single book in the grid.
@@ -67,19 +66,14 @@ class BookGridItem extends ConsumerWidget {
       children: [
         Expanded(child: _buildCoverStack(context, fit: StackFit.expand)),
         const SizedBox(height: 12),
-        Text(
-          book.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: AppTheme.contentTextStyle,
-        ),
+        Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
         const SizedBox(height: 4),
         if (book.author.isNotEmpty)
           Text(
             book.author,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTheme.contentTextStyle.copyWith(
+            style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
               fontSize: 12,
             ),
@@ -130,7 +124,7 @@ class BookGridItem extends ConsumerWidget {
                 book.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTheme.contentTextStyle.copyWith(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 11,
                   fontWeight: FontWeight.w400,

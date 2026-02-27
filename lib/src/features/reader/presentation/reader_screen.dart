@@ -512,6 +512,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         _saveProgress();
                       },
                       onRendererInitialized: () async {
+                        await Future.delayed(const Duration(milliseconds: 30));
                         setState(() {
                           _isWebViewLoading = false;
                         });

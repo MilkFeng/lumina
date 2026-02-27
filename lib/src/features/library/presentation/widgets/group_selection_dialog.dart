@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../domain/shelf_group.dart';
 import '../../../../../l10n/app_localizations.dart';
 
@@ -37,16 +36,13 @@ class GroupSelectionDialog extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.folder_off_outlined),
-              title: Text(
-                AppLocalizations.of(context)!.uncategorized,
-                style: AppTheme.contentTextStyle,
-              ),
+              title: Text(AppLocalizations.of(context)!.uncategorized),
               onTap: () => Navigator.pop(context, -1),
             ),
             ...groups.map(
               (group) => ListTile(
                 leading: const Icon(Icons.folder_outlined),
-                title: Text(group.name, style: AppTheme.contentTextStyle),
+                title: Text(group.name),
                 onTap: () => Navigator.pop(context, group.id),
               ),
             ),

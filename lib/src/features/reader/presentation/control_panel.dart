@@ -212,8 +212,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   title: Text(
                     widget.title,
                     style: themeData.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontFamily: AppTheme.fontFamilyContent,
+                      fontWeight: FontWeight.w500,
                       fontSize: 16,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -260,6 +259,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                     IconButton(
                       icon: const Icon(Icons.list_outlined),
                       onPressed: widget.onOpenDrawer,
+                      color: themeData.colorScheme.onSurface,
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -288,8 +288,8 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                 ? _handleTapLeft
                                 : null,
                             onLongPress: null,
-                            disabledColor: themeData.colorScheme.onSurface
-                                .withAlpha(100),
+                            disabledColor: themeData.disabledColor,
+                            color: themeData.colorScheme.onSurface,
                           ),
                         ),
                         Column(
@@ -303,7 +303,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                             ),
                             if (widget.totalPagesInChapter > 1)
                               Text(
-                                'Page ${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
+                                '${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
                                 style: themeData.textTheme.bodyMedium,
                               ),
                           ],
@@ -332,8 +332,8 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                 ? _handleTapRight
                                 : null,
                             onLongPress: null,
-                            disabledColor: themeData.colorScheme.onSurface
-                                .withAlpha(100),
+                            disabledColor: themeData.disabledColor,
+                            color: themeData.colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -414,6 +414,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                           ),
                         );
                       },
+                      color: themeData.colorScheme.onSurface,
                     ),
                   ],
                 ),

@@ -25,23 +25,23 @@ String _generateVariableStyle(
 
   return '''
     :root {
-      --zoom: ${theme.zoom};
-      --safe-width: ${safeWidth}px;
-      --safe-height: ${safeHeight}px;
-      --padding-top: ${padding.top}px;
-      --padding-left: ${padding.left}px;
-      --padding-right: ${padding.right}px;
-      --padding-bottom: ${padding.bottom}px;
-      --reader-overflow-x: ${direction == 1 ? 'hidden' : 'auto'};
-      --reader-overflow-y: ${direction == 1 ? 'auto' : 'hidden'};
-      --primary-color: ${colorToHex(primaryColor)};
-      --primary-container-color: ${colorToHex(colorScheme.primaryContainer)};
-      --surface-color: ${colorToHex(colorScheme.surface)};
-      --on-surface-color: ${colorToHex(colorScheme.onSurface)};
-      --on-surface-variant-color: ${colorToHex(colorScheme.onSurfaceVariant)};
-      --outline-variant-color: ${colorToHex(colorScheme.outlineVariant)};
-      --surface-container-color: ${colorToHex(colorScheme.surfaceContainer)};
-      --surface-container-high-color: ${colorToHex(colorScheme.surfaceContainerHigh)};
+      --lumina-zoom: ${theme.zoom};
+      --lumina-safe-width: ${safeWidth}px;
+      --lumina-safe-height: ${safeHeight}px;
+      --lumina-padding-top: ${padding.top}px;
+      --lumina-padding-left: ${padding.left}px;
+      --lumina-padding-right: ${padding.right}px;
+      --lumina-padding-bottom: ${padding.bottom}px;
+      --lumina-reader-overflow-x: ${direction == 1 ? 'hidden' : 'auto'};
+      --lumina-reader-overflow-y: ${direction == 1 ? 'auto' : 'hidden'};
+      --lumina-primary-color: ${colorToHex(primaryColor)};
+      --lumina-primary-container-color: ${colorToHex(colorScheme.primaryContainer)};
+      --lumina-surface-color: ${colorToHex(colorScheme.surface)};
+      --lumina-on-surface-color: ${colorToHex(colorScheme.onSurface)};
+      --lumina-on-surface-variant-color: ${colorToHex(colorScheme.onSurfaceVariant)};
+      --lumina-outline-variant-color: ${colorToHex(colorScheme.outlineVariant)};
+      --lumina-surface-container-color: ${colorToHex(colorScheme.surfaceContainer)};
+      --lumina-surface-container-high-color: ${colorToHex(colorScheme.surfaceContainerHigh)};
     }
   ''';
 }

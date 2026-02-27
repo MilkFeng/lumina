@@ -2,8 +2,8 @@ html,
 body {
   margin: 0 !important;
   padding: 0 !important;
-  width: var(--safe-width) !important;
-  height: var(--safe-height) !important;
+  width: var(--lumina-safe-width) !important;
+  height: var(--lumina-safe-height) !important;
   background-color: transparent !important;
   touch-action: none !important;
 
@@ -18,7 +18,7 @@ body {
   font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
   text-align: justify;
 
-  font-size: calc(100% * var(--zoom)) !important;
+  font-size: calc(100% * var(--lumina-zoom)) !important;
 
   -webkit-text-size-adjust: none !important;
   text-size-adjust: none !important;
@@ -26,15 +26,15 @@ body {
 
 html,
 body {
-  overflow-x: var(--reader-overflow-x) !important;
-  overflow-y: var(--reader-overflow-y) !important;
+  overflow-x: var(--lumina-reader-overflow-x) !important;
+  overflow-y: var(--lumina-reader-overflow-y) !important;
 }
 
 body {
-  column-width: var(--safe-width) !important;
+  column-width: var(--lumina-safe-width) !important;
   column-gap: 128px !important;
   column-fill: auto !important;
-  height: var(--safe-height) !important;
+  height: var(--lumina-safe-height) !important;
 }
 
 body * {
@@ -46,11 +46,11 @@ body * {
 }
 
 body.is-vertical * {
-  max-height: var(--safe-height) !important;
+  max-height: var(--lumina-safe-height) !important;
 }
 
 body:not(.is-vertical) * {
-  max-width: var(--safe-width) !important;
+  max-width: var(--lumina-safe-width) !important;
 }
 
 ::-webkit-scrollbar,
@@ -76,13 +76,13 @@ body::-webkit-scrollbar:vertical {
 body.is-vertical img,
 body.is-vertical svg,
 body.is-vertical video {
-  max-width: var(--safe-width) !important;
+  max-width: var(--lumina-safe-width) !important;
 }
 
 body:not(.is-vertical) img,
 body:not(.is-vertical) svg,
 body:not(.is-vertical) video {
-  max-height: var(--safe-height) !important;
+  max-height: var(--lumina-safe-height) !important;
 }
 
 img,
@@ -115,62 +115,70 @@ a:visited {
   opacity: 1 !important;
 }
 
-body.override-color p,
-body.override-color h1,
-body.override-color h2,
-body.override-color h3,
-body.override-color h4,
-body.override-color h5,
-body.override-color h6,
-body.override-color li,
-body.override-color span,
-body.override-color div,
-body.override-color section {
-  color: var(--on-surface-color);
+body.lumina-override-color {
+  color: var(--lumina-on-surface-color) !important;
 }
 
-body.override-color ::selection {
-  background-color: var(--primary-container-color) !important;
+body.lumina-override-color p,
+body.lumina-override-color h1,
+body.lumina-override-color h2,
+body.lumina-override-color h3,
+body.lumina-override-color h4,
+body.lumina-override-color h5,
+body.lumina-override-color h6,
+body.lumina-override-color li,
+body.lumina-override-color span,
+body.lumina-override-color div,
+body.lumina-override-color section {
+  color: var(--lumina-on-surface-color);
+}
+
+body.lumina-override-color ::selection {
+  background-color: var(--lumina-primary-container-color) !important;
   color: inherit !important;
 }
 
-body.override-color a,
-body.override-color a:link,
-body.override-color a:visited,
-body.override-color a:active {
-  color: var(--primary-color);
+body.lumina-override-color a,
+body.lumina-override-color a:link,
+body.lumina-override-color a:visited,
+body.lumina-override-color a:active {
+  color: var(--lumina-primary-color);
 }
 
-body.override-color a:visited {
-  color: var(--primary-color) !important;
+body.lumina-override-color a:visited {
+  color: var(--lumina-primary-color) !important;
 }
 
-body.override-color blockquote {
-  background-color: var(--surface-container-color) !important;
-  border-color: var(--primary-color) !important;
-  color: var(--on-surface-variant-color) !important;
+body.lumina-override-color a * {
+  color: inherit !important;
 }
 
-body.override-color hr {
-  background-color: var(--outline-variant-color) !important;
+body.lumina-override-color blockquote {
+  background-color: var(--lumina-surface-container-color) !important;
+  border-color: var(--lumina-primary-color) !important;
+  color: var(--lumina-on-surface-variant-color) !important;
 }
 
-body.override-color code {
-  background-color: var(--surface-container-high-color) !important;
-  color: var(--primary-color) !important;
+body.lumina-override-color hr {
+  background-color: var(--lumina-outline-variant-color) !important;
 }
 
-body.override-color pre {
-  background-color: var(--surface-container-color) !important;
-  border: 1px solid var(--outline-variant-color) !important;
+body.lumina-override-color code {
+  background-color: var(--lumina-surface-container-high-color) !important;
+  color: var(--lumina-primary-color) !important;
 }
 
-body.override-color pre code {
-  color: var(--on-surface-variant-color) !important;
+body.lumina-override-color pre {
+  background-color: var(--lumina-surface-container-color) !important;
+  border: 1px solid var(--lumina-outline-variant-color) !important;
 }
 
-body.override-color figcaption {
-  color: var(--on-surface-variant-color) !important;
+body.lumina-override-color pre code {
+  color: var(--lumina-on-surface-variant-color) !important;
+}
+
+body.lumina-override-color figcaption {
+  color: var(--lumina-on-surface-variant-color) !important;
 }
 
 aside[epub\:type~="footnote"],

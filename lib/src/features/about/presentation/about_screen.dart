@@ -142,6 +142,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
   Widget _buildAppHeader(BuildContext context, AppLocalizations l10n) {
     const appSvgPath = 'assets/icons/icon.svg';
+    const logoSvgPath = 'assets/logos/logo.svg';
 
     return Column(
       children: [
@@ -159,11 +160,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         const SizedBox(height: 16),
 
         // App Name
-        Text(
-          l10n.appName,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+        SvgPicture.asset(
+          logoSvgPath,
+          height: 20,
+          colorFilter: ColorFilter.mode(
+            Theme.of(context).colorScheme.onSurface,
+            BlendMode.srcIn,
+          ),
         ),
 
         const SizedBox(height: 8),
@@ -173,7 +176,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           Text(
             'v$_version',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 14,
             ),
           ),
@@ -194,7 +197,6 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           child: Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.primary,
             ),
           ),
@@ -215,14 +217,14 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
       leading: Icon(
         icon,
-        color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w500)),
+      title: Text(title),
       subtitle: Text(
         subtitle,
         style: TextStyle(
           fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
       onTap: onTap,
@@ -245,7 +247,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         tip,
         style: TextStyle(
           fontSize: 14,
-          color: Theme.of(context).colorScheme.onSurface.withAlpha(204),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
       dense: true,
@@ -257,17 +259,14 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
       leading: Icon(
         Icons.cleaning_services_outlined,
-        color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
-      title: Text(
-        l10n.cleanCache,
-        style: TextStyle(fontWeight: FontWeight.w500),
-      ),
+      title: Text(l10n.cleanCache),
       subtitle: Text(
         l10n.cleanCacheSubtitle,
         style: TextStyle(
           fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
       trailing: _isCleaning
@@ -287,17 +286,14 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
       leading: Icon(
         Icons.archive_outlined,
-        color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
-      title: Text(
-        l10n.backupLibrary,
-        style: TextStyle(fontWeight: FontWeight.w500),
-      ),
+      title: Text(l10n.backupLibrary),
       subtitle: Text(
         l10n.backupLibraryDescription,
         style: TextStyle(
           fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
       trailing: _isExporting
@@ -318,6 +314,8 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     await service.cleanCacheFiles();
     final deletedCount = await service.cleanOrphanFiles();
     await service.cleanShareFiles();
+
+    await Future.delayed(const Duration(milliseconds: 200)); // For better UX
 
     setState(() => _isCleaning = false);
 

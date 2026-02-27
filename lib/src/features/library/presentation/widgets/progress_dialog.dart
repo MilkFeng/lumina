@@ -115,7 +115,6 @@ class _ProgressDialogState extends State<ProgressDialog> {
                         color: theme.colorScheme.onSurfaceVariant.withValues(
                           alpha: 0.8,
                         ),
-                        fontFamily: AppTheme.fontFamilyContent,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -179,7 +178,6 @@ class _ProgressDialogState extends State<ProgressDialog> {
                               return Text(
                                 item.message,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  fontFamily: AppTheme.fontFamilyContent,
                                   color: color,
                                   fontWeight: FontWeight.w400,
                                 ),

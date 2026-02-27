@@ -93,30 +93,6 @@ flutter:
   generate: true
   uses-material-design: true
 
-  fonts:
-    - family: AppSerif
-      fonts:
-        - asset: assets/fonts/SourceHanSerifSC-ExtraLight-Subset.ttf
-          weight: 200
-        - asset: assets/fonts/SourceHanSerifSC-Light-Subset.ttf
-          weight: 300
-        - asset: assets/fonts/SourceHanSerifSC-Regular-Subset.ttf
-          weight: 400
-        - asset: assets/fonts/SourceHanSerifSC-Medium-Subset.ttf
-          weight: 500
-        - asset: assets/fonts/SourceHanSerifSC-SemiBold-Subset.ttf
-          weight: 600
-        - asset: assets/fonts/SourceHanSerifSC-Bold-Subset.ttf
-          weight: 700
-        - asset: assets/fonts/SourceHanSerifSC-Heavy-Subset.ttf
-          weight: 900
-
-    - family: AppSerifContent
-      fonts:
-        - asset: assets/fonts/SourceHanSerifSC-Regular-Subset.ttf
-          weight: 400
-        - asset: assets/fonts/SourceHanSerifSC-Bold-Subset.ttf
-          weight: 700
-
   assets:
     - assets/icons/icon.svg
+    - assets/logos/logo.svg

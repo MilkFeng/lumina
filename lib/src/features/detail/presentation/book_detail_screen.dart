@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
 import 'package:lumina/src/features/library/data/repositories/shelf_book_repository_provider.dart';
 import 'package:lumina/src/features/detail/presentation/book_detail_helpers.dart';
@@ -355,7 +354,6 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
-                fontFamily: AppTheme.fontFamilyContent,
                 fontWeight: FontWeight.w400,
               ),
               textAlign: TextAlign.center,

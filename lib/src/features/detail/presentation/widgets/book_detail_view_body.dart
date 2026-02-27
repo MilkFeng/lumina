@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/detail/presentation/book_detail_screen.dart';
 import '../../../library/domain/shelf_book.dart';
 import '../../../../core/widgets/book_cover.dart';
@@ -63,10 +62,9 @@ class BookDetailViewBody extends ConsumerWidget {
             // Title
             Text(
               book.title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w400,
-                fontFamily: AppTheme.fontFamilyContent,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w400),
               textAlign: TextAlign.left,
             ),
 
@@ -76,8 +74,7 @@ class BookDetailViewBody extends ConsumerWidget {
               Text(
                 book.authors.join(l10n.spliter),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
-                  fontFamily: AppTheme.fontFamilyContent,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w400,
                 ),
                 textAlign: TextAlign.left,
@@ -90,10 +87,9 @@ class BookDetailViewBody extends ConsumerWidget {
               ExpandableText(
                 text: book.description!,
                 maxLines: 4,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontFamily: AppTheme.fontFamilyContent,
-                  fontWeight: FontWeight.w400,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w400),
               ),
             ],
 
@@ -115,9 +111,7 @@ class BookDetailViewBody extends ConsumerWidget {
                   Icon(
                     Icons.book_outlined,
                     size: 16,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withAlpha(153),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -125,9 +119,7 @@ class BookDetailViewBody extends ConsumerWidget {
                         ? l10n.progressPercent(progressPercent)
                         : l10n.notStarted,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withAlpha(153),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -198,7 +190,7 @@ class _MetadataChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );

@@ -81,16 +81,25 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
+    final safePadding = MediaQuery.of(context).padding;
 
-    const double maxPopupHeight = 150.0;
     const double minBookmarkWidth = 150;
     final double maxBookmarkWidth = screenSize.width * 0.8;
 
-    final spaceBelow = screenSize.height - widget.anchorRect.bottom;
-    final spaceAbove = widget.anchorRect.top;
+    final spaceBelow =
+        screenSize.height - widget.anchorRect.bottom - safePadding.bottom;
+    final spaceAbove = widget.anchorRect.top - safePadding.top;
 
-    final bool showBelow =
-        spaceBelow >= maxPopupHeight || spaceBelow > spaceAbove;
+    final bool showBelow = spaceBelow >= spaceAbove;
+
+    final double calculatedMaxHeight = showBelow
+        ? (spaceBelow - safePadding.bottom - 12.0)
+        : (spaceAbove - safePadding.top - 12.0);
+
+    final double maxBookmarkHeight = calculatedMaxHeight.clamp(
+      100.0,
+      screenSize.height * 0.4,
+    );
 
     final double topPosition = showBelow ? widget.anchorRect.bottom + 6.0 : -1;
     final double bottomPosition = !showBelow
@@ -139,7 +148,7 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                     filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
                     child: Container(
                       constraints: BoxConstraints(
-                        maxHeight: maxPopupHeight,
+                        maxHeight: maxBookmarkHeight,
                         maxWidth: maxBookmarkWidth,
                         minWidth: minBookmarkWidth,
                       ),
@@ -175,7 +184,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           widget.rawHtml,
                           textStyle: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                fontFamily: AppTheme.fontFamilyContent,
                                 color: widget.epubTheme.colorScheme.onSurface,
                                 height: 1.6,
                               ),
@@ -188,7 +196,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                               'Error loading content',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    fontFamily: AppTheme.fontFamilyContent,
                                     color:
                                         widget.epubTheme.colorScheme.onSurface,
                                   ),
@@ -196,16 +203,34 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           },
                           customStylesBuilder: (element) {
                             Map<String, String> styles = {};
+                            final fontSize =
+                                (widget
+                                        .epubTheme
+                                        .themeData
+                                        .textTheme
+                                        .labelMedium
+                                        ?.fontSize ??
+                                    14.0) *
+                                widget.epubTheme.zoom;
+                            styles['font-size'] = '${fontSize}px';
                             if (widget.epubTheme.shouldOverrideTextColor) {
                               styles['color'] = colorToHex(
                                 widget.epubTheme.colorScheme.onSurface,
                               );
                             }
                             if (element.localName == 'a') {
-                              styles['color'] = colorToHex(
-                                widget.epubTheme.colorScheme.primary,
-                              );
+                              final color =
+                                  widget.epubTheme.overridePrimaryColor ??
+                                  widget.epubTheme.colorScheme.primary;
+                              styles['color'] = colorToHex(color);
                               styles['text-decoration'] = 'none';
+                            }
+                            if (element.localName == 'ol' ||
+                                element.localName == 'ul') {
+                              return {'padding-left': '20px', 'margin': '0'};
+                            }
+                            if (element.localName == 'p') {
+                              return {'margin': '0 0 8px 0'};
                             }
                             return styles;
                           },

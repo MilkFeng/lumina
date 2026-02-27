@@ -269,7 +269,7 @@ class EpubReader {
       if (match) {
         style.setProperty(
           'font-size',
-          `calc(\${match[0]} * var(--zoom))`,
+          `calc(\${match[0]} * var(--lumina-zoom))`,
           style.getPropertyPriority('font-size')
         );
       }
@@ -589,9 +589,9 @@ class EpubReader {
       doc.head.appendChild(variableStyle);
 
       if (this.state.config.theme.shouldOverrideTextColor) {
-        doc.body.classList.add('override-color');
+        doc.body.classList.add('lumina-override-color');
       } else {
-        doc.body.classList.remove('override-color');
+        doc.body.classList.remove('lumina-override-color');
       }
 
       if (this._isVertical()) {
@@ -640,6 +640,12 @@ class EpubReader {
           window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
           window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
           window.flutter_inappwebview.callHandler('onRendererInitialized');
+        } else if (iframe.id === 'frame-prev') {
+          // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
+          this.jumpToLastPageOfFrame(iframe);
+        } else if (iframe.id === 'frame-next') {
+          // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
+          this.jumpToPageFor('next', 0);
         }
 
         this._buildInteractionMap();
@@ -701,6 +707,12 @@ class EpubReader {
         window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
         window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
         window.flutter_inappwebview.callHandler('onRendererInitialized');
+      } else if (iframe.id === 'frame-prev') {
+        // Jump to the end of the previous frame to prepare for smooth transition when user cycles frames
+        this.jumpToLastPageOfFrame(iframe);
+      } else if (iframe.id === 'frame-next') {
+        // Jump to the start of the next frame to prepare for smooth transition when user cycles frames
+        this.jumpToPageFor('next', 0);
       }
 
       this._buildInteractionMap();
@@ -854,29 +866,29 @@ class EpubReader {
     const root = doc.documentElement;
     const body = doc.body;
 
-    root.style.setProperty('--zoom', this.state.config.theme.zoom);
-    root.style.setProperty('--safe-width', this.state.config.safeWidth + 'px');
-    root.style.setProperty('--safe-height', this.state.config.safeHeight + 'px');
-    root.style.setProperty('--padding-top', this.state.config.padding.top + 'px');
-    root.style.setProperty('--padding-left', this.state.config.padding.left + 'px');
-    root.style.setProperty('--padding-right', this.state.config.padding.right + 'px');
-    root.style.setProperty('--padding-bottom', this.state.config.padding.bottom + 'px');
-    root.style.setProperty('--reader-overflow-x', this._isVertical() ? 'hidden' : 'auto');
-    root.style.setProperty('--reader-overflow-y', this._isVertical() ? 'auto' : 'hidden');
+    root.style.setProperty('--lumina-zoom', this.state.config.theme.zoom);
+    root.style.setProperty('--lumina-safe-width', this.state.config.safeWidth + 'px');
+    root.style.setProperty('--lumina-safe-height', this.state.config.safeHeight + 'px');
+    root.style.setProperty('--lumina-padding-top', this.state.config.padding.top + 'px');
+    root.style.setProperty('--lumina-padding-left', this.state.config.padding.left + 'px');
+    root.style.setProperty('--lumina-padding-right', this.state.config.padding.right + 'px');
+    root.style.setProperty('--lumina-padding-bottom', this.state.config.padding.bottom + 'px');
+    root.style.setProperty('--lumina-reader-overflow-x', this._isVertical() ? 'hidden' : 'auto');
+    root.style.setProperty('--lumina-reader-overflow-y', this._isVertical() ? 'auto' : 'hidden');
 
-    root.style.setProperty('--surface-color', this.state.config.theme.surfaceColor);
-    root.style.setProperty('--on-surface-color', this.state.config.theme.onSurfaceColor);
-    root.style.setProperty('--primary-color', this.state.config.theme.primaryColor);
-    root.style.setProperty('--primary-container', this.state.config.theme.primaryContainerColor);
-    root.style.setProperty('--on-surface-variant', this.state.config.theme.onSurfaceVariantColor);
-    root.style.setProperty('--outline-variant', this.state.config.theme.outlineVariantColor);
-    root.style.setProperty('--surface-container', this.state.config.theme.surfaceContainerColor);
-    root.style.setProperty('--surface-container-high', this.state.config.theme.surfaceContainerHighColor);
+    root.style.setProperty('--lumina-surface-color', this.state.config.theme.surfaceColor);
+    root.style.setProperty('--lumina-on-surface-color', this.state.config.theme.onSurfaceColor);
+    root.style.setProperty('--lumina-primary-color', this.state.config.theme.primaryColor);
+    root.style.setProperty('--lumina-primary-container', this.state.config.theme.primaryContainerColor);
+    root.style.setProperty('--lumina-on-surface-variant', this.state.config.theme.onSurfaceVariantColor);
+    root.style.setProperty('--lumina-outline-variant', this.state.config.theme.outlineVariantColor);
+    root.style.setProperty('--lumina-surface-container', this.state.config.theme.surfaceContainerColor);
+    root.style.setProperty('--lumina-surface-container-high', this.state.config.theme.surfaceContainerHighColor);
 
     if (this.state.config.theme.shouldOverrideTextColor) {
-      body.classList.add('override-color');
+      body.classList.add('lumina-override-color');
     } else {
-      body.classList.remove('override-color');
+      body.classList.remove('lumina-override-color');
     }
 
     const existingStyle = doc.getElementById(styleId);
@@ -886,24 +898,24 @@ class EpubReader {
   }
 
   _generateVariableStyle() {
-    const zoomItem = '--zoom: ' + this.state.config.theme.zoom + ';';
-    const safeWidthItem = '--safe-width: ' + this.state.config.safeWidth + 'px;';
-    const safeHeightItem = '--safe-height: ' + this.state.config.safeHeight + 'px;';
-    const paddingTopItem = '--padding-top: ' + this.state.config.padding.top + 'px;';
-    const paddingLeftItem = '--padding-left: ' + this.state.config.padding.left + 'px;';
-    const paddingRightItem = '--padding-right: ' + this.state.config.padding.right + 'px;';
-    const paddingBottomItem = '--padding-bottom: ' + this.state.config.padding.bottom + 'px;';
-    const readerOverflowXItem = '--reader-overflow-x: ' + (this._isVertical() ? 'hidden' : 'auto') + ';';
-    const readerOverflowYItem = '--reader-overflow-y: ' + (this._isVertical() ? 'auto' : 'hidden') + ';';
+    const zoomItem = '--lumina-zoom: ' + this.state.config.theme.zoom + ';';
+    const safeWidthItem = '--lumina-safe-width: ' + this.state.config.safeWidth + 'px;';
+    const safeHeightItem = '--lumina-safe-height: ' + this.state.config.safeHeight + 'px;';
+    const paddingTopItem = '--lumina-padding-top: ' + this.state.config.padding.top + 'px;';
+    const paddingLeftItem = '--lumina-padding-left: ' + this.state.config.padding.left + 'px;';
+    const paddingRightItem = '--lumina-padding-right: ' + this.state.config.padding.right + 'px;';
+    const paddingBottomItem = '--lumina-padding-bottom: ' + this.state.config.padding.bottom + 'px;';
+    const readerOverflowXItem = '--lumina-reader-overflow-x: ' + (this._isVertical() ? 'hidden' : 'auto') + ';';
+    const readerOverflowYItem = '--lumina-reader-overflow-y: ' + (this._isVertical() ? 'auto' : 'hidden') + ';';
 
-    const surfaceColorItem = '--surface-color: ' + this.state.config.theme.surfaceColor + ';';
-    const onSurfaceColorItem = '--on-surface-color: ' + this.state.config.theme.onSurfaceColor + ';';
-    const primaryColorItem = '--primary-color: ' + this.state.config.theme.primaryColor + ';';
-    const primaryContainerItem = '--primary-container-color: ' + this.state.config.theme.primaryContainerColor + ';';
-    const onSurfaceVariantItem = '--on-surface-variant-color: ' + this.state.config.theme.onSurfaceVariantColor + ';';
-    const outlineVariantItem = '--outline-variant-color: ' + this.state.config.theme.outlineVariantColor + ';';
-    const surfaceContainerItem = '--surface-container-color: ' + this.state.config.theme.surfaceContainerColor + ';';
-    const surfaceContainerHighItem = '--surface-container-high-color: ' + this.state.config.theme.surfaceContainerHighColor + ';';
+    const surfaceColorItem = '--lumina-surface-color: ' + this.state.config.theme.surfaceColor + ';';
+    const onSurfaceColorItem = '--lumina-on-surface-color: ' + this.state.config.theme.onSurfaceColor + ';';
+    const primaryColorItem = '--lumina-primary-color: ' + this.state.config.theme.primaryColor + ';';
+    const primaryContainerItem = '--lumina-primary-container-color: ' + this.state.config.theme.primaryContainerColor + ';';
+    const onSurfaceVariantItem = '--lumina-on-surface-variant-color: ' + this.state.config.theme.onSurfaceVariantColor + ';';
+    const outlineVariantItem = '--lumina-outline-variant-color: ' + this.state.config.theme.outlineVariantColor + ';';
+    const surfaceContainerItem = '--lumina-surface-container-color: ' + this.state.config.theme.surfaceContainerColor + ';';
+    const surfaceContainerHighItem = '--lumina-surface-container-high-color: ' + this.state.config.theme.surfaceContainerHighColor + ';';
 
     return ':root {'
       + zoomItem
@@ -1099,8 +1111,8 @@ html,
 body {
   margin: 0 !important;
   padding: 0 !important;
-  width: var(--safe-width) !important;
-  height: var(--safe-height) !important;
+  width: var(--lumina-safe-width) !important;
+  height: var(--lumina-safe-height) !important;
   background-color: transparent !important;
   touch-action: none !important;
 
@@ -1115,7 +1127,7 @@ body {
   font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
   text-align: justify;
 
-  font-size: calc(100% * var(--zoom)) !important;
+  font-size: calc(100% * var(--lumina-zoom)) !important;
 
   -webkit-text-size-adjust: none !important;
   text-size-adjust: none !important;
@@ -1123,15 +1135,15 @@ body {
 
 html,
 body {
-  overflow-x: var(--reader-overflow-x) !important;
-  overflow-y: var(--reader-overflow-y) !important;
+  overflow-x: var(--lumina-reader-overflow-x) !important;
+  overflow-y: var(--lumina-reader-overflow-y) !important;
 }
 
 body {
-  column-width: var(--safe-width) !important;
+  column-width: var(--lumina-safe-width) !important;
   column-gap: 128px !important;
   column-fill: auto !important;
-  height: var(--safe-height) !important;
+  height: var(--lumina-safe-height) !important;
 }
 
 body * {
@@ -1143,11 +1155,11 @@ body * {
 }
 
 body.is-vertical * {
-  max-height: var(--safe-height) !important;
+  max-height: var(--lumina-safe-height) !important;
 }
 
 body:not(.is-vertical) * {
-  max-width: var(--safe-width) !important;
+  max-width: var(--lumina-safe-width) !important;
 }
 
 ::-webkit-scrollbar,
@@ -1173,13 +1185,13 @@ body::-webkit-scrollbar:vertical {
 body.is-vertical img,
 body.is-vertical svg,
 body.is-vertical video {
-  max-width: var(--safe-width) !important;
+  max-width: var(--lumina-safe-width) !important;
 }
 
 body:not(.is-vertical) img,
 body:not(.is-vertical) svg,
 body:not(.is-vertical) video {
-  max-height: var(--safe-height) !important;
+  max-height: var(--lumina-safe-height) !important;
 }
 
 img,
@@ -1212,62 +1224,70 @@ a:visited {
   opacity: 1 !important;
 }
 
-body.override-color p,
-body.override-color h1,
-body.override-color h2,
-body.override-color h3,
-body.override-color h4,
-body.override-color h5,
-body.override-color h6,
-body.override-color li,
-body.override-color span,
-body.override-color div,
-body.override-color section {
-  color: var(--on-surface-color);
+body.lumina-override-color {
+  color: var(--lumina-on-surface-color) !important;
 }
 
-body.override-color ::selection {
-  background-color: var(--primary-container-color) !important;
+body.lumina-override-color p,
+body.lumina-override-color h1,
+body.lumina-override-color h2,
+body.lumina-override-color h3,
+body.lumina-override-color h4,
+body.lumina-override-color h5,
+body.lumina-override-color h6,
+body.lumina-override-color li,
+body.lumina-override-color span,
+body.lumina-override-color div,
+body.lumina-override-color section {
+  color: var(--lumina-on-surface-color);
+}
+
+body.lumina-override-color ::selection {
+  background-color: var(--lumina-primary-container-color) !important;
   color: inherit !important;
 }
 
-body.override-color a,
-body.override-color a:link,
-body.override-color a:visited,
-body.override-color a:active {
-  color: var(--primary-color);
+body.lumina-override-color a,
+body.lumina-override-color a:link,
+body.lumina-override-color a:visited,
+body.lumina-override-color a:active {
+  color: var(--lumina-primary-color);
 }
 
-body.override-color a:visited {
-  color: var(--primary-color) !important;
+body.lumina-override-color a:visited {
+  color: var(--lumina-primary-color) !important;
 }
 
-body.override-color blockquote {
-  background-color: var(--surface-container-color) !important;
-  border-color: var(--primary-color) !important;
-  color: var(--on-surface-variant-color) !important;
+body.lumina-override-color a * {
+  color: inherit !important;
 }
 
-body.override-color hr {
-  background-color: var(--outline-variant-color) !important;
+body.lumina-override-color blockquote {
+  background-color: var(--lumina-surface-container-color) !important;
+  border-color: var(--lumina-primary-color) !important;
+  color: var(--lumina-on-surface-variant-color) !important;
 }
 
-body.override-color code {
-  background-color: var(--surface-container-high-color) !important;
-  color: var(--primary-color) !important;
+body.lumina-override-color hr {
+  background-color: var(--lumina-outline-variant-color) !important;
 }
 
-body.override-color pre {
-  background-color: var(--surface-container-color) !important;
-  border: 1px solid var(--outline-variant-color) !important;
+body.lumina-override-color code {
+  background-color: var(--lumina-surface-container-high-color) !important;
+  color: var(--lumina-primary-color) !important;
 }
 
-body.override-color pre code {
-  color: var(--on-surface-variant-color) !important;
+body.lumina-override-color pre {
+  background-color: var(--lumina-surface-container-color) !important;
+  border: 1px solid var(--lumina-outline-variant-color) !important;
 }
 
-body.override-color figcaption {
-  color: var(--on-surface-variant-color) !important;
+body.lumina-override-color pre code {
+  color: var(--lumina-on-surface-variant-color) !important;
+}
+
+body.lumina-override-color figcaption {
+  color: var(--lumina-on-surface-variant-color) !important;
 }
 
 aside[epub\\:type~="footnote"],
@@ -1311,16 +1331,16 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--surface-color, #FFFFFF) !important;
+  background-color: var(--lumina-surface-color, #FFFFFF) !important;
 }
 
 /* Container for iframes */
 #frame-container {
   position: absolute;
-  top: var(--padding-top, 0px);
-  left: var(--padding-left, 0px);
-  right: var(--padding-right, 0px);
-  bottom: var(--padding-bottom, 0px);
+  top: var(--lumina-padding-top, 0px);
+  left: var(--lumina-padding-left, 0px);
+  right: var(--lumina-padding-right, 0px);
+  bottom: var(--lumina-padding-bottom, 0px);
   overflow: hidden;
 }
 
@@ -1332,7 +1352,7 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
-  background-color: var(--surface-color, #FFFFFF) !important;
+  background-color: var(--lumina-surface-color, #FFFFFF) !important;
 }
 
 /* Prev iframe: hidden, low z-index */

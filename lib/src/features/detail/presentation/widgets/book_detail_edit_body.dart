@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import '../../../library/domain/shelf_book.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -69,7 +68,6 @@ class BookDetailEditBody extends StatelessWidget {
               ),
               onChanged: onTitleChanged,
               textInputAction: TextInputAction.next,
-              style: AppTheme.contentTextStyle,
               maxLines: null,
               inputFormatters: [
                 FilteringTextInputFormatter.deny(RegExp(r'[\n\r]')),
@@ -86,7 +84,6 @@ class BookDetailEditBody extends StatelessWidget {
                 helperText: l10n.authorsTooltip,
               ),
               textInputAction: TextInputAction.next,
-              style: AppTheme.contentTextStyle,
               maxLines: null,
               inputFormatters: [
                 FilteringTextInputFormatter.deny(RegExp(r'[\n\r]')),
@@ -102,7 +99,6 @@ class BookDetailEditBody extends StatelessWidget {
               minLines: 5,
               maxLines: null,
               textInputAction: TextInputAction.newline,
-              style: AppTheme.contentTextStyle,
             ),
 
             const SizedBox(height: 128),

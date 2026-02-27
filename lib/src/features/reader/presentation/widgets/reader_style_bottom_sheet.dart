@@ -259,7 +259,6 @@ class _SectionTitle extends StatelessWidget {
       label,
       style: TextStyle(
         fontSize: 14,
-        fontWeight: FontWeight.bold,
         color: Theme.of(context).colorScheme.primary,
       ),
     );
@@ -278,8 +277,7 @@ class _SubLabel extends StatelessWidget {
       label,
       style: TextStyle(
         fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -294,19 +292,10 @@ class _ScaleSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: 0.7);
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       children: [
-        Text(
-          'A',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: color,
-          ),
-        ),
+        Text('A', style: TextStyle(fontSize: 12, color: color)),
         Expanded(
           child: Slider(
             value: value,
@@ -317,14 +306,7 @@ class _ScaleSlider extends StatelessWidget {
             onChanged: onChanged,
           ),
         ),
-        Text(
-          'A',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
+        Text('A', style: TextStyle(fontSize: 22, color: color)),
       ],
     );
   }
@@ -367,10 +349,7 @@ class _MarginStepper extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -382,14 +361,13 @@ class _MarginStepper extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 visualDensity: VisualDensity.compact,
                 color: colorScheme.primary,
-                disabledColor: colorScheme.onSurface.withValues(alpha: 0.3),
+                disabledColor: colorScheme.onSurfaceVariant,
               ),
               Text(
                 '$value',
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               IconButton(
@@ -399,7 +377,7 @@ class _MarginStepper extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 visualDensity: VisualDensity.compact,
                 color: colorScheme.primary,
-                disabledColor: colorScheme.onSurface.withValues(alpha: 0.3),
+                disabledColor: colorScheme.onSurfaceVariant,
               ),
             ],
           ),
