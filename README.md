@@ -64,6 +64,11 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
       <br />
       <sub>Footnote Support</sub>
     </td>
+    <td align="center">
+      <img src="docs/vertical.jpg" width="250px" />
+      <br />
+      <sub>Vertical Reading Support</sub>
+    </td>
   </tr>
 </table>
 

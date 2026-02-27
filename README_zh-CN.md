@@ -64,6 +64,11 @@
       <br />
       <sub>脚注支持</sub>
     </td>
+    <td align="center">
+      <img src="docs/vertical.jpg" width="250px" />
+      <br />
+      <sub>竖排阅读支持</sub>
+    </td>
   </tr>
 </table>
 
