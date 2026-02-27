@@ -74,7 +74,7 @@ class BookDetailViewBody extends ConsumerWidget {
               Text(
                 book.authors.join(l10n.spliter),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w400,
                 ),
                 textAlign: TextAlign.left,
@@ -111,9 +111,7 @@ class BookDetailViewBody extends ConsumerWidget {
                   Icon(
                     Icons.book_outlined,
                     size: 16,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withAlpha(153),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -121,9 +119,7 @@ class BookDetailViewBody extends ConsumerWidget {
                         ? l10n.progressPercent(progressPercent)
                         : l10n.notStarted,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withAlpha(153),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -194,7 +190,7 @@ class _MetadataChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );
