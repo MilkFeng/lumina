@@ -17,7 +17,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final location = state.uri.toString();
-      print('Router intercepted system file link: $location');
       if (location.startsWith('content://') || location.startsWith('file://')) {
         Future.microtask(() {
           ref.read(pendingRouteFileProvider.notifier).state = location;
