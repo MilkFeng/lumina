@@ -33,14 +33,19 @@
       <sub>书架页面</sub>
     </td>
     <td align="center">
-      <img src="docs/dark.jpg" width="250px" />
+      <img src="docs/about.jpg" width="250px" />
       <br />
-      <sub>深色模式</sub>
+      <sub>关于</sub>
     </td>
     <td align="center">
-      <img src="docs/chinese.jpg" width="250px" />
+      <img src="docs/reader.jpg" width="250px" />
       <br />
-      <sub>中文</sub>
+      <sub>阅读界面</sub>
+    </td>
+    <td align="center">
+      <img src="docs/detail.jpg" width="250px" />
+      <br />
+      <sub>书籍详情</sub>
     </td>
   </tr>
   <tr>
@@ -50,9 +55,14 @@
       <sub>目录导航</sub>
     </td>
     <td align="center">
-      <img src="docs/about.jpg" width="250px" />
+      <img src="docs/style.jpg" width="250px" />
       <br />
-      <sub>关于</sub>
+      <sub>样式设置</sub>
+    </td>
+    <td align="center">
+      <img src="docs/footnote.jpg" width="250px" />
+      <br />
+      <sub>脚注支持</sub>
     </td>
   </tr>
 </table>
@@ -109,13 +119,6 @@ flutter build apk --release
 flutter build ios --release
 ```
 
-## ⚠️ 注意事项
-
-### EPUB 格式支持
-- 支持标准 EPUB 2.0 和 EPUB 3.0 格式
-- 暂不支持 DRM 加密的电子书
-- 推荐使用符合标准的 EPUB 文件以获得最佳体验
-
 ## 🗺️ 开发计划
 
 - [x] 基础 EPUB 解析与渲染
@@ -140,9 +143,9 @@ flutter build ios --release
 - [x] 编辑书籍的元数据（标题、作者等）
 - [x] 阅读设置（字体大小、背景颜色等）
 - [x] 脚注支持
+- [ ] 更好的颜色表现
 - [ ] 云端同步 (WebDAV)
 - [ ] 搜索功能
-- [ ] 更好的颜色表现
 - [ ] 注释和书签功能
 - [ ] 编辑书籍的封面
 - [ ] 更多的阅读设置选项
