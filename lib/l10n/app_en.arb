@@ -261,7 +261,7 @@
     "description": "Deleted badge label"
   },
   
-  "moveTo": "Move to ...",
+  "moveTo": "Move to",
   "@moveTo": {
     "description": "Move to dialog title"
   },
@@ -316,7 +316,7 @@
     "description": "Invalid file error message"
   },
   
-  "importing": "Importing...",
+  "importing": "Importing",
   "@importing": {
     "description": "Importing progress message"
   },
@@ -562,7 +562,7 @@
     "description": "Folder path validation error"
   },
   
-  "testing": "Testing...",
+  "testing": "Testing",
   "@testing": {
     "description": "Testing connection status"
   },
@@ -862,7 +862,7 @@
     "description": "Backup library feature description"
   },
 
-  "restoringBackup": "Restoring Backup…",
+  "restoringBackup": "Restoring Backup",
   "@restoringBackup": {
     "description": "Title shown while restore is in progress"
   },
@@ -892,7 +892,7 @@
     }
   },
 
-  "restoring": "Restoring...",
+  "restoring": "Restoring",
   "@restoring": {
     "description": "Restoring progress message"
   },

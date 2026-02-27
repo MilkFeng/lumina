@@ -164,7 +164,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleted => 'Deleted';
 
   @override
-  String get moveTo => 'Move to ...';
+  String get moveTo => 'Move to';
 
   @override
   String get createNewCategory => 'Create New Category';
@@ -196,7 +196,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidFileSelected => 'Invalid file selected';
 
   @override
-  String get importing => 'Importing...';
+  String get importing => 'Importing';
 
   @override
   String get importCompleted => 'Import completed';
@@ -330,7 +330,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get folderPathRequired => 'Folder path is required';
 
   @override
-  String get testing => 'Testing...';
+  String get testing => 'Testing';
 
   @override
   String get testConnection => 'Test Connection';
@@ -510,7 +510,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Export your library data as a folder, including book files and database backup';
 
   @override
-  String get restoringBackup => 'Restoring Backup…';
+  String get restoringBackup => 'Restoring Backup';
 
   @override
   String get restoreCompleted => 'Restore Completed';
@@ -532,7 +532,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get restoring => 'Restoring...';
+  String get restoring => 'Restoring';
 
   @override
   String restoringProgress(int success, int failed, int remaining) {

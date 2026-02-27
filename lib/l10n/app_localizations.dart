@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// Move to dialog title
   ///
   /// In en, this message translates to:
-  /// **'Move to ...'**
+  /// **'Move to'**
   String get moveTo;
 
   /// Create new category option
@@ -467,7 +467,7 @@ abstract class AppLocalizations {
   /// Importing progress message
   ///
   /// In en, this message translates to:
-  /// **'Importing...'**
+  /// **'Importing'**
   String get importing;
 
   /// Import completed message
@@ -689,7 +689,7 @@ abstract class AppLocalizations {
   /// Testing connection status
   ///
   /// In en, this message translates to:
-  /// **'Testing...'**
+  /// **'Testing'**
   String get testing;
 
   /// Test connection button label
@@ -983,7 +983,7 @@ abstract class AppLocalizations {
   /// Title shown while restore is in progress
   ///
   /// In en, this message translates to:
-  /// **'Restoring Backup…'**
+  /// **'Restoring Backup'**
   String get restoringBackup;
 
   /// Title shown when restore finishes
@@ -1007,7 +1007,7 @@ abstract class AppLocalizations {
   /// Restoring progress message
   ///
   /// In en, this message translates to:
-  /// **'Restoring...'**
+  /// **'Restoring'**
   String get restoring;
 
   /// Restoring progress details

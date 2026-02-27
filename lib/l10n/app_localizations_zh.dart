@@ -164,7 +164,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleted => '已删除';
 
   @override
-  String get moveTo => '移动到……';
+  String get moveTo => '移动到';
 
   @override
   String get createNewCategory => '创建新分类';
@@ -196,7 +196,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalidFileSelected => '选择的文件无效';
 
   @override
-  String get importing => '导入中……';
+  String get importing => '导入中';
 
   @override
   String get importCompleted => '导入完成';
@@ -500,7 +500,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupLibraryDescription => '将书库数据导出为一个文件夹，包括书籍文件和数据库备份';
 
   @override
-  String get restoringBackup => '正在恢复备份…';
+  String get restoringBackup => '正在恢复备份';
 
   @override
   String get restoreCompleted => '恢复完成';
@@ -516,7 +516,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get restoring => '正在恢复…';
+  String get restoring => '正在恢复';
 
   @override
   String restoringProgress(int success, int failed, int remaining) {
