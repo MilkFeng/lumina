@@ -1088,7 +1088,8 @@ class EpubReader {
       } else if (bestCandidate.type === 'link') {
         window.flutter_inappwebview.callHandler(
           'onLinkTap', bestCandidate.data,
-          absoluteLeft, absoluteTop, rect.width, rect.height
+          absoluteLeft, absoluteTop, rect.width, rect.height,
+          x, y
         );
       } else {
         window.flutter_inappwebview.callHandler('onTap', x, y);
