@@ -149,7 +149,7 @@ class EpubReader {
         clearTimeout(this._resizeDebounceTimer);
       }
       this._resizeDebounceTimer = setTimeout(() => {
-        this._buildInteractionMap();
+        window.flutter_inappwebview.callHandler('onViewportResize');
       }, 120);
     };
   }

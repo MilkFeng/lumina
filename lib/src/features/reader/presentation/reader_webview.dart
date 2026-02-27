@@ -428,6 +428,13 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         }
       },
     );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onViewportResize',
+      callback: (args) {
+        _updateTheme(_currentTheme);
+      },
+    );
   }
 
   Future<ui.Image?> _takeScreenshot() async {
