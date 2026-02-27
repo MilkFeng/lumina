@@ -1150,7 +1150,7 @@ body * {
   orphans: 1;
   widows: 1;
 
-  word-break: break-all !important;
+  word-break: break-word !important;
   overflow-wrap: break-word !important;
 }
 
