@@ -112,9 +112,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.8,
-                        ),
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -129,7 +127,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                         l10n.details,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -171,9 +169,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                                   color = theme.colorScheme.primary;
                                   break;
                                 case ProgressLogType.info:
-                                  color =
-                                      theme.textTheme.bodySmall?.color ??
-                                      theme.colorScheme.onSurfaceVariant;
+                                  color = theme.colorScheme.onSurfaceVariant;
                               }
                               return Text(
                                 item.message,

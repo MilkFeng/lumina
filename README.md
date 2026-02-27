@@ -2,11 +2,15 @@
 
 # Lumina
 
+<p align="center">
+  <img src="docs/icon.png" width="128px" />
+</p>
+
+A lightweight EPUB e-book reader built with Flutter, supporting both Android and iOS platforms.
+
 [![Flutter](https://img.shields.io/badge/Flutter-3.41.2-blue.svg)](https://flutter.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg)]()
-
-> A lightweight EPUB e-book reader built with Flutter, supporting both Android and iOS platforms.
 
 ## 🚧 Early Development Stage
 
@@ -29,14 +33,19 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
       <sub>Shelf</sub>
     </td>
     <td align="center">
-      <img src="docs/dark.jpg" width="250px" />
+      <img src="docs/about.jpg" width="250px" />
       <br />
-      <sub>Dark Mode</sub>
+      <sub>About</sub>
     </td>
     <td align="center">
-      <img src="docs/chinese.jpg" width="250px" />
+      <img src="docs/reader.jpg" width="250px" />
       <br />
-      <sub>Chinese</sub>
+      <sub>Reader</sub>
+    </td>
+    <td align="center">
+      <img src="docs/detail.jpg" width="250px" />
+      <br />
+      <sub>Book Details</sub>
     </td>
   </tr>
   <tr>
@@ -46,9 +55,14 @@ Please note that this project is currently in Alpha. Breaking changes to the dat
       <sub>Table of Contents</sub>
     </td>
     <td align="center">
-      <img src="docs/about.jpg" width="250px" />
+      <img src="docs/style.jpg" width="250px" />
       <br />
-      <sub>About</sub>
+      <sub>Style Settings</sub>
+    </td>
+    <td align="center">
+      <img src="docs/footnote.jpg" width="250px" />
+      <br />
+      <sub>Footnote Support</sub>
     </td>
   </tr>
 </table>
@@ -105,13 +119,6 @@ flutter build apk --release
 flutter build ios --release
 ```
 
-## ⚠️ Important Notes
-
-### EPUB Format Support
-- Supports standard EPUB 2.0 and EPUB 3.0 formats
-- DRM-encrypted e-books are not currently supported
-- Standard-compliant EPUB files are recommended for the best experience
-
 ## 🗺️ Roadmap
 
 - [x] Basic EPUB parsing and rendering
@@ -136,9 +143,9 @@ flutter build ios --release
 - [x] Edit book metadata (title, author, etc.)
 - [x] Reading settings (font size, background color, etc.)
 - [x] Footnote support
+- [ ] Better color rendering
 - [ ] Cloud sync (WebDAV)
 - [ ] Search functionality
-- [ ] Better color rendering
 - [ ] Annotation and bookmarking features
 - [ ] Edit book covers
 - [ ] More reading settings options

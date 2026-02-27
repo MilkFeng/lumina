@@ -299,12 +299,16 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                               widget.totalSpineItems == 0
                                   ? '0/0'
                                   : '${widget.currentSpineItemIndex + 1}/${widget.totalSpineItems}',
-                              style: themeData.textTheme.displayMedium,
+                              style: themeData.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             if (widget.totalPagesInChapter > 1)
                               Text(
                                 '${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
-                                style: themeData.textTheme.bodyMedium,
+                                style: themeData.textTheme.bodyMedium?.copyWith(
+                                  fontSize: 10,
+                                ),
                               ),
                           ],
                         ),

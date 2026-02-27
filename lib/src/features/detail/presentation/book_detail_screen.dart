@@ -353,7 +353,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w400,
               ),
               textAlign: TextAlign.center,

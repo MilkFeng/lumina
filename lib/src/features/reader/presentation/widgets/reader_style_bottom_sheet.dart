@@ -417,7 +417,7 @@ class _FollowSystemSwitch extends StatelessWidget {
           Icon(
             Icons.brightness_auto_outlined,
             size: 18,
-            color: colorScheme.onSurface.withValues(alpha: 0.8),
+            color: colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -425,7 +425,7 @@ class _FollowSystemSwitch extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: colorScheme.onSurface.withValues(alpha: 0.8),
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
