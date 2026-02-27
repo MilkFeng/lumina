@@ -429,26 +429,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       if (await canLaunchUrl(Uri.parse(url))) {
         // Open a dialog to confirm opening external link
         if (mounted && context.mounted) {
+          final themeData = _getEpubTheme().themeData;
           final shouldOpen =
               await showDialog<bool>(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: Text(AppLocalizations.of(context)!.openExternalLink),
-                  content: Text(
-                    AppLocalizations.of(
-                      context,
-                    )!.openExternalLinkConfirmation(url),
+                builder: (context) => Theme(
+                  data: themeData,
+                  child: AlertDialog(
+                    title: Text(AppLocalizations.of(context)!.openExternalLink),
+                    content: Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.openExternalLinkConfirmation(url),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text(AppLocalizations.of(context)!.cancel),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: Text(AppLocalizations.of(context)!.open),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: Text(AppLocalizations.of(context)!.cancel),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: Text(AppLocalizations.of(context)!.open),
-                    ),
-                  ],
                 ),
               ) ??
               false;

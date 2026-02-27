@@ -320,9 +320,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
               child: IgnorePointer(
                 ignoring: !widget.isLoading && widget.shouldShowWebView,
                 child: AnimatedOpacity(
-                  duration: const Duration(
-                    milliseconds: AppTheme.defaultAnimationDurationMs,
-                  ),
+                  duration: (widget.isLoading || !widget.shouldShowWebView)
+                      ? Duration.zero
+                      : const Duration(
+                          milliseconds: AppTheme.defaultAnimationDurationMs,
+                        ),
                   curve: Curves.easeOut,
                   opacity: (widget.isLoading || !widget.shouldShowWebView)
                       ? 1.0
