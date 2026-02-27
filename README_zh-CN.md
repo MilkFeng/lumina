@@ -3,7 +3,7 @@
 # Lumina
 
 <p align="center">
-  <img src="docs/icon.png" width="96px" />
+  <img src="docs/icon.png" width="128px" />
 </p>
 
 一个基于 Flutter 开发的轻量级 EPUB 电子书阅读器，支持 Android 和 iOS 双平台。
