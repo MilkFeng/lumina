@@ -148,6 +148,7 @@ flutter build ios --release
 - [x] Edit book metadata (title, author, etc.)
 - [x] Reading settings (font size, background color, etc.)
 - [x] Footnote support
+- [x] Link handling
 - [ ] Better color rendering
 - [ ] Cloud sync (WebDAV)
 - [ ] Search functionality
