@@ -1169,9 +1169,7 @@ body {
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 
-  font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
   text-align: justify;
-
   font-size: calc(100% * var(--lumina-zoom)) !important;
 
   -webkit-text-size-adjust: none !important;

@@ -98,35 +98,31 @@ class EpubWebViewHandler {
     String fileHash,
     WebUri requestUrl,
   ) async {
-    try {
-      final prefix = "/book/$fileHash/";
-      if (!requestUrl.path.startsWith(prefix)) {
-        return left('Invalid file hash');
-      }
-
-      final decodedPath = Uri.decodeFull(requestUrl.path);
-      final relativePath = decodedPath.substring(prefix.length);
-
-      final fileRelativePath = relativePath.split('#')[0];
-
-      epubPath = '${AppStorage.documentsPath}/$epubPath';
-
-      final result = await _streamService.readFileFromEpub(
-        epubPath: epubPath,
-        targetFilePath: fileRelativePath,
-      );
-
-      if (result.isLeft()) {
-        return left(result.getLeft().toNullable() ?? 'Error reading file');
-      }
-
-      final data = result.getRight().toNullable()!;
-      final mimeType = _streamService.getMimeType(fileRelativePath);
-
-      return right((data, mimeType));
-    } catch (e) {
-      return left('Error reading file: $e');
+    final prefix = "/book/$fileHash/";
+    if (!requestUrl.path.startsWith(prefix)) {
+      return left('Invalid file hash');
     }
+
+    final decodedPath = Uri.decodeFull(requestUrl.path);
+    final relativePath = decodedPath.substring(prefix.length);
+
+    final fileRelativePath = relativePath.split('#')[0];
+
+    epubPath = '${AppStorage.documentsPath}/$epubPath';
+
+    final result = await _streamService.readFileFromEpub(
+      epubPath: epubPath,
+      targetFilePath: fileRelativePath,
+    );
+
+    if (result.isLeft()) {
+      return left(result.getLeft().toNullable() ?? 'Error reading file');
+    }
+
+    final data = result.getRight().toNullable()!;
+    final mimeType = _streamService.getMimeType(fileRelativePath);
+
+    return right((data, mimeType));
   }
 
   /// Generate base URL for a chapter
