@@ -265,11 +265,11 @@ class EpubReader {
 
   _applyRules(style) {
     if (style.fontSize && !style.fontSize.includes('calc')) {
-      const match = style.fontSize.trim().toLowerCase().match(/^(\\d+(?:\\.\\d+)?)(px|pt)\$/);
+      const match = style.fontSize.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)(px|pt)$/);
       if (match) {
         style.setProperty(
           'font-size',
-          `calc(\${match[0]} * var(--lumina-zoom))`,
+          'calc(' + match[0] + ' * var(--lumina-zoom))',
           style.getPropertyPriority('font-size')
         );
       }
@@ -1326,9 +1326,9 @@ body.lumina-override-color figcaption {
   color: var(--lumina-on-surface-variant-color) !important;
 }
 
-aside[epub\\:type~="footnote"],
-aside[epub\\:type~="endnote"],
-div[epub\\:type~="footnote"] {
+aside[epub\:type~="footnote"],
+aside[epub\:type~="endnote"],
+div[epub\:type~="footnote"] {
   display: none !important;
 }
 
@@ -1345,7 +1345,7 @@ div[epub\\:type~="footnote"] {
   display: none !important;
 }
 
-a[epub\\:type~="noteref"],
+a[epub\:type~="noteref"],
 a[role~="doc-noteref"] {
   display: inline !important;
 }
