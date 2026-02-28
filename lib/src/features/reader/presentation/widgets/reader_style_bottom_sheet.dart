@@ -364,10 +364,7 @@ class _MarginStepper extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.secondary.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +384,7 @@ class _MarginStepper extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 visualDensity: VisualDensity.compact,
                 color: colorScheme.primary,
-                disabledColor: colorScheme.onSurfaceVariant,
+                disabledColor: colorScheme.outline,
               ),
               Text(
                 '$value',
@@ -403,7 +400,7 @@ class _MarginStepper extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 visualDensity: VisualDensity.compact,
                 color: colorScheme.primary,
-                disabledColor: colorScheme.onSurfaceVariant,
+                disabledColor: colorScheme.outline,
               ),
             ],
           ),
@@ -435,10 +432,7 @@ class _FollowSystemSwitch extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.secondary.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant, width: 1.5),
       ),
       child: Row(
         children: [
@@ -483,11 +477,7 @@ class _ThemeOptionChip extends StatelessWidget {
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
-                : Theme.of(
-                    context,
-                  ).colorScheme.secondary.withValues(alpha: 0.3),
+            color: isSelected ? colorScheme.primary : colorScheme.secondary,
             width: 1.5,
           ),
         ),
@@ -521,7 +511,7 @@ class _LinkHandlingSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    Widget _chip(ReaderLinkHandling option, IconData icon, String label) {
+    Widget chip(ReaderLinkHandling option, IconData icon, String label) {
       final selected = value == option;
       return Expanded(
         child: InkWell(
@@ -536,8 +526,8 @@ class _LinkHandlingSelector extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: selected
-                    ? colorScheme.primary.withValues(alpha: 0.5)
-                    : colorScheme.secondary.withValues(alpha: 0.3),
+                    ? colorScheme.primary
+                    : colorScheme.outlineVariant,
                 width: 1.5,
               ),
             ),
@@ -574,15 +564,15 @@ class _LinkHandlingSelector extends StatelessWidget {
 
     return Row(
       children: [
-        _chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
+        chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
         const SizedBox(width: 8),
-        _chip(
+        chip(
           ReaderLinkHandling.always,
           Icons.open_in_new_outlined,
           alwaysLabel,
         ),
         const SizedBox(width: 8),
-        _chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
+        chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
       ],
     );
   }

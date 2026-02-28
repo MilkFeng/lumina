@@ -126,7 +126,7 @@ class _SectionTitle extends StatelessWidget {
       label,
       style: TextStyle(
         fontSize: 14,
-        color: Theme.of(context).colorScheme.primary,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -155,15 +155,15 @@ class _OptionChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     final bgColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.15)
+        ? colorScheme.primaryContainer
         : colorScheme.surfaceContainerHighest;
 
     final borderColor = isSelected
-        ? colorScheme.primary.withValues(alpha: 0.5)
-        : colorScheme.secondary.withValues(alpha: 0.3);
+        ? colorScheme.primary
+        : colorScheme.outlineVariant;
 
     final contentColor = isSelected
-        ? colorScheme.primary
+        ? colorScheme.onPrimaryContainer
         : colorScheme.onSurfaceVariant;
 
     return InkWell(
@@ -190,7 +190,11 @@ class _OptionChip extends StatelessWidget {
             ],
             Text(
               label,
-              style: TextStyle(fontSize: 14, color: contentColor),
+              style: TextStyle(
+                fontSize: 14,
+                color: contentColor,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

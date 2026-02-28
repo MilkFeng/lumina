@@ -205,6 +205,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   ],
                 ),
                 child: AppBar(
+                  backgroundColor: themeData.colorScheme.surfaceContainer,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back_outlined),
                     onPressed: widget.onBack,
