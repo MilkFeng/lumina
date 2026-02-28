@@ -85,7 +85,7 @@ class _ExpandableTextState extends State<ExpandableText> {
                           ? AppLocalizations.of(context)!.collapse
                           : AppLocalizations.of(context)!.expandAll,
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                         decoration: TextDecoration.underline,

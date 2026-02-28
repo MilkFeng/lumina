@@ -126,7 +126,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                       child: Text(
                         l10n.details,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
+                          color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500,
                           decoration: TextDecoration.underline,
                         ),
