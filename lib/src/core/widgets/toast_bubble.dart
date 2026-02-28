@@ -20,10 +20,11 @@ class ToastBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = _backgroundColor(type, isDark);
-    final contentColor = _contentColor(type, isDark);
-    final icon = iconOverride ?? _iconForType(type, isDark);
+    final backgroundColor = _backgroundColor(type, colorScheme);
+    final contentColor = _contentColor(type, colorScheme);
+    final icon = iconOverride ?? _iconForType(type);
 
     final bubble = Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -32,9 +33,7 @@ class ToastBubble extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.shadow.withValues(alpha: isDark ? 0.4 : 0.2),
+            color: colorScheme.shadow.withValues(alpha: isDark ? 0.4 : 0.15),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -73,37 +72,27 @@ class ToastBubble extends StatelessWidget {
     );
   }
 
-  static Color _backgroundColor(ToastBubbleType type, bool isDark) {
-    if (isDark) {
-      switch (type) {
-        case ToastBubbleType.success:
-        case ToastBubbleType.info:
-          return const Color.fromARGB(160, 224, 224, 224);
-        case ToastBubbleType.error:
-          return const Color.fromARGB(160, 255, 205, 210);
-      }
-    }
+  static Color _backgroundColor(ToastBubbleType type, ColorScheme colorScheme) {
     switch (type) {
       case ToastBubbleType.success:
       case ToastBubbleType.info:
-        return const Color.fromARGB(160, 25, 25, 25);
+        return colorScheme.inverseSurface;
       case ToastBubbleType.error:
-        return const Color.fromARGB(160, 185, 28, 28);
+        return colorScheme.error;
     }
   }
 
-  static Color _contentColor(ToastBubbleType type, bool isDark) {
-    if (isDark) {
-      if (type == ToastBubbleType.error) {
-        return const Color.fromARGB(255, 77, 8, 8);
-      }
-      return const Color.fromARGB(255, 25, 25, 25);
-    } else {
-      return Colors.white;
+  static Color _contentColor(ToastBubbleType type, ColorScheme colorScheme) {
+    switch (type) {
+      case ToastBubbleType.success:
+      case ToastBubbleType.info:
+        return colorScheme.onInverseSurface;
+      case ToastBubbleType.error:
+        return colorScheme.onError;
     }
   }
 
-  static IconData? _iconForType(ToastBubbleType type, bool isDark) {
+  static IconData? _iconForType(ToastBubbleType type) {
     switch (type) {
       case ToastBubbleType.success:
         return Icons.check_circle_outlined;
