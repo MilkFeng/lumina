@@ -196,6 +196,16 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     final notifier = ref.read(appThemeNotifierProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Determine the brightness that is actually in effect right now so we
+    // only show the relevant variant picker.
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final effectiveBrightness = switch (settings.themeMode) {
+      AppThemeMode.light => Brightness.light,
+      AppThemeMode.dark => Brightness.dark,
+      AppThemeMode.system => systemBrightness,
+    };
+    final isEffectivelyDark = effectiveBrightness == Brightness.dark;
+
     return _buildInfoSection(
       context,
       title: l10n.appAppearance,
@@ -241,67 +251,71 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Light Theme Style ─────────────────────────────────────────
-              Text(
-                l10n.appLightTheme,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colorScheme.onSurfaceVariant,
+              // ── Variant picker: only the active brightness is shown ────────
+              if (!isEffectivelyDark) ...[
+                // Light Theme Style
+                Text(
+                  l10n.appLightTheme,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 16,
-                runSpacing: 12,
-                children: [
-                  _AppThemeVariantChip(
-                    colorScheme: AppTheme.lightColorScheme,
-                    isSelected:
-                        settings.lightVariant == AppLightThemeVariant.standard,
-                    onTap: () =>
-                        notifier.setLightVariant(AppLightThemeVariant.standard),
-                  ),
-                  _AppThemeVariantChip(
-                    colorScheme: AppTheme.eyeCareColorScheme,
-                    isSelected:
-                        settings.lightVariant == AppLightThemeVariant.eyeCare,
-                    onTap: () =>
-                        notifier.setLightVariant(AppLightThemeVariant.eyeCare),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // ── Dark Theme Style ──────────────────────────────────────────
-              Text(
-                l10n.appDarkTheme,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colorScheme.onSurfaceVariant,
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 12,
+                  children: [
+                    _AppThemeVariantChip(
+                      colorScheme: AppTheme.lightColorScheme,
+                      isSelected:
+                          settings.lightVariant ==
+                          AppLightThemeVariant.standard,
+                      onTap: () => notifier.setLightVariant(
+                        AppLightThemeVariant.standard,
+                      ),
+                    ),
+                    _AppThemeVariantChip(
+                      colorScheme: AppTheme.eyeCareColorScheme,
+                      isSelected:
+                          settings.lightVariant == AppLightThemeVariant.eyeCare,
+                      onTap: () => notifier.setLightVariant(
+                        AppLightThemeVariant.eyeCare,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 16,
-                runSpacing: 12,
-                children: [
-                  _AppThemeVariantChip(
-                    colorScheme: AppTheme.darkColorScheme,
-                    isSelected:
-                        settings.darkVariant == AppDarkThemeVariant.standard,
-                    onTap: () =>
-                        notifier.setDarkVariant(AppDarkThemeVariant.standard),
+              ] else ...[
+                // Dark Theme Style
+                Text(
+                  l10n.appDarkTheme,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
                   ),
-                  _AppThemeVariantChip(
-                    colorScheme: AppTheme.darkEyeCareColorScheme,
-                    isSelected:
-                        settings.darkVariant == AppDarkThemeVariant.eyeCare,
-                    onTap: () =>
-                        notifier.setDarkVariant(AppDarkThemeVariant.eyeCare),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 12,
+                  children: [
+                    _AppThemeVariantChip(
+                      colorScheme: AppTheme.darkColorScheme,
+                      isSelected:
+                          settings.darkVariant == AppDarkThemeVariant.standard,
+                      onTap: () =>
+                          notifier.setDarkVariant(AppDarkThemeVariant.standard),
+                    ),
+                    _AppThemeVariantChip(
+                      colorScheme: AppTheme.darkEyeCareColorScheme,
+                      isSelected:
+                          settings.darkVariant == AppDarkThemeVariant.eyeCare,
+                      onTap: () =>
+                          notifier.setDarkVariant(AppDarkThemeVariant.eyeCare),
+                    ),
+                  ],
+                ),
+              ],
 
               const SizedBox(height: 8),
             ],
