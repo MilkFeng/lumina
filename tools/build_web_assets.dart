@@ -17,13 +17,9 @@ void main() {
 
   Map<String, String> contentMap = {};
 
-  String escape(String str) {
-    return str.replaceAll('\\', '\\\\').replaceAll('\$', '\\\$');
-  }
-
   for (final entry in fileMap.entries) {
     final content = File(entry.key).readAsStringSync();
-    contentMap.putIfAbsent(entry.value, () => escape(content));
+    contentMap.putIfAbsent(entry.value, () => content);
   }
 
   String generatedContent = '''

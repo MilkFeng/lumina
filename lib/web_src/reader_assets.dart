@@ -265,11 +265,11 @@ class EpubReader {
 
   _applyRules(style) {
     if (style.fontSize && !style.fontSize.includes('calc')) {
-      const match = style.fontSize.trim().toLowerCase().match(/^(\\d+(?:\\.\\d+)?)(px|pt)\$/);
+      const match = style.fontSize.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)(px|pt)$/);
       if (match) {
         style.setProperty(
           'font-size',
-          `calc(\${match[0]} * var(--lumina-zoom))`,
+          'calc(' + match[0] + ' * var(--lumina-zoom))',
           style.getPropertyPriority('font-size')
         );
       }
@@ -453,8 +453,17 @@ class EpubReader {
         const docX = rect.left + body.scrollLeft - bodyRect.left;
         const docY = rect.top + body.scrollTop - bodyRect.top;
 
-        // duokan
+        // duokan footnote support:
+        // 1. img with duokan-footnote class
+        // 2. img with alt or title attribute within a link with duokan-footnote class
+        let isDuokanFootnote = false;
         if (img.classList.contains('duokan-footnote')) {
+          isDuokanFootnote = true;
+        } else if (img.parentElement && img.parentElement.tagName.toLowerCase() === 'a' &&
+          img.parentElement.classList.contains('duokan-footnote')) {
+          isDuokanFootnote = true;
+        }
+        if (isDuokanFootnote) {
           const altText = img.getAttribute('alt') || img.getAttribute('title') || '';
 
           quadTree.insert({
@@ -1088,7 +1097,8 @@ class EpubReader {
       } else if (bestCandidate.type === 'link') {
         window.flutter_inappwebview.callHandler(
           'onLinkTap', bestCandidate.data,
-          absoluteLeft, absoluteTop, rect.width, rect.height
+          absoluteLeft, absoluteTop, rect.width, rect.height,
+          x, y
         );
       } else {
         window.flutter_inappwebview.callHandler('onTap', x, y);
@@ -1159,9 +1169,7 @@ body {
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 
-  font-family: "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "Songti SC", "SimSun", serif;
   text-align: justify;
-
   font-size: calc(100% * var(--lumina-zoom)) !important;
 
   -webkit-text-size-adjust: none !important;
@@ -1325,9 +1333,9 @@ body.lumina-override-color figcaption {
   color: var(--lumina-on-surface-variant-color) !important;
 }
 
-aside[epub\\:type~="footnote"],
-aside[epub\\:type~="endnote"],
-div[epub\\:type~="footnote"] {
+aside[epub\:type~="footnote"],
+aside[epub\:type~="endnote"],
+div[epub\:type~="footnote"] {
   display: none !important;
 }
 
@@ -1344,7 +1352,7 @@ div[epub\\:type~="footnote"] {
   display: none !important;
 }
 
-a[epub\\:type~="noteref"],
+a[epub\:type~="noteref"],
 a[role~="doc-noteref"] {
   display: inline !important;
 }

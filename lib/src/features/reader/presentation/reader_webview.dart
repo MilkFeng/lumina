@@ -466,10 +466,12 @@ class _ReaderWebViewState extends State<ReaderWebView> {
           (args[3] as num).toDouble(),
           (args[4] as num).toDouble(),
         );
+        final x = (args[5] as num).toDouble();
+        final y = (args[6] as num).toDouble();
         if (widget.callbacks.shouldHandleLinkTap(url, rect)) {
           widget.callbacks.onLinkTap(url, rect);
         } else {
-          widget.callbacks.onTap(rect.center.dx, rect.center.dy);
+          widget.callbacks.onTap(x, y);
         }
       },
     );

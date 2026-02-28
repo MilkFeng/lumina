@@ -130,6 +130,10 @@ class EpubZipParser {
     String? fileName,
   ) {
     try {
+      final opfDir = opfPath.contains('/')
+          ? opfPath.substring(0, opfPath.lastIndexOf('/'))
+          : '';
+
       final doc = XmlDocument.parse(content);
       final packageElement = doc.rootElement;
 
@@ -172,17 +176,18 @@ class EpubZipParser {
         }
       }
 
+      final guideElement = packageElement.findElements('guide').firstOrNull;
+      final guideItems = _parseGuide(guideElement);
+
       var metadata = _parseMetadata(
         metadataElement,
         manifestMap,
+        guideItems,
         version,
-        opfPath,
+        opfDir,
         fileName,
+        archive,
       );
-
-      final opfDir = opfPath.contains('/')
-          ? opfPath.substring(0, opfPath.lastIndexOf('/'))
-          : '';
 
       // Step 1: Build spine list with full metadata
       final spineItems = <SpineItem>[];
@@ -232,7 +237,12 @@ class EpubZipParser {
         final navFile = archive.findFile(navPath);
         if (navFile != null) {
           final navContent = _decodeString(navFile.content as List<int>);
-          toc = _parseNav(navContent, opfDir, spineIndexMap);
+
+          // Extract NAV directory for resolving relative links in NAV parsing
+          final navDir = navPath.contains('/')
+              ? navPath.substring(0, navPath.lastIndexOf('/'))
+              : '';
+          toc = _parseNav(navContent, navDir, spineIndexMap);
         }
       }
 
@@ -248,14 +258,19 @@ class EpubZipParser {
 
           if (tocFile != null) {
             final tocContent = _decodeString(tocFile.content as List<int>);
-            toc = _parseNcx(tocContent, manifestMap, opfDir, spineIndexMap);
+
+            // Extract TOC directory for resolving relative links in NCX parsing
+            final ncxDir = tocPath.contains('/')
+                ? tocPath.substring(0, tocPath.lastIndexOf('/'))
+                : '';
+            toc = _parseNcx(tocContent, manifestMap, ncxDir, spineIndexMap);
           }
         }
       }
 
       // Fallback: Create flat TOC from spine if no NCX/NAV found
       if (toc.isEmpty) {
-        toc = _parseSpineAsChapters(spineItems, opfDir);
+        toc = _parseSpineAsChapters(spineItems);
       }
 
       // Generate id for each TocItem
@@ -306,9 +321,11 @@ class EpubZipParser {
   static _MetadataResult _parseMetadata(
     XmlElement metadataElement,
     Map<String, (Href, String?)> manifestMap,
+    List<_GuideItem> guideItems,
     String version,
-    String opfPath,
+    String opfDir,
     String? fileName,
+    Archive archive,
   ) {
     // Helper function to find elements by local name (ignoring namespace prefix)
     // This handles both <title> and <dc:title> formats
@@ -370,6 +387,56 @@ class EpubZipParser {
       }
     }
 
+    // Return cover href relative to OPF directory
+    String? extractCoverHrefFromGuideItem(_GuideItem item) {
+      final href = _resolveRelativePath(opfDir, item.href);
+      String? resultHref;
+
+      // href could be a xhtml file - we need to find the actual image file it references
+      if (href.endsWith('.xhtml') ||
+          href.endsWith('.html') ||
+          href.endsWith('.htm')) {
+        final coverFile = archive.findFile(href);
+        if (coverFile != null) {
+          final coverContent = _decodeString(coverFile.content as List<int>);
+          final imgSrc = _extractFirstImageFromHtml(coverContent);
+          if (imgSrc != null) {
+            final hrefDir = href.contains('/')
+                ? href.substring(0, href.lastIndexOf('/'))
+                : '';
+            resultHref = _resolveRelativePath(hrefDir, imgSrc);
+            resultHref = _generateRelativePath(opfDir, resultHref);
+          }
+        }
+      } else if (href.endsWith('.jpg') ||
+          href.endsWith('.jpeg') ||
+          href.endsWith('.png') ||
+          href.endsWith('.webp')) {
+        resultHref = href;
+      }
+      return resultHref;
+    }
+
+    if (coverHref == null) {
+      // For EPUB 3, also check guide for reference with type="cover"
+      final coverReference = guideItems
+          .where((item) => item.type.toLowerCase() == 'cover')
+          .firstOrNull;
+      if (coverReference != null) {
+        coverHref = extractCoverHrefFromGuideItem(coverReference);
+      }
+    }
+
+    if (coverHref == null) {
+      // For EPUB 2, also check guide for reference with title containing "cover"
+      final coverReference = guideItems
+          .where((item) => item.title.toLowerCase().contains('cover'))
+          .firstOrNull;
+      if (coverReference != null) {
+        coverHref = extractCoverHrefFromGuideItem(coverReference);
+      }
+    }
+
     if (coverHref == null) {
       // Fallback: look for common cover file names in manifest
       for (final key in manifestMap.keys) {
@@ -394,13 +461,47 @@ class EpubZipParser {
     );
   }
 
+  static String? _extractFirstImageFromHtml(String htmlContent) {
+    final imgRegExp = RegExp(r'<img[^>]+src="([^">]+)"', caseSensitive: false);
+    final svgImageRegExp = RegExp(
+      r'<image[^>]+(?:xlink:href|href)="([^">]+)"',
+      caseSensitive: false,
+    );
+
+    final imgMatch = imgRegExp.firstMatch(htmlContent);
+    if (imgMatch != null && imgMatch.groupCount >= 1) {
+      return imgMatch.group(1);
+    }
+
+    final svgMatch = svgImageRegExp.firstMatch(htmlContent);
+    if (svgMatch != null && svgMatch.groupCount >= 1) {
+      return svgMatch.group(1);
+    }
+
+    return null;
+  }
+
+  static List<_GuideItem> _parseGuide(XmlElement? guideElement) {
+    if (guideElement == null) return [];
+
+    final guideItems = <_GuideItem>[];
+    for (final reference in guideElement.findElements('reference')) {
+      final type = reference.getAttribute('type') ?? '';
+      final title = reference.getAttribute('title') ?? '';
+      final href = reference.getAttribute('href') ?? '';
+      guideItems.add(_GuideItem(type: type, title: title, href: href));
+    }
+
+    return guideItems;
+  }
+
   /// Parse NCX file for TOC navigation tree
   /// Returns the pure hierarchical structure as defined in the NCX
   /// No gap-filling or spine merging is performed
   static List<TocItem> _parseNcx(
     String content,
     Map<String, (Href, String?)> manifestMap,
-    String opfDir,
+    String baseDir,
     Map<String, int> spineIndexMap,
   ) {
     try {
@@ -415,7 +516,7 @@ class EpubZipParser {
         navMapElement.findElements('navPoint'),
         manifestMap,
         0,
-        opfDir,
+        baseDir,
         spineIndexMap,
       );
     } catch (e) {
@@ -429,7 +530,7 @@ class EpubZipParser {
     Iterable<XmlElement> navPoints,
     Map<String, (Href, String?)> manifestMap,
     int depth,
-    String opfDir,
+    String baseDir,
     Map<String, int> spineIndexMap,
   ) {
     final chapters = <TocItem>[];
@@ -448,7 +549,7 @@ class EpubZipParser {
       final src = contentElement.getAttribute('src') ?? '';
 
       // Resolve href relative to OPF directory
-      final hrefStr = opfDir.isEmpty ? src : '$opfDir/$src';
+      final hrefStr = _resolveRelativePath(baseDir, src);
       var href = _resolveHref(hrefStr);
 
       // Map to spine index for progress tracking
@@ -463,7 +564,7 @@ class EpubZipParser {
         navPoint.findElements('navPoint'),
         manifestMap,
         depth + 1,
-        opfDir,
+        baseDir,
         spineIndexMap,
       );
 
@@ -493,7 +594,7 @@ class EpubZipParser {
   /// Returns the hierarchical TOC from <nav epub:type="toc"> ... <ol>
   static List<TocItem> _parseNav(
     String content,
-    String opfDir,
+    String baseDir,
     Map<String, int> spineIndexMap,
   ) {
     try {
@@ -525,7 +626,7 @@ class EpubZipParser {
       return _parseNavListItems(
         rootOl.findElements('li'),
         0,
-        opfDir,
+        baseDir,
         spineIndexMap,
       );
     } catch (e) {
@@ -537,7 +638,7 @@ class EpubZipParser {
   static List<TocItem> _parseNavListItems(
     Iterable<XmlElement> listItems,
     int depth,
-    String opfDir,
+    String baseDir,
     Map<String, int> spineIndexMap,
   ) {
     final chapters = <TocItem>[];
@@ -561,7 +662,7 @@ class EpubZipParser {
       Href? href;
       int spineIdx = -1;
       if (hrefValue != null && hrefValue.trim().isNotEmpty) {
-        final hrefStr = opfDir.isEmpty ? hrefValue : '$opfDir/$hrefValue';
+        final hrefStr = _resolveRelativePath(baseDir, hrefValue);
         href = _resolveHref(hrefStr);
         if (href != null) {
           final normalizedPath = _normalizePath(href.path);
@@ -578,7 +679,7 @@ class EpubZipParser {
           : _parseNavListItems(
               nestedOl.findElements('li'),
               depth + 1,
-              opfDir,
+              baseDir,
               spineIndexMap,
             );
 
@@ -610,10 +711,7 @@ class EpubZipParser {
 
   /// Parse spine as flat TOC list (fallback when no NCX/NAV exists)
   /// Creates simple sequential chapter entries from spine order
-  static List<TocItem> _parseSpineAsChapters(
-    List<SpineItem> spineItems,
-    String opfDir,
-  ) {
+  static List<TocItem> _parseSpineAsChapters(List<SpineItem> spineItems) {
     final chapters = <TocItem>[];
     int chapterNum = 1;
 
@@ -661,6 +759,36 @@ class EpubZipParser {
     // Replace multiple slashes with single slash
     path = path.replaceAll(RegExp(r'/+'), '/');
     return path;
+  }
+
+  /// Resolve relative path against base directory
+  static String _resolveRelativePath(String baseDir, String relativePath) {
+    if (baseDir.isEmpty) return relativePath;
+
+    final baseUri = Uri.parse(baseDir.endsWith('/') ? baseDir : '$baseDir/');
+    final resolvedUri = baseUri.resolve(relativePath);
+
+    String result = resolvedUri.toString();
+    if (result.startsWith('/')) {
+      result = result.substring(1);
+    }
+    return Uri.decodeFull(result);
+  }
+
+  /// Generate relative path from base directory to target path
+  static String _generateRelativePath(String baseDir, String path) {
+    final basePath = baseDir.endsWith('/') ? baseDir : '$baseDir/';
+    final targetPath = path.startsWith('/') ? path.substring(1) : path;
+    if (targetPath.startsWith(basePath)) {
+      String relativePath = targetPath.substring(basePath.length);
+      if (relativePath.isEmpty) {
+        relativePath = '.';
+      }
+      final normalizedRelativePath = _normalizePath(relativePath);
+      return Uri.decodeFull(normalizedRelativePath);
+    } else {
+      return targetPath;
+    }
   }
 }
 
@@ -714,4 +842,12 @@ class _MetadataResult {
     required this.subjects,
     this.coverHref,
   });
+}
+
+class _GuideItem {
+  String type;
+  String title;
+  String href;
+
+  _GuideItem({required this.type, required this.title, required this.href});
 }
