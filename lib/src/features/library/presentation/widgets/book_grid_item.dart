@@ -124,10 +124,16 @@ class BookGridItem extends ConsumerWidget {
                 book.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
+                  shadows: [
+                    const Shadow(
+                      color: Colors.black54,
+                      blurRadius: 2.0,
+                      offset: Offset(0, 1.0),
+                    ),
+                  ],
                 ),
               ),
             ),

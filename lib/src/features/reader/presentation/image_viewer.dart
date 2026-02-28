@@ -227,6 +227,7 @@ class _ImageViewerState extends State<ImageViewer>
       child: AspectRatio(
         aspectRatio: _imageAspectRatio!,
         child: Container(
+          // Ensure the background is always visible during the transition for better contrast and visibility
           color: Colors.white.withValues(alpha: curve),
           child: Image.memory(
             imageData,
