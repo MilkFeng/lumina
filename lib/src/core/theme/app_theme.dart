@@ -145,20 +145,6 @@ class AppTheme {
     shadow: Colors.black,
   );
 
-  static ColorScheme colorSchemeForBrightness(Brightness brightness) {
-    return brightness == Brightness.light ? lightColorScheme : darkColorScheme;
-  }
-
-  /// Light Theme
-  static ThemeData get lightTheme {
-    return buildTheme(lightColorScheme);
-  }
-
-  /// Dark Theme - Optional monochrome variant
-  static ThemeData get darkTheme {
-    return buildTheme(darkColorScheme);
-  }
-
   static ThemeData buildTheme(ColorScheme colorScheme) {
     final notionRadius = BorderRadius.circular(4.0);
     return ThemeData(

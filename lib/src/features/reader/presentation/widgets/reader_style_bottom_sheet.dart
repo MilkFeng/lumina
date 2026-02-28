@@ -81,9 +81,7 @@ class _ReaderStyleBottomSheetState
                           runSpacing: 12,
                           children: [
                             _ThemeOptionChip(
-                              colorScheme: AppTheme.colorSchemeForBrightness(
-                                Brightness.light,
-                              ),
+                              colorScheme: AppTheme.lightColorScheme,
                               isSelected:
                                   _themeMode == ReaderSettingThemeMode.light,
                               onTap: () {
@@ -97,9 +95,7 @@ class _ReaderStyleBottomSheetState
                               },
                             ),
                             _ThemeOptionChip(
-                              colorScheme: AppTheme.colorSchemeForBrightness(
-                                Brightness.dark,
-                              ),
+                              colorScheme: AppTheme.darkColorScheme,
                               isSelected:
                                   _themeMode == ReaderSettingThemeMode.dark,
                               onTap: () {
