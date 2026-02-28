@@ -20,7 +20,7 @@ class AppTheme {
   static ColorScheme get matchaDarkColorScheme => kMatchaDarkColorScheme;
 
   static ThemeData buildTheme(ColorScheme colorScheme) {
-    final notionRadius = BorderRadius.circular(4.0);
+    final notionRadius = BorderRadius.circular(8.0);
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
@@ -60,14 +60,13 @@ class AppTheme {
           vertical: 12,
         ),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: notionRadius),
           textStyle: const TextStyle(fontWeight: FontWeight.w500),
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
         ),
       ),
       textTheme: _buildTextTheme(colorScheme),

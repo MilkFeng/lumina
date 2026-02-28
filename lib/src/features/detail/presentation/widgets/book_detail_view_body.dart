@@ -145,9 +145,9 @@ class BookDetailViewBody extends ConsumerWidget {
             // Read / Continue reading button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: FilledButton.tonal(
                 onPressed: navigateToReader,
-                style: ElevatedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: Text(
