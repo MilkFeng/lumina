@@ -138,33 +138,6 @@ class AppTheme {
           textStyle: const TextStyle(fontWeight: FontWeight.w500),
         ),
       ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: colorScheme.onSurfaceVariant,
-          textStyle: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colorScheme.onSurface,
-          side: BorderSide(color: colorScheme.outline, width: 1),
-          shape: RoundedRectangleBorder(borderRadius: notionRadius),
-          textStyle: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-      ),
-      dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant,
-        thickness: 1,
-        space: 1,
-      ),
-      cardTheme: CardThemeData(
-        elevation: 0,
-        color: colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: notionRadius,
-          side: BorderSide(color: colorScheme.outlineVariant, width: 1),
-        ),
-      ),
       textTheme: _buildTextTheme(colorScheme),
       splashFactory: NoSplash.splashFactory,
     );
