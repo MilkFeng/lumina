@@ -201,11 +201,6 @@ class _TocDrawerState extends State<TocDrawer> {
         child: Column(
           children: [
             _buildHeader(context, isDark),
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: widget.themeData.colorScheme.outlineVariant,
-            ),
             Expanded(
               // Optimization: ListView.builder only builds items on screen
               child: ListView.builder(

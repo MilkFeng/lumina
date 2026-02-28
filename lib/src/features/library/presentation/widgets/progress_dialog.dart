@@ -82,6 +82,12 @@ class _ProgressDialogState extends State<ProgressDialog> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
+    const Color warningLight = Color(0xFFED6C02);
+    const Color warningDark = Color(0xFFFFB74D);
+    final Color warningColor = theme.brightness == Brightness.dark
+        ? warningDark
+        : warningLight;
+
     return AlertDialog(
       title: Text(_isCompleted ? widget.completeTitle : widget.title),
       content: SizedBox(
@@ -163,7 +169,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                                   color = theme.colorScheme.error;
                                   break;
                                 case ProgressLogType.warning:
-                                  color = Colors.orangeAccent;
+                                  color = warningColor;
                                   break;
                                 case ProgressLogType.success:
                                   color = theme.colorScheme.primary;

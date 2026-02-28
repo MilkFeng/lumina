@@ -554,7 +554,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
           children: [
             Scaffold(
               key: _scaffoldKey,
-              backgroundColor: epubTheme.surfaceColor,
+              backgroundColor: epubTheme.colorScheme.surfaceContainer,
               drawer: TocDrawer(
                 book: _bookSession.book!,
                 toc: _bookSession.toc,
