@@ -677,7 +677,7 @@ class EpubZipParser {
     final baseUri = Uri.parse(baseDir.endsWith('/') ? baseDir : '$baseDir/');
     final resolvedUri = baseUri.resolve(relativePath);
 
-    String result = resolvedUri.path;
+    String result = resolvedUri.toString();
     if (result.startsWith('/')) {
       result = result.substring(1);
     }
