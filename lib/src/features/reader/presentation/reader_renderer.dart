@@ -314,9 +314,9 @@ class _ReaderRendererState extends State<ReaderRenderer>
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.15),
+            color: Theme.of(context).colorScheme.shadow.withValues(
+              alpha: _currentTheme.isDark ? 0.3 : 0.15,
+            ),
             blurRadius: 10,
             offset: Offset.zero,
           ),

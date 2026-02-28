@@ -198,7 +198,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   color: themeData.colorScheme.surfaceContainer,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(30),
+                      color: themeData.colorScheme.shadow.withAlpha(30),
                       blurRadius: 10,
                       offset: Offset.zero,
                     ),
@@ -247,7 +247,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   color: themeData.colorScheme.surfaceContainer,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(30),
+                      color: themeData.colorScheme.shadow.withAlpha(30),
                       blurRadius: 10,
                       offset: Offset.zero,
                     ),
@@ -415,7 +415,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                           },
                           backgroundColor: Colors.transparent,
                           elevation: 0,
-                          barrierColor: Colors.black.withAlpha(
+                          barrierColor: themeData.colorScheme.scrim.withAlpha(
                             isDark ? 150 : 80,
                           ),
                           scrollControlDisabledMaxHeightRatio: 0.75,

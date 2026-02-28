@@ -136,7 +136,9 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                   borderRadius: borderRadius,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(isDark ? 50 : 25),
+                      color: widget.epubTheme.colorScheme.shadow.withAlpha(
+                        isDark ? 50 : 25,
+                      ),
                       blurRadius: 16,
                       offset: Offset(_slideFromLeft ? 4 : -4, 6),
                     ),

@@ -281,7 +281,7 @@ class BookGridItem extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-          color: Colors.black.withValues(alpha: 0.8),
+          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.8),
           child: Text(
             '${(book.readingProgress * 100).toStringAsFixed(2)}%',
             style: const TextStyle(

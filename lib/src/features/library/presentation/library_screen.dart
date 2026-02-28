@@ -210,10 +210,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     return SpeedDial(
       icon: Icons.add_outlined,
       activeIcon: Icons.close_outlined,
-      overlayColor: Colors.black,
-      overlayOpacity: 0.4,
+      overlayColor: Theme.of(context).colorScheme.scrim,
+      overlayOpacity: 0.5,
       spaceBetweenChildren: 12,
+      renderOverlay: true,
+      useRotationAnimation: true,
       children: [
+        buildSpeedDialChild(
+          Icons.file_present_outlined,
+          AppLocalizations.of(context)!.importFiles,
+          () => _importFiles(context, ref),
+        ),
         buildSpeedDialChild(
           Icons.folder_open_outlined,
           AppLocalizations.of(context)!.importFromFolder,
@@ -223,11 +230,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           Icons.settings_backup_restore_outlined,
           AppLocalizations.of(context)!.restoreFromBackup,
           () => handleRestoreBackup(context, ref),
-        ),
-        buildSpeedDialChild(
-          Icons.file_present_outlined,
-          AppLocalizations.of(context)!.importFiles,
-          () => _importFiles(context, ref),
         ),
       ],
     );

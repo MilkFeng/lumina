@@ -32,7 +32,9 @@ class ToastBubble extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.2),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withValues(alpha: isDark ? 0.4 : 0.2),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
