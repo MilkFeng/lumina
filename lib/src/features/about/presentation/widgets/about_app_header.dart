@@ -20,8 +20,17 @@ class AboutAppHeader extends StatelessWidget {
           width: 96,
           height: 96,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(
+                  context,
+                ).colorScheme.shadow.withValues(alpha: 0.2),
+                blurRadius: 10,
+                offset: Offset.zero,
+              ),
+            ],
           ),
           child: SvgPicture.asset(_appSvgPath, width: 56, height: 56),
         ),
