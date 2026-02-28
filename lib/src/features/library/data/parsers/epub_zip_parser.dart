@@ -130,6 +130,10 @@ class EpubZipParser {
     String? fileName,
   ) {
     try {
+      final opfDir = opfPath.contains('/')
+          ? opfPath.substring(0, opfPath.lastIndexOf('/'))
+          : '';
+
       final doc = XmlDocument.parse(content);
       final packageElement = doc.rootElement;
 
@@ -172,17 +176,18 @@ class EpubZipParser {
         }
       }
 
+      final guideElement = packageElement.findElements('guide').firstOrNull;
+      final guideItems = _parseGuide(guideElement);
+
       var metadata = _parseMetadata(
         metadataElement,
         manifestMap,
+        guideItems,
         version,
-        opfPath,
+        opfDir,
         fileName,
+        archive,
       );
-
-      final opfDir = opfPath.contains('/')
-          ? opfPath.substring(0, opfPath.lastIndexOf('/'))
-          : '';
 
       // Step 1: Build spine list with full metadata
       final spineItems = <SpineItem>[];
@@ -316,9 +321,11 @@ class EpubZipParser {
   static _MetadataResult _parseMetadata(
     XmlElement metadataElement,
     Map<String, (Href, String?)> manifestMap,
+    List<_GuideItem> guideItems,
     String version,
-    String opfPath,
+    String opfDir,
     String? fileName,
+    Archive archive,
   ) {
     // Helper function to find elements by local name (ignoring namespace prefix)
     // This handles both <title> and <dc:title> formats
@@ -380,6 +387,56 @@ class EpubZipParser {
       }
     }
 
+    // Return cover href relative to OPF directory
+    String? extractCoverHrefFromGuideItem(_GuideItem item) {
+      final href = _resolveRelativePath(opfDir, item.href);
+      String? resultHref;
+
+      // href could be a xhtml file - we need to find the actual image file it references
+      if (href.endsWith('.xhtml') ||
+          href.endsWith('.html') ||
+          href.endsWith('.htm')) {
+        final coverFile = archive.findFile(href);
+        if (coverFile != null) {
+          final coverContent = _decodeString(coverFile.content as List<int>);
+          final imgSrc = _extractFirstImageFromHtml(coverContent);
+          if (imgSrc != null) {
+            final hrefDir = href.contains('/')
+                ? href.substring(0, href.lastIndexOf('/'))
+                : '';
+            resultHref = _resolveRelativePath(hrefDir, imgSrc);
+            resultHref = _generateRelativePath(opfDir, resultHref);
+          }
+        }
+      } else if (href.endsWith('.jpg') ||
+          href.endsWith('.jpeg') ||
+          href.endsWith('.png') ||
+          href.endsWith('.webp')) {
+        resultHref = href;
+      }
+      return resultHref;
+    }
+
+    if (coverHref == null) {
+      // For EPUB 3, also check guide for reference with type="cover"
+      final coverReference = guideItems
+          .where((item) => item.type.toLowerCase() == 'cover')
+          .firstOrNull;
+      if (coverReference != null) {
+        coverHref = extractCoverHrefFromGuideItem(coverReference);
+      }
+    }
+
+    if (coverHref == null) {
+      // For EPUB 2, also check guide for reference with title containing "cover"
+      final coverReference = guideItems
+          .where((item) => item.title.toLowerCase().contains('cover'))
+          .firstOrNull;
+      if (coverReference != null) {
+        coverHref = extractCoverHrefFromGuideItem(coverReference);
+      }
+    }
+
     if (coverHref == null) {
       // Fallback: look for common cover file names in manifest
       for (final key in manifestMap.keys) {
@@ -402,6 +459,40 @@ class EpubZipParser {
       subjects: subjects,
       coverHref: coverHref,
     );
+  }
+
+  static String? _extractFirstImageFromHtml(String htmlContent) {
+    final imgRegExp = RegExp(r'<img[^>]+src="([^">]+)"', caseSensitive: false);
+    final svgImageRegExp = RegExp(
+      r'<image[^>]+(?:xlink:href|href)="([^">]+)"',
+      caseSensitive: false,
+    );
+
+    final imgMatch = imgRegExp.firstMatch(htmlContent);
+    if (imgMatch != null && imgMatch.groupCount >= 1) {
+      return imgMatch.group(1);
+    }
+
+    final svgMatch = svgImageRegExp.firstMatch(htmlContent);
+    if (svgMatch != null && svgMatch.groupCount >= 1) {
+      return svgMatch.group(1);
+    }
+
+    return null;
+  }
+
+  static List<_GuideItem> _parseGuide(XmlElement? guideElement) {
+    if (guideElement == null) return [];
+
+    final guideItems = <_GuideItem>[];
+    for (final reference in guideElement.findElements('reference')) {
+      final type = reference.getAttribute('type') ?? '';
+      final title = reference.getAttribute('title') ?? '';
+      final href = reference.getAttribute('href') ?? '';
+      guideItems.add(_GuideItem(type: type, title: title, href: href));
+    }
+
+    return guideItems;
   }
 
   /// Parse NCX file for TOC navigation tree
@@ -683,6 +774,22 @@ class EpubZipParser {
     }
     return Uri.decodeFull(result);
   }
+
+  /// Generate relative path from base directory to target path
+  static String _generateRelativePath(String baseDir, String path) {
+    final basePath = baseDir.endsWith('/') ? baseDir : '$baseDir/';
+    final targetPath = path.startsWith('/') ? path.substring(1) : path;
+    if (targetPath.startsWith(basePath)) {
+      String relativePath = targetPath.substring(basePath.length);
+      if (relativePath.isEmpty) {
+        relativePath = '.';
+      }
+      final normalizedRelativePath = _normalizePath(relativePath);
+      return Uri.decodeFull(normalizedRelativePath);
+    } else {
+      return targetPath;
+    }
+  }
 }
 
 /// Result of EPUB ZIP parsing
@@ -735,4 +842,12 @@ class _MetadataResult {
     required this.subjects,
     this.coverHref,
   });
+}
+
+class _GuideItem {
+  String type;
+  String title;
+  String href;
+
+  _GuideItem({required this.type, required this.title, required this.href});
 }
