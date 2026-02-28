@@ -21,7 +21,7 @@ class _ReaderStyleBottomSheetState
   late int _bottomMargin;
   late int _leftMargin;
   late int _rightMargin;
-  late bool _followSystemTheme;
+  late bool _followAppTheme;
   late ReaderSettingThemeMode _themeMode;
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
@@ -39,7 +39,7 @@ class _ReaderStyleBottomSheetState
     _bottomMargin = s.marginBottom.toInt();
     _leftMargin = s.marginLeft.toInt();
     _rightMargin = s.marginRight.toInt();
-    _followSystemTheme = s.followSystemTheme;
+    _followAppTheme = s.followAppTheme;
     _themeMode = s.themeMode;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
@@ -64,13 +64,13 @@ class _ReaderStyleBottomSheetState
             _SectionTitle(label: l10n.readerAppearance),
             const SizedBox(height: 12),
 
-            // Reader Theme – only shown when Follow System is off
+            // Reader Theme – only shown when Follow App Theme is off
             AnimatedSize(
               duration: const Duration(
                 milliseconds: AppTheme.defaultAnimationDurationMs,
               ),
               curve: Curves.easeInOut,
-              child: _followSystemTheme
+              child: _followAppTheme
                   ? const SizedBox(height: 0, width: double.infinity)
                   : Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -147,13 +147,13 @@ class _ReaderStyleBottomSheetState
                     ),
             ),
 
-            // Follow System Theme
+            // Follow App Theme
             _FollowSystemSwitch(
-              label: l10n.readerFollowSystemTheme,
-              value: _followSystemTheme,
+              label: l10n.readerFollowAppTheme,
+              value: _followAppTheme,
               onChanged: (v) {
-                setState(() => _followSystemTheme = v);
-                _notifier.setFollowSystemTheme(v);
+                setState(() => _followAppTheme = v);
+                _notifier.setFollowAppTheme(v);
               },
             ),
 

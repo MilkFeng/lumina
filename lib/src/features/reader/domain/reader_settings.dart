@@ -25,7 +25,7 @@ enum ReaderLinkHandling {
 
 class ReaderSettings {
   final double zoom;
-  final bool followSystemTheme;
+  final bool followAppTheme;
   final ReaderSettingThemeMode themeMode;
   final double marginTop;
   final double marginBottom;
@@ -36,7 +36,7 @@ class ReaderSettings {
 
   const ReaderSettings({
     this.zoom = 1.0,
-    this.followSystemTheme = true,
+    this.followAppTheme = true,
     this.themeMode = ReaderSettingThemeMode.light,
     this.marginTop = 16.0,
     this.marginBottom = 16.0,
@@ -48,7 +48,7 @@ class ReaderSettings {
 
   ReaderSettings copyWith({
     double? zoom,
-    bool? followSystemTheme,
+    bool? followAppTheme,
     ReaderSettingThemeMode? themeMode,
     double? marginTop,
     double? marginBottom,
@@ -59,7 +59,7 @@ class ReaderSettings {
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
-      followSystemTheme: followSystemTheme ?? this.followSystemTheme,
+      followAppTheme: followAppTheme ?? this.followAppTheme,
       themeMode: themeMode ?? this.themeMode,
       marginTop: marginTop ?? this.marginTop,
       marginBottom: marginBottom ?? this.marginBottom,
@@ -70,17 +70,17 @@ class ReaderSettings {
     );
   }
 
-  EpubTheme toEpubTheme({required Brightness platformBrightness}) {
+  EpubTheme toEpubTheme({required ColorScheme appColorScheme}) {
     const kOverridePrimaryColorForDark = Color(0xFF7B9CAE);
 
     ColorScheme colorScheme;
     bool shouldOverrideTextColor = true;
     Color? overridePrimaryColor;
 
-    if (followSystemTheme) {
-      colorScheme = AppTheme.colorSchemeForBrightness(platformBrightness);
-      if (platformBrightness == Brightness.light) {
-        shouldOverrideTextColor = false; // Light theme uses default text color
+    if (followAppTheme) {
+      colorScheme = appColorScheme;
+      if (appColorScheme.brightness == Brightness.light) {
+        shouldOverrideTextColor = false;
       } else {
         overridePrimaryColor = kOverridePrimaryColorForDark;
       }

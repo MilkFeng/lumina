@@ -9,7 +9,7 @@ part 'reader_settings_notifier.g.dart';
 class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   // ── Persistence keys ────────────────────────────────────────────────────────
   static const _kZoom = 'reader_zoom';
-  static const _kFollowSystem = 'reader_follow_system';
+  static const _kFollowApp = 'reader_follow_app';
   static const _kThemeMode = 'reader_theme_mode';
   static const _kMarginTop = 'reader_margin_top';
   static const _kMarginBottom = 'reader_margin_bottom';
@@ -26,7 +26,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
         .when(
           data: (prefs) => ReaderSettings(
             zoom: prefs.getDouble(_kZoom) ?? 1.0,
-            followSystemTheme: prefs.getBool(_kFollowSystem) ?? true,
+            followAppTheme: prefs.getBool(_kFollowApp) ?? true,
             themeMode:
                 ReaderSettingThemeMode.values[prefs.getInt(_kThemeMode) ??
                     ReaderSettingThemeMode.light.index],
@@ -59,9 +59,9 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
     state = state.copyWith(zoom: zoom);
   }
 
-  Future<void> setFollowSystemTheme(bool follow) async {
-    await _prefs.setBool(_kFollowSystem, follow);
-    state = state.copyWith(followSystemTheme: follow);
+  Future<void> setFollowAppTheme(bool follow) async {
+    await _prefs.setBool(_kFollowApp, follow);
+    state = state.copyWith(followAppTheme: follow);
   }
 
   Future<void> setThemeMode(ReaderSettingThemeMode mode) async {

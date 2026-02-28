@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/theme/app_theme_notifier.dart';
+import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
 import 'package:lumina/src/features/library/data/services/export_backup_service_provider.dart';
 import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
@@ -56,6 +59,11 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           _buildAppHeader(context, l10n),
 
           const SizedBox(height: 48),
+
+          // Appearance Section
+          _buildAppearanceSection(context, l10n),
+
+          const SizedBox(height: 24),
 
           // Library Section
           _buildInfoSection(
@@ -179,6 +187,128 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               fontSize: 14,
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildAppearanceSection(BuildContext context, AppLocalizations l10n) {
+    final settings = ref.watch(appThemeNotifierProvider);
+    final notifier = ref.read(appThemeNotifierProvider.notifier);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return _buildInfoSection(
+      context,
+      title: l10n.appAppearance,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Theme Mode ────────────────────────────────────────────────
+              Text(
+                l10n.appThemeMode,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _AppThemeModeChip(
+                    icon: Icons.brightness_auto_outlined,
+                    label: l10n.appThemeModeSystem,
+                    isSelected: settings.themeMode == AppThemeMode.system,
+                    onTap: () => notifier.setThemeMode(AppThemeMode.system),
+                  ),
+                  const SizedBox(width: 8),
+                  _AppThemeModeChip(
+                    icon: Icons.light_mode_outlined,
+                    label: l10n.appThemeModeLight,
+                    isSelected: settings.themeMode == AppThemeMode.light,
+                    onTap: () => notifier.setThemeMode(AppThemeMode.light),
+                  ),
+                  const SizedBox(width: 8),
+                  _AppThemeModeChip(
+                    icon: Icons.dark_mode_outlined,
+                    label: l10n.appThemeModeDark,
+                    isSelected: settings.themeMode == AppThemeMode.dark,
+                    onTap: () => notifier.setThemeMode(AppThemeMode.dark),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Light Theme Style ─────────────────────────────────────────
+              Text(
+                l10n.appLightTheme,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _AppThemeVariantChip(
+                    colorScheme: AppTheme.lightColorScheme,
+                    label: l10n.appThemeVariantStandard,
+                    isSelected:
+                        settings.lightVariant == AppLightThemeVariant.standard,
+                    onTap: () =>
+                        notifier.setLightVariant(AppLightThemeVariant.standard),
+                  ),
+                  const SizedBox(width: 12),
+                  _AppThemeVariantChip(
+                    colorScheme: AppTheme.eyeCareColorScheme,
+                    label: l10n.appThemeVariantEyeCare,
+                    isSelected:
+                        settings.lightVariant == AppLightThemeVariant.eyeCare,
+                    onTap: () =>
+                        notifier.setLightVariant(AppLightThemeVariant.eyeCare),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Dark Theme Style ──────────────────────────────────────────
+              Text(
+                l10n.appDarkTheme,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _AppThemeVariantChip(
+                    colorScheme: AppTheme.darkColorScheme,
+                    label: l10n.appThemeVariantStandard,
+                    isSelected:
+                        settings.darkVariant == AppDarkThemeVariant.standard,
+                    onTap: () =>
+                        notifier.setDarkVariant(AppDarkThemeVariant.standard),
+                  ),
+                  const SizedBox(width: 12),
+                  _AppThemeVariantChip(
+                    colorScheme: AppTheme.darkEyeCareColorScheme,
+                    label: l10n.appThemeVariantEyeCare,
+                    isSelected:
+                        settings.darkVariant == AppDarkThemeVariant.eyeCare,
+                    onTap: () =>
+                        notifier.setDarkVariant(AppDarkThemeVariant.eyeCare),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -416,6 +546,150 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             child: Text(l10n.confirm),
           ),
         ],
+      ),
+    );
+  }
+}
+// ── Private helper widgets ────────────────────────────────────────────────────
+
+/// Segmented chip for selecting the app theme mode (system / light / dark).
+class _AppThemeModeChip extends StatelessWidget {
+  const _AppThemeModeChip({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.secondary
+                : colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary.withValues(alpha: 0.5)
+                  : colorScheme.outline,
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isSelected
+                    ? colorScheme.onSecondary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isSelected
+                      ? colorScheme.onSecondary
+                      : colorScheme.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Color-swatch chip for selecting a light or dark theme variant.
+class _AppThemeVariantChip extends StatelessWidget {
+  const _AppThemeVariantChip({
+    required this.colorScheme,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final ColorScheme colorScheme;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 88,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? activeScheme.primary.withValues(alpha: 0.6)
+                : activeScheme.outline,
+            width: isSelected ? 2.0 : 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Color preview strip
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                height: 24,
+                child: Row(
+                  children: [
+                    Expanded(child: ColoredBox(color: colorScheme.surface)),
+                    Expanded(child: ColoredBox(color: colorScheme.primary)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isSelected
+                    ? activeScheme.primary
+                    : activeScheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (isSelected) ...[
+              const SizedBox(height: 2),
+              Icon(
+                Icons.check_circle_outline,
+                size: 12,
+                color: activeScheme.primary,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -752,6 +752,51 @@
     "description": "Clean cache success message when no files were removed"
   },
 
+  "appAppearance": "Appearance",
+  "@appAppearance": {
+    "description": "Appearance section title in about screen"
+  },
+
+  "appThemeMode": "Theme",
+  "@appThemeMode": {
+    "description": "Label for the app-wide theme mode selector"
+  },
+
+  "appThemeModeSystem": "System",
+  "@appThemeModeSystem": {
+    "description": "Theme mode option: follow system"
+  },
+
+  "appThemeModeLight": "Light",
+  "@appThemeModeLight": {
+    "description": "Theme mode option: always light"
+  },
+
+  "appThemeModeDark": "Dark",
+  "@appThemeModeDark": {
+    "description": "Theme mode option: always dark"
+  },
+
+  "appLightTheme": "Light Theme Style",
+  "@appLightTheme": {
+    "description": "Label for light theme variant selector"
+  },
+
+  "appDarkTheme": "Dark Theme Style",
+  "@appDarkTheme": {
+    "description": "Label for dark theme variant selector"
+  },
+
+  "appThemeVariantStandard": "Standard",
+  "@appThemeVariantStandard": {
+    "description": "Theme variant: standard clean look"
+  },
+
+  "appThemeVariantEyeCare": "Eye Care",
+  "@appThemeVariantEyeCare": {
+    "description": "Theme variant: warm-tinted eye-ease look"
+  },
+
   "projectInfo": "Project Info",
   "@projectInfo": {
     "description": "Project information section title"
@@ -1068,9 +1113,9 @@
     "description": "Reader style sheet section title for appearance"
   },
 
-  "readerFollowSystemTheme": "Follow System Theme",
-  "@readerFollowSystemTheme": {
-    "description": "Toggle label to follow the system color scheme"
+  "readerFollowAppTheme": "Follow App Theme",
+  "@readerFollowAppTheme": {
+    "description": "Toggle label to make the reader follow the app-wide color scheme"
   },
 
   "readerThemeLight": "Light",
