@@ -47,7 +47,6 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(l10n.about),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
       body: ListView(
