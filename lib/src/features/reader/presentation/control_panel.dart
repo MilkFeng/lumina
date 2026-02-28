@@ -171,7 +171,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
   Widget build(BuildContext context) {
     final settings = ref.watch(readerSettingsNotifierProvider);
     final epubTheme = settings.toEpubTheme(
-      platformBrightness: Theme.of(context).colorScheme.brightness,
+      appColorScheme: Theme.of(context).colorScheme,
     );
     final isDark = epubTheme.isDark;
     final themeData = AppTheme.buildTheme(epubTheme.colorScheme);
@@ -198,13 +198,14 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   color: themeData.colorScheme.surfaceContainer,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(30),
+                      color: themeData.colorScheme.shadow.withAlpha(30),
                       blurRadius: 10,
                       offset: Offset.zero,
                     ),
                   ],
                 ),
                 child: AppBar(
+                  backgroundColor: themeData.colorScheme.surfaceContainer,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back_outlined),
                     onPressed: widget.onBack,
@@ -247,7 +248,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   color: themeData.colorScheme.surfaceContainer,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(30),
+                      color: themeData.colorScheme.shadow.withAlpha(30),
                       blurRadius: 10,
                       offset: Offset.zero,
                     ),
@@ -356,10 +357,9 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                 );
                                 final currentEpubTheme = currentSettings
                                     .toEpubTheme(
-                                      platformBrightness:
-                                          MediaQuery.platformBrightnessOf(
-                                            context,
-                                          ),
+                                      appColorScheme: Theme.of(
+                                        context,
+                                      ).colorScheme,
                                     );
                                 final activeTheme = AppTheme.buildTheme(
                                   currentEpubTheme.colorScheme,
@@ -416,7 +416,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                           },
                           backgroundColor: Colors.transparent,
                           elevation: 0,
-                          barrierColor: Colors.black.withAlpha(
+                          barrierColor: themeData.colorScheme.scrim.withAlpha(
                             isDark ? 150 : 80,
                           ),
                           scrollControlDisabledMaxHeightRatio: 0.75,

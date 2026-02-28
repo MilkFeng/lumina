@@ -124,10 +124,16 @@ class BookGridItem extends ConsumerWidget {
                 book.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
+                  shadows: [
+                    const Shadow(
+                      color: Colors.black54,
+                      blurRadius: 2.0,
+                      offset: Offset(0, 1.0),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -281,7 +287,7 @@ class BookGridItem extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-          color: Colors.black.withValues(alpha: 0.8),
+          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.8),
           child: Text(
             '${(book.readingProgress * 100).toStringAsFixed(2)}%',
             style: const TextStyle(

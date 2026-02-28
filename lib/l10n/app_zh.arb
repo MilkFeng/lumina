@@ -762,6 +762,51 @@
     "description": "缓存清理成功消息"
   },
 
+  "appAppearance": "外观",
+  "@appAppearance": {
+    "description": "关于页面外观设置区块标题"
+  },
+
+  "appThemeMode": "主题",
+  "@appThemeMode": {
+    "description": "应用主题模式选择器标签"
+  },
+
+  "appThemeModeSystem": "跟随系统",
+  "@appThemeModeSystem": {
+    "description": "主题模式选项：跟随系统"
+  },
+
+  "appThemeModeLight": "浅色",
+  "@appThemeModeLight": {
+    "description": "主题模式选项：始终浅色"
+  },
+
+  "appThemeModeDark": "深色",
+  "@appThemeModeDark": {
+    "description": "主题模式选项：始终深色"
+  },
+
+  "appLightTheme": "浅色主题风格",
+  "@appLightTheme": {
+    "description": "浅色主题方案选择器标签"
+  },
+
+  "appDarkTheme": "深色主题风格",
+  "@appDarkTheme": {
+    "description": "深色主题方案选择器标签"
+  },
+
+  "appThemeVariantStandard": "标准",
+  "@appThemeVariantStandard": {
+    "description": "主题方案：标准简洁风格"
+  },
+
+  "appThemeVariantEyeCare": "护眼",
+  "@appThemeVariantEyeCare": {
+    "description": "主题方案：暖色护眼风格"
+  },
+
   "projectInfo": "项目信息",
   "@projectInfo": {
     "description": "项目信息部分标题"
@@ -1078,9 +1123,9 @@
     "description": "阅读器样式面板外观区块标题"
   },
 
-  "readerFollowSystemTheme": "跟随系统主题",
-  "@readerFollowSystemTheme": {
-    "description": "是否跟随系统颜色方案的开关标签"
+  "readerFollowAppTheme": "跟随应用主题",
+  "@readerFollowAppTheme": {
+    "description": "是否跟随应用主题颜色方案的开关标签"
   },
 
   "readerThemeLight": "浅色",

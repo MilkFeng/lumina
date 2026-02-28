@@ -154,8 +154,10 @@ class _ImageViewerState extends State<ImageViewer>
     );
     final Rect targetEndRect = _dynamicCloseRect ?? fullscreenRect;
 
+    final themeData = widget.epubTheme.themeData;
+
     return Theme(
-      data: widget.epubTheme.themeData,
+      data: themeData,
       child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, result) async {
@@ -184,7 +186,9 @@ class _ImageViewerState extends State<ImageViewer>
                   GestureDetector(
                     onTap: _handleClose,
                     child: Container(
-                      color: Colors.black.withValues(alpha: bgOpacity),
+                      color: themeData.colorScheme.scrim.withValues(
+                        alpha: bgOpacity,
+                      ),
                     ),
                   ),
 
@@ -223,6 +227,7 @@ class _ImageViewerState extends State<ImageViewer>
       child: AspectRatio(
         aspectRatio: _imageAspectRatio!,
         child: Container(
+          // Ensure the background is always visible during the transition for better contrast and visibility
           color: Colors.white.withValues(alpha: curve),
           child: Image.memory(
             imageData,

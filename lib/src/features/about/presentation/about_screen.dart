@@ -4,14 +4,15 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service_provider.dart';
-import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
+import 'package:lumina/src/features/about/presentation/widgets/about_app_header.dart';
+import 'package:lumina/src/features/about/presentation/widgets/about_appearance_section.dart';
+import 'package:lumina/src/features/about/presentation/widgets/about_info_section.dart';
+import 'package:lumina/src/features/about/presentation/widgets/backup_tile.dart';
+import 'package:lumina/src/features/about/presentation/widgets/clean_cache_tile.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 /// About Screen - Shows app information, tips and credits
 class AboutScreen extends ConsumerStatefulWidget {
@@ -23,9 +24,6 @@ class AboutScreen extends ConsumerStatefulWidget {
 
 class _AboutScreenState extends ConsumerState<AboutScreen> {
   String _version = '';
-  bool _isCleaning = false;
-  bool _isExporting = false;
-  final _exportTileKey = GlobalKey();
 
   @override
   void initState() {
@@ -52,28 +50,25 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 32),
         children: [
-          // App Icon and Name
-          _buildAppHeader(context, l10n),
+          AboutAppHeader(version: _version),
 
           const SizedBox(height: 48),
 
-          // Library Section
-          _buildInfoSection(
-            context,
-            title: l10n.library,
-            children: [_buildBackupTile(context, l10n)],
-          ),
+          const AboutAppearanceSection(),
 
           const SizedBox(height: 24),
 
-          // Storage Section
-          _buildInfoSection(
-            context,
+          // Library section
+          AboutInfoSection(title: l10n.library, children: const [BackupTile()]),
+
+          const SizedBox(height: 24),
+
+          // Storage section
+          AboutInfoSection(
             title: l10n.storage,
             children: [
-              _buildCleanCacheTile(context, l10n),
-              _buildInfoTile(
-                context,
+              const CleanCacheTile(),
+              AboutInfoTile(
                 icon: Icons.folder_open_outlined,
                 title: l10n.openStorageLocation,
                 subtitle: l10n.openStorageLocationSubtitle,
@@ -86,21 +81,18 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
           const SizedBox(height: 24),
 
-          // Project Info Section
-          _buildInfoSection(
-            context,
+          // Project info section
+          AboutInfoSection(
             title: l10n.projectInfo,
             children: [
-              _buildInfoTile(
-                context,
+              AboutInfoTile(
                 icon: Icons.code_outlined,
                 title: l10n.github,
                 subtitle: 'github.com/MilkFeng/lumina.git',
                 onTap: () =>
                     _launchUrl('https://github.com/MilkFeng/lumina.git'),
               ),
-              _buildInfoTile(
-                context,
+              AboutInfoTile(
                 icon: Icons.person_outline_outlined,
                 title: l10n.author,
                 subtitle: 'Milk Feng',
@@ -110,23 +102,19 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 
           const SizedBox(height: 24),
 
-          // Tips Section
-          _buildInfoSection(
-            context,
+          // Tips section
+          AboutInfoSection(
             title: l10n.tips,
             children: [
-              _buildTipTile(
-                context,
+              AboutTipTile(
                 icon: Icons.touch_app_outlined,
                 tip: l10n.tipLongPressTab,
               ),
-              _buildTipTile(
-                context,
+              AboutTipTile(
                 icon: Icons.keyboard_double_arrow_right_outlined,
                 tip: l10n.tipLongPressNextTrack,
               ),
-              _buildTipTile(
-                context,
+              AboutTipTile(
                 icon: Icons.image_outlined,
                 tip: l10n.longPressToViewImage,
               ),
@@ -139,244 +127,11 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     );
   }
 
-  Widget _buildAppHeader(BuildContext context, AppLocalizations l10n) {
-    const appSvgPath = 'assets/icons/icon.svg';
-    const logoSvgPath = 'assets/logos/logo.svg';
-
-    return Column(
-      children: [
-        // App Icon
-        Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: SvgPicture.asset(appSvgPath, width: 56, height: 56),
-        ),
-
-        const SizedBox(height: 16),
-
-        // App Name
-        SvgPicture.asset(
-          logoSvgPath,
-          width: 96,
-          colorFilter: ColorFilter.mode(
-            Theme.of(context).colorScheme.onSurface,
-            BlendMode.srcIn,
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Version
-        if (_version.isNotEmpty)
-          Text(
-            'v$_version',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 14,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildInfoSection(
-    BuildContext context, {
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        ...children,
-      ],
-    );
-  }
-
-  Widget _buildInfoTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    VoidCallback? onTap,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-      leading: Icon(
-        icon,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-      title: Text(title),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildTipTile(
-    BuildContext context, {
-    required IconData icon,
-    required String tip,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-      leading: Icon(
-        icon,
-        color: Theme.of(context).colorScheme.primary.withAlpha(153),
-        size: 20,
-      ),
-      title: Text(
-        tip,
-        style: TextStyle(
-          fontSize: 14,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-      dense: true,
-    );
-  }
-
-  Widget _buildCleanCacheTile(BuildContext context, AppLocalizations l10n) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-      leading: Icon(
-        Icons.cleaning_services_outlined,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-      title: Text(l10n.cleanCache),
-      subtitle: Text(
-        l10n.cleanCacheSubtitle,
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-      trailing: _isCleaning
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : null,
-      onTap: _isCleaning ? null : () => _cleanCache(context, l10n),
-    );
-  }
-
-  Widget _buildBackupTile(BuildContext context, AppLocalizations l10n) {
-    return ListTile(
-      key: _exportTileKey,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-      leading: Icon(
-        Icons.archive_outlined,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-      title: Text(l10n.backupLibrary),
-      subtitle: Text(
-        l10n.backupLibraryDescription,
-        style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-      trailing: _isExporting
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : null,
-      onTap: _isExporting ? null : () => _handleExportBackup(context, ref),
-    );
-  }
-
-  Future<void> _cleanCache(BuildContext context, AppLocalizations l10n) async {
-    setState(() => _isCleaning = true);
-
-    final service = ref.read(storageCleanupServiceProvider);
-    await service.cleanCacheFiles();
-    final deletedCount = await service.cleanOrphanFiles();
-    await service.cleanShareFiles();
-
-    await Future.delayed(const Duration(milliseconds: 200)); // For better UX
-
-    setState(() => _isCleaning = false);
-
-    if (!context.mounted) return;
-
-    final message = deletedCount == 0
-        ? l10n.cleanCacheSuccess
-        : l10n.cleanCacheSuccessWithCount(deletedCount);
-
-    ToastService.showSuccess(message);
-  }
-
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
-  }
-
-  /// Triggers a full library backup export.
-  ///
-  /// Shows a non-dismissible loading dialog while the export runs, then
-  /// presents feedback via a [SnackBar]:
-  ///   - Android success → folder path in Downloads
-  ///   - iOS / other success → Share Sheet was presented by the service
-  ///   - Failure → error message in red
-  /// Returns the screen-space [Rect] of the export tile, used as the
-  /// `sharePositionOrigin` anchor for the iOS Share Sheet popover.
-  Rect? _exportTileRect() {
-    final box = _exportTileKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) return null;
-    final offset = box.localToGlobal(Offset.zero);
-    return offset & box.size;
-  }
-
-  Future<void> _handleExportBackup(BuildContext context, WidgetRef ref) async {
-    if (_isExporting) return; // Prevent multiple taps
-    setState(() => _isExporting = true);
-
-    final result = await ref
-        .read(exportBackupServiceProvider)
-        .exportLibraryAsFolder(sharePositionOrigin: _exportTileRect());
-
-    // Guard against widget being unmounted while awaiting.
-    if (!context.mounted) {
-      _isExporting = false;
-      return;
-    }
-
-    switch (result) {
-      case ExportSuccess(:final path):
-        final message = (Platform.isAndroid && path != null)
-            ? AppLocalizations.of(context)!.backupSavedToDownloads(path)
-            : AppLocalizations.of(context)!.backupShared;
-        ToastService.showSuccess(message);
-      case ExportFailure(:final message):
-        ToastService.showError(
-          AppLocalizations.of(context)!.exportFailed(message),
-        );
-    }
-
-    setState(() => _isExporting = false);
   }
 
   Future<void> _openAndroidFolder(AppLocalizations l10n) async {

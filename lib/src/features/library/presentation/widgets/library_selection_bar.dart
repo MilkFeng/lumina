@@ -76,7 +76,7 @@ class _ActionButton extends StatelessWidget {
             Icon(
               icon,
               color: enabled
-                  ? Theme.of(context).colorScheme.primary
+                  ? Theme.of(context).colorScheme.onSurface
                   : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 4),

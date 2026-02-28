@@ -444,6 +444,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cleanCacheSuccess => 'Cache cleaned';
 
   @override
+  String get appAppearance => 'Appearance';
+
+  @override
+  String get appThemeMode => 'Theme';
+
+  @override
+  String get appThemeModeSystem => 'System';
+
+  @override
+  String get appThemeModeLight => 'Light';
+
+  @override
+  String get appThemeModeDark => 'Dark';
+
+  @override
+  String get appLightTheme => 'Light Theme Style';
+
+  @override
+  String get appDarkTheme => 'Dark Theme Style';
+
+  @override
+  String get appThemeVariantStandard => 'Standard';
+
+  @override
+  String get appThemeVariantEyeCare => 'Eye Care';
+
+  @override
   String get projectInfo => 'Project Info';
 
   @override
@@ -633,7 +660,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerAppearance => 'Appearance';
 
   @override
-  String get readerFollowSystemTheme => 'Follow System Theme';
+  String get readerFollowAppTheme => 'Follow App Theme';
 
   @override
   String get readerThemeLight => 'Light';

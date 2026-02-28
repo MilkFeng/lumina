@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:lumina/src/core/theme/app_theme_notifier.dart';
 import 'package:lumina/src/global_share_handler.dart';
 import '../l10n/app_localizations.dart';
 import 'core/router/app_router.dart';
-import 'core/theme/app_theme.dart';
 
 /// Root application widget
 class LuminaReaderApp extends ConsumerWidget {
@@ -15,6 +15,7 @@ class LuminaReaderApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final appTheme = ref.watch(appThemeNotifierProvider);
 
     String systemLocale = Platform.localeName;
     final locale = Locale(systemLocale.split('_')[0]);
@@ -48,9 +49,9 @@ class LuminaReaderApp extends ConsumerWidget {
       },
 
       // Modern Minimalist Theme
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      theme: appTheme.lightTheme,
+      darkTheme: appTheme.darkTheme,
+      themeMode: appTheme.flutterThemeMode,
 
       // Navigation
       routerConfig: router,

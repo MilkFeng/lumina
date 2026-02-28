@@ -866,6 +866,60 @@ abstract class AppLocalizations {
   /// **'Cache cleaned'**
   String get cleanCacheSuccess;
 
+  /// Appearance section title in about screen
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appAppearance;
+
+  /// Label for the app-wide theme mode selector
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get appThemeMode;
+
+  /// Theme mode option: follow system
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get appThemeModeSystem;
+
+  /// Theme mode option: always light
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get appThemeModeLight;
+
+  /// Theme mode option: always dark
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get appThemeModeDark;
+
+  /// Label for light theme variant selector
+  ///
+  /// In en, this message translates to:
+  /// **'Light Theme Style'**
+  String get appLightTheme;
+
+  /// Label for dark theme variant selector
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Theme Style'**
+  String get appDarkTheme;
+
+  /// Theme variant: standard clean look
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get appThemeVariantStandard;
+
+  /// Theme variant: warm-tinted eye-ease look
+  ///
+  /// In en, this message translates to:
+  /// **'Eye Care'**
+  String get appThemeVariantEyeCare;
+
   /// Project information section title
   ///
   /// In en, this message translates to:
@@ -1184,11 +1238,11 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get readerAppearance;
 
-  /// Toggle label to follow the system color scheme
+  /// Toggle label to make the reader follow the app-wide color scheme
   ///
   /// In en, this message translates to:
-  /// **'Follow System Theme'**
-  String get readerFollowSystemTheme;
+  /// **'Follow App Theme'**
+  String get readerFollowAppTheme;
 
   /// Light reader theme chip label
   ///

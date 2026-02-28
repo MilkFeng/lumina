@@ -437,6 +437,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cleanCacheSuccess => '清理完成';
 
   @override
+  String get appAppearance => '外观';
+
+  @override
+  String get appThemeMode => '主题';
+
+  @override
+  String get appThemeModeSystem => '跟随系统';
+
+  @override
+  String get appThemeModeLight => '浅色';
+
+  @override
+  String get appThemeModeDark => '深色';
+
+  @override
+  String get appLightTheme => '浅色主题风格';
+
+  @override
+  String get appDarkTheme => '深色主题风格';
+
+  @override
+  String get appThemeVariantStandard => '标准';
+
+  @override
+  String get appThemeVariantEyeCare => '护眼';
+
+  @override
   String get projectInfo => '项目信息';
 
   @override
@@ -615,7 +642,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerAppearance => '外观与主题';
 
   @override
-  String get readerFollowSystemTheme => '跟随系统主题';
+  String get readerFollowAppTheme => '跟随应用主题';
 
   @override
   String get readerThemeLight => '浅色';

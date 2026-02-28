@@ -186,27 +186,50 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       return null;
     }
 
+    SpeedDialChild buildSpeedDialChild(
+      IconData icon,
+      String label,
+      VoidCallback onTap,
+    ) {
+      return SpeedDialChild(
+        child: Icon(icon),
+        label: label,
+        onTap: onTap,
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+        labelBackgroundColor: Theme.of(context).colorScheme.surface,
+        labelShadow: [],
+        labelStyle: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontWeight: FontWeight.w500,
+        ),
+        elevation: 2,
+      );
+    }
+
     return SpeedDial(
       icon: Icons.add_outlined,
       activeIcon: Icons.close_outlined,
-      overlayColor: Colors.black,
-      overlayOpacity: 0.4,
+      overlayColor: Theme.of(context).colorScheme.scrim,
+      overlayOpacity: 0.5,
       spaceBetweenChildren: 12,
+      renderOverlay: true,
+      useRotationAnimation: true,
       children: [
-        SpeedDialChild(
-          child: const Icon(Icons.folder_open_outlined),
-          label: AppLocalizations.of(context)!.importFromFolder,
-          onTap: () => _scanFolder(context, ref),
+        buildSpeedDialChild(
+          Icons.file_present_outlined,
+          AppLocalizations.of(context)!.importFiles,
+          () => _importFiles(context, ref),
         ),
-        SpeedDialChild(
-          child: const Icon(Icons.file_present_outlined),
-          label: AppLocalizations.of(context)!.importFiles,
-          onTap: () => _importFiles(context, ref),
+        buildSpeedDialChild(
+          Icons.folder_open_outlined,
+          AppLocalizations.of(context)!.importFromFolder,
+          () => _scanFolder(context, ref),
         ),
-        SpeedDialChild(
-          child: const Icon(Icons.settings_backup_restore_outlined),
-          label: AppLocalizations.of(context)!.restoreFromBackup,
-          onTap: () => handleRestoreBackup(context, ref),
+        buildSpeedDialChild(
+          Icons.settings_backup_restore_outlined,
+          AppLocalizations.of(context)!.restoreFromBackup,
+          () => handleRestoreBackup(context, ref),
         ),
       ],
     );

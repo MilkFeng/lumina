@@ -21,7 +21,7 @@ class _ReaderStyleBottomSheetState
   late int _bottomMargin;
   late int _leftMargin;
   late int _rightMargin;
-  late bool _followSystemTheme;
+  late bool _followAppTheme;
   late ReaderSettingThemeMode _themeMode;
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
@@ -39,7 +39,7 @@ class _ReaderStyleBottomSheetState
     _bottomMargin = s.marginBottom.toInt();
     _leftMargin = s.marginLeft.toInt();
     _rightMargin = s.marginRight.toInt();
-    _followSystemTheme = s.followSystemTheme;
+    _followAppTheme = s.followAppTheme;
     _themeMode = s.themeMode;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
@@ -64,13 +64,13 @@ class _ReaderStyleBottomSheetState
             _SectionTitle(label: l10n.readerAppearance),
             const SizedBox(height: 12),
 
-            // Reader Theme – only shown when Follow System is off
+            // Reader Theme – only shown when Follow App Theme is off
             AnimatedSize(
               duration: const Duration(
                 milliseconds: AppTheme.defaultAnimationDurationMs,
               ),
               curve: Curves.easeInOut,
-              child: _followSystemTheme
+              child: _followAppTheme
                   ? const SizedBox(height: 0, width: double.infinity)
                   : Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -81,9 +81,7 @@ class _ReaderStyleBottomSheetState
                           runSpacing: 12,
                           children: [
                             _ThemeOptionChip(
-                              colorScheme: AppTheme.colorSchemeForBrightness(
-                                Brightness.light,
-                              ),
+                              colorScheme: AppTheme.lightColorScheme,
                               isSelected:
                                   _themeMode == ReaderSettingThemeMode.light,
                               onTap: () {
@@ -97,9 +95,7 @@ class _ReaderStyleBottomSheetState
                               },
                             ),
                             _ThemeOptionChip(
-                              colorScheme: AppTheme.colorSchemeForBrightness(
-                                Brightness.dark,
-                              ),
+                              colorScheme: AppTheme.darkColorScheme,
                               isSelected:
                                   _themeMode == ReaderSettingThemeMode.dark,
                               onTap: () {
@@ -141,19 +137,48 @@ class _ReaderStyleBottomSheetState
                                 );
                               },
                             ),
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.matchaLightColorScheme,
+                              isSelected:
+                                  _themeMode == ReaderSettingThemeMode.matcha,
+                              onTap: () {
+                                setState(
+                                  () => _themeMode =
+                                      ReaderSettingThemeMode.matcha,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.matcha,
+                                );
+                              },
+                            ),
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.matchaDarkColorScheme,
+                              isSelected:
+                                  _themeMode ==
+                                  ReaderSettingThemeMode.darkMatcha,
+                              onTap: () {
+                                setState(
+                                  () => _themeMode =
+                                      ReaderSettingThemeMode.darkMatcha,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.darkMatcha,
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
                     ),
             ),
 
-            // Follow System Theme
+            // Follow App Theme
             _FollowSystemSwitch(
-              label: l10n.readerFollowSystemTheme,
-              value: _followSystemTheme,
+              label: l10n.readerFollowAppTheme,
+              value: _followAppTheme,
               onChanged: (v) {
-                setState(() => _followSystemTheme = v);
-                _notifier.setFollowSystemTheme(v);
+                setState(() => _followAppTheme = v);
+                _notifier.setFollowAppTheme(v);
               },
             ),
 
@@ -368,10 +393,7 @@ class _MarginStepper extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.secondary.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,7 +413,7 @@ class _MarginStepper extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 visualDensity: VisualDensity.compact,
                 color: colorScheme.primary,
-                disabledColor: colorScheme.onSurfaceVariant,
+                disabledColor: colorScheme.outline,
               ),
               Text(
                 '$value',
@@ -407,7 +429,7 @@ class _MarginStepper extends StatelessWidget {
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 visualDensity: VisualDensity.compact,
                 color: colorScheme.primary,
-                disabledColor: colorScheme.onSurfaceVariant,
+                disabledColor: colorScheme.outline,
               ),
             ],
           ),
@@ -439,10 +461,7 @@ class _FollowSystemSwitch extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.secondary.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant, width: 1.5),
       ),
       child: Row(
         children: [
@@ -487,11 +506,7 @@ class _ThemeOptionChip extends StatelessWidget {
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
-                : Theme.of(
-                    context,
-                  ).colorScheme.secondary.withValues(alpha: 0.3),
+            color: isSelected ? colorScheme.primary : colorScheme.secondary,
             width: 1.5,
           ),
         ),
@@ -525,7 +540,7 @@ class _LinkHandlingSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    Widget _chip(ReaderLinkHandling option, IconData icon, String label) {
+    Widget chip(ReaderLinkHandling option, IconData icon, String label) {
       final selected = value == option;
       return Expanded(
         child: InkWell(
@@ -540,8 +555,8 @@ class _LinkHandlingSelector extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: selected
-                    ? colorScheme.primary.withValues(alpha: 0.5)
-                    : colorScheme.secondary.withValues(alpha: 0.3),
+                    ? colorScheme.primary
+                    : colorScheme.outlineVariant,
                 width: 1.5,
               ),
             ),
@@ -578,15 +593,15 @@ class _LinkHandlingSelector extends StatelessWidget {
 
     return Row(
       children: [
-        _chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
+        chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
         const SizedBox(width: 8),
-        _chip(
+        chip(
           ReaderLinkHandling.always,
           Icons.open_in_new_outlined,
           alwaysLabel,
         ),
         const SizedBox(width: 8),
-        _chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
+        chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
       ],
     );
   }
