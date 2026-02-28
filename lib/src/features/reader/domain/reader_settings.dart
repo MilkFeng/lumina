@@ -6,9 +6,13 @@ enum ReaderSettingThemeMode {
   light,
   dark,
 
-  // More themes
+  // Eye care variants
   eyeCare,
   darkEyeCare,
+
+  // Matcha variants
+  matcha,
+  darkMatcha,
 }
 
 /// Controls how the reader handles external link taps.
@@ -92,6 +96,10 @@ class ReaderSettings {
       } else if (themeMode == ReaderSettingThemeMode.dark) {
         colorScheme = AppTheme.darkColorScheme;
         overridePrimaryColor = kOverridePrimaryColorForDark;
+      } else if (themeMode == ReaderSettingThemeMode.matcha) {
+        colorScheme = AppTheme.matchaLightColorScheme;
+      } else if (themeMode == ReaderSettingThemeMode.darkMatcha) {
+        colorScheme = AppTheme.matchaDarkColorScheme;
       } else {
         colorScheme = AppTheme.lightColorScheme;
         shouldOverrideTextColor = false; // Light theme uses default text color

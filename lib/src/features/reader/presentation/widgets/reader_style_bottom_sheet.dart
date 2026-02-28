@@ -137,6 +137,35 @@ class _ReaderStyleBottomSheetState
                                 );
                               },
                             ),
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.matchaLightColorScheme,
+                              isSelected:
+                                  _themeMode == ReaderSettingThemeMode.matcha,
+                              onTap: () {
+                                setState(
+                                  () => _themeMode =
+                                      ReaderSettingThemeMode.matcha,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.matcha,
+                                );
+                              },
+                            ),
+                            _ThemeOptionChip(
+                              colorScheme: AppTheme.matchaDarkColorScheme,
+                              isSelected:
+                                  _themeMode ==
+                                  ReaderSettingThemeMode.darkMatcha,
+                              onTap: () {
+                                setState(
+                                  () => _themeMode =
+                                      ReaderSettingThemeMode.darkMatcha,
+                                );
+                                _notifier.setThemeMode(
+                                  ReaderSettingThemeMode.darkMatcha,
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),

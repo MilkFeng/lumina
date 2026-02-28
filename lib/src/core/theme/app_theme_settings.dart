@@ -5,10 +5,10 @@ import 'package:lumina/src/core/theme/app_theme.dart';
 enum AppThemeMode { system, light, dark }
 
 /// Selects one of the available light-mode color schemes.
-enum AppLightThemeVariant { standard, eyeCare }
+enum AppLightThemeVariant { standard, eyeCare, matcha }
 
 /// Selects one of the available dark-mode color schemes.
-enum AppDarkThemeVariant { standard, eyeCare }
+enum AppDarkThemeVariant { standard, eyeCare, matcha }
 
 /// Persistent settings that control the app-wide color theme and
 /// (optionally) the dark/light variant applied to library, detail and
@@ -55,6 +55,8 @@ class AppThemeSettings {
         return AppTheme.lightColorScheme;
       case AppLightThemeVariant.eyeCare:
         return AppTheme.eyeCareColorScheme;
+      case AppLightThemeVariant.matcha:
+        return AppTheme.matchaLightColorScheme;
     }
   }
 
@@ -65,6 +67,8 @@ class AppThemeSettings {
         return AppTheme.darkColorScheme;
       case AppDarkThemeVariant.eyeCare:
         return AppTheme.darkEyeCareColorScheme;
+      case AppDarkThemeVariant.matcha:
+        return AppTheme.matchaDarkColorScheme;
     }
   }
 

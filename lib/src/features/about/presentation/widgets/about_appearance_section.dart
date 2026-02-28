@@ -102,6 +102,13 @@ class AboutAppearanceSection extends ConsumerWidget {
                         AppLightThemeVariant.eyeCare,
                       ),
                     ),
+                    AppThemeVariantChip(
+                      colorScheme: AppTheme.matchaLightColorScheme,
+                      isSelected:
+                          settings.lightVariant == AppLightThemeVariant.matcha,
+                      onTap: () =>
+                          notifier.setLightVariant(AppLightThemeVariant.matcha),
+                    ),
                   ],
                 ),
               ] else ...[
@@ -130,6 +137,13 @@ class AboutAppearanceSection extends ConsumerWidget {
                           settings.darkVariant == AppDarkThemeVariant.eyeCare,
                       onTap: () =>
                           notifier.setDarkVariant(AppDarkThemeVariant.eyeCare),
+                    ),
+                    AppThemeVariantChip(
+                      colorScheme: AppTheme.matchaDarkColorScheme,
+                      isSelected:
+                          settings.darkVariant == AppDarkThemeVariant.matcha,
+                      onTap: () =>
+                          notifier.setDarkVariant(AppDarkThemeVariant.matcha),
                     ),
                   ],
                 ),

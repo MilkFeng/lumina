@@ -16,6 +16,9 @@ class AppTheme {
   static ColorScheme get eyeCareColorScheme => kEyeCareColorScheme;
   static ColorScheme get darkEyeCareColorScheme => kDarkEyeCareColorScheme;
 
+  static ColorScheme get matchaLightColorScheme => kMatchaLightColorScheme;
+  static ColorScheme get matchaDarkColorScheme => kMatchaDarkColorScheme;
+
   static ThemeData buildTheme(ColorScheme colorScheme) {
     final notionRadius = BorderRadius.circular(4.0);
     return ThemeData(
