@@ -80,7 +80,7 @@ class AboutTipTile extends StatelessWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
       leading: Icon(
         icon,
-        color: Theme.of(context).colorScheme.primary.withAlpha(153),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         size: 20,
       ),
       title: Text(
