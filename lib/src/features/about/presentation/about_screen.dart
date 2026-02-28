@@ -250,20 +250,19 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
+              Wrap(
+                spacing: 16,
+                runSpacing: 12,
                 children: [
                   _AppThemeVariantChip(
                     colorScheme: AppTheme.lightColorScheme,
-                    label: l10n.appThemeVariantStandard,
                     isSelected:
                         settings.lightVariant == AppLightThemeVariant.standard,
                     onTap: () =>
                         notifier.setLightVariant(AppLightThemeVariant.standard),
                   ),
-                  const SizedBox(width: 12),
                   _AppThemeVariantChip(
                     colorScheme: AppTheme.eyeCareColorScheme,
-                    label: l10n.appThemeVariantEyeCare,
                     isSelected:
                         settings.lightVariant == AppLightThemeVariant.eyeCare,
                     onTap: () =>
@@ -283,20 +282,19 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
+              Wrap(
+                spacing: 16,
+                runSpacing: 12,
                 children: [
                   _AppThemeVariantChip(
                     colorScheme: AppTheme.darkColorScheme,
-                    label: l10n.appThemeVariantStandard,
                     isSelected:
                         settings.darkVariant == AppDarkThemeVariant.standard,
                     onTap: () =>
                         notifier.setDarkVariant(AppDarkThemeVariant.standard),
                   ),
-                  const SizedBox(width: 12),
                   _AppThemeVariantChip(
                     colorScheme: AppTheme.darkEyeCareColorScheme,
-                    label: l10n.appThemeVariantEyeCare,
                     isSelected:
                         settings.darkVariant == AppDarkThemeVariant.eyeCare,
                     onTap: () =>
@@ -552,7 +550,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
 }
 // ── Private helper widgets ────────────────────────────────────────────────────
 
-/// Segmented chip for selecting the app theme mode (system / light / dark).
+/// Chip for selecting the app-wide theme mode (system / light / dark).
+/// Expands to fill available width, shows icon + label, fills background
+/// with [colorScheme.secondary] when selected.
 class _AppThemeModeChip extends StatelessWidget {
   const _AppThemeModeChip({
     required this.icon,
@@ -583,7 +583,7 @@ class _AppThemeModeChip extends StatelessWidget {
             border: Border.all(
               color: isSelected
                   ? colorScheme.primary.withValues(alpha: 0.5)
-                  : colorScheme.outline,
+                  : colorScheme.secondary.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -618,77 +618,44 @@ class _AppThemeModeChip extends StatelessWidget {
   }
 }
 
-/// Color-swatch chip for selecting a light or dark theme variant.
+/// Chip for selecting a theme color-scheme variant.
+/// Identical to the reader bottom sheet chip:
+/// 56x56, preview colorscheme colors, [Icons.check_outlined] when selected.
 class _AppThemeVariantChip extends StatelessWidget {
   const _AppThemeVariantChip({
     required this.colorScheme,
-    required this.label,
     required this.isSelected,
     required this.onTap,
   });
 
   final ColorScheme colorScheme;
-  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final activeScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 88,
-        padding: const EdgeInsets.all(10),
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? activeScheme.primary.withValues(alpha: 0.6)
-                : activeScheme.outline,
-            width: isSelected ? 2.0 : 1.5,
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+                : Theme.of(
+                    context,
+                  ).colorScheme.secondary.withValues(alpha: 0.3),
+            width: 1.5,
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Color preview strip
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                height: 24,
-                child: Row(
-                  children: [
-                    Expanded(child: ColoredBox(color: colorScheme.surface)),
-                    Expanded(child: ColoredBox(color: colorScheme.primary)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected
-                    ? activeScheme.primary
-                    : activeScheme.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (isSelected) ...[
-              const SizedBox(height: 2),
-              Icon(
-                Icons.check_circle_outline,
-                size: 12,
-                color: activeScheme.primary,
-              ),
-            ],
-          ],
+        child: Icon(
+          isSelected ? Icons.check_outlined : Icons.text_format_outlined,
+          size: 32,
+          color: colorScheme.primary,
         ),
       ),
     );
