@@ -58,9 +58,9 @@ class MockShelfBookRepository extends _i1.Mock
       ) as _i4.Future<List<_i5.ShelfBook>>);
 
   @override
-  _i4.Future<Set<String>> getAllFileHashes() => (super.noSuchMethod(
+  _i4.Future<Set<String>> getAllNotDeletedFileHashes() => (super.noSuchMethod(
         Invocation.method(
-          #getAllFileHashes,
+          #getAllNotDeletedFileHashes,
           [],
         ),
         returnValue: _i4.Future<Set<String>>.value(<String>{}),
