@@ -1,19 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
-
-enum ReaderSettingThemeMode {
-  light,
-  dark,
-
-  // Eye care variants
-  eyeCare,
-  darkEyeCare,
-
-  // Matcha variants
-  matcha,
-  darkMatcha,
-}
 
 /// Controls how the reader handles external link taps.
 enum ReaderLinkHandling {
@@ -30,7 +17,9 @@ enum ReaderLinkHandling {
 class ReaderSettings {
   final double zoom;
   final bool followAppTheme;
-  final ReaderSettingThemeMode themeMode;
+
+  /// Index into [AppThemeSettings.allColorSchemes] representing the reader theme.
+  final int themeIndex;
   final double marginTop;
   final double marginBottom;
   final double marginLeft;
@@ -41,7 +30,7 @@ class ReaderSettings {
   const ReaderSettings({
     this.zoom = 1.0,
     this.followAppTheme = true,
-    this.themeMode = ReaderSettingThemeMode.light,
+    this.themeIndex = 0,
     this.marginTop = 16.0,
     this.marginBottom = 16.0,
     this.marginLeft = 16.0,
@@ -53,7 +42,7 @@ class ReaderSettings {
   ReaderSettings copyWith({
     double? zoom,
     bool? followAppTheme,
-    ReaderSettingThemeMode? themeMode,
+    int? themeIndex,
     double? marginTop,
     double? marginBottom,
     double? marginLeft,
@@ -64,7 +53,7 @@ class ReaderSettings {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
       followAppTheme: followAppTheme ?? this.followAppTheme,
-      themeMode: themeMode ?? this.themeMode,
+      themeIndex: themeIndex ?? this.themeIndex,
       marginTop: marginTop ?? this.marginTop,
       marginBottom: marginBottom ?? this.marginBottom,
       marginLeft: marginLeft ?? this.marginLeft,
@@ -75,35 +64,23 @@ class ReaderSettings {
   }
 
   EpubTheme toEpubTheme({required ColorScheme appColorScheme}) {
-    const kOverridePrimaryColorForDark = Color(0xFF7B9CAE);
-
     ColorScheme colorScheme;
     bool shouldOverrideTextColor = true;
     Color? overridePrimaryColor;
 
     if (followAppTheme) {
       colorScheme = appColorScheme;
-      if (appColorScheme.brightness == Brightness.light) {
-        shouldOverrideTextColor = false;
-      } else {
-        overridePrimaryColor = kOverridePrimaryColorForDark;
-      }
+      final index = AppThemeSettings.allColorSchemes.indexOf(appColorScheme);
+      overridePrimaryColor = AppThemeSettings.allOverridePrimaryColors[index];
+      shouldOverrideTextColor =
+          AppThemeSettings.allShouldOverrideTextColor[index];
     } else {
-      if (themeMode == ReaderSettingThemeMode.eyeCare) {
-        colorScheme = AppTheme.eyeCareColorScheme;
-      } else if (themeMode == ReaderSettingThemeMode.darkEyeCare) {
-        colorScheme = AppTheme.darkEyeCareColorScheme;
-      } else if (themeMode == ReaderSettingThemeMode.dark) {
-        colorScheme = AppTheme.darkColorScheme;
-        overridePrimaryColor = kOverridePrimaryColorForDark;
-      } else if (themeMode == ReaderSettingThemeMode.matcha) {
-        colorScheme = AppTheme.matchaLightColorScheme;
-      } else if (themeMode == ReaderSettingThemeMode.darkMatcha) {
-        colorScheme = AppTheme.matchaDarkColorScheme;
-      } else {
-        colorScheme = AppTheme.lightColorScheme;
-        shouldOverrideTextColor = false; // Light theme uses default text color
-      }
+      final schemes = AppThemeSettings.allColorSchemes;
+      final index = themeIndex.clamp(0, schemes.length - 1);
+      colorScheme = schemes[index];
+      overridePrimaryColor = AppThemeSettings.allOverridePrimaryColors[index];
+      shouldOverrideTextColor =
+          AppThemeSettings.allShouldOverrideTextColor[index];
     }
 
     return EpubTheme(
@@ -120,16 +97,9 @@ class ReaderSettings {
     );
   }
 
-  /// Maps a [ReaderSettingThemeMode] to its corresponding [ColorScheme].
-  static ColorScheme colorSchemeForReaderTheme(ReaderSettingThemeMode mode) =>
-      switch (mode) {
-        ReaderSettingThemeMode.light => AppTheme.lightColorScheme,
-        ReaderSettingThemeMode.dark => AppTheme.darkColorScheme,
-        ReaderSettingThemeMode.eyeCare => AppTheme.eyeCareColorScheme,
-        ReaderSettingThemeMode.darkEyeCare => AppTheme.darkEyeCareColorScheme,
-        ReaderSettingThemeMode.matcha => AppTheme.matchaLightColorScheme,
-        ReaderSettingThemeMode.darkMatcha => AppTheme.matchaDarkColorScheme,
-      };
-
-  ColorScheme get currentColorScheme => colorSchemeForReaderTheme(themeMode);
+  /// The [ColorScheme] currently selected from [AppThemeSettings.allColorSchemes].
+  ColorScheme get currentColorScheme {
+    final schemes = AppThemeSettings.allColorSchemes;
+    return schemes[themeIndex.clamp(0, schemes.length - 1)];
+  }
 }

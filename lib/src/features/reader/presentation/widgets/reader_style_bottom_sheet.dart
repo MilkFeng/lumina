@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
 
@@ -22,7 +23,7 @@ class _ReaderStyleBottomSheetState
   late int _leftMargin;
   late int _rightMargin;
   late bool _followAppTheme;
-  late ReaderSettingThemeMode _themeMode;
+  late int _themeIndex;
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
 
@@ -40,7 +41,7 @@ class _ReaderStyleBottomSheetState
     _leftMargin = s.marginLeft.toInt();
     _rightMargin = s.marginRight.toInt();
     _followAppTheme = s.followAppTheme;
-    _themeMode = s.themeMode;
+    _themeIndex = s.themeIndex;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
   }
@@ -79,20 +80,21 @@ class _ReaderStyleBottomSheetState
                         child: Wrap(
                           spacing: 16,
                           runSpacing: 12,
-                          // Dynamically build a chip for every ReaderSettingThemeMode.
-                          children: ReaderSettingThemeMode.values.map((mode) {
-                            return _ThemeOptionChip(
-                              colorScheme:
-                                  ReaderSettings.colorSchemeForReaderTheme(
-                                    mode,
-                                  ),
-                              isSelected: _themeMode == mode,
-                              onTap: () {
-                                setState(() => _themeMode = mode);
-                                _notifier.setThemeMode(mode);
-                              },
-                            );
-                          }).toList(),
+                          // Dynamically build a chip for every entry in AppThemeSettings.allColorSchemes.
+                          children: AppThemeSettings.allColorSchemes
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                                return _ThemeOptionChip(
+                                  colorScheme: entry.value,
+                                  isSelected: _themeIndex == entry.key,
+                                  onTap: () {
+                                    setState(() => _themeIndex = entry.key);
+                                    _notifier.setThemeIndex(entry.key);
+                                  },
+                                );
+                              })
+                              .toList(),
                         ),
                       ),
                     ),

@@ -106,4 +106,35 @@ class AppThemeSettings {
         AppDarkThemeVariant.eyeCare => AppTheme.darkEyeCareColorScheme,
         AppDarkThemeVariant.matcha => AppTheme.matchaDarkColorScheme,
       };
+
+  /// Ordered list of every available [ColorScheme] for the reader theme picker.
+  /// The list index is persisted as an integer to represent the chosen theme.
+  static List<ColorScheme> get allColorSchemes => [
+    AppTheme.lightColorScheme,
+    AppTheme.darkColorScheme,
+    AppTheme.eyeCareColorScheme,
+    AppTheme.darkEyeCareColorScheme,
+    AppTheme.matchaLightColorScheme,
+    AppTheme.matchaDarkColorScheme,
+  ];
+
+  /// For reader themes that use a custom primary color in dark mode, this provides
+  /// a parallel list of the override primary color (or null if no override needed)
+  static List<Color?> get allOverridePrimaryColors => [
+    null, // standard light
+    const Color(0xFF7B9CAE), // standard dark
+    null, // eye care light
+    null, // eye care dark
+    null, // matcha light
+    null, // matcha dark
+  ];
+
+  static List<bool> get allShouldOverrideTextColor => [
+    false, // standard light
+    true, // standard dark
+    false, // eye care light
+    false, // eye care dark
+    false, // matcha light
+    false, // matcha dark
+  ];
 }

@@ -27,9 +27,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
           data: (prefs) => ReaderSettings(
             zoom: prefs.getDouble(_kZoom) ?? 1.0,
             followAppTheme: prefs.getBool(_kFollowApp) ?? true,
-            themeMode:
-                ReaderSettingThemeMode.values[prefs.getInt(_kThemeMode) ??
-                    ReaderSettingThemeMode.light.index],
+            themeIndex: prefs.getInt(_kThemeMode) ?? 0,
             marginTop: prefs.getDouble(_kMarginTop) ?? 16.0,
             marginBottom: prefs.getDouble(_kMarginBottom) ?? 16.0,
             marginLeft: prefs.getDouble(_kMarginLeft) ?? 16.0,
@@ -64,9 +62,9 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
     state = state.copyWith(followAppTheme: follow);
   }
 
-  Future<void> setThemeMode(ReaderSettingThemeMode mode) async {
-    await _prefs.setInt(_kThemeMode, mode.index);
-    state = state.copyWith(themeMode: mode);
+  Future<void> setThemeIndex(int index) async {
+    await _prefs.setInt(_kThemeMode, index);
+    state = state.copyWith(themeIndex: index);
   }
 
   Future<void> setMarginTop(double value) async {
