@@ -86,9 +86,13 @@ class _LibraryAppBarState extends State<LibraryAppBar>
           sliver: SliverAppBar(
             pinned: true,
             floating: false,
-            backgroundColor: isSelectionMode
-                ? Theme.of(context).colorScheme.surfaceContainer
-                : Theme.of(context).colorScheme.surface,
+            // Lerp between surface (normal) and surfaceContainer (selection).
+            // _animation.value: 1.0 = normal, 0.0 = selection mode.
+            backgroundColor: Color.lerp(
+              Theme.of(context).colorScheme.surfaceContainer,
+              Theme.of(context).colorScheme.surface,
+              _animation.value,
+            ),
             leading: isSelectionMode
                 ? IconButton(
                     icon: const Icon(Icons.close_outlined),
