@@ -48,7 +48,7 @@ class LibraryAppBar extends StatelessWidget {
           onTap: isSelectionMode
               ? null
               : () {
-                  context.push('/about');
+                  context.push('/settings');
                 },
           child: isSelectionMode
               ? Text(

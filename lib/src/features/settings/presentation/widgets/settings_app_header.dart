@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 /// Displays the app icon, logo SVG, and version string at the top of the
-/// About screen.
-class AboutAppHeader extends StatelessWidget {
-  const AboutAppHeader({super.key, required this.version});
+/// Settings screen.
+class SettingsAppHeader extends StatelessWidget {
+  const SettingsAppHeader({super.key, required this.version});
 
   final String version;
 

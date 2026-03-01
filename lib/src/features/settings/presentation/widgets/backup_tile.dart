@@ -34,11 +34,14 @@ class _BackupTileState extends ConsumerState<BackupTile> {
     if (_isExporting) return;
     setState(() => _isExporting = true);
 
+    // Capture l10n before the async gap to avoid BuildContext use after await.
+    final l10n = AppLocalizations.of(context)!;
+
     final result = await ref
         .read(exportBackupServiceProvider)
         .exportLibraryAsFolder(sharePositionOrigin: _tileRect());
 
-    if (!context.mounted) {
+    if (!mounted) {
       _isExporting = false;
       return;
     }
@@ -46,13 +49,11 @@ class _BackupTileState extends ConsumerState<BackupTile> {
     switch (result) {
       case ExportSuccess(:final path):
         final message = (Platform.isAndroid && path != null)
-            ? AppLocalizations.of(context)!.backupSavedToDownloads(path)
-            : AppLocalizations.of(context)!.backupShared;
+            ? l10n.backupSavedToDownloads(path)
+            : l10n.backupShared;
         ToastService.showSuccess(message);
       case ExportFailure(:final message):
-        ToastService.showError(
-          AppLocalizations.of(context)!.exportFailed(message),
-        );
+        ToastService.showError(l10n.exportFailed(message));
     }
 
     setState(() => _isExporting = false);

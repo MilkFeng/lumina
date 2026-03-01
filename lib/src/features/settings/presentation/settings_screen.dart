@@ -5,24 +5,24 @@ import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/about/presentation/widgets/about_app_header.dart';
-import 'package:lumina/src/features/about/presentation/widgets/about_appearance_section.dart';
-import 'package:lumina/src/features/about/presentation/widgets/about_info_section.dart';
-import 'package:lumina/src/features/about/presentation/widgets/backup_tile.dart';
-import 'package:lumina/src/features/about/presentation/widgets/clean_cache_tile.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/backup_tile.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/clean_cache_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
 
-/// About Screen - Shows app information, tips and credits
-class AboutScreen extends ConsumerStatefulWidget {
-  const AboutScreen({super.key});
+/// Settings Screen - Shows app information, tips and credits
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key});
 
   @override
-  ConsumerState<AboutScreen> createState() => _AboutScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _AboutScreenState extends ConsumerState<AboutScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _version = '';
 
   @override
@@ -50,25 +50,28 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 32),
         children: [
-          AboutAppHeader(version: _version),
+          SettingsAppHeader(version: _version),
 
           const SizedBox(height: 48),
 
-          const AboutAppearanceSection(),
+          const SettingsAppearanceSection(),
 
           const SizedBox(height: 24),
 
           // Library section
-          AboutInfoSection(title: l10n.library, children: const [BackupTile()]),
+          SettingsInfoSection(
+            title: l10n.library,
+            children: const [BackupTile()],
+          ),
 
           const SizedBox(height: 24),
 
           // Storage section
-          AboutInfoSection(
+          SettingsInfoSection(
             title: l10n.storage,
             children: [
               const CleanCacheTile(),
-              AboutInfoTile(
+              SettingsInfoTile(
                 icon: Icons.folder_open_outlined,
                 title: l10n.openStorageLocation,
                 subtitle: l10n.openStorageLocationSubtitle,
@@ -82,17 +85,17 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           const SizedBox(height: 24),
 
           // Project info section
-          AboutInfoSection(
+          SettingsInfoSection(
             title: l10n.projectInfo,
             children: [
-              AboutInfoTile(
+              SettingsInfoTile(
                 icon: Icons.code_outlined,
                 title: l10n.github,
                 subtitle: 'github.com/MilkFeng/lumina.git',
                 onTap: () =>
                     _launchUrl('https://github.com/MilkFeng/lumina.git'),
               ),
-              AboutInfoTile(
+              SettingsInfoTile(
                 icon: Icons.person_outline_outlined,
                 title: l10n.author,
                 subtitle: 'Milk Feng',
@@ -103,18 +106,18 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           const SizedBox(height: 24),
 
           // Tips section
-          AboutInfoSection(
+          SettingsInfoSection(
             title: l10n.tips,
             children: [
-              AboutTipTile(
+              SettingsTipTile(
                 icon: Icons.touch_app_outlined,
                 tip: l10n.tipLongPressTab,
               ),
-              AboutTipTile(
+              SettingsTipTile(
                 icon: Icons.keyboard_double_arrow_right_outlined,
                 tip: l10n.tipLongPressNextTrack,
               ),
-              AboutTipTile(
+              SettingsTipTile(
                 icon: Icons.image_outlined,
                 tip: l10n.longPressToViewImage,
               ),

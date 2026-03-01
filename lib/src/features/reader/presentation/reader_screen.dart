@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -120,10 +119,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     // Update WebView theme when system theme changes
     if (_currentTheme != null && _currentTheme != Theme.of(context)) {
       _currentTheme = Theme.of(context);
-      _themeUpdateDebouncer?.cancel();
-      _themeUpdateDebouncer = Timer(const Duration(milliseconds: 100), () {
-        _updateWebViewTheme();
-      });
+      _updateWebViewThemeWithDebounce();
     }
   }
 
@@ -499,15 +495,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   EpubTheme _getEpubTheme() {
     final settings = ref.read(readerSettingsNotifierProvider);
-    return settings.toEpubTheme(appColorScheme: Theme.of(context).colorScheme);
+    return settings.toEpubTheme(context);
   }
 
   @override
   Widget build(BuildContext context) {
     // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
-    final prefsAsync = ref.watch(sharedPreferencesProvider);
     final settings = ref.watch(readerSettingsNotifierProvider);
-    if (!prefsAsync.hasValue || !_bookSession.isLoaded) {
+    if (!_bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: const SizedBox.shrink(),
@@ -532,7 +527,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     ref.listen(readerSettingsNotifierProvider, (previous, next) {
       if (previous != null && previous != next) {
-        _updateWebViewTheme();
+        // If zoom changed, use debounce to avoid excessive WebView reloads while dragging the slider
+        if (previous.zoom != next.zoom) {
+          _updateWebViewThemeWithDebounce();
+        } else {
+          _updateWebViewTheme();
+        }
       }
     });
 
@@ -614,9 +614,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onLinkTap: _handleLinkTap,
                       shouldHandleLinkTap: _shouldHandleLinkTap,
                       shouldShowWebView: _shouldShowWebView,
-                      initializeTheme: settings.toEpubTheme(
-                        appColorScheme: Theme.of(context).colorScheme,
-                      ),
+                      initializeTheme: settings.toEpubTheme(context),
                     ),
 
                     ControlPanel(
@@ -704,7 +702,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _navigateToSpineItem(0, 'top');
   }
 
+  void _updateWebViewThemeWithDebounce() {
+    _themeUpdateDebouncer?.cancel();
+    _themeUpdateDebouncer = Timer(const Duration(milliseconds: 50), () {
+      _updateWebViewTheme();
+    });
+  }
+
   Future<void> _updateWebViewTheme() async {
+    final newTheme = _getEpubTheme();
+    final currentTheme = _rendererController.currentTheme;
+    if (currentTheme != null && currentTheme == newTheme) {
+      return;
+    }
+
     setState(() {
       _updatingTheme = true;
     });

@@ -21,27 +21,22 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
   ReaderSettings build() {
-    return ref
-        .watch(sharedPreferencesProvider)
-        .when(
-          data: (prefs) => ReaderSettings(
-            zoom: prefs.getDouble(_kZoom) ?? 1.0,
-            followAppTheme: prefs.getBool(_kFollowApp) ?? true,
-            themeMode:
-                ReaderSettingThemeMode.values[prefs.getInt(_kThemeMode) ??
-                    ReaderSettingThemeMode.light.index],
-            marginTop: prefs.getDouble(_kMarginTop) ?? 16.0,
-            marginBottom: prefs.getDouble(_kMarginBottom) ?? 16.0,
-            marginLeft: prefs.getDouble(_kMarginLeft) ?? 16.0,
-            marginRight: prefs.getDouble(_kMarginRight) ?? 16.0,
-            linkHandling:
-                ReaderLinkHandling.values[prefs.getInt(_kLinkHandling) ??
-                    ReaderLinkHandling.ask.index],
-            handleIntraLink: prefs.getBool(_kHandleIntraLink) ?? true,
-          ),
-          loading: () => const ReaderSettings(),
-          error: (_, __) => const ReaderSettings(),
-        );
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final linkHandlingIndex = prefs.getInt(_kLinkHandling);
+
+    return ReaderSettings().copyWith(
+      zoom: prefs.getDouble(_kZoom),
+      followAppTheme: prefs.getBool(_kFollowApp),
+      themeIndex: prefs.getInt(_kThemeMode),
+      marginTop: prefs.getDouble(_kMarginTop),
+      marginBottom: prefs.getDouble(_kMarginBottom),
+      marginLeft: prefs.getDouble(_kMarginLeft),
+      marginRight: prefs.getDouble(_kMarginRight),
+      linkHandling: linkHandlingIndex != null
+          ? ReaderLinkHandling.values.elementAt(linkHandlingIndex)
+          : null,
+      handleIntraLink: prefs.getBool(_kHandleIntraLink),
+    );
   }
 
   // ── Convenience accessor ─────────────────────────────────────────────────────
@@ -49,8 +44,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   /// Safe to call inside mutation methods because [sharedPreferencesProvider]
   /// is [keepAlive] and will already be resolved by the time the UI can
   /// trigger any of these methods.
-  SharedPreferences get _prefs =>
-      ref.read(sharedPreferencesProvider).requireValue;
+  SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
 
   // ── Mutation methods ─────────────────────────────────────────────────────────
 
@@ -64,9 +58,9 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
     state = state.copyWith(followAppTheme: follow);
   }
 
-  Future<void> setThemeMode(ReaderSettingThemeMode mode) async {
-    await _prefs.setInt(_kThemeMode, mode.index);
-    state = state.copyWith(themeMode: mode);
+  Future<void> setThemeIndex(int index) async {
+    await _prefs.setInt(_kThemeMode, index);
+    state = state.copyWith(themeIndex: index);
   }
 
   Future<void> setMarginTop(double value) async {

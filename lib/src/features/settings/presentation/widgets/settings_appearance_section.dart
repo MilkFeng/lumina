@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/theme/app_theme_notifier.dart';
 import 'package:lumina/src/core/theme/app_theme_settings.dart';
-import 'package:lumina/src/features/about/presentation/widgets/about_info_section.dart';
-import 'package:lumina/src/features/about/presentation/widgets/about_theme_chips.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_theme_chips.dart';
 import '../../../../../l10n/app_localizations.dart';
 
-/// Renders the Appearance card on the About screen, containing the theme-mode
+/// Renders the Appearance card on the Settings screen, containing the theme-mode
 /// selector and the active-brightness variant picker.
-class AboutAppearanceSection extends ConsumerWidget {
-  const AboutAppearanceSection({super.key});
+class SettingsAppearanceSection extends ConsumerWidget {
+  const SettingsAppearanceSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,7 +26,7 @@ class AboutAppearanceSection extends ConsumerWidget {
     };
     final isEffectivelyDark = effectiveBrightness == Brightness.dark;
 
-    return AboutInfoSection(
+    return SettingsInfoSection(
       title: l10n.appAppearance,
       children: [
         Padding(
@@ -81,35 +80,23 @@ class AboutAppearanceSection extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  children: [
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.lightColorScheme,
-                      isSelected:
-                          settings.lightVariant ==
-                          AppLightThemeVariant.standard,
-                      onTap: () => notifier.setLightVariant(
-                        AppLightThemeVariant.standard,
-                      ),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.eyeCareColorScheme,
-                      isSelected:
-                          settings.lightVariant == AppLightThemeVariant.eyeCare,
-                      onTap: () => notifier.setLightVariant(
-                        AppLightThemeVariant.eyeCare,
-                      ),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.matchaLightColorScheme,
-                      isSelected:
-                          settings.lightVariant == AppLightThemeVariant.matcha,
-                      onTap: () =>
-                          notifier.setLightVariant(AppLightThemeVariant.matcha),
-                    ),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  // Dynamically build a chip for every AppLightThemeVariant.
+                  child: Row(
+                    children: AppLightThemeVariant.values.map((variant) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: AppThemeVariantChip(
+                          colorScheme: AppThemeSettings.lightColorSchemeFor(
+                            variant,
+                          ),
+                          isSelected: settings.lightVariant == variant,
+                          onTap: () => notifier.setLightVariant(variant),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ] else ...[
                 Text(
@@ -120,32 +107,23 @@ class AboutAppearanceSection extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  children: [
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.darkColorScheme,
-                      isSelected:
-                          settings.darkVariant == AppDarkThemeVariant.standard,
-                      onTap: () =>
-                          notifier.setDarkVariant(AppDarkThemeVariant.standard),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.darkEyeCareColorScheme,
-                      isSelected:
-                          settings.darkVariant == AppDarkThemeVariant.eyeCare,
-                      onTap: () =>
-                          notifier.setDarkVariant(AppDarkThemeVariant.eyeCare),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.matchaDarkColorScheme,
-                      isSelected:
-                          settings.darkVariant == AppDarkThemeVariant.matcha,
-                      onTap: () =>
-                          notifier.setDarkVariant(AppDarkThemeVariant.matcha),
-                    ),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  // Dynamically build a chip for every AppDarkThemeVariant.
+                  child: Row(
+                    children: AppDarkThemeVariant.values.map((variant) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: AppThemeVariantChip(
+                          colorScheme: AppThemeSettings.darkColorSchemeFor(
+                            variant,
+                          ),
+                          isSelected: settings.darkVariant == variant,
+                          onTap: () => notifier.setDarkVariant(variant),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ],
 

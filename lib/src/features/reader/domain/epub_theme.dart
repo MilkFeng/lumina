@@ -70,4 +70,25 @@ class EpubTheme {
       },
     };
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is EpubTheme &&
+        other.zoom == zoom &&
+        other.shouldOverrideTextColor == shouldOverrideTextColor &&
+        other.colorScheme == colorScheme &&
+        other.overridePrimaryColor == overridePrimaryColor &&
+        other.padding == padding;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    zoom,
+    shouldOverrideTextColor,
+    colorScheme,
+    overridePrimaryColor,
+    padding,
+  );
 }

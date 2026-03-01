@@ -1,36 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
-enum ReaderSettingThemeMode {
-  light,
-  dark,
-
-  // Eye care variants
-  eyeCare,
-  darkEyeCare,
-
-  // Matcha variants
-  matcha,
-  darkMatcha,
-}
-
 /// Controls how the reader handles external link taps.
-enum ReaderLinkHandling {
-  /// Show a confirmation dialog before opening external links.
-  ask,
-
-  /// Open external links directly without asking.
-  always,
-
-  /// Ignore external link taps entirely.
-  never,
-}
+enum ReaderLinkHandling { ask, always, never }
 
 class ReaderSettings {
   final double zoom;
   final bool followAppTheme;
-  final ReaderSettingThemeMode themeMode;
+
+  /// Index into [AppThemeSettings.allColorSchemes] representing the reader theme.
+  final int themeIndex;
   final double marginTop;
   final double marginBottom;
   final double marginLeft;
@@ -41,7 +21,7 @@ class ReaderSettings {
   const ReaderSettings({
     this.zoom = 1.0,
     this.followAppTheme = true,
-    this.themeMode = ReaderSettingThemeMode.light,
+    this.themeIndex = 0,
     this.marginTop = 16.0,
     this.marginBottom = 16.0,
     this.marginLeft = 16.0,
@@ -53,7 +33,7 @@ class ReaderSettings {
   ReaderSettings copyWith({
     double? zoom,
     bool? followAppTheme,
-    ReaderSettingThemeMode? themeMode,
+    int? themeIndex,
     double? marginTop,
     double? marginBottom,
     double? marginLeft,
@@ -64,7 +44,7 @@ class ReaderSettings {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
       followAppTheme: followAppTheme ?? this.followAppTheme,
-      themeMode: themeMode ?? this.themeMode,
+      themeIndex: themeIndex ?? this.themeIndex,
       marginTop: marginTop ?? this.marginTop,
       marginBottom: marginBottom ?? this.marginBottom,
       marginLeft: marginLeft ?? this.marginLeft,
@@ -74,43 +54,28 @@ class ReaderSettings {
     );
   }
 
-  EpubTheme toEpubTheme({required ColorScheme appColorScheme}) {
-    const kOverridePrimaryColorForDark = Color(0xFF7B9CAE);
+  EpubTheme toEpubTheme(BuildContext context) {
+    final appColorScheme = Theme.of(context).colorScheme;
+    final appPreset =
+        Theme.of(context).extension<LuminaThemeExtension>()?.preset ??
+        LuminaThemePreset.standardLight;
 
-    ColorScheme colorScheme;
-    bool shouldOverrideTextColor = true;
-    Color? overridePrimaryColor;
+    final LuminaThemePreset preset;
+    final ColorScheme colorScheme;
 
     if (followAppTheme) {
+      preset = appPreset;
       colorScheme = appColorScheme;
-      if (appColorScheme.brightness == Brightness.light) {
-        shouldOverrideTextColor = false;
-      } else {
-        overridePrimaryColor = kOverridePrimaryColorForDark;
-      }
     } else {
-      if (themeMode == ReaderSettingThemeMode.eyeCare) {
-        colorScheme = AppTheme.eyeCareColorScheme;
-      } else if (themeMode == ReaderSettingThemeMode.darkEyeCare) {
-        colorScheme = AppTheme.darkEyeCareColorScheme;
-      } else if (themeMode == ReaderSettingThemeMode.dark) {
-        colorScheme = AppTheme.darkColorScheme;
-        overridePrimaryColor = kOverridePrimaryColorForDark;
-      } else if (themeMode == ReaderSettingThemeMode.matcha) {
-        colorScheme = AppTheme.matchaLightColorScheme;
-      } else if (themeMode == ReaderSettingThemeMode.darkMatcha) {
-        colorScheme = AppTheme.matchaDarkColorScheme;
-      } else {
-        colorScheme = AppTheme.lightColorScheme;
-        shouldOverrideTextColor = false; // Light theme uses default text color
-      }
+      preset = currentPreset;
+      colorScheme = currentPreset.colorScheme;
     }
 
     return EpubTheme(
       zoom: zoom,
-      shouldOverrideTextColor: shouldOverrideTextColor,
+      shouldOverrideTextColor: preset.shouldOverrideTextColor,
       colorScheme: colorScheme,
-      overridePrimaryColor: overridePrimaryColor,
+      overridePrimaryColor: preset.overridePrimaryColor,
       padding: EdgeInsets.only(
         top: marginTop,
         bottom: marginBottom,
@@ -119,4 +84,11 @@ class ReaderSettings {
       ),
     );
   }
+
+  /// The [LuminaThemePreset] currently selected by [themeIndex].
+  LuminaThemePreset get currentPreset =>
+      LuminaThemePreset.fromIndex(themeIndex);
+
+  /// The [ColorScheme] currently selected from [LuminaThemePreset].
+  ColorScheme get currentColorScheme => currentPreset.colorScheme;
 }

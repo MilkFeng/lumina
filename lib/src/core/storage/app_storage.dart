@@ -7,8 +7,16 @@ class AppStorage {
   static late String _tempPath;
   static late String _supportPath;
 
+  /// Path to the app's documents directory, where books and covers are stored.
+  /// Always ends with a slash.
   static String get documentsPath => _documentsPath;
+
+  /// Path to the app's temporary directory, where transient files can be stored.
+  /// Always ends with a slash.
   static String get tempPath => _tempPath;
+
+  /// Path to the app's support directory, where auxiliary files can be stored.
+  /// Always ends with a slash.
   static String get supportPath => _supportPath;
 
   static Future<void> init() async {

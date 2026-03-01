@@ -170,9 +170,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(readerSettingsNotifierProvider);
-    final epubTheme = settings.toEpubTheme(
-      appColorScheme: Theme.of(context).colorScheme,
-    );
+    final epubTheme = settings.toEpubTheme(context);
     final isDark = epubTheme.isDark;
     final themeData = AppTheme.buildTheme(epubTheme.colorScheme);
     return Theme(
@@ -356,11 +354,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                   readerSettingsNotifierProvider,
                                 );
                                 final currentEpubTheme = currentSettings
-                                    .toEpubTheme(
-                                      appColorScheme: Theme.of(
-                                        context,
-                                      ).colorScheme,
-                                    );
+                                    .toEpubTheme(context);
                                 final activeTheme = AppTheme.buildTheme(
                                   currentEpubTheme.colorScheme,
                                 );

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/theme/color_schemes.dart';
 
 /// Notion-like Minimalist Theme for Lumina Reader
 /// Philosophy: Content-first, monochrome, no shadows, serif typography
@@ -9,15 +8,6 @@ class AppTheme {
   static const int defaultAnimationDurationMs = 250;
   static const int defaultLongAnimationDurationMs = 320;
   static const int defaultPresentationDurationMs = 3 * 1000; // 3 seconds
-
-  static ColorScheme get lightColorScheme => kLightColorScheme;
-  static ColorScheme get darkColorScheme => kDarkColorScheme;
-
-  static ColorScheme get eyeCareColorScheme => kEyeCareColorScheme;
-  static ColorScheme get darkEyeCareColorScheme => kDarkEyeCareColorScheme;
-
-  static ColorScheme get matchaLightColorScheme => kMatchaLightColorScheme;
-  static ColorScheme get matchaDarkColorScheme => kMatchaDarkColorScheme;
 
   static ThemeData buildTheme(ColorScheme colorScheme) {
     final notionRadius = BorderRadius.circular(8.0);
@@ -58,15 +48,6 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 12,
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: notionRadius),
-          textStyle: const TextStyle(fontWeight: FontWeight.w500),
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
         ),
       ),
       textTheme: _buildTextTheme(colorScheme),

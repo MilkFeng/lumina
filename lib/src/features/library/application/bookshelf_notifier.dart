@@ -95,7 +95,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   @override
   Future<BookshelfState> build() async {
     // Load SharedPreferences and restore the previously saved sort order.
-    _prefs = await ref.read(sharedPreferencesProvider.future);
+    _prefs = ref.read(sharedPreferencesProvider);
     final savedSortName = _prefs?.getString(_sortOrderKey);
     final savedSort = savedSortName != null
         ? ShelfBookSortBy.values.firstWhere(

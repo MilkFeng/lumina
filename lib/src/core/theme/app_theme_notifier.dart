@@ -17,27 +17,26 @@ class AppThemeNotifier extends _$AppThemeNotifier {
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   AppThemeSettings build() {
-    return ref
-        .watch(sharedPreferencesProvider)
-        .when(
-          data: (prefs) => AppThemeSettings(
-            themeMode: AppThemeMode
-                .values[prefs.getInt(_kThemeMode) ?? AppThemeMode.system.index],
-            lightVariant:
-                AppLightThemeVariant.values[prefs.getInt(_kLightVariant) ??
-                    AppLightThemeVariant.standard.index],
-            darkVariant:
-                AppDarkThemeVariant.values[prefs.getInt(_kDarkVariant) ??
-                    AppDarkThemeVariant.standard.index],
-          ),
-          loading: () => const AppThemeSettings(),
-          error: (_, __) => const AppThemeSettings(),
-        );
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final themeModeIndex = prefs.getInt(_kThemeMode);
+    final lightVariantIndex = prefs.getInt(_kLightVariant);
+    final darkVariantIndex = prefs.getInt(_kDarkVariant);
+
+    return AppThemeSettings().copyWith(
+      themeMode: themeModeIndex != null
+          ? AppThemeMode.values.elementAt(themeModeIndex)
+          : null,
+      lightVariant: lightVariantIndex != null
+          ? AppLightThemeVariant.values.elementAt(lightVariantIndex)
+          : null,
+      darkVariant: darkVariantIndex != null
+          ? AppDarkThemeVariant.values.elementAt(darkVariantIndex)
+          : null,
+    );
   }
 
   // ── Internal helper ───────────────────────────────────────────────────────
-  SharedPreferences get _prefs =>
-      ref.read(sharedPreferencesProvider).requireValue;
+  SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
 
   // ── Mutation methods ──────────────────────────────────────────────────────
 

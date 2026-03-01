@@ -16,6 +16,8 @@ class ReaderRendererController {
 
   bool get isAttached => _rendererState != null;
 
+  EpubTheme? get currentTheme => _rendererState?._currentTheme;
+
   ReaderWebViewController? get webViewController =>
       _rendererState?._webViewController;
 

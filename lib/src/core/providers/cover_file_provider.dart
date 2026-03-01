@@ -16,7 +16,7 @@ Future<File?> coverFile(CoverFileRef ref, String? relativePath) async {
   try {
     // Decode URI components and construct full path
     final decodedPath = Uri.decodeFull(relativePath);
-    final file = File('${AppStorage.documentsPath}/$decodedPath');
+    final file = File('${AppStorage.documentsPath}$decodedPath');
 
     // Check if file exists
     final exists = await file.exists();

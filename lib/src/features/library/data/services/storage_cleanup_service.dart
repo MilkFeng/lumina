@@ -32,7 +32,7 @@ class StorageCleanupService {
   Future<int> cleanOrphanFiles() async {
     // Collect all hashes that are known to the database (including
     // soft-deleted records so we don't accidentally wipe them).
-    final validHashes = await _shelfBookRepo.getAllFileHashes();
+    final validHashes = await _shelfBookRepo.getAllNotDeletedFileHashes();
 
     int deletedCount = 0;
     deletedCount += await _cleanDirectory(
@@ -54,7 +54,7 @@ class StorageCleanupService {
   }
 
   Future<void> cleanShareFiles() async {
-    final shareDir = Directory('${AppStorage.tempPath}/$_kShareDir');
+    final shareDir = Directory('${AppStorage.tempPath}$_kShareDir');
     if (await shareDir.exists()) {
       await shareDir.delete(recursive: true);
     }
@@ -62,7 +62,7 @@ class StorageCleanupService {
 
   Future<File> saveTempFileForSharing(File sourceFile, String title) async {
     final sanitizedTitle = title.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
-    final tempDir = Directory('${AppStorage.tempPath}/$_kShareDir');
+    final tempDir = Directory('${AppStorage.tempPath}$_kShareDir');
     if (!await tempDir.exists()) {
       await tempDir.create(recursive: true);
     }

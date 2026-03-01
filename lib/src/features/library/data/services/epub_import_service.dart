@@ -209,7 +209,7 @@ class EpubImportService {
     String fileHash,
   ) async {
     try {
-      final booksDir = Directory('${AppStorage.documentsPath}/$kBooksDir');
+      final booksDir = Directory('${AppStorage.documentsPath}$kBooksDir');
       if (!await booksDir.exists()) {
         await booksDir.create(recursive: true);
       }
@@ -242,7 +242,7 @@ class EpubImportService {
     }
 
     try {
-      final coversDir = Directory('${AppStorage.documentsPath}/$kCoversDir');
+      final coversDir = Directory('${AppStorage.documentsPath}$kCoversDir');
       if (!await coversDir.exists()) {
         await coversDir.create(recursive: true);
       }
@@ -304,7 +304,7 @@ class EpubImportService {
   /// Delete a file (helper for cleanup)
   Future<void> _deleteFile(String path) async {
     try {
-      final absolutePath = '${AppStorage.documentsPath}/$path';
+      final absolutePath = '${AppStorage.documentsPath}$path';
       final file = File(absolutePath);
       if (await file.exists()) {
         await file.delete();

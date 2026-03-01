@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// A titled section container used throughout the About screen.
-class AboutInfoSection extends StatelessWidget {
-  const AboutInfoSection({
+/// A titled section container used throughout the Settings screen.
+class SettingsInfoSection extends StatelessWidget {
+  const SettingsInfoSection({
     super.key,
     required this.title,
     required this.children,
@@ -32,8 +32,8 @@ class AboutInfoSection extends StatelessWidget {
 }
 
 /// A standard info row with an icon, title, and subtitle.
-class AboutInfoTile extends StatelessWidget {
-  const AboutInfoTile({
+class SettingsInfoTile extends StatelessWidget {
+  const SettingsInfoTile({
     super.key,
     required this.icon,
     required this.title,
@@ -68,8 +68,8 @@ class AboutInfoTile extends StatelessWidget {
 }
 
 /// A compact tip row with a small icon and a hint text.
-class AboutTipTile extends StatelessWidget {
-  const AboutTipTile({super.key, required this.icon, required this.tip});
+class SettingsTipTile extends StatelessWidget {
+  const SettingsTipTile({super.key, required this.icon, required this.tip});
 
   final IconData icon;
   final String tip;

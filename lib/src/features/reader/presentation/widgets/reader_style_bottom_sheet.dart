@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
 
@@ -22,9 +23,14 @@ class _ReaderStyleBottomSheetState
   late int _leftMargin;
   late int _rightMargin;
   late bool _followAppTheme;
-  late ReaderSettingThemeMode _themeMode;
+  late int _themeIndex;
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
+
+  // Linked scroll controllers so that both theme-chip rows scroll in sync.
+  final _lightScrollCtrl = ScrollController();
+  final _darkScrollCtrl = ScrollController();
+  bool _syncingScroll = false;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -40,9 +46,35 @@ class _ReaderStyleBottomSheetState
     _leftMargin = s.marginLeft.toInt();
     _rightMargin = s.marginRight.toInt();
     _followAppTheme = s.followAppTheme;
-    _themeMode = s.themeMode;
+    _themeIndex = s.themeIndex;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
+
+    _lightScrollCtrl.addListener(_syncFromLight);
+    _darkScrollCtrl.addListener(_syncFromDark);
+  }
+
+  void _syncFromLight() {
+    if (_syncingScroll) return;
+    if (!_darkScrollCtrl.hasClients) return;
+    _syncingScroll = true;
+    _darkScrollCtrl.jumpTo(_lightScrollCtrl.offset);
+    _syncingScroll = false;
+  }
+
+  void _syncFromDark() {
+    if (_syncingScroll) return;
+    if (!_lightScrollCtrl.hasClients) return;
+    _syncingScroll = true;
+    _lightScrollCtrl.jumpTo(_darkScrollCtrl.offset);
+    _syncingScroll = false;
+  }
+
+  @override
+  void dispose() {
+    _lightScrollCtrl.dispose();
+    _darkScrollCtrl.dispose();
+    super.dispose();
   }
 
   ReaderSettingsNotifier get _notifier =>
@@ -64,7 +96,9 @@ class _ReaderStyleBottomSheetState
             _SectionTitle(label: l10n.readerAppearance),
             const SizedBox(height: 12),
 
-            // Reader Theme – only shown when Follow App Theme is off
+            // Reader Theme – only shown when Follow App Theme is off.
+            // Chips are split into a light-theme row and a dark-theme row, each
+            // horizontally scrollable and breaking out of the 24 px side padding.
             AnimatedSize(
               duration: const Duration(
                 milliseconds: AppTheme.defaultAnimationDurationMs,
@@ -74,100 +108,75 @@ class _ReaderStyleBottomSheetState
                   ? const SizedBox(height: 0, width: double.infinity)
                   : Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 12,
-                          children: [
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.lightColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.light,
-                              onTap: () {
-                                setState(
-                                  () =>
-                                      _themeMode = ReaderSettingThemeMode.light,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.light,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.darkColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.dark,
-                              onTap: () {
-                                setState(
-                                  () =>
-                                      _themeMode = ReaderSettingThemeMode.dark,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.dark,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.eyeCareColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.eyeCare,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.eyeCare,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.eyeCare,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.darkEyeCareColorScheme,
-                              isSelected:
-                                  _themeMode ==
-                                  ReaderSettingThemeMode.darkEyeCare,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.darkEyeCare,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.darkEyeCare,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.matchaLightColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.matcha,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.matcha,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.matcha,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.matchaDarkColorScheme,
-                              isSelected:
-                                  _themeMode ==
-                                  ReaderSettingThemeMode.darkMatcha,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.darkMatcha,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.darkMatcha,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Recover full width by adding back the 24 px on each side.
+                          final fullWidth = constraints.maxWidth + 48;
+
+                          final lightPresets = LuminaThemePreset.lightPresets;
+                          final darkPresets = LuminaThemePreset.darkPresets;
+
+                          Widget themeRow(
+                            String label,
+                            List<LuminaThemePreset> presets,
+                            ScrollController scrollCtrl,
+                          ) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Transform.translate shifts paint only, so
+                                // AnimatedSize still measures the correct height.
+                                SizedBox(
+                                  width: fullWidth,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    controller: scrollCtrl,
+                                    child: Row(
+                                      children: presets.map((preset) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 16,
+                                          ),
+                                          child: _ThemeOptionChip(
+                                            colorScheme: preset.colorScheme,
+                                            isSelected:
+                                                _themeIndex == preset.index,
+                                            onTap: () {
+                                              setState(
+                                                () =>
+                                                    _themeIndex = preset.index,
+                                              );
+                                              _notifier.setThemeIndex(
+                                                preset.index,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              themeRow(
+                                l10n.appLightTheme,
+                                lightPresets,
+                                _lightScrollCtrl,
+                              ),
+                              const SizedBox(height: 16),
+                              themeRow(
+                                l10n.appDarkTheme,
+                                darkPresets,
+                                _darkScrollCtrl,
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
             ),
