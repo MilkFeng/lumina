@@ -60,15 +60,6 @@ class AppTheme {
           vertical: 12,
         ),
       ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: notionRadius),
-          textStyle: const TextStyle(fontWeight: FontWeight.w500),
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-        ),
-      ),
       textTheme: _buildTextTheme(colorScheme),
       splashFactory: NoSplash.splashFactory,
     );
