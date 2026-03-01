@@ -28,8 +28,17 @@ import 'package:lumina/src/core/theme/color_schemes.dart';
 /// Determines which ThemeMode the app uses.
 enum AppThemeMode { system, light, dark }
 
-/// Selects one of the available light-mode color schemes.
-enum AppThemeVariant { standard, eyeCare, matcha, midnight, sakura }
+/// Selects one of the available color schemes.
+enum AppThemeVariant {
+  standard,
+  eyeCare,
+  matcha,
+  midnight,
+  sakura,
+  ocean,
+  twilight,
+  coffee,
+}
 
 /// A single source of truth for every selectable theme in the app.
 ///
@@ -93,6 +102,42 @@ enum LuminaThemePreset {
   // index 9
   sakuraDark(
     colorSchemeGetter: kSakuraDarkColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 10
+  oceanLight(
+    colorSchemeGetter: kOceanLightColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 11
+  oceanDark(
+    colorSchemeGetter: kOceanDarkColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 12
+  twilightLight(
+    colorSchemeGetter: kTwilightLightColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 13
+  twilightDark(
+    colorSchemeGetter: kTwilightDarkColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 14
+  coffeeLight(
+    colorSchemeGetter: kCoffeeLightColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 15
+  coffeeDark(
+    colorSchemeGetter: kCoffeeDarkColorScheme,
     shouldOverrideTextColor: true,
     overridePrimaryColor: null,
   );
@@ -211,6 +256,9 @@ class AppThemeSettings {
         AppThemeVariant.matcha => LuminaThemePreset.matchaLight,
         AppThemeVariant.midnight => LuminaThemePreset.midnightLight,
         AppThemeVariant.sakura => LuminaThemePreset.sakuraLight,
+        AppThemeVariant.ocean => LuminaThemePreset.oceanLight,
+        AppThemeVariant.twilight => LuminaThemePreset.twilightLight,
+        AppThemeVariant.coffee => LuminaThemePreset.coffeeLight,
       };
 
   /// Maps a [AppThemeVariant] to its [LuminaThemePreset].
@@ -221,6 +269,9 @@ class AppThemeSettings {
         AppThemeVariant.matcha => LuminaThemePreset.matchaDark,
         AppThemeVariant.midnight => LuminaThemePreset.midnightDark,
         AppThemeVariant.sakura => LuminaThemePreset.sakuraDark,
+        AppThemeVariant.ocean => LuminaThemePreset.oceanDark,
+        AppThemeVariant.twilight => LuminaThemePreset.twilightDark,
+        AppThemeVariant.coffee => LuminaThemePreset.coffeeDark,
       };
 
   /// Maps a [AppThemeVariant] to its [LuminaThemePreset].

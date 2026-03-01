@@ -94,7 +94,7 @@ class LibraryAppBar extends StatelessWidget {
                 tabAlignment: TabAlignment.start,
                 tabs: _buildTabs(context),
                 indicatorSize: TabBarIndicatorSize.label,
-                dividerColor: Theme.of(context).colorScheme.primary,
+                dividerColor: Colors.transparent,
               ),
       ),
     );
