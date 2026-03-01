@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/theme/app_theme_notifier.dart';
 import 'package:lumina/src/core/theme/app_theme_settings.dart';
-import 'package:lumina/src/features/about/presentation/widgets/about_info_section.dart';
-import 'package:lumina/src/features/about/presentation/widgets/about_theme_chips.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_theme_chips.dart';
 import '../../../../../l10n/app_localizations.dart';
 
-/// Renders the Appearance card on the About screen, containing the theme-mode
+/// Renders the Appearance card on the Settings screen, containing the theme-mode
 /// selector and the active-brightness variant picker.
-class AboutAppearanceSection extends ConsumerWidget {
-  const AboutAppearanceSection({super.key});
+class SettingsAppearanceSection extends ConsumerWidget {
+  const SettingsAppearanceSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,7 +27,7 @@ class AboutAppearanceSection extends ConsumerWidget {
     };
     final isEffectivelyDark = effectiveBrightness == Brightness.dark;
 
-    return AboutInfoSection(
+    return SettingsInfoSection(
       title: l10n.appAppearance,
       children: [
         Padding(
