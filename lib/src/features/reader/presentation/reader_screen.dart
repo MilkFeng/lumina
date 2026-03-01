@@ -120,10 +120,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     // Update WebView theme when system theme changes
     if (_currentTheme != null && _currentTheme != Theme.of(context)) {
       _currentTheme = Theme.of(context);
-      _themeUpdateDebouncer?.cancel();
-      _themeUpdateDebouncer = Timer(const Duration(milliseconds: 100), () {
-        _updateWebViewTheme();
-      });
+      _updateWebViewThemeWithDebounce();
     }
   }
 
@@ -532,7 +529,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     ref.listen(readerSettingsNotifierProvider, (previous, next) {
       if (previous != null && previous != next) {
-        _updateWebViewTheme();
+        // If zoom changed, use debounce to avoid excessive WebView reloads while dragging the slider
+        if (previous.zoom != next.zoom) {
+          _updateWebViewThemeWithDebounce();
+        } else {
+          _updateWebViewTheme();
+        }
       }
     });
 
@@ -702,7 +704,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _navigateToSpineItem(0, 'top');
   }
 
+  void _updateWebViewThemeWithDebounce() {
+    _themeUpdateDebouncer?.cancel();
+    _themeUpdateDebouncer = Timer(const Duration(milliseconds: 50), () {
+      _updateWebViewTheme();
+    });
+  }
+
   Future<void> _updateWebViewTheme() async {
+    final newTheme = _getEpubTheme();
+    final currentTheme = _rendererController.currentTheme;
+    if (currentTheme != null && currentTheme == newTheme) {
+      return;
+    }
+
     setState(() {
       _updatingTheme = true;
     });
