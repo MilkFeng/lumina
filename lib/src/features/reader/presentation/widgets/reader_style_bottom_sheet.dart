@@ -27,6 +27,11 @@ class _ReaderStyleBottomSheetState
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
 
+  // Linked scroll controllers so that both theme-chip rows scroll in sync.
+  final _lightScrollCtrl = ScrollController();
+  final _darkScrollCtrl = ScrollController();
+  bool _syncingScroll = false;
+
   static const int _marginMin = 0;
   static const int _marginMax = 64;
   static const int _marginStep = 2;
@@ -44,6 +49,32 @@ class _ReaderStyleBottomSheetState
     _themeIndex = s.themeIndex;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
+
+    _lightScrollCtrl.addListener(_syncFromLight);
+    _darkScrollCtrl.addListener(_syncFromDark);
+  }
+
+  void _syncFromLight() {
+    if (_syncingScroll) return;
+    if (!_darkScrollCtrl.hasClients) return;
+    _syncingScroll = true;
+    _darkScrollCtrl.jumpTo(_lightScrollCtrl.offset);
+    _syncingScroll = false;
+  }
+
+  void _syncFromDark() {
+    if (_syncingScroll) return;
+    if (!_lightScrollCtrl.hasClients) return;
+    _syncingScroll = true;
+    _lightScrollCtrl.jumpTo(_darkScrollCtrl.offset);
+    _syncingScroll = false;
+  }
+
+  @override
+  void dispose() {
+    _lightScrollCtrl.dispose();
+    _darkScrollCtrl.dispose();
+    super.dispose();
   }
 
   ReaderSettingsNotifier get _notifier =>
@@ -65,7 +96,9 @@ class _ReaderStyleBottomSheetState
             _SectionTitle(label: l10n.readerAppearance),
             const SizedBox(height: 12),
 
-            // Reader Theme – only shown when Follow App Theme is off
+            // Reader Theme – only shown when Follow App Theme is off.
+            // Chips are split into a light-theme row and a dark-theme row, each
+            // horizontally scrollable and breaking out of the 24 px side padding.
             AnimatedSize(
               duration: const Duration(
                 milliseconds: AppTheme.defaultAnimationDurationMs,
@@ -75,24 +108,75 @@ class _ReaderStyleBottomSheetState
                   ? const SizedBox(height: 0, width: double.infinity)
                   : Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 12,
-                          // Dynamically build a chip for every LuminaThemePreset.
-                          children: LuminaThemePreset.values.map((preset) {
-                            final idx = preset.index;
-                            return _ThemeOptionChip(
-                              colorScheme: preset.colorScheme,
-                              isSelected: _themeIndex == idx,
-                              onTap: () {
-                                setState(() => _themeIndex = idx);
-                                _notifier.setThemeIndex(idx);
-                              },
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Recover full width by adding back the 24 px on each side.
+                          final fullWidth = constraints.maxWidth + 48;
+
+                          final lightPresets = LuminaThemePreset.lightPresets;
+                          final darkPresets = LuminaThemePreset.darkPresets;
+
+                          Widget themeRow(
+                            String label,
+                            List<LuminaThemePreset> presets,
+                            ScrollController scrollCtrl,
+                          ) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Transform.translate shifts paint only, so
+                                // AnimatedSize still measures the correct height.
+                                SizedBox(
+                                  width: fullWidth,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    controller: scrollCtrl,
+                                    child: Row(
+                                      children: presets.map((preset) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 16,
+                                          ),
+                                          child: _ThemeOptionChip(
+                                            colorScheme: preset.colorScheme,
+                                            isSelected:
+                                                _themeIndex == preset.index,
+                                            onTap: () {
+                                              setState(
+                                                () =>
+                                                    _themeIndex = preset.index,
+                                              );
+                                              _notifier.setThemeIndex(
+                                                preset.index,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             );
-                          }).toList(),
-                        ),
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              themeRow(
+                                l10n.appLightTheme,
+                                lightPresets,
+                                _lightScrollCtrl,
+                              ),
+                              const SizedBox(height: 16),
+                              themeRow(
+                                l10n.appDarkTheme,
+                                darkPresets,
+                                _darkScrollCtrl,
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
             ),

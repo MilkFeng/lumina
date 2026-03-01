@@ -125,6 +125,14 @@ enum LuminaThemePreset {
     if (index < 0 || index >= values.length) return standardLight;
     return values[index];
   }
+
+  static List<LuminaThemePreset> get lightPresets => values
+      .where((preset) => preset.colorScheme.brightness == Brightness.light)
+      .toList();
+
+  static List<LuminaThemePreset> get darkPresets => values
+      .where((preset) => preset.colorScheme.brightness == Brightness.dark)
+      .toList();
 }
 
 /// Persistent settings that control the app-wide color theme and

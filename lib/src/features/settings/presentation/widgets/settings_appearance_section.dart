@@ -80,19 +80,23 @@ class SettingsAppearanceSection extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   // Dynamically build a chip for every AppLightThemeVariant.
-                  children: AppLightThemeVariant.values.map((variant) {
-                    return AppThemeVariantChip(
-                      colorScheme: AppThemeSettings.lightColorSchemeFor(
-                        variant,
-                      ),
-                      isSelected: settings.lightVariant == variant,
-                      onTap: () => notifier.setLightVariant(variant),
-                    );
-                  }).toList(),
+                  child: Row(
+                    children: AppLightThemeVariant.values.map((variant) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: AppThemeVariantChip(
+                          colorScheme: AppThemeSettings.lightColorSchemeFor(
+                            variant,
+                          ),
+                          isSelected: settings.lightVariant == variant,
+                          onTap: () => notifier.setLightVariant(variant),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ] else ...[
                 Text(
@@ -103,17 +107,23 @@ class SettingsAppearanceSection extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   // Dynamically build a chip for every AppDarkThemeVariant.
-                  children: AppDarkThemeVariant.values.map((variant) {
-                    return AppThemeVariantChip(
-                      colorScheme: AppThemeSettings.darkColorSchemeFor(variant),
-                      isSelected: settings.darkVariant == variant,
-                      onTap: () => notifier.setDarkVariant(variant),
-                    );
-                  }).toList(),
+                  child: Row(
+                    children: AppDarkThemeVariant.values.map((variant) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: AppThemeVariantChip(
+                          colorScheme: AppThemeSettings.darkColorSchemeFor(
+                            variant,
+                          ),
+                          isSelected: settings.darkVariant == variant,
+                          onTap: () => notifier.setDarkVariant(variant),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ],
 
