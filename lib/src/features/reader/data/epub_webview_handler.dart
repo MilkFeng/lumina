@@ -108,7 +108,7 @@ class EpubWebViewHandler {
 
     final fileRelativePath = relativePath.split('#')[0];
 
-    epubPath = '${AppStorage.documentsPath}/$epubPath';
+    epubPath = '${AppStorage.documentsPath}$epubPath';
 
     final result = await _streamService.readFileFromEpub(
       epubPath: epubPath,
