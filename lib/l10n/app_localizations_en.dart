@@ -477,6 +477,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get author => 'Author';
 
   @override
+  String get openSourceLicenses => 'Open Source Licenses';
+
+  @override
+  String get openSourceLicensesSubtitle =>
+      'View open source libraries used in the app and their licenses';
+
+  @override
   String get tips => 'Tips';
 
   @override

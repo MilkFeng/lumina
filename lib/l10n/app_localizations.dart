@@ -932,6 +932,18 @@ abstract class AppLocalizations {
   /// **'Author'**
   String get author;
 
+  /// Open source licenses label
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source Licenses'**
+  String get openSourceLicenses;
+
+  /// Open source licenses subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'View open source libraries used in the app and their licenses'**
+  String get openSourceLicensesSubtitle;
+
   /// Tips section title
   ///
   /// In en, this message translates to:

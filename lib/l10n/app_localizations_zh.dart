@@ -470,6 +470,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get author => '作者';
 
   @override
+  String get openSourceLicenses => '开源许可证';
+
+  @override
+  String get openSourceLicensesSubtitle => '显示应用中使用的开源库及其许可证';
+
+  @override
   String get tips => '使用提示';
 
   @override

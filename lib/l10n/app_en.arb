@@ -807,6 +807,16 @@
     "description": "Author label"
   },
 
+  "openSourceLicenses": "Open Source Licenses",
+  "@openSourceLicenses": {
+    "description": "Open source licenses label"
+  },
+
+  "openSourceLicensesSubtitle": "View open source libraries used in the app and their licenses",
+  "@openSourceLicensesSubtitle": {
+    "description": "Open source licenses subtitle"
+  },
+
   "tips": "Tips",
   "@tips": {
     "description": "Tips section title"

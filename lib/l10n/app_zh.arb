@@ -817,6 +817,16 @@
     "description": "作者标签"
   },
 
+  "openSourceLicenses": "开源许可证",
+  "@openSourceLicenses": {
+    "description": "开源许可证标签"
+  },
+
+  "openSourceLicensesSubtitle": "显示应用中使用的开源库及其许可证",
+  "@openSourceLicensesSubtitle": {
+    "description": "开源许可证副标题"
+  },
+
   "tips": "使用提示",
   "@tips": {
     "description": "提示部分标题"

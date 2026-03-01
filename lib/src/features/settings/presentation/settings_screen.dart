@@ -100,6 +100,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: l10n.author,
                 subtitle: 'Milk Feng',
               ),
+              SettingsInfoTile(
+                icon: Icons.attribution_outlined,
+                title: l10n.openSourceLicenses,
+                onTap: () => showLicensePage(
+                  context: context,
+                  applicationVersion: _version,
+                  useRootNavigator: true,
+                ),
+                subtitle: l10n.openSourceLicensesSubtitle,
+              ),
             ],
           ),
 
