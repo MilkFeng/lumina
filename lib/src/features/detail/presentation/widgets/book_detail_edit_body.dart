@@ -46,6 +46,7 @@ class BookDetailEditBody extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Hero(
+                transitionOnUserGestures: true,
                 tag: 'book-cover-${book.id}',
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 300),

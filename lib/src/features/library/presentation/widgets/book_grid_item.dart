@@ -160,6 +160,7 @@ class BookGridItem extends ConsumerWidget {
     );
 
     return Hero(
+      transitionOnUserGestures: true,
       tag: 'book-cover-${book.id}',
       flightShuttleBuilder:
           (
