@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/theme/color_schemes.dart';
 
 /// Determines which ThemeMode the app uses.
 enum AppThemeMode { system, light, dark }
@@ -9,6 +10,78 @@ enum AppLightThemeVariant { standard, eyeCare, matcha }
 
 /// Selects one of the available dark-mode color schemes.
 enum AppDarkThemeVariant { standard, eyeCare, matcha }
+
+/// A single source of truth for every selectable theme in the app.
+///
+/// Enum declaration order is stable and defines the persisted [index] used by
+/// [ReaderSettings.themeIndex] — never reorder or remove values.
+enum LuminaThemePreset {
+  // index 0
+  standardLight(
+    colorSchemeGetter: kLightColorScheme,
+    shouldOverrideTextColor: false,
+    overridePrimaryColor: null,
+  ),
+  // index 1
+  standardDark(
+    colorSchemeGetter: kDarkColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: Color(0xFF7B9CAE),
+  ),
+  // index 2
+  eyeCareLight(
+    colorSchemeGetter: kEyeCareColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 3
+  eyeCareDark(
+    colorSchemeGetter: kDarkEyeCareColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 4
+  matchaLight(
+    colorSchemeGetter: kMatchaLightColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 5
+  matchaDark(
+    colorSchemeGetter: kMatchaDarkColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  );
+
+  const LuminaThemePreset({
+    required ColorScheme colorSchemeGetter,
+
+    /// For reader themes only: whether the preset's text color is guaranteed to be
+    /// legible against the background. If false, the reader will not override the
+    /// EPUB's default text color, allowing it to fall back to a readable color if
+    /// the preset's default text color happens to be unreadable against the background.
+    /// This is necessary for themes like standardLight where the default text color (black)
+    /// would be unreadable against the light background of some EPUBs.
+    required this.shouldOverrideTextColor,
+
+    /// For reader themes only: a single accent color to use in place of the EPUB's default
+    /// accent color. This is necessary for themes like standardDark where the default accent
+    /// color (bright blue) would be unreadable against the dark background.
+    required this.overridePrimaryColor,
+  }) : colorScheme = colorSchemeGetter;
+
+  final ColorScheme colorScheme;
+  final bool shouldOverrideTextColor;
+  final Color? overridePrimaryColor;
+
+  /// Safely resolves a persisted integer back to a [LuminaThemePreset].
+  /// Falls back to [standardLight] for out-of-range values.
+  static LuminaThemePreset fromIndex(int index) {
+    final values = LuminaThemePreset.values;
+    if (index < 0 || index >= values.length) return standardLight;
+    return values[index];
+  }
+}
 
 /// Persistent settings that control the app-wide color theme and
 /// (optionally) the dark/light variant applied to library, detail and
@@ -93,48 +166,25 @@ class AppThemeSettings {
 
   /// Maps a [AppLightThemeVariant] to its corresponding [ColorScheme].
   static ColorScheme lightColorSchemeFor(AppLightThemeVariant variant) =>
-      switch (variant) {
-        AppLightThemeVariant.standard => AppTheme.lightColorScheme,
-        AppLightThemeVariant.eyeCare => AppTheme.eyeCareColorScheme,
-        AppLightThemeVariant.matcha => AppTheme.matchaLightColorScheme,
-      };
+      lightPresetFor(variant).colorScheme;
 
   /// Maps a [AppDarkThemeVariant] to its corresponding [ColorScheme].
   static ColorScheme darkColorSchemeFor(AppDarkThemeVariant variant) =>
+      darkPresetFor(variant).colorScheme;
+
+  /// Maps a [AppLightThemeVariant] to its [LuminaThemePreset].
+  static LuminaThemePreset lightPresetFor(AppLightThemeVariant variant) =>
       switch (variant) {
-        AppDarkThemeVariant.standard => AppTheme.darkColorScheme,
-        AppDarkThemeVariant.eyeCare => AppTheme.darkEyeCareColorScheme,
-        AppDarkThemeVariant.matcha => AppTheme.matchaDarkColorScheme,
+        AppLightThemeVariant.standard => LuminaThemePreset.standardLight,
+        AppLightThemeVariant.eyeCare => LuminaThemePreset.eyeCareLight,
+        AppLightThemeVariant.matcha => LuminaThemePreset.matchaLight,
       };
 
-  /// Ordered list of every available [ColorScheme] for the reader theme picker.
-  /// The list index is persisted as an integer to represent the chosen theme.
-  static List<ColorScheme> get allColorSchemes => [
-    AppTheme.lightColorScheme,
-    AppTheme.darkColorScheme,
-    AppTheme.eyeCareColorScheme,
-    AppTheme.darkEyeCareColorScheme,
-    AppTheme.matchaLightColorScheme,
-    AppTheme.matchaDarkColorScheme,
-  ];
-
-  /// For reader themes that use a custom primary color in dark mode, this provides
-  /// a parallel list of the override primary color (or null if no override needed)
-  static List<Color?> get allOverridePrimaryColors => [
-    null, // standard light
-    const Color(0xFF7B9CAE), // standard dark
-    null, // eye care light
-    null, // eye care dark
-    null, // matcha light
-    null, // matcha dark
-  ];
-
-  static List<bool> get allShouldOverrideTextColor => [
-    false, // standard light
-    true, // standard dark
-    false, // eye care light
-    false, // eye care dark
-    false, // matcha light
-    false, // matcha dark
-  ];
+  /// Maps a [AppDarkThemeVariant] to its [LuminaThemePreset].
+  static LuminaThemePreset darkPresetFor(AppDarkThemeVariant variant) =>
+      switch (variant) {
+        AppDarkThemeVariant.standard => LuminaThemePreset.standardDark,
+        AppDarkThemeVariant.eyeCare => LuminaThemePreset.eyeCareDark,
+        AppDarkThemeVariant.matcha => LuminaThemePreset.matchaDark,
+      };
 }

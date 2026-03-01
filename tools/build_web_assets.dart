@@ -10,6 +10,7 @@ void main() {
   // Check if all source files exist
   for (final path in fileMap.keys) {
     if (!File(path).existsSync()) {
+      // ignore: avoid_print
       print('❌ Cannot find source file: $path. Please ensure it exists.');
       return;
     }
@@ -40,6 +41,7 @@ void main() {
   }
 
   outFile.writeAsStringSync(generatedContent);
+  // ignore: avoid_print
   print(
     '✅ Web assets generated successfully at lib/web_src/reader_assets.dart',
   );

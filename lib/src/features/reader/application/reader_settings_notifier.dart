@@ -38,7 +38,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
             handleIntraLink: prefs.getBool(_kHandleIntraLink) ?? true,
           ),
           loading: () => const ReaderSettings(),
-          error: (_, __) => const ReaderSettings(),
+          error: (_, _) => const ReaderSettings(),
         );
   }
 

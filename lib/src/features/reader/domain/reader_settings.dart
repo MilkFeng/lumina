@@ -64,30 +64,26 @@ class ReaderSettings {
   }
 
   EpubTheme toEpubTheme({required ColorScheme appColorScheme}) {
-    ColorScheme colorScheme;
-    bool shouldOverrideTextColor = true;
-    Color? overridePrimaryColor;
+    final LuminaThemePreset preset;
 
     if (followAppTheme) {
-      colorScheme = appColorScheme;
-      final index = AppThemeSettings.allColorSchemes.indexOf(appColorScheme);
-      overridePrimaryColor = AppThemeSettings.allOverridePrimaryColors[index];
-      shouldOverrideTextColor =
-          AppThemeSettings.allShouldOverrideTextColor[index];
+      // Find the preset whose ColorScheme matches the active app scheme.
+      // Falls back to standardLight when no match is found (e.g. dynamic color).
+      preset = LuminaThemePreset.values.firstWhere(
+        (p) => p.colorScheme == appColorScheme,
+        orElse: () => appColorScheme.brightness == Brightness.dark
+            ? LuminaThemePreset.standardDark
+            : LuminaThemePreset.standardLight,
+      );
     } else {
-      final schemes = AppThemeSettings.allColorSchemes;
-      final index = themeIndex.clamp(0, schemes.length - 1);
-      colorScheme = schemes[index];
-      overridePrimaryColor = AppThemeSettings.allOverridePrimaryColors[index];
-      shouldOverrideTextColor =
-          AppThemeSettings.allShouldOverrideTextColor[index];
+      preset = LuminaThemePreset.fromIndex(themeIndex);
     }
 
     return EpubTheme(
       zoom: zoom,
-      shouldOverrideTextColor: shouldOverrideTextColor,
-      colorScheme: colorScheme,
-      overridePrimaryColor: overridePrimaryColor,
+      shouldOverrideTextColor: preset.shouldOverrideTextColor,
+      colorScheme: followAppTheme ? appColorScheme : preset.colorScheme,
+      overridePrimaryColor: preset.overridePrimaryColor,
       padding: EdgeInsets.only(
         top: marginTop,
         bottom: marginBottom,
@@ -97,9 +93,10 @@ class ReaderSettings {
     );
   }
 
-  /// The [ColorScheme] currently selected from [AppThemeSettings.allColorSchemes].
-  ColorScheme get currentColorScheme {
-    final schemes = AppThemeSettings.allColorSchemes;
-    return schemes[themeIndex.clamp(0, schemes.length - 1)];
-  }
+  /// The [LuminaThemePreset] currently selected by [themeIndex].
+  LuminaThemePreset get currentPreset =>
+      LuminaThemePreset.fromIndex(themeIndex);
+
+  /// The [ColorScheme] currently selected from [LuminaThemePreset].
+  ColorScheme get currentColorScheme => currentPreset.colorScheme;
 }

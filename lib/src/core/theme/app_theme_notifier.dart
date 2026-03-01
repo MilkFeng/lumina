@@ -31,7 +31,7 @@ class AppThemeNotifier extends _$AppThemeNotifier {
                     AppDarkThemeVariant.standard.index],
           ),
           loading: () => const AppThemeSettings(),
-          error: (_, __) => const AppThemeSettings(),
+          error: (_, _) => const AppThemeSettings(),
         );
   }
 

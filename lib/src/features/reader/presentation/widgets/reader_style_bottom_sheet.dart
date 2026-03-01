@@ -80,21 +80,18 @@ class _ReaderStyleBottomSheetState
                         child: Wrap(
                           spacing: 16,
                           runSpacing: 12,
-                          // Dynamically build a chip for every entry in AppThemeSettings.allColorSchemes.
-                          children: AppThemeSettings.allColorSchemes
-                              .asMap()
-                              .entries
-                              .map((entry) {
-                                return _ThemeOptionChip(
-                                  colorScheme: entry.value,
-                                  isSelected: _themeIndex == entry.key,
-                                  onTap: () {
-                                    setState(() => _themeIndex = entry.key);
-                                    _notifier.setThemeIndex(entry.key);
-                                  },
-                                );
-                              })
-                              .toList(),
+                          // Dynamically build a chip for every LuminaThemePreset.
+                          children: LuminaThemePreset.values.map((preset) {
+                            final idx = preset.index;
+                            return _ThemeOptionChip(
+                              colorScheme: preset.colorScheme,
+                              isSelected: _themeIndex == idx,
+                              onTap: () {
+                                setState(() => _themeIndex = idx);
+                                _notifier.setThemeIndex(idx);
+                              },
+                            );
+                          }).toList(),
                         ),
                       ),
                     ),
