@@ -100,23 +100,34 @@ class _LibraryAppBarState extends State<LibraryAppBar>
                   )
                 : null,
             title: GestureDetector(
-              onTap: isSelectionMode
-                  ? null
-                  : () {
-                      context.push('/settings');
-                    },
+              behavior: HitTestBehavior.opaque,
+              onTap: isSelectionMode ? null : () => context.push('/settings'),
               child: isSelectionMode
                   ? Text(
                       AppLocalizations.of(
                         context,
                       )!.selected(widget.state.selectedCount),
                     )
-                  : SvgPicture.asset(
-                      logoSvgPath,
-                      height: 16,
-                      colorFilter: ColorFilter.mode(
-                        Theme.of(context).colorScheme.onSurface,
-                        BlendMode.srcIn,
+                  : IconButton(
+                      padding: EdgeInsets.only(
+                        left: 0,
+                        right: 32,
+                        top: 16,
+                        bottom: 16,
+                      ),
+                      alignment: Alignment.centerLeft,
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
+                      ),
+                      onPressed: () => context.push('/settings'),
+                      icon: SvgPicture.asset(
+                        logoSvgPath,
+                        height: 16,
+                        colorFilter: ColorFilter.mode(
+                          Theme.of(context).colorScheme.onSurface,
+                          BlendMode.srcIn,
+                        ),
                       ),
                     ),
             ),
@@ -155,6 +166,7 @@ class _LibraryAppBarState extends State<LibraryAppBar>
                 tabAlignment: TabAlignment.start,
                 tabs: _buildTabs(context),
                 indicatorSize: TabBarIndicatorSize.label,
+                dividerColor: Theme.of(context).colorScheme.primaryFixed,
               ),
             ),
           ),
