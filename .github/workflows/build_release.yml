@@ -140,10 +140,7 @@ jobs:
 
       - name: Extract Release Notes
         id: extract_notes
-        uses: charles-schambach/extract-release-notes-action@v1
-        with:
-          tag: ${{ github.ref_name }}
-          changelog_file: CHANGELOG.md
+        uses: ffurrer2/extract-release-notes@v3
 
       - name: Release to GitHub
         uses: softprops/action-gh-release@v2
