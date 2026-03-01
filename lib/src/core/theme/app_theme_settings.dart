@@ -125,11 +125,11 @@ class AppThemeSettings {
   ColorScheme get lightColorScheme {
     switch (lightVariant) {
       case AppLightThemeVariant.standard:
-        return AppTheme.lightColorScheme;
+        return kLightColorScheme;
       case AppLightThemeVariant.eyeCare:
-        return AppTheme.eyeCareColorScheme;
+        return kEyeCareColorScheme;
       case AppLightThemeVariant.matcha:
-        return AppTheme.matchaLightColorScheme;
+        return kMatchaLightColorScheme;
     }
   }
 
@@ -137,11 +137,11 @@ class AppThemeSettings {
   ColorScheme get darkColorScheme {
     switch (darkVariant) {
       case AppDarkThemeVariant.standard:
-        return AppTheme.darkColorScheme;
+        return kDarkColorScheme;
       case AppDarkThemeVariant.eyeCare:
-        return AppTheme.darkEyeCareColorScheme;
+        return kDarkEyeCareColorScheme;
       case AppDarkThemeVariant.matcha:
-        return AppTheme.matchaDarkColorScheme;
+        return kMatchaDarkColorScheme;
     }
   }
 
