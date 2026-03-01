@@ -1,16 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
-import 'package:lumina/src/features/library/presentation/widgets/progress_dialog.dart';
-import '../../../../../l10n/app_localizations.dart';
-import '../../../../core/services/toast_service.dart';
-import '../../application/bookshelf_notifier.dart';
-import '../../application/library_notifier.dart';
-import '../../data/services/import_backup_service.dart';
-import '../../data/services/unified_import_service_provider.dart';
-import '../../domain/shelf_group.dart';
-import '../widgets/group_selection_dialog.dart';
+import 'package:lumina/src/features/library/presentation/widgets/import_progress_dialog.dart';
+import 'package:lumina/src/features/library/presentation/widgets/restore_progress_dialog.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../core/services/toast_service.dart';
+import '../application/bookshelf_notifier.dart';
+import '../application/library_notifier.dart';
+import '../data/services/unified_import_service_provider.dart';
+import '../domain/shelf_group.dart';
+import 'widgets/group_selection_dialog.dart';
 
 /// Mixin that provides action methods for LibraryScreen.
 /// Handles imports, deletions, group management, and file operations.
@@ -50,62 +52,11 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
 
     final l10n = AppLocalizations.of(context)!;
 
-    int totalCount = 0;
-    int currentCount = 0;
-    int successCount = 0;
-    int failedCount = 0;
-    String currentFileName = '';
-
     await showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.5),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (dialogContext, setState) {
-            final hasProgress = totalCount > 0;
-            final isCompleted = currentCount == totalCount && totalCount > 0;
-            final progressValue = hasProgress
-                ? (isCompleted ? 1.0 : currentCount / totalCount)
-                : null;
-
-            return ProgressDialog(
-              title: l10n.importing,
-              completeTitle: l10n.importCompleted,
-              progressMessage: l10n.importingProgress(
-                successCount,
-                failedCount,
-                totalCount - successCount - failedCount,
-              ),
-              processingMessage: l10n.progressing(currentFileName),
-              progressStream: stream,
-              progressValue: progressValue,
-
-              onProgress: (log) {
-                if (log is ImportProgress) {
-                  setState(() {
-                    totalCount = log.totalCount;
-                    currentCount = log.currentCount;
-                    currentFileName = log.currentFileName;
-
-                    if (log.status == ImportStatus.success) {
-                      successCount++;
-                    } else if (log.status == ImportStatus.failed) {
-                      failedCount++;
-                    }
-                  });
-                }
-              },
-              onError: (error, stackTrace) {
-                ToastService.showError(l10n.importFailed(error.toString()));
-              },
-              onCompleted: () {
-                ToastService.showSuccess(l10n.importCompleted);
-              },
-            );
-          },
-        );
-      },
+      builder: (ctx) => ImportProgressDialog(stream: stream, l10n: l10n),
     );
 
     // Clean all temporary files after import is done
@@ -388,66 +339,14 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       //    the final ImportResult when the user closes it.
       final l10n = AppLocalizations.of(context)!;
 
-      int totalCount = 0;
-      int currentCount = 0;
-      int successCount = 0;
-      int failedCount = 0;
-      String currentFileName = '';
-
       await showDialog(
         context: context,
         barrierDismissible: false,
         barrierColor: Theme.of(
           context,
         ).colorScheme.scrim.withValues(alpha: 0.5),
-        builder: (ctx) {
-          return StatefulBuilder(
-            builder: (dialogContext, setState) {
-              final hasProgress = totalCount > 0;
-              final isCompleted = currentCount == totalCount && totalCount > 0;
-              final progressValue = hasProgress
-                  ? (isCompleted ? 1.0 : currentCount / totalCount)
-                  : null;
-
-              return ProgressDialog(
-                title: l10n.restoring,
-                completeTitle: l10n.restoreCompleted,
-                progressMessage: l10n.restoringProgress(
-                  successCount,
-                  failedCount,
-                  totalCount - successCount - failedCount,
-                ),
-                processingMessage: l10n.progressing(currentFileName),
-                progressStream: progressStream,
-                progressValue: progressValue,
-
-                onProgress: (log) {
-                  if (log is BackupImportProgress) {
-                    setState(() {
-                      totalCount = log.total;
-                      currentCount = log.current;
-                      currentFileName = log.currentFileName;
-
-                      if (log.result != null) {
-                        if (log.result is ImportSuccess) {
-                          successCount++;
-                        } else if (log.result is ImportFailure) {
-                          failedCount++;
-                        }
-                      }
-                    });
-                  }
-                },
-                onError: (error, stackTrace) {
-                  ToastService.showError(l10n.restoreFailed(error.toString()));
-                },
-                onCompleted: () {
-                  ToastService.showSuccess(l10n.restoreCompleted);
-                },
-              );
-            },
-          );
-        },
+        builder: (ctx) =>
+            RestoreProgressDialog(stream: progressStream, l10n: l10n),
       );
     } catch (e) {
       if (context.mounted) {
