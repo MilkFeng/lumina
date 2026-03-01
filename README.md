@@ -12,6 +12,8 @@ A lightweight EPUB e-book reader built with Flutter, supporting both Android and
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg)]()
 
+[CHANGELOG](./CHANGELOG.md)
+
 ## 🚧 Early Development Stage
 
 Please note that this project is currently in Alpha. Breaking changes to the database schema may occur without migration scripts in early versions.

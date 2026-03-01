@@ -12,6 +12,8 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey.svg)]()
 
+[CHANGELOG](./CHANGELOG.md)
+
 ## 🚧 早期开发阶段
 
 请注意，本项目目前处于 Alpha 测试阶段。早期版本中，数据库架构可能会发生重大变更，且未提供迁移脚本。
