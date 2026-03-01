@@ -44,13 +44,6 @@ class BookGridItem extends ConsumerWidget {
             // Selection checkbox (top-left, all modes)
             if (isSelectionMode)
               Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
-
-            // Finished badge (top-right, relaxed / comfortable only;
-            // compact bakes it into its own cover stack)
-            if (book.isFinished &&
-                !isSelectionMode &&
-                viewMode != ViewMode.compact)
-              Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
           ],
         ),
       ),
@@ -138,9 +131,6 @@ class BookGridItem extends ConsumerWidget {
         ),
         // Progress badge (top-right)
         _buildProgressBadge(context),
-        // Finished badge (top-right, replaces progress badge)
-        if (book.isFinished && !isSelectionMode)
-          Positioned(top: 8, right: 8, child: _buildFinishedBadge()),
       ],
     );
   }
@@ -298,21 +288,6 @@ class BookGridItem extends ConsumerWidget {
     );
   }
 
-  Widget _buildFinishedBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.green,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Icon(
-        Icons.check_circle_outlined,
-        size: 16,
-        color: Colors.white,
-      ),
-    );
-  }
-
   Widget _buildCheckbox(BuildContext context) {
     return Container(
       width: 24,
@@ -324,7 +299,7 @@ class BookGridItem extends ConsumerWidget {
             : Theme.of(context).colorScheme.surface,
         border: Border.all(
           color: isSelected
-              ? Theme.of(context).colorScheme.primary
+              ? Theme.of(context).colorScheme.primaryContainer
               : Theme.of(context).colorScheme.outline,
           width: 2,
         ),

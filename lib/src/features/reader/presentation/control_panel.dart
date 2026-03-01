@@ -390,8 +390,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                               decoration: BoxDecoration(
                                                 color: activeTheme
                                                     .colorScheme
-                                                    .onSurfaceVariant
-                                                    .withAlpha(100),
+                                                    .onSurfaceVariant,
                                                 borderRadius:
                                                     BorderRadius.circular(2),
                                               ),
