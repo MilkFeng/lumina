@@ -79,94 +79,20 @@ class _ReaderStyleBottomSheetState
                         child: Wrap(
                           spacing: 16,
                           runSpacing: 12,
-                          children: [
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.lightColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.light,
+                          // Dynamically build a chip for every ReaderSettingThemeMode.
+                          children: ReaderSettingThemeMode.values.map((mode) {
+                            return _ThemeOptionChip(
+                              colorScheme:
+                                  ReaderSettings.colorSchemeForReaderTheme(
+                                    mode,
+                                  ),
+                              isSelected: _themeMode == mode,
                               onTap: () {
-                                setState(
-                                  () =>
-                                      _themeMode = ReaderSettingThemeMode.light,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.light,
-                                );
+                                setState(() => _themeMode = mode);
+                                _notifier.setThemeMode(mode);
                               },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.darkColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.dark,
-                              onTap: () {
-                                setState(
-                                  () =>
-                                      _themeMode = ReaderSettingThemeMode.dark,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.dark,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.eyeCareColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.eyeCare,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.eyeCare,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.eyeCare,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.darkEyeCareColorScheme,
-                              isSelected:
-                                  _themeMode ==
-                                  ReaderSettingThemeMode.darkEyeCare,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.darkEyeCare,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.darkEyeCare,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.matchaLightColorScheme,
-                              isSelected:
-                                  _themeMode == ReaderSettingThemeMode.matcha,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.matcha,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.matcha,
-                                );
-                              },
-                            ),
-                            _ThemeOptionChip(
-                              colorScheme: AppTheme.matchaDarkColorScheme,
-                              isSelected:
-                                  _themeMode ==
-                                  ReaderSettingThemeMode.darkMatcha,
-                              onTap: () {
-                                setState(
-                                  () => _themeMode =
-                                      ReaderSettingThemeMode.darkMatcha,
-                                );
-                                _notifier.setThemeMode(
-                                  ReaderSettingThemeMode.darkMatcha,
-                                );
-                              },
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
                       ),
                     ),

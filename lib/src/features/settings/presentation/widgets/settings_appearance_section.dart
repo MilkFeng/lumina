@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/theme/app_theme_notifier.dart';
 import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';

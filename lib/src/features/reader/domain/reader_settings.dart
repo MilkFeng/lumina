@@ -119,4 +119,17 @@ class ReaderSettings {
       ),
     );
   }
+
+  /// Maps a [ReaderSettingThemeMode] to its corresponding [ColorScheme].
+  static ColorScheme colorSchemeForReaderTheme(ReaderSettingThemeMode mode) =>
+      switch (mode) {
+        ReaderSettingThemeMode.light => AppTheme.lightColorScheme,
+        ReaderSettingThemeMode.dark => AppTheme.darkColorScheme,
+        ReaderSettingThemeMode.eyeCare => AppTheme.eyeCareColorScheme,
+        ReaderSettingThemeMode.darkEyeCare => AppTheme.darkEyeCareColorScheme,
+        ReaderSettingThemeMode.matcha => AppTheme.matchaLightColorScheme,
+        ReaderSettingThemeMode.darkMatcha => AppTheme.matchaDarkColorScheme,
+      };
+
+  ColorScheme get currentColorScheme => colorSchemeForReaderTheme(themeMode);
 }
