@@ -499,7 +499,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   EpubTheme _getEpubTheme() {
     final settings = ref.read(readerSettingsNotifierProvider);
-    return settings.toEpubTheme(appColorScheme: Theme.of(context).colorScheme);
+    return settings.toEpubTheme(context);
   }
 
   @override
@@ -614,9 +614,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onLinkTap: _handleLinkTap,
                       shouldHandleLinkTap: _shouldHandleLinkTap,
                       shouldShowWebView: _shouldShowWebView,
-                      initializeTheme: settings.toEpubTheme(
-                        appColorScheme: Theme.of(context).colorScheme,
-                      ),
+                      initializeTheme: settings.toEpubTheme(context),
                     ),
 
                     ControlPanel(

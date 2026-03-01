@@ -145,11 +145,15 @@ class AppThemeSettings {
     }
   }
 
-  /// [ThemeData] built from the chosen light scheme.
-  ThemeData get lightTheme => AppTheme.buildTheme(lightColorScheme);
+  /// [ThemeData] built from the chosen light scheme, with [LuminaThemeExtension] injected.
+  ThemeData get lightTheme => AppTheme.buildTheme(lightColorScheme).copyWith(
+    extensions: [LuminaThemeExtension(preset: lightPresetFor(lightVariant))],
+  );
 
-  /// [ThemeData] built from the chosen dark scheme.
-  ThemeData get darkTheme => AppTheme.buildTheme(darkColorScheme);
+  /// [ThemeData] built from the chosen dark scheme, with [LuminaThemeExtension] injected.
+  ThemeData get darkTheme => AppTheme.buildTheme(darkColorScheme).copyWith(
+    extensions: [LuminaThemeExtension(preset: darkPresetFor(darkVariant))],
+  );
 
   /// Returns the color scheme that is actually active at runtime, given the
   /// current [platformBrightness].
@@ -187,4 +191,23 @@ class AppThemeSettings {
         AppDarkThemeVariant.eyeCare => LuminaThemePreset.eyeCareDark,
         AppDarkThemeVariant.matcha => LuminaThemePreset.matchaDark,
       };
+}
+
+/// A [ThemeExtension] that injects the active [LuminaThemePreset] into the
+/// widget tree, making it accessible via [Theme.of(context).extension<LuminaThemeExtension>()].
+class LuminaThemeExtension extends ThemeExtension<LuminaThemeExtension> {
+  const LuminaThemeExtension({required this.preset});
+
+  final LuminaThemePreset preset;
+
+  @override
+  LuminaThemeExtension copyWith({LuminaThemePreset? preset}) =>
+      LuminaThemeExtension(preset: preset ?? this.preset);
+
+  /// Enums cannot be meaningfully interpolated, so snap at the midpoint.
+  @override
+  LuminaThemeExtension lerp(covariant LuminaThemeExtension? other, double t) {
+    if (other == null) return this;
+    return t < 0.5 ? this : other;
+  }
 }

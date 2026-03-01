@@ -3,16 +3,7 @@ import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
 /// Controls how the reader handles external link taps.
-enum ReaderLinkHandling {
-  /// Show a confirmation dialog before opening external links.
-  ask,
-
-  /// Open external links directly without asking.
-  always,
-
-  /// Ignore external link taps entirely.
-  never,
-}
+enum ReaderLinkHandling { ask, always, never }
 
 class ReaderSettings {
   final double zoom;
@@ -63,26 +54,27 @@ class ReaderSettings {
     );
   }
 
-  EpubTheme toEpubTheme({required ColorScheme appColorScheme}) {
+  EpubTheme toEpubTheme(BuildContext context) {
+    final appColorScheme = Theme.of(context).colorScheme;
+    final appPreset =
+        Theme.of(context).extension<LuminaThemeExtension>()?.preset ??
+        LuminaThemePreset.standardLight;
+
     final LuminaThemePreset preset;
+    final ColorScheme colorScheme;
 
     if (followAppTheme) {
-      // Find the preset whose ColorScheme matches the active app scheme.
-      // Falls back to standardLight when no match is found (e.g. dynamic color).
-      preset = LuminaThemePreset.values.firstWhere(
-        (p) => p.colorScheme == appColorScheme,
-        orElse: () => appColorScheme.brightness == Brightness.dark
-            ? LuminaThemePreset.standardDark
-            : LuminaThemePreset.standardLight,
-      );
+      preset = appPreset;
+      colorScheme = appColorScheme;
     } else {
-      preset = LuminaThemePreset.fromIndex(themeIndex);
+      preset = currentPreset;
+      colorScheme = currentPreset.colorScheme;
     }
 
     return EpubTheme(
       zoom: zoom,
       shouldOverrideTextColor: preset.shouldOverrideTextColor,
-      colorScheme: followAppTheme ? appColorScheme : preset.colorScheme,
+      colorScheme: colorScheme,
       overridePrimaryColor: preset.overridePrimaryColor,
       padding: EdgeInsets.only(
         top: marginTop,
