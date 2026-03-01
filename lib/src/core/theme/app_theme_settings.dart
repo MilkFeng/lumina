@@ -110,50 +110,33 @@ class AppThemeSettings {
   }
 
   /// Maps to Flutter's [ThemeMode] for use in [MaterialApp].
-  ThemeMode get flutterThemeMode {
-    switch (themeMode) {
-      case AppThemeMode.system:
-        return ThemeMode.system;
-      case AppThemeMode.light:
-        return ThemeMode.light;
-      case AppThemeMode.dark:
-        return ThemeMode.dark;
-    }
-  }
+  ThemeMode get flutterThemeMode => switch (themeMode) {
+    AppThemeMode.system => ThemeMode.system,
+    AppThemeMode.light => ThemeMode.light,
+    AppThemeMode.dark => ThemeMode.dark,
+  };
+
+  /// The active light preset based on the current variant.
+  LuminaThemePreset get activeLightPreset => lightPresetFor(lightVariant);
+
+  /// The active dark preset based on the current variant.
+  LuminaThemePreset get activeDarkPreset => darkPresetFor(darkVariant);
 
   /// The [ColorScheme] used when the app is in light mode.
-  ColorScheme get lightColorScheme {
-    switch (lightVariant) {
-      case AppLightThemeVariant.standard:
-        return kLightColorScheme;
-      case AppLightThemeVariant.eyeCare:
-        return kEyeCareColorScheme;
-      case AppLightThemeVariant.matcha:
-        return kMatchaLightColorScheme;
-    }
-  }
+  ColorScheme get lightColorScheme => activeLightPreset.colorScheme;
 
   /// The [ColorScheme] used when the app is in dark mode.
-  ColorScheme get darkColorScheme {
-    switch (darkVariant) {
-      case AppDarkThemeVariant.standard:
-        return kDarkColorScheme;
-      case AppDarkThemeVariant.eyeCare:
-        return kDarkEyeCareColorScheme;
-      case AppDarkThemeVariant.matcha:
-        return kMatchaDarkColorScheme;
-    }
-  }
+  ColorScheme get darkColorScheme => activeDarkPreset.colorScheme;
 
   /// [ThemeData] built from the chosen light scheme, with [LuminaThemeExtension] injected.
-  ThemeData get lightTheme => AppTheme.buildTheme(lightColorScheme).copyWith(
-    extensions: [LuminaThemeExtension(preset: lightPresetFor(lightVariant))],
-  );
+  ThemeData get lightTheme => AppTheme.buildTheme(
+    lightColorScheme,
+  ).copyWith(extensions: [LuminaThemeExtension(preset: activeLightPreset)]);
 
   /// [ThemeData] built from the chosen dark scheme, with [LuminaThemeExtension] injected.
-  ThemeData get darkTheme => AppTheme.buildTheme(darkColorScheme).copyWith(
-    extensions: [LuminaThemeExtension(preset: darkPresetFor(darkVariant))],
-  );
+  ThemeData get darkTheme => AppTheme.buildTheme(
+    darkColorScheme,
+  ).copyWith(extensions: [LuminaThemeExtension(preset: activeDarkPreset)]);
 
   /// Returns the color scheme that is actually active at runtime, given the
   /// current [platformBrightness].
