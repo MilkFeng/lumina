@@ -242,6 +242,9 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
+          backgroundColor: _isEditing
+              ? Theme.of(context).colorScheme.surfaceContainer
+              : Theme.of(context).colorScheme.surface,
           // Leading: back arrow in view mode, close icon in edit mode.
           leading: _isEditing
               ? IconButton(

@@ -37,7 +37,9 @@ class LibraryAppBar extends StatelessWidget {
       sliver: SliverAppBar(
         pinned: true,
         floating: false,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: isSelectionMode
+            ? Theme.of(context).colorScheme.surfaceContainer
+            : Theme.of(context).colorScheme.surface,
         leading: isSelectionMode
             ? IconButton(
                 icon: const Icon(Icons.close_outlined),
