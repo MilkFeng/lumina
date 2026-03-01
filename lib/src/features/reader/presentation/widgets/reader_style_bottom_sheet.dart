@@ -27,11 +27,6 @@ class _ReaderStyleBottomSheetState
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
 
-  // Linked scroll controllers so that both theme-chip rows scroll in sync.
-  final _lightScrollCtrl = ScrollController();
-  final _darkScrollCtrl = ScrollController();
-  bool _syncingScroll = false;
-
   static const int _marginMin = 0;
   static const int _marginMax = 64;
   static const int _marginStep = 2;
@@ -49,31 +44,10 @@ class _ReaderStyleBottomSheetState
     _themeIndex = s.themeIndex;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
-
-    _lightScrollCtrl.addListener(_syncFromLight);
-    _darkScrollCtrl.addListener(_syncFromDark);
-  }
-
-  void _syncFromLight() {
-    if (_syncingScroll) return;
-    if (!_darkScrollCtrl.hasClients) return;
-    _syncingScroll = true;
-    _darkScrollCtrl.jumpTo(_lightScrollCtrl.offset);
-    _syncingScroll = false;
-  }
-
-  void _syncFromDark() {
-    if (_syncingScroll) return;
-    if (!_lightScrollCtrl.hasClients) return;
-    _syncingScroll = true;
-    _lightScrollCtrl.jumpTo(_darkScrollCtrl.offset);
-    _syncingScroll = false;
   }
 
   @override
   void dispose() {
-    _lightScrollCtrl.dispose();
-    _darkScrollCtrl.dispose();
     super.dispose();
   }
 
@@ -116,65 +90,42 @@ class _ReaderStyleBottomSheetState
                           final lightPresets = LuminaThemePreset.lightPresets;
                           final darkPresets = LuminaThemePreset.darkPresets;
 
-                          Widget themeRow(
-                            String label,
-                            List<LuminaThemePreset> presets,
-                            ScrollController scrollCtrl,
-                          ) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Transform.translate shifts paint only, so
-                                // AnimatedSize still measures the correct height.
-                                SizedBox(
-                                  width: fullWidth,
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    controller: scrollCtrl,
-                                    child: Row(
-                                      children: presets.map((preset) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            right: 16,
-                                          ),
-                                          child: _ThemeOptionChip(
-                                            colorScheme: preset.colorScheme,
-                                            isSelected:
-                                                _themeIndex == preset.index,
-                                            onTap: () {
-                                              setState(
-                                                () =>
-                                                    _themeIndex = preset.index,
-                                              );
-                                              _notifier.setThemeIndex(
-                                                preset.index,
-                                              );
-                                            },
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
+                          // Build a plain Row of chips for the given preset list.
+                          Row presetRow(List<LuminaThemePreset> presets) {
+                            return Row(
+                              children: presets.map((preset) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 16),
+                                  child: _ThemeOptionChip(
+                                    colorScheme: preset.colorScheme,
+                                    isSelected: _themeIndex == preset.index,
+                                    onTap: () {
+                                      setState(
+                                        () => _themeIndex = preset.index,
+                                      );
+                                      _notifier.setThemeIndex(preset.index);
+                                    },
                                   ),
-                                ),
-                              ],
+                                );
+                              }).toList(),
                             );
                           }
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              themeRow(
-                                l10n.appLightTheme,
-                                lightPresets,
-                                _lightScrollCtrl,
+                          // Both rows share one ScrollView so the gap between
+                          // them scrolls together with the chips.
+                          return SizedBox(
+                            width: fullWidth,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  presetRow(lightPresets),
+                                  const SizedBox(height: 16),
+                                  presetRow(darkPresets),
+                                ],
                               ),
-                              const SizedBox(height: 16),
-                              themeRow(
-                                l10n.appDarkTheme,
-                                darkPresets,
-                                _darkScrollCtrl,
-                              ),
-                            ],
+                            ),
                           );
                         },
                       ),
