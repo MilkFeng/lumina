@@ -896,17 +896,11 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get appThemeModeDark;
 
-  /// Label for light theme variant selector
+  /// Label for the theme variant selector
   ///
   /// In en, this message translates to:
-  /// **'Light Theme Style'**
-  String get appLightTheme;
-
-  /// Label for dark theme variant selector
-  ///
-  /// In en, this message translates to:
-  /// **'Dark Theme Style'**
-  String get appDarkTheme;
+  /// **'Theme Variant'**
+  String get appThemeVariant;
 
   /// Theme variant: standard clean look
   ///
@@ -937,6 +931,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Author'**
   String get author;
+
+  /// Open source licenses label
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source Licenses'**
+  String get openSourceLicenses;
+
+  /// Open source licenses subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'View open source libraries used in the app and their licenses'**
+  String get openSourceLicensesSubtitle;
 
   /// Tips section title
   ///

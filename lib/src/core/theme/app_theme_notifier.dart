@@ -11,26 +11,21 @@ part 'app_theme_notifier.g.dart';
 class AppThemeNotifier extends _$AppThemeNotifier {
   // ── Persistence keys ──────────────────────────────────────────────────────
   static const _kThemeMode = 'app_theme_mode';
-  static const _kLightVariant = 'app_light_variant';
-  static const _kDarkVariant = 'app_dark_variant';
+  static const _kThemeVariant = 'app_theme_variant';
 
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   AppThemeSettings build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final themeModeIndex = prefs.getInt(_kThemeMode);
-    final lightVariantIndex = prefs.getInt(_kLightVariant);
-    final darkVariantIndex = prefs.getInt(_kDarkVariant);
+    final themeVariantIndex = prefs.getInt(_kThemeVariant);
 
     return AppThemeSettings().copyWith(
       themeMode: themeModeIndex != null
           ? AppThemeMode.values.elementAt(themeModeIndex)
           : null,
-      lightVariant: lightVariantIndex != null
-          ? AppLightThemeVariant.values.elementAt(lightVariantIndex)
-          : null,
-      darkVariant: darkVariantIndex != null
-          ? AppDarkThemeVariant.values.elementAt(darkVariantIndex)
+      themeVariant: themeVariantIndex != null
+          ? AppThemeVariant.values.elementAt(themeVariantIndex)
           : null,
     );
   }
@@ -45,13 +40,8 @@ class AppThemeNotifier extends _$AppThemeNotifier {
     state = state.copyWith(themeMode: mode);
   }
 
-  Future<void> setLightVariant(AppLightThemeVariant variant) async {
-    await _prefs.setInt(_kLightVariant, variant.index);
-    state = state.copyWith(lightVariant: variant);
-  }
-
-  Future<void> setDarkVariant(AppDarkThemeVariant variant) async {
-    await _prefs.setInt(_kDarkVariant, variant.index);
-    state = state.copyWith(darkVariant: variant);
+  Future<void> setThemeVariant(AppThemeVariant variant) async {
+    await _prefs.setInt(_kThemeVariant, variant.index);
+    state = state.copyWith(themeVariant: variant);
   }
 }

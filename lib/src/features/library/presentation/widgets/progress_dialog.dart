@@ -1,32 +1,34 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/library/application/progress_log.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 
+/// A "dumb" progress dialog that renders purely from the values passed to it.
+/// All stream subscription, state accumulation, and completion handling must
+/// be done by the caller; this widget has no internal stream logic.
 class ProgressDialog extends StatefulWidget {
-  final String completeTitle;
   final String title;
+  final String completeTitle;
   final String progressMessage;
   final String processingMessage;
-  final Stream<ProgressLog> progressStream;
   final double? progressValue;
-  final Function(ProgressLog) onProgress;
-  final Function(Object, StackTrace)? onError;
-  final Function()? onCompleted;
+
+  /// When `true` the dialog shows the complete title and enables the Close
+  /// button. Set this from the parent once the stream is done or errors.
+  final bool isCompleted;
+
+  /// Accumulated log entries to display in the collapsible details panel.
+  final List<ProgressLog> logs;
 
   const ProgressDialog({
-    required this.completeTitle,
     required this.title,
+    required this.completeTitle,
     required this.progressMessage,
     required this.processingMessage,
-    required this.progressStream,
     required this.progressValue,
-    required this.onProgress,
-    required this.onError,
-    required this.onCompleted,
+    required this.isCompleted,
+    required this.logs,
     super.key,
   });
 
@@ -35,47 +37,8 @@ class ProgressDialog extends StatefulWidget {
 }
 
 class _ProgressDialogState extends State<ProgressDialog> {
-  StreamSubscription<ProgressLog>? _subscription;
-
-  bool _isCompleted = false;
+  // Only internal UI state: whether the details panel is expanded.
   bool _showDetails = false;
-
-  final List<ProgressLog> _logs = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _subscription = widget.progressStream.listen(
-      _handleProgress,
-      onError: (Object error, StackTrace stackTrace) {
-        if (!mounted) return;
-        setState(() {
-          _isCompleted = true;
-        });
-        widget.onError?.call(error, stackTrace);
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() {
-          _isCompleted = true;
-        });
-        widget.onCompleted?.call();
-      },
-      cancelOnError: false,
-    );
-  }
-
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
-
-  void _handleProgress(ProgressLog progress) {
-    if (!mounted) return;
-    widget.onProgress(progress);
-    _logs.add(progress);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +52,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
         : warningLight;
 
     return AlertDialog(
-      title: Text(_isCompleted ? widget.completeTitle : widget.title),
+      title: Text(widget.isCompleted ? widget.completeTitle : widget.title),
       content: SizedBox(
         width: double.maxFinite,
         child: Column(
@@ -111,7 +74,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                      _isCompleted
+                      widget.isCompleted
                           ? l10n.progressedAll
                           : widget.processingMessage,
                       maxLines: 2,
@@ -124,9 +87,9 @@ class _ProgressDialogState extends State<ProgressDialog> {
                     ),
                   ),
 
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
 
-                  if (_logs.isNotEmpty)
+                  if (widget.logs.isNotEmpty)
                     GestureDetector(
                       onTap: () => setState(() => _showDetails = !_showDetails),
                       child: Text(
@@ -148,7 +111,7 @@ class _ProgressDialogState extends State<ProgressDialog> {
               ),
               curve: Curves.easeInOutCubic,
               alignment: Alignment.topCenter,
-              child: (_logs.isNotEmpty && _showDetails)
+              child: (widget.logs.isNotEmpty && _showDetails)
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -157,12 +120,13 @@ class _ProgressDialogState extends State<ProgressDialog> {
                           constraints: const BoxConstraints(maxHeight: 220),
                           child: ListView.separated(
                             shrinkWrap: true,
-                            itemCount: _logs.length,
+                            itemCount: widget.logs.length,
                             reverse: true,
                             separatorBuilder: (_, _) =>
                                 const SizedBox(height: 8),
                             itemBuilder: (context, index) {
-                              final item = _logs[_logs.length - 1 - index];
+                              final item =
+                                  widget.logs[widget.logs.length - 1 - index];
                               Color color;
                               switch (item.type) {
                                 case ProgressLogType.error:
@@ -196,7 +160,9 @@ class _ProgressDialogState extends State<ProgressDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _isCompleted ? () => Navigator.of(context).pop() : null,
+          onPressed: widget.isCompleted
+              ? () => Navigator.of(context).pop()
+              : null,
           child: Text(l10n.close),
         ),
       ],

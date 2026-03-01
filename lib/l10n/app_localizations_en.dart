@@ -459,10 +459,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appThemeModeDark => 'Dark';
 
   @override
-  String get appLightTheme => 'Light Theme Style';
-
-  @override
-  String get appDarkTheme => 'Dark Theme Style';
+  String get appThemeVariant => 'Theme Variant';
 
   @override
   String get appThemeVariantStandard => 'Standard';
@@ -478,6 +475,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get author => 'Author';
+
+  @override
+  String get openSourceLicenses => 'Open Source Licenses';
+
+  @override
+  String get openSourceLicensesSubtitle =>
+      'View open source libraries used in the app and their licenses';
 
   @override
   String get tips => 'Tips';

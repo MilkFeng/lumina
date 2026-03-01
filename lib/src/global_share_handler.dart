@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/library/application/library_notifier.dart';
 import 'features/library/application/bookshelf_notifier.dart';
+import 'features/library/application/progress_log.dart';
 import 'features/library/presentation/widgets/progress_dialog.dart';
 import '../l10n/app_localizations.dart';
 import 'core/services/toast_service.dart';
@@ -59,63 +60,13 @@ class GolbalShareHandler extends ConsumerWidget {
         .read(libraryNotifierProvider.notifier)
         .importPipelineStream(paths);
 
-    int totalCount = 0;
-    int currentCount = 0;
-    int successCount = 0;
-    int failedCount = 0;
-    String currentFileName = '';
-
     await showDialog(
       context: navContext,
       barrierDismissible: false,
       barrierColor: Theme.of(
         navContext,
       ).colorScheme.scrim.withValues(alpha: 0.5),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            final hasProgress = totalCount > 0;
-            final isCompleted = currentCount == totalCount && totalCount > 0;
-            final progressValue = hasProgress
-                ? (isCompleted ? 1.0 : currentCount / totalCount)
-                : null;
-
-            return ProgressDialog(
-              title: l10n.importing,
-              completeTitle: l10n.importCompleted,
-              progressMessage: l10n.importingProgress(
-                successCount,
-                failedCount,
-                totalCount - successCount - failedCount,
-              ),
-              processingMessage: l10n.progressing(currentFileName),
-              progressStream: stream,
-              progressValue: progressValue,
-              onProgress: (log) {
-                if (log is ImportProgress) {
-                  setDialogState(() {
-                    totalCount = log.totalCount;
-                    currentCount = log.currentCount;
-                    currentFileName = log.currentFileName;
-
-                    if (log.status == ImportStatus.success) {
-                      successCount++;
-                    } else if (log.status == ImportStatus.failed) {
-                      failedCount++;
-                    }
-                  });
-                }
-              },
-              onError: (error, stackTrace) {
-                ToastService.showError(l10n.importFailed(error.toString()));
-              },
-              onCompleted: () {
-                ToastService.showSuccess(l10n.importCompleted);
-              },
-            );
-          },
-        );
-      },
+      builder: (ctx) => _ShareImportProgressDialog(stream: stream, l10n: l10n),
     );
 
     // Clean up any leftover temp cache files created during this session.
@@ -123,5 +74,103 @@ class GolbalShareHandler extends ConsumerWidget {
 
     // Refresh the bookshelf so the newly imported book appears immediately.
     await ref.read(bookshelfNotifierProvider.notifier).refresh();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private stream-aware host widget for GolbalShareHandler's import dialog.
+// ---------------------------------------------------------------------------
+
+class _ShareImportProgressDialog extends StatefulWidget {
+  final Stream<ProgressLog> stream;
+  final AppLocalizations l10n;
+
+  const _ShareImportProgressDialog({required this.stream, required this.l10n});
+
+  @override
+  State<_ShareImportProgressDialog> createState() =>
+      _ShareImportProgressDialogState();
+}
+
+class _ShareImportProgressDialogState
+    extends State<_ShareImportProgressDialog> {
+  StreamSubscription<ProgressLog>? _sub;
+
+  int _totalCount = 0;
+  int _currentCount = 0;
+  int _successCount = 0;
+  int _failedCount = 0;
+  String _currentFileName = '';
+  bool _isCompleted = false;
+  final List<ProgressLog> _logs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = widget.stream.listen(
+      _onData,
+      onError: _onError,
+      onDone: _onDone,
+      cancelOnError: false,
+    );
+  }
+
+  void _onData(ProgressLog log) {
+    if (!mounted) return;
+    setState(() {
+      _logs.add(log);
+      if (log is ImportProgress) {
+        _totalCount = log.totalCount;
+        _currentCount = log.currentCount;
+        _currentFileName = log.currentFileName;
+        if (log.status == ImportStatus.success) {
+          _successCount++;
+        } else if (log.status == ImportStatus.failed) {
+          _failedCount++;
+        }
+      }
+    });
+  }
+
+  void _onError(Object error, StackTrace st) {
+    if (!mounted) return;
+    setState(() => _isCompleted = true);
+    ToastService.showError(widget.l10n.importFailed(error.toString()));
+  }
+
+  void _onDone() {
+    if (!mounted) return;
+    setState(() => _isCompleted = true);
+    ToastService.showSuccess(widget.l10n.importCompleted);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasProgress = _totalCount > 0;
+    final isDone =
+        _isCompleted || (_totalCount > 0 && _currentCount == _totalCount);
+    final progressValue = hasProgress
+        ? (isDone ? 1.0 : _currentCount / _totalCount)
+        : null;
+
+    return ProgressDialog(
+      title: widget.l10n.importing,
+      completeTitle: widget.l10n.importCompleted,
+      progressMessage: widget.l10n.importingProgress(
+        _successCount,
+        _failedCount,
+        _totalCount - _successCount - _failedCount,
+      ),
+      processingMessage: widget.l10n.progressing(_currentFileName),
+      progressValue: progressValue,
+      isCompleted: isDone,
+      logs: _logs,
+    );
   }
 }

@@ -19,10 +19,7 @@ class LibrarySelectionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: Theme.of(context).colorScheme.outline),
-        ),
+        color: Theme.of(context).colorScheme.surfaceContainer,
       ),
       child: SafeArea(
         top: false,

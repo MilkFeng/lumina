@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
-import 'mixins/library_actions_mixin.dart';
+import 'library_actions_mixin.dart';
 import 'widgets/book_grid_item.dart';
 import 'widgets/library_app_bar.dart';
 import 'widgets/library_selection_bar.dart';
@@ -284,17 +285,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             children: _buildTabViewChildren(context, ref, state),
           ),
         ),
-        if (state.isSelectionMode)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: LibrarySelectionBar(
-              state: state,
-              onMove: () => showMoveToGroup(context, ref, state),
-              onDelete: () => confirmDelete(context, ref),
-            ),
+        // Slide the selection bar up from below the screen when entering
+        // selection mode, and back down when leaving it.
+        AnimatedPositioned(
+          duration: const Duration(
+            milliseconds: AppTheme.defaultAnimationDurationMs,
           ),
+          curve: Curves.easeInOut,
+          bottom: state.isSelectionMode ? 0 : -100,
+          left: 0,
+          right: 0,
+          child: LibrarySelectionBar(
+            state: state,
+            onMove: () => showMoveToGroup(context, ref, state),
+            onDelete: () => confirmDelete(context, ref),
+          ),
+        ),
       ],
     );
   }

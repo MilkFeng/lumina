@@ -64,12 +64,11 @@ class ImportCacheManager {
     final tempCacheFile = File(tempCachePath);
 
     // Extract original file name from platform path
-    String originalName;
+    String originalName = platformPath.name;
 
     switch (platformPath) {
       case AndroidUriPath(:final uri):
         await _streamAndHashFromSAF(uri, tempCacheFile);
-        originalName = _extractFileNameFromUri(uri);
       case IOSFilePath(path: final originalPath):
         final fetchCallback = _iosFetchCallback;
         if (fetchCallback != null) {
@@ -81,7 +80,6 @@ class ImportCacheManager {
           // Fallback when no callback was provided (e.g. in unit tests).
           await _copyAndHashFromFileSystem(originalPath, tempCacheFile);
         }
-        originalName = path.basename(originalPath);
     }
 
     // Calculate hash of the cached file
@@ -92,54 +90,6 @@ class ImportCacheManager {
       hash: hash,
       originalName: originalName,
     );
-  }
-
-  /// Extracts the file name from an Android SAF URI
-  ///
-  /// Handles various URI formats and decodes URL-encoded characters.
-  String _extractFileNameFromUri(String uri) {
-    try {
-      // Debug logging
-      final parsedUri = Uri.parse(uri);
-
-      // Get the last path segment
-      final segments = parsedUri.pathSegments;
-
-      if (segments.isNotEmpty) {
-        final lastSegment = segments.last;
-
-        // Extract filename from document ID format (e.g., "primary:path/file.epub")
-        if (lastSegment.contains(':')) {
-          final colonIndex = lastSegment.indexOf(':');
-          final pathPart = lastSegment.substring(colonIndex + 1);
-
-          // Get the last part after splitting by /
-          if (pathPart.contains('/')) {
-            final fileName = pathPart.split('/').last;
-            return fileName;
-          } else {
-            // No slash, the whole thing is the filename
-            return pathPart;
-          }
-        }
-
-        // If no colon, try splitting by /
-        if (lastSegment.contains('/')) {
-          final fileName = lastSegment.split('/').last;
-          return fileName;
-        }
-
-        // No special characters, return as-is
-        return lastSegment;
-      }
-
-      // Fallback: return a default name
-      return 'unknown.epub';
-    } catch (e) {
-      // ignore: avoid_print
-      debugPrint('Error extracting file name from URI: $e');
-      return 'unknown.epub';
-    }
   }
 
   /// Streams content from Android SAF URI to cache file

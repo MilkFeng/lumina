@@ -777,14 +777,9 @@
     "description": "Theme mode option: always dark"
   },
 
-  "appLightTheme": "Light Theme Style",
-  "@appLightTheme": {
-    "description": "Label for light theme variant selector"
-  },
-
-  "appDarkTheme": "Dark Theme Style",
-  "@appDarkTheme": {
-    "description": "Label for dark theme variant selector"
+  "appThemeVariant": "Theme Variant",
+  "@appThemeVariant": {
+    "description": "Label for the theme variant selector"
   },
 
   "appThemeVariantStandard": "Standard",
@@ -810,6 +805,16 @@
   "author": "Author",
   "@author": {
     "description": "Author label"
+  },
+
+  "openSourceLicenses": "Open Source Licenses",
+  "@openSourceLicenses": {
+    "description": "Open source licenses label"
+  },
+
+  "openSourceLicensesSubtitle": "View open source libraries used in the app and their licenses",
+  "@openSourceLicensesSubtitle": {
+    "description": "Open source licenses subtitle"
   },
 
   "tips": "Tips",

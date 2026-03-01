@@ -787,14 +787,9 @@
     "description": "主题模式选项：始终深色"
   },
 
-  "appLightTheme": "浅色主题风格",
-  "@appLightTheme": {
-    "description": "浅色主题方案选择器标签"
-  },
-
-  "appDarkTheme": "深色主题风格",
-  "@appDarkTheme": {
-    "description": "深色主题方案选择器标签"
+  "appThemeVariant": "主题方案",
+  "@appThemeVariant": {
+    "description": "主题方案选择器标签"
   },
 
   "appThemeVariantStandard": "标准",
@@ -820,6 +815,16 @@
   "author": "作者",
   "@author": {
     "description": "作者标签"
+  },
+
+  "openSourceLicenses": "开源许可证",
+  "@openSourceLicenses": {
+    "description": "开源许可证标签"
+  },
+
+  "openSourceLicensesSubtitle": "显示应用中使用的开源库及其许可证",
+  "@openSourceLicensesSubtitle": {
+    "description": "开源许可证副标题"
   },
 
   "tips": "使用提示",

@@ -263,18 +263,23 @@ class EpubReader {
     }
   }
 
-  _applyRules(style) {
-    if (style.fontSize && !style.fontSize.includes('calc')) {
-      const match = style.fontSize.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)(px|pt)$/);
+  _applyRuleWithFixedValue(style, property) {
+    const value = style[property];
+    if (value && !value.includes('calc')) {
+      const match = value.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)(px|pt)$/);
       if (match) {
         style.setProperty(
-          'font-size',
-          'calc(' + match[0] + ' * var(--lumina-zoom))',
-          style.getPropertyPriority('font-size')
+          property,
+          'calc(' + value + ' * var(--lumina-zoom))',
+          style.getPropertyPriority(property)
         );
       }
     }
+  }
 
+  _applyRules(style) {
+    this._applyRuleWithFixedValue(style, 'font-size');
+    this._applyRuleWithFixedValue(style, 'line-height');
     if (style.breakBefore) style.webkitColumnBreakBefore = this._convertToColumnBreak(style.breakBefore);
     if (style.pageBreakBefore) style.webkitColumnBreakBefore = this._convertToColumnBreak(style.pageBreakBefore);
     if (style.breakAfter && style.breakAfter !== 'auto') style.webkitColumnBreakAfter = this._convertToColumnBreak(style.breakAfter);

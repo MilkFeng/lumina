@@ -35,7 +35,8 @@ class BookDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<BookDetailScreen> createState() => _BookDetailScreenState();
 }
 
-class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
+class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
+    with SingleTickerProviderStateMixin {
   // --------------------------------------------------------------------------
   // Editing state
   // --------------------------------------------------------------------------
@@ -47,12 +48,26 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
   late final TextEditingController _authorsController;
   late final TextEditingController _descriptionController;
 
+  // Animates the AppBar background color between surface and surfaceContainer.
+  late final AnimationController _colorController;
+  late final Animation<double> _colorAnimation;
+
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController();
     _authorsController = TextEditingController();
     _descriptionController = TextEditingController();
+
+    _colorController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+      value: 0.0, // 0 = view mode (surface), 1 = edit mode (surfaceContainer)
+    );
+    _colorAnimation = CurvedAnimation(
+      parent: _colorController,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -60,6 +75,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
     _titleController.dispose();
     _authorsController.dispose();
     _descriptionController.dispose();
+    _colorController.dispose();
     super.dispose();
   }
 
@@ -73,11 +89,13 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
     _authorsController.text = book.authors.join(', ');
     _descriptionController.text = book.description ?? '';
     _checkTitleError(book.title);
+    _colorController.forward();
     setState(() => _isEditing = true);
   }
 
   /// Switches back to view mode without saving.
   void _exitEditMode() {
+    _colorController.reverse();
     setState(() => _isEditing = false);
   }
 
@@ -239,56 +257,67 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
           await _handleCancelEdit(isPop: true, book: book);
         }
       },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          // Leading: back arrow in view mode, close icon in edit mode.
-          leading: _isEditing
-              ? IconButton(
-                  icon: const Icon(Icons.close_outlined),
-                  onPressed: _isSaving
-                      ? null
-                      : () => _handleCancelEdit(isPop: false, book: book),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.arrow_back_outlined),
-                  onPressed: () => context.pop(),
-                ),
-          // Actions: save check in edit mode; share + edit in view mode.
-          title: _isEditing
-              ? Text(AppLocalizations.of(context)!.editBook)
-              : null,
-          actions: _isEditing
-              ? [
-                  IconButton(
-                    icon: const Icon(Icons.check_outlined),
-                    tooltip: AppLocalizations.of(context)!.save,
-                    onPressed: book != null ? () => _save(book) : null,
-                  ),
-                ]
-              : [
-                  if (book != null)
-                    IconButton(
-                      icon: const Icon(Icons.share_outlined),
-                      tooltip: AppLocalizations.of(context)!.shareEpub,
-                      onPressed: () => shareEpub(context, book, ref),
+      child: AnimatedBuilder(
+        animation: _colorAnimation,
+        builder: (context, child) {
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              // Lerp between surface (view) and surfaceContainer (edit).
+              backgroundColor: Color.lerp(
+                Theme.of(context).colorScheme.surface,
+                Theme.of(context).colorScheme.surfaceContainer,
+                _colorAnimation.value,
+              ),
+              // Leading: back arrow in view mode, close icon in edit mode.
+              leading: _isEditing
+                  ? IconButton(
+                      icon: const Icon(Icons.close_outlined),
+                      onPressed: _isSaving
+                          ? null
+                          : () => _handleCancelEdit(isPop: false, book: book),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.arrow_back_outlined),
+                      onPressed: () => context.pop(),
                     ),
-                  if (book != null)
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined),
-                      tooltip: AppLocalizations.of(context)!.editBook,
-                      onPressed: () => _enterEditMode(book),
-                    ),
-                ],
-        ),
-        body: AnimatedBuilder(
-          animation: routeAnimation ?? const AlwaysStoppedAnimation(0.0),
-          builder: (context, child) {
-            final isTransitioning = (routeAnimation?.value ?? 1.0) < 1.0;
-            return AbsorbPointer(absorbing: isTransitioning, child: child);
-          },
-          child: _buildBody(context),
-        ),
+              // Actions: save check in edit mode; share + edit in view mode.
+              title: _isEditing
+                  ? Text(AppLocalizations.of(context)!.editBook)
+                  : null,
+              actions: _isEditing
+                  ? [
+                      IconButton(
+                        icon: const Icon(Icons.check_outlined),
+                        tooltip: AppLocalizations.of(context)!.save,
+                        onPressed: book != null ? () => _save(book) : null,
+                      ),
+                    ]
+                  : [
+                      if (book != null)
+                        IconButton(
+                          icon: const Icon(Icons.share_outlined),
+                          tooltip: AppLocalizations.of(context)!.shareEpub,
+                          onPressed: () => shareEpub(context, book, ref),
+                        ),
+                      if (book != null)
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined),
+                          tooltip: AppLocalizations.of(context)!.editBook,
+                          onPressed: () => _enterEditMode(book),
+                        ),
+                    ],
+            ),
+            body: AnimatedBuilder(
+              animation: routeAnimation ?? const AlwaysStoppedAnimation(0.0),
+              builder: (context, child) {
+                final isTransitioning = (routeAnimation?.value ?? 1.0) < 1.0;
+                return AbsorbPointer(absorbing: isTransitioning, child: child);
+              },
+              child: _buildBody(context),
+            ),
+          );
+        },
       ),
     );
   }

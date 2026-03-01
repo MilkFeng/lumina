@@ -452,10 +452,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appThemeModeDark => '深色';
 
   @override
-  String get appLightTheme => '浅色主题风格';
-
-  @override
-  String get appDarkTheme => '深色主题风格';
+  String get appThemeVariant => '主题方案';
 
   @override
   String get appThemeVariantStandard => '标准';
@@ -471,6 +468,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get author => '作者';
+
+  @override
+  String get openSourceLicenses => '开源许可证';
+
+  @override
+  String get openSourceLicensesSubtitle => '显示应用中使用的开源库及其许可证';
 
   @override
   String get tips => '使用提示';
