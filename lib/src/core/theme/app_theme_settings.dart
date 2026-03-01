@@ -90,4 +90,20 @@ class AppThemeSettings {
         ? darkColorScheme
         : lightColorScheme;
   }
+
+  /// Maps a [AppLightThemeVariant] to its corresponding [ColorScheme].
+  static ColorScheme lightColorSchemeFor(AppLightThemeVariant variant) =>
+      switch (variant) {
+        AppLightThemeVariant.standard => AppTheme.lightColorScheme,
+        AppLightThemeVariant.eyeCare => AppTheme.eyeCareColorScheme,
+        AppLightThemeVariant.matcha => AppTheme.matchaLightColorScheme,
+      };
+
+  /// Maps a [AppDarkThemeVariant] to its corresponding [ColorScheme].
+  static ColorScheme darkColorSchemeFor(AppDarkThemeVariant variant) =>
+      switch (variant) {
+        AppDarkThemeVariant.standard => AppTheme.darkColorScheme,
+        AppDarkThemeVariant.eyeCare => AppTheme.darkEyeCareColorScheme,
+        AppDarkThemeVariant.matcha => AppTheme.matchaDarkColorScheme,
+      };
 }

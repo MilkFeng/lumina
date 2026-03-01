@@ -84,32 +84,16 @@ class SettingsAppearanceSection extends ConsumerWidget {
                 Wrap(
                   spacing: 16,
                   runSpacing: 12,
-                  children: [
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.lightColorScheme,
-                      isSelected:
-                          settings.lightVariant ==
-                          AppLightThemeVariant.standard,
-                      onTap: () => notifier.setLightVariant(
-                        AppLightThemeVariant.standard,
+                  // Dynamically build a chip for every AppLightThemeVariant.
+                  children: AppLightThemeVariant.values.map((variant) {
+                    return AppThemeVariantChip(
+                      colorScheme: AppThemeSettings.lightColorSchemeFor(
+                        variant,
                       ),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.eyeCareColorScheme,
-                      isSelected:
-                          settings.lightVariant == AppLightThemeVariant.eyeCare,
-                      onTap: () => notifier.setLightVariant(
-                        AppLightThemeVariant.eyeCare,
-                      ),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.matchaLightColorScheme,
-                      isSelected:
-                          settings.lightVariant == AppLightThemeVariant.matcha,
-                      onTap: () =>
-                          notifier.setLightVariant(AppLightThemeVariant.matcha),
-                    ),
-                  ],
+                      isSelected: settings.lightVariant == variant,
+                      onTap: () => notifier.setLightVariant(variant),
+                    );
+                  }).toList(),
                 ),
               ] else ...[
                 Text(
@@ -123,29 +107,14 @@ class SettingsAppearanceSection extends ConsumerWidget {
                 Wrap(
                   spacing: 16,
                   runSpacing: 12,
-                  children: [
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.darkColorScheme,
-                      isSelected:
-                          settings.darkVariant == AppDarkThemeVariant.standard,
-                      onTap: () =>
-                          notifier.setDarkVariant(AppDarkThemeVariant.standard),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.darkEyeCareColorScheme,
-                      isSelected:
-                          settings.darkVariant == AppDarkThemeVariant.eyeCare,
-                      onTap: () =>
-                          notifier.setDarkVariant(AppDarkThemeVariant.eyeCare),
-                    ),
-                    AppThemeVariantChip(
-                      colorScheme: AppTheme.matchaDarkColorScheme,
-                      isSelected:
-                          settings.darkVariant == AppDarkThemeVariant.matcha,
-                      onTap: () =>
-                          notifier.setDarkVariant(AppDarkThemeVariant.matcha),
-                    ),
-                  ],
+                  // Dynamically build a chip for every AppDarkThemeVariant.
+                  children: AppDarkThemeVariant.values.map((variant) {
+                    return AppThemeVariantChip(
+                      colorScheme: AppThemeSettings.darkColorSchemeFor(variant),
+                      isSelected: settings.darkVariant == variant,
+                      onTap: () => notifier.setDarkVariant(variant),
+                    );
+                  }).toList(),
                 ),
               ],
 
