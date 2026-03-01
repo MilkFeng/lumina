@@ -896,17 +896,11 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get appThemeModeDark;
 
-  /// Label for light theme variant selector
+  /// Label for the theme variant selector
   ///
   /// In en, this message translates to:
-  /// **'Light Theme Style'**
-  String get appLightTheme;
-
-  /// Label for dark theme variant selector
-  ///
-  /// In en, this message translates to:
-  /// **'Dark Theme Style'**
-  String get appDarkTheme;
+  /// **'Theme Variant'**
+  String get appThemeVariant;
 
   /// Theme variant: standard clean look
   ///

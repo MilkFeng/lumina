@@ -30,10 +30,7 @@ import 'package:lumina/src/core/theme/color_schemes.dart';
 enum AppThemeMode { system, light, dark }
 
 /// Selects one of the available light-mode color schemes.
-enum AppLightThemeVariant { standard, eyeCare, matcha, midnight, sakura }
-
-/// Selects one of the available dark-mode color schemes.
-enum AppDarkThemeVariant { standard, eyeCare, matcha, midnight, sakura }
+enum AppThemeVariant { standard, eyeCare, matcha, midnight, sakura }
 
 /// A single source of truth for every selectable theme in the app.
 ///
@@ -140,24 +137,20 @@ enum LuminaThemePreset {
 /// about screens.
 class AppThemeSettings {
   final AppThemeMode themeMode;
-  final AppLightThemeVariant lightVariant;
-  final AppDarkThemeVariant darkVariant;
+  final AppThemeVariant themeVariant;
 
   const AppThemeSettings({
     this.themeMode = AppThemeMode.system,
-    this.lightVariant = AppLightThemeVariant.standard,
-    this.darkVariant = AppDarkThemeVariant.standard,
+    this.themeVariant = AppThemeVariant.standard,
   });
 
   AppThemeSettings copyWith({
     AppThemeMode? themeMode,
-    AppLightThemeVariant? lightVariant,
-    AppDarkThemeVariant? darkVariant,
+    AppThemeVariant? themeVariant,
   }) {
     return AppThemeSettings(
       themeMode: themeMode ?? this.themeMode,
-      lightVariant: lightVariant ?? this.lightVariant,
-      darkVariant: darkVariant ?? this.darkVariant,
+      themeVariant: themeVariant ?? this.themeVariant,
     );
   }
 
@@ -169,10 +162,10 @@ class AppThemeSettings {
   };
 
   /// The active light preset based on the current variant.
-  LuminaThemePreset get activeLightPreset => lightPresetFor(lightVariant);
+  LuminaThemePreset get activeLightPreset => lightPresetFor(themeVariant);
 
   /// The active dark preset based on the current variant.
-  LuminaThemePreset get activeDarkPreset => darkPresetFor(darkVariant);
+  LuminaThemePreset get activeDarkPreset => darkPresetFor(themeVariant);
 
   /// The [ColorScheme] used when the app is in light mode.
   ColorScheme get lightColorScheme => activeLightPreset.colorScheme;
@@ -203,32 +196,32 @@ class AppThemeSettings {
         : lightColorScheme;
   }
 
-  /// Maps a [AppLightThemeVariant] to its corresponding [ColorScheme].
-  static ColorScheme lightColorSchemeFor(AppLightThemeVariant variant) =>
-      lightPresetFor(variant).colorScheme;
+  /// Maps a [AppThemeVariant] to its corresponding [ColorScheme] based on the given brightness.
+  static ColorScheme colorSchemeFor(
+    AppThemeVariant variant,
+    Brightness brightness,
+  ) => brightness == Brightness.dark
+      ? darkPresetFor(variant).colorScheme
+      : lightPresetFor(variant).colorScheme;
 
-  /// Maps a [AppDarkThemeVariant] to its corresponding [ColorScheme].
-  static ColorScheme darkColorSchemeFor(AppDarkThemeVariant variant) =>
-      darkPresetFor(variant).colorScheme;
-
-  /// Maps a [AppLightThemeVariant] to its [LuminaThemePreset].
-  static LuminaThemePreset lightPresetFor(AppLightThemeVariant variant) =>
+  /// Maps a [AppThemeVariant] to its [LuminaThemePreset].
+  static LuminaThemePreset lightPresetFor(AppThemeVariant variant) =>
       switch (variant) {
-        AppLightThemeVariant.standard => LuminaThemePreset.standardLight,
-        AppLightThemeVariant.eyeCare => LuminaThemePreset.eyeCareLight,
-        AppLightThemeVariant.matcha => LuminaThemePreset.matchaLight,
-        AppLightThemeVariant.midnight => LuminaThemePreset.midnightLight,
-        AppLightThemeVariant.sakura => LuminaThemePreset.sakuraLight,
+        AppThemeVariant.standard => LuminaThemePreset.standardLight,
+        AppThemeVariant.eyeCare => LuminaThemePreset.eyeCareLight,
+        AppThemeVariant.matcha => LuminaThemePreset.matchaLight,
+        AppThemeVariant.midnight => LuminaThemePreset.midnightLight,
+        AppThemeVariant.sakura => LuminaThemePreset.sakuraLight,
       };
 
-  /// Maps a [AppDarkThemeVariant] to its [LuminaThemePreset].
-  static LuminaThemePreset darkPresetFor(AppDarkThemeVariant variant) =>
+  /// Maps a [AppThemeVariant] to its [LuminaThemePreset].
+  static LuminaThemePreset darkPresetFor(AppThemeVariant variant) =>
       switch (variant) {
-        AppDarkThemeVariant.standard => LuminaThemePreset.standardDark,
-        AppDarkThemeVariant.eyeCare => LuminaThemePreset.eyeCareDark,
-        AppDarkThemeVariant.matcha => LuminaThemePreset.matchaDark,
-        AppDarkThemeVariant.midnight => LuminaThemePreset.midnightDark,
-        AppDarkThemeVariant.sakura => LuminaThemePreset.sakuraDark,
+        AppThemeVariant.standard => LuminaThemePreset.standardDark,
+        AppThemeVariant.eyeCare => LuminaThemePreset.eyeCareDark,
+        AppThemeVariant.matcha => LuminaThemePreset.matchaDark,
+        AppThemeVariant.midnight => LuminaThemePreset.midnightDark,
+        AppThemeVariant.sakura => LuminaThemePreset.sakuraDark,
       };
 }
 

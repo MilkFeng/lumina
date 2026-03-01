@@ -452,10 +452,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appThemeModeDark => '深色';
 
   @override
-  String get appLightTheme => '浅色主题风格';
-
-  @override
-  String get appDarkTheme => '深色主题风格';
+  String get appThemeVariant => '主题方案';
 
   @override
   String get appThemeVariantStandard => '标准';

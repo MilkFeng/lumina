@@ -24,7 +24,6 @@ class SettingsAppearanceSection extends ConsumerWidget {
       AppThemeMode.dark => Brightness.dark,
       AppThemeMode.system => systemBrightness,
     };
-    final isEffectivelyDark = effectiveBrightness == Brightness.dark;
 
     return SettingsInfoSection(
       title: l10n.appAppearance,
@@ -70,62 +69,35 @@ class SettingsAppearanceSection extends ConsumerWidget {
 
               const SizedBox(height: 20),
 
-              // Variant picker — only shows options for the active brightness
-              if (!isEffectivelyDark) ...[
-                Text(
-                  l10n.appLightTheme,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+              Text(
+                l10n.appThemeVariant,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  // Dynamically build a chip for every AppLightThemeVariant.
-                  child: Row(
-                    children: AppLightThemeVariant.values.map((variant) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: AppThemeVariantChip(
-                          colorScheme: AppThemeSettings.lightColorSchemeFor(
-                            variant,
-                          ),
-                          isSelected: settings.lightVariant == variant,
-                          onTap: () => notifier.setLightVariant(variant),
+              ),
+              const SizedBox(height: 8),
+
+              // Variant picker
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                // Dynamically build a chip for every AppThemeVariant.
+                child: Row(
+                  children: AppThemeVariant.values.map((variant) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: AppThemeVariantChip(
+                        colorScheme: AppThemeSettings.colorSchemeFor(
+                          variant,
+                          effectiveBrightness,
                         ),
-                      );
-                    }).toList(),
-                  ),
+                        isSelected: settings.themeVariant == variant,
+                        onTap: () => notifier.setThemeVariant(variant),
+                      ),
+                    );
+                  }).toList(),
                 ),
-              ] else ...[
-                Text(
-                  l10n.appDarkTheme,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  // Dynamically build a chip for every AppDarkThemeVariant.
-                  child: Row(
-                    children: AppDarkThemeVariant.values.map((variant) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: AppThemeVariantChip(
-                          colorScheme: AppThemeSettings.darkColorSchemeFor(
-                            variant,
-                          ),
-                          isSelected: settings.darkVariant == variant,
-                          onTap: () => notifier.setDarkVariant(variant),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
+              ),
 
               const SizedBox(height: 8),
             ],

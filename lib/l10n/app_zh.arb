@@ -787,14 +787,9 @@
     "description": "主题模式选项：始终深色"
   },
 
-  "appLightTheme": "浅色主题风格",
-  "@appLightTheme": {
-    "description": "浅色主题方案选择器标签"
-  },
-
-  "appDarkTheme": "深色主题风格",
-  "@appDarkTheme": {
-    "description": "深色主题方案选择器标签"
+  "appThemeVariant": "主题方案",
+  "@appThemeVariant": {
+    "description": "主题方案选择器标签"
   },
 
   "appThemeVariantStandard": "标准",
