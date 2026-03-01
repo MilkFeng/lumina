@@ -55,11 +55,46 @@ final class AndroidUriPath extends PlatformPath {
   @override
   String get name {
     try {
-      final decodedUri = Uri.decodeFull(uri);
-      return p.basename(decodedUri);
+      // Debug logging
+      final parsedUri = Uri.parse(uri);
+
+      // Get the last path segment
+      final segments = parsedUri.pathSegments;
+
+      if (segments.isNotEmpty) {
+        final lastSegment = segments.last;
+
+        // Extract filename from document ID format (e.g., "primary:path/file.epub")
+        if (lastSegment.contains(':')) {
+          final colonIndex = lastSegment.indexOf(':');
+          final pathPart = lastSegment.substring(colonIndex + 1);
+
+          // Get the last part after splitting by /
+          if (pathPart.contains('/')) {
+            final fileName = pathPart.split('/').last;
+            return fileName;
+          } else {
+            // No slash, the whole thing is the filename
+            return pathPart;
+          }
+        }
+
+        // If no colon, try splitting by /
+        if (lastSegment.contains('/')) {
+          final fileName = lastSegment.split('/').last;
+          return fileName;
+        }
+
+        // No special characters, return as-is
+        return lastSegment;
+      }
+
+      // Fallback: return a default name
+      return 'unknown.epub';
     } catch (e) {
-      debugPrint('Failed to decode URI: $uri, error: $e');
-      return uri; // Fallback to raw URI if decoding fails
+      // ignore: avoid_print
+      debugPrint('Error extracting file name from URI: $e');
+      return 'unknown.epub';
     }
   }
 }

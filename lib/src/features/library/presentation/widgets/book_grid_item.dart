@@ -86,9 +86,6 @@ class BookGridItem extends ConsumerWidget {
               child: LinearProgressIndicator(
                 value: book.readingProgress,
                 minHeight: 3,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.primary.withAlpha(51),
               ),
             ),
           ),
