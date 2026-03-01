@@ -3,9 +3,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'shared_preferences_provider.g.dart';
 
-/// A keep-alive provider that returns the [SharedPreferences] singleton.
-/// Using keepAlive so the instance is created once and reused app-wide.
+/// A synchronous, keep-alive provider for [SharedPreferences].
+///
+/// ⚠️ This will throw an [UnimplementedError] by default.
+/// It MUST be overridden in `main.dart` using `overrideWithValue`
+/// after `SharedPreferences.getInstance()` is awaited.
 @Riverpod(keepAlive: true)
-Future<SharedPreferences> sharedPreferences(SharedPreferencesRef ref) async {
-  return SharedPreferences.getInstance();
+SharedPreferences sharedPreferences(SharedPreferencesRef ref) {
+  throw UnimplementedError(
+    'sharedPreferencesProvider MUST be initialized via override in main.dart using ProviderScope!',
+  );
 }

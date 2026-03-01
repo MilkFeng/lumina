@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -502,9 +501,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   Widget build(BuildContext context) {
     // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
-    final prefsAsync = ref.watch(sharedPreferencesProvider);
     final settings = ref.watch(readerSettingsNotifierProvider);
-    if (!prefsAsync.hasValue || !_bookSession.isLoaded) {
+    if (!_bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         body: const SizedBox.shrink(),
