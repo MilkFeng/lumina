@@ -2,6 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/theme/color_schemes.dart';
 
+/// ============================================================================
+/// HOW TO ADD A NEW THEME VARIANT:
+///
+/// 1. Add the Light & Dark variants to the enums:
+///    Update [AppLightThemeVariant] and [AppDarkThemeVariant] with your new
+///    theme name (e.g., `sakura`).
+///
+/// 2. Define the preset values in this enum:
+///    Add the corresponding light and dark presets at the END of this enum.
+///    WARNING: Do NOT reorder or remove existing values! The declaration order
+///    is stable and defines the persisted integer [index] used by
+///    [ReaderSettings.themeIndex].
+///    Example:
+///      sakuraLight(
+///        colorSchemeGetter: kSakuraLightColorScheme,
+///        shouldOverrideTextColor: true,
+///        overridePrimaryColor: null,
+///      ),
+///
+/// 3. Update mappings in [AppThemeSettings]:
+///    Update the switch expressions in `lightPresetFor()` and `darkPresetFor()`
+///    to map your new variants to your new presets.
+/// ============================================================================
+
 /// Determines which ThemeMode the app uses.
 enum AppThemeMode { system, light, dark }
 
@@ -56,17 +80,13 @@ enum LuminaThemePreset {
   const LuminaThemePreset({
     required ColorScheme colorSchemeGetter,
 
-    /// For reader themes only: whether the preset's text color is guaranteed to be
-    /// legible against the background. If false, the reader will not override the
-    /// EPUB's default text color, allowing it to fall back to a readable color if
-    /// the preset's default text color happens to be unreadable against the background.
-    /// This is necessary for themes like standardLight where the default text color (black)
-    /// would be unreadable against the light background of some EPUBs.
+    /// For reader themes only: whether to override the EPUB's default text color
+    /// with the preset's text color.
     required this.shouldOverrideTextColor,
 
     /// For reader themes only: a single accent color to use in place of the EPUB's default
     /// accent color. This is necessary for themes like standardDark where the default accent
-    /// color (bright blue) would be unreadable against the dark background.
+    /// color (black) would be unreadable against the dark background.
     required this.overridePrimaryColor,
   }) : colorScheme = colorSchemeGetter;
 
