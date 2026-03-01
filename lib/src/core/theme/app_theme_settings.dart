@@ -30,10 +30,10 @@ import 'package:lumina/src/core/theme/color_schemes.dart';
 enum AppThemeMode { system, light, dark }
 
 /// Selects one of the available light-mode color schemes.
-enum AppLightThemeVariant { standard, eyeCare, matcha }
+enum AppLightThemeVariant { standard, eyeCare, matcha, midnight, sakura }
 
 /// Selects one of the available dark-mode color schemes.
-enum AppDarkThemeVariant { standard, eyeCare, matcha }
+enum AppDarkThemeVariant { standard, eyeCare, matcha, midnight, sakura }
 
 /// A single source of truth for every selectable theme in the app.
 ///
@@ -73,6 +73,30 @@ enum LuminaThemePreset {
   // index 5
   matchaDark(
     colorSchemeGetter: kMatchaDarkColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 6
+  midnightLight(
+    colorSchemeGetter: kMidnightLightColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 7
+  midnightDark(
+    colorSchemeGetter: kMidnightDarkColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 8
+  sakuraLight(
+    colorSchemeGetter: kSakuraLightColorScheme,
+    shouldOverrideTextColor: true,
+    overridePrimaryColor: null,
+  ),
+  // index 9
+  sakuraDark(
+    colorSchemeGetter: kSakuraDarkColorScheme,
     shouldOverrideTextColor: true,
     overridePrimaryColor: null,
   );
@@ -185,6 +209,8 @@ class AppThemeSettings {
         AppLightThemeVariant.standard => LuminaThemePreset.standardLight,
         AppLightThemeVariant.eyeCare => LuminaThemePreset.eyeCareLight,
         AppLightThemeVariant.matcha => LuminaThemePreset.matchaLight,
+        AppLightThemeVariant.midnight => LuminaThemePreset.midnightLight,
+        AppLightThemeVariant.sakura => LuminaThemePreset.sakuraLight,
       };
 
   /// Maps a [AppDarkThemeVariant] to its [LuminaThemePreset].
@@ -193,6 +219,8 @@ class AppThemeSettings {
         AppDarkThemeVariant.standard => LuminaThemePreset.standardDark,
         AppDarkThemeVariant.eyeCare => LuminaThemePreset.eyeCareDark,
         AppDarkThemeVariant.matcha => LuminaThemePreset.matchaDark,
+        AppDarkThemeVariant.midnight => LuminaThemePreset.midnightDark,
+        AppDarkThemeVariant.sakura => LuminaThemePreset.sakuraDark,
       };
 }
 
