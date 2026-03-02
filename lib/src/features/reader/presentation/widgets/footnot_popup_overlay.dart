@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -87,7 +88,9 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
     final double maxBookmarkWidth = screenSize.width * 0.8;
 
     final spaceBelow =
-        screenSize.height - widget.anchorRect.bottom - safePadding.bottom;
+        screenSize.height -
+        widget.anchorRect.bottom -
+        max(safePadding.bottom, 32);
     final spaceAbove = widget.anchorRect.top - safePadding.top;
 
     final bool showBelow = spaceBelow >= spaceAbove;

@@ -71,7 +71,7 @@ class _ActionButton extends StatelessWidget {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

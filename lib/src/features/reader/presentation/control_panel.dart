@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -167,6 +168,20 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     }
   }
 
+  String _formatPageIndicator(int current, int total) {
+    if (total == 0) {
+      return '0/0';
+    }
+    current = current.clamp(1, total);
+    final totalStr = total.toString();
+    final currentStr = current.toString().padLeft(totalStr.length, '0');
+    final minLength = 2 * 4 + 1;
+    final paddingLength =
+        max(0, minLength - currentStr.length - totalStr.length - 1) ~/ 2;
+    final paddingStr = ' ' * paddingLength;
+    return '$paddingStr$currentStr/$totalStr$paddingStr';
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(readerSettingsNotifierProvider);
@@ -240,10 +255,16 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   left: 16,
                   right: 16,
                   top: 16,
-                  bottom: MediaQuery.of(context).padding.bottom + 16,
+                  bottom: bottomStatusBarHeight + 16,
                 ),
                 decoration: BoxDecoration(
                   color: themeData.colorScheme.surfaceContainer,
+                ),
+                constraints: BoxConstraints(
+                  maxHeight:
+                      AppTheme.kBottomAppBarHeight + bottomStatusBarHeight,
+                  minHeight:
+                      AppTheme.kBottomAppBarHeight + bottomStatusBarHeight,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -288,18 +309,28 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              widget.totalSpineItems == 0
-                                  ? '0/0'
-                                  : '${widget.currentSpineItemIndex + 1}/${widget.totalSpineItems}',
+                              _formatPageIndicator(
+                                widget.currentSpineItemIndex + 1,
+                                widget.totalSpineItems,
+                              ),
                               style: themeData.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
                               ),
                             ),
                             if (widget.totalPagesInChapter > 1)
                               Text(
-                                '${widget.currentPageInChapter + 1}/${widget.totalPagesInChapter}',
+                                _formatPageIndicator(
+                                  widget.currentPageInChapter + 1,
+                                  widget.totalPagesInChapter,
+                                ),
                                 style: themeData.textTheme.bodyMedium?.copyWith(
                                   fontSize: 10,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
                                 ),
                               ),
                           ],
