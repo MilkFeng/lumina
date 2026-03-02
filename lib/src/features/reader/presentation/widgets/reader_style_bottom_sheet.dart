@@ -466,7 +466,11 @@ class _ThemeOptionChip extends StatelessWidget {
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? colorScheme.primary : colorScheme.secondary,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+                : Theme.of(
+                    context,
+                  ).colorScheme.secondary.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),

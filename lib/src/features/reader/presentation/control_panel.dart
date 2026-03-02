@@ -173,6 +173,9 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     final epubTheme = settings.toEpubTheme(context);
     final isDark = epubTheme.isDark;
     final themeData = AppTheme.buildTheme(epubTheme.colorScheme);
+
+    final topStatusBarHeight = MediaQuery.of(context).padding.top;
+    final bottomStatusBarHeight = MediaQuery.of(context).padding.bottom;
     return Theme(
       data: themeData,
       child: Stack(
@@ -183,7 +186,9 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
               milliseconds: AppTheme.defaultAnimationDurationMs,
             ),
             curve: Curves.easeInOut,
-            top: widget.showControls ? 0 : -100,
+            top: widget.showControls
+                ? 0
+                : -(AppTheme.kTopAppBarHeight + topStatusBarHeight),
             left: 0,
             right: 0,
             child: AnimatedOpacity(
@@ -194,13 +199,6 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
               child: Container(
                 decoration: BoxDecoration(
                   color: themeData.colorScheme.surfaceContainer,
-                  boxShadow: [
-                    BoxShadow(
-                      color: themeData.colorScheme.shadow.withAlpha(30),
-                      blurRadius: 10,
-                      offset: Offset.zero,
-                    ),
-                  ],
                 ),
                 child: AppBar(
                   backgroundColor: themeData.colorScheme.surfaceContainer,
@@ -227,7 +225,9 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
               milliseconds: AppTheme.defaultAnimationDurationMs,
             ),
             curve: Curves.easeInOut,
-            bottom: widget.showControls ? 0 : -100,
+            bottom: widget.showControls
+                ? 0
+                : -(AppTheme.kBottomAppBarHeight + bottomStatusBarHeight),
             left: 0,
             right: 0,
             child: AnimatedOpacity(
@@ -244,13 +244,6 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                 ),
                 decoration: BoxDecoration(
                   color: themeData.colorScheme.surfaceContainer,
-                  boxShadow: [
-                    BoxShadow(
-                      color: themeData.colorScheme.shadow.withAlpha(30),
-                      blurRadius: 10,
-                      offset: Offset.zero,
-                    ),
-                  ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
