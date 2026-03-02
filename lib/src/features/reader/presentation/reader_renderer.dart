@@ -331,20 +331,24 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
 
   Widget _buildBottomStatusBarOverlay() {
     Widget buildBadge(String content, bool tabular) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          color: _currentTheme.colorScheme.surfaceContainer,
-        ),
-        child: Text(
-          content,
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
-          ),
+      return Text(
+        content,
+        style: TextStyle(
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
+          shadows: [
+            Shadow(
+              color: Theme.of(
+                context,
+              ).colorScheme.surface.withValues(alpha: 0.5),
+              blurRadius: 1.0,
+              offset: Offset.zero,
+            ),
+          ],
         ),
       );
     }
