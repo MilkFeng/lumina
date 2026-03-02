@@ -308,9 +308,21 @@ class _ScaleSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    final disableColor = Theme.of(context).colorScheme.outline;
     return Row(
       children: [
-        Text('A', style: TextStyle(fontSize: 12, color: color)),
+        GestureDetector(
+          onTap: value > 0.5
+              ? () => onChanged((value - 0.1).clamp(0.5, 2.5))
+              : null,
+          child: Text(
+            'A',
+            style: TextStyle(
+              fontSize: 12,
+              color: value > 0.5 ? color : disableColor,
+            ),
+          ),
+        ),
         Expanded(
           child: Slider(
             value: value,
@@ -321,7 +333,18 @@ class _ScaleSlider extends StatelessWidget {
             onChanged: onChanged,
           ),
         ),
-        Text('A', style: TextStyle(fontSize: 22, color: color)),
+        GestureDetector(
+          onTap: value < 2.5
+              ? () => onChanged((value + 0.1).clamp(0.5, 2.5))
+              : null,
+          child: Text(
+            'A',
+            style: TextStyle(
+              fontSize: 22,
+              color: value < 2.5 ? color : disableColor,
+            ),
+          ),
+        ),
       ],
     );
   }

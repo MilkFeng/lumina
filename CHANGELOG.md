@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- 设置界面和阅读器下拉菜单中主题方块的一致性
+- 兼容书籍中自定义的页面颜色
+- 导入 Dialog 的 BUG
+- 更多脚注格式的支持
+- 去除主页下方的白条
+- Bottom Sheet 中缩放调节滑块的旁边两个 A 可以点击
+
 ## [v0.2.1] - 2026-03-01
 
 ### English
