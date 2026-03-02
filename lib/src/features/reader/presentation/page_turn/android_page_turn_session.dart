@@ -60,12 +60,18 @@ class AndroidPageTurnSession {
 
   Future<void> perform({
     required ReaderWebViewController webViewController,
+    required bool needAnimation,
     required bool isNext,
     required bool isVertical,
     required Future<void> Function(bool) onPerformPageTurn,
     required void Function(VoidCallback) setState,
     required bool Function() isMounted,
   }) async {
+    if (!needAnimation) {
+      await onPerformPageTurn(isNext);
+      return;
+    }
+
     final int turnToken = ++_pageTurnToken;
 
     final screenshot = await _takeScreenshot(webViewController);

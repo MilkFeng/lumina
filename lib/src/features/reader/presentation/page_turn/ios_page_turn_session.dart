@@ -35,10 +35,16 @@ class IOSPageTurnSession {
   }
 
   Future<void> perform({
+    required bool needAnimation,
     required bool isNext,
     required bool isVertical,
     required Future<void> Function(bool) onPerformPageTurn,
   }) async {
+    if (!needAnimation) {
+      await onPerformPageTurn(isNext);
+      return;
+    }
+
     await _prepareIOSPageTurn();
     await onPerformPageTurn(isNext);
     unawaited(_animateIOSPageTurn(isNext, isVertical));

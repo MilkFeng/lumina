@@ -3,8 +3,11 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/application/reader_settings_notifier.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
+import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
@@ -87,7 +90,7 @@ class ReaderRendererController {
   }
 }
 
-class ReaderRenderer extends StatefulWidget {
+class ReaderRenderer extends ConsumerStatefulWidget {
   final ReaderRendererController controller;
   final BookSession bookSession;
   final EpubWebViewHandler webViewHandler;
@@ -138,10 +141,10 @@ class ReaderRenderer extends StatefulWidget {
   }
 
   @override
-  State<ReaderRenderer> createState() => _ReaderRendererState();
+  ConsumerState<ReaderRenderer> createState() => _ReaderRendererState();
 }
 
-class _ReaderRendererState extends State<ReaderRenderer>
+class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     with TickerProviderStateMixin {
   final GlobalKey _webViewKey = GlobalKey();
   final ReaderWebViewController _webViewController = ReaderWebViewController();
@@ -150,6 +153,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
   late final IOSPageTurnSession _iosPageTurnSession;
 
   late EpubTheme _currentTheme;
+  late bool _needPageTurnAnimation;
 
   EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
     final safePaddings = MediaQuery.paddingOf(context);
@@ -185,6 +189,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     );
     _iosPageTurnSession = IOSPageTurnSession();
     _currentTheme = widget.initializeTheme;
+    _needPageTurnAnimation = false;
   }
 
   @override
@@ -200,6 +205,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
     if (Platform.isAndroid) {
       await _androidPageTurnSession.perform(
         webViewController: _webViewController,
+        needAnimation: _needPageTurnAnimation,
         isNext: isNext,
         isVertical: widget.isVertical,
         onPerformPageTurn: widget.onPerformPageTurn,
@@ -208,6 +214,7 @@ class _ReaderRendererState extends State<ReaderRenderer>
       );
     } else {
       await _iosPageTurnSession.perform(
+        needAnimation: _needPageTurnAnimation,
         isNext: isNext,
         isVertical: widget.isVertical,
         onPerformPageTurn: widget.onPerformPageTurn,
@@ -287,6 +294,15 @@ class _ReaderRendererState extends State<ReaderRenderer>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(readerSettingsNotifierProvider, (previous, next) {
+      if (previous?.pageAnimation != next.pageAnimation) {
+        setState(() {
+          _needPageTurnAnimation =
+              next.pageAnimation != ReaderPageAnimation.none;
+        });
+      }
+    });
+
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
