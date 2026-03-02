@@ -255,10 +255,16 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                   left: 16,
                   right: 16,
                   top: 16,
-                  bottom: MediaQuery.of(context).padding.bottom + 16,
+                  bottom: bottomStatusBarHeight + 16,
                 ),
                 decoration: BoxDecoration(
                   color: themeData.colorScheme.surfaceContainer,
+                ),
+                constraints: BoxConstraints(
+                  maxHeight:
+                      AppTheme.kBottomAppBarHeight + bottomStatusBarHeight,
+                  minHeight:
+                      AppTheme.kBottomAppBarHeight + bottomStatusBarHeight,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
