@@ -9,6 +9,9 @@ class AppTheme {
   static const int defaultLongAnimationDurationMs = 320;
   static const int defaultPresentationDurationMs = 3 * 1000; // 3 seconds
 
+  static const double kBottomAppBarHeight = 64.0 + 16.0 + 16.0;
+  static const double kTopAppBarHeight = 64.0;
+
   static ThemeData buildTheme(ColorScheme colorScheme) {
     final notionRadius = BorderRadius.circular(8.0);
     return ThemeData(

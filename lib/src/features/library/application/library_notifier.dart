@@ -152,7 +152,6 @@ class LibraryNotifier extends _$LibraryNotifier {
     int currentCount = 0;
 
     for (final path in paths) {
-      currentCount++;
       ImportableEpub? importable;
       String currentFileName = '';
 
@@ -213,6 +212,7 @@ class LibraryNotifier extends _$LibraryNotifier {
             debugPrint('Failed to clean cache file: $cleanError');
           }
         }
+        currentCount++;
       }
     }
 

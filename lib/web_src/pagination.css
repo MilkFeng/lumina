@@ -4,7 +4,7 @@ body {
   padding: 0 !important;
   width: var(--lumina-safe-width) !important;
   height: var(--lumina-safe-height) !important;
-  background-color: transparent !important;
+  background-color: transparent;
   touch-action: none !important;
 
   -webkit-user-select: none;
@@ -103,14 +103,6 @@ figure {
 a {
   pointer-events: none !important;
   cursor: default !important;
-  text-decoration: none;
-}
-
-a:visited {
-  color: currentColor !important;
-  text-decoration: inherit !important;
-  border-bottom: inherit !important;
-  opacity: 1 !important;
 }
 
 body.lumina-override-color {
@@ -141,6 +133,7 @@ body.lumina-override-color a:link,
 body.lumina-override-color a:visited,
 body.lumina-override-color a:active {
   color: var(--lumina-primary-color);
+  text-decoration: none;
 }
 
 body.lumina-override-color a:visited {

@@ -1292,6 +1292,24 @@ abstract class AppLocalizations {
   /// **'Follow in-book links'**
   String get readerHandleIntraLink;
 
+  /// Reader style sheet section title for page-turning animation
+  ///
+  /// In en, this message translates to:
+  /// **'Page Animation'**
+  String get readerPageAnimationSection;
+
+  /// Page animation option: no animation
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get readerPageAnimationNone;
+
+  /// Page animation option: slide/swipe transition
+  ///
+  /// In en, this message translates to:
+  /// **'Slide'**
+  String get readerPageAnimationSlide;
+
   /// Error message shown when the user tries to open a link that cannot be handled by the system
   ///
   /// In en, this message translates to:

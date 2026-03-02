@@ -147,7 +147,7 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                 child: ClipRRect(
                   borderRadius: borderRadius,
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                     child: Container(
                       constraints: BoxConstraints(
                         maxHeight: maxBookmarkHeight,

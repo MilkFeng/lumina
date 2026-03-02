@@ -17,12 +17,14 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   static const _kMarginRight = 'reader_margin_right';
   static const _kLinkHandling = 'reader_link_handling';
   static const _kHandleIntraLink = 'reader_handle_intra_link';
+  static const _kPageAnimation = 'reader_page_animation';
 
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
   ReaderSettings build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final linkHandlingIndex = prefs.getInt(_kLinkHandling);
+    final pageAnimationIndex = prefs.getInt(_kPageAnimation);
 
     return ReaderSettings().copyWith(
       zoom: prefs.getDouble(_kZoom),
@@ -36,6 +38,9 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
           ? ReaderLinkHandling.values.elementAt(linkHandlingIndex)
           : null,
       handleIntraLink: prefs.getBool(_kHandleIntraLink),
+      pageAnimation: pageAnimationIndex != null
+          ? ReaderPageAnimation.values.elementAt(pageAnimationIndex)
+          : null,
     );
   }
 
@@ -91,5 +96,10 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setHandleIntraLink(bool value) async {
     await _prefs.setBool(_kHandleIntraLink, value);
     state = state.copyWith(handleIntraLink: value);
+  }
+
+  Future<void> setPageAnimation(ReaderPageAnimation value) async {
+    await _prefs.setInt(_kPageAnimation, value.index);
+    state = state.copyWith(pageAnimation: value);
   }
 }

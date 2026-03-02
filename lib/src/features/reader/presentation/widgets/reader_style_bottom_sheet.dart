@@ -1,10 +1,18 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/theme/app_theme_settings.dart';
+import 'package:lumina/src/core/widgets/integer_stepper.dart';
+import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
+import 'package:lumina/src/core/widgets/settings_section_title.dart';
+import 'package:lumina/src/core/widgets/settings_sub_label.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
+import 'reader_link_handling_selector.dart';
+import 'reader_page_animation_selector.dart';
+import 'reader_scale_slider.dart';
+import 'reader_theme_option_chip.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
 class ReaderStyleBottomSheet extends ConsumerStatefulWidget {
@@ -26,6 +34,7 @@ class _ReaderStyleBottomSheetState
   late int _themeIndex;
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
+  late ReaderPageAnimation _pageAnimation;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -44,6 +53,7 @@ class _ReaderStyleBottomSheetState
     _themeIndex = s.themeIndex;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
+    _pageAnimation = s.pageAnimation;
   }
 
   @override
@@ -67,7 +77,7 @@ class _ReaderStyleBottomSheetState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Section 1: Appearance ───────────────────────────────────────
-            _SectionTitle(label: l10n.readerAppearance),
+            SettingsSectionTitle(label: l10n.readerAppearance),
             const SizedBox(height: 12),
 
             // Reader Theme – only shown when Follow App Theme is off.
@@ -96,7 +106,7 @@ class _ReaderStyleBottomSheetState
                               children: presets.map((preset) {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 16),
-                                  child: _ThemeOptionChip(
+                                  child: ReaderThemeOptionChip(
                                     colorScheme: preset.colorScheme,
                                     isSelected: _themeIndex == preset.index,
                                     onTap: () {
@@ -133,7 +143,7 @@ class _ReaderStyleBottomSheetState
             ),
 
             // Follow App Theme
-            _FollowSystemSwitch(
+            LabeledSwitchTile(
               label: l10n.readerFollowAppTheme,
               value: _followAppTheme,
               onChanged: (v) {
@@ -145,13 +155,13 @@ class _ReaderStyleBottomSheetState
             const SizedBox(height: 24),
 
             // ── Section 2: Typography & Layout ─────────────────────────────
-            _SectionTitle(label: l10n.readerTypographyLayout),
+            SettingsSectionTitle(label: l10n.readerTypographyLayout),
             const SizedBox(height: 16),
 
             // Scale
-            _SubLabel(label: l10n.readerScale),
+            SettingsSubLabel(label: l10n.readerScale),
             const SizedBox(height: 4),
-            _ScaleSlider(
+            ReaderScaleSlider(
               value: _scale,
               onChanged: (v) {
                 setState(() => _scale = v);
@@ -162,12 +172,12 @@ class _ReaderStyleBottomSheetState
             const SizedBox(height: 20),
 
             // Margins
-            _SubLabel(label: l10n.readerMargins),
+            SettingsSubLabel(label: l10n.readerMargins),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: _MarginStepper(
+                  child: IntegerStepper(
                     label: l10n.readerMarginTop,
                     value: _topMargin,
                     min: _marginMin,
@@ -181,7 +191,7 @@ class _ReaderStyleBottomSheetState
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _MarginStepper(
+                  child: IntegerStepper(
                     label: l10n.readerMarginBottom,
                     value: _bottomMargin,
                     min: _marginMin,
@@ -199,7 +209,7 @@ class _ReaderStyleBottomSheetState
             Row(
               children: [
                 Expanded(
-                  child: _MarginStepper(
+                  child: IntegerStepper(
                     label: l10n.readerMarginLeft,
                     value: _leftMargin,
                     min: _marginMin,
@@ -213,7 +223,7 @@ class _ReaderStyleBottomSheetState
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _MarginStepper(
+                  child: IntegerStepper(
                     label: l10n.readerMarginRight,
                     value: _rightMargin,
                     min: _marginMin,
@@ -231,9 +241,9 @@ class _ReaderStyleBottomSheetState
             const SizedBox(height: 24),
 
             // ── Section 3: Links ──────────────────────────────────────────
-            _SectionTitle(label: l10n.readerLinkHandlingSection),
+            SettingsSectionTitle(label: l10n.readerLinkHandlingSection),
             const SizedBox(height: 12),
-            _LinkHandlingSelector(
+            ReaderLinkHandlingSelector(
               value: _linkHandling,
               onChanged: (v) {
                 setState(() => _linkHandling = v);
@@ -244,7 +254,7 @@ class _ReaderStyleBottomSheetState
               neverLabel: l10n.readerLinkHandlingNever,
             ),
             const SizedBox(height: 12),
-            _FollowSystemSwitch(
+            LabeledSwitchTile(
               label: l10n.readerHandleIntraLink,
               value: _handleIntraLink,
               icon: Icons.link_outlined,
@@ -253,316 +263,24 @@ class _ReaderStyleBottomSheetState
                 _notifier.setHandleIntraLink(v);
               },
             ),
+
+            const SizedBox(height: 24),
+
+            // ── Section 4: Page Animation ─────────────────────────────────
+            SettingsSectionTitle(label: l10n.readerPageAnimationSection),
+            const SizedBox(height: 12),
+            ReaderPageAnimationSelector(
+              value: _pageAnimation,
+              onChanged: (v) {
+                setState(() => _pageAnimation = v);
+                _notifier.setPageAnimation(v);
+              },
+              noneLabel: l10n.readerPageAnimationNone,
+              slideLabel: l10n.readerPageAnimationSlide,
+            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-// ── Private helper widgets ─────────────────────────────────────────────────────
-
-/// Grey section-title label.
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontSize: 14,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-    );
-  }
-}
-
-/// Smaller sub-label used within a section (e.g. "Scale", "Margins").
-class _SubLabel extends StatelessWidget {
-  const _SubLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontSize: 13,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-    );
-  }
-}
-
-/// Scale slider with a small "A" on the left and a large "A" on the right.
-class _ScaleSlider extends StatelessWidget {
-  const _ScaleSlider({required this.value, required this.onChanged});
-
-  final double value;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Row(
-      children: [
-        Text('A', style: TextStyle(fontSize: 12, color: color)),
-        Expanded(
-          child: Slider(
-            value: value,
-            min: 0.5,
-            max: 2.5,
-            divisions: 20,
-            label: value.toStringAsFixed(1),
-            onChanged: onChanged,
-          ),
-        ),
-        Text('A', style: TextStyle(fontSize: 22, color: color)),
-      ],
-    );
-  }
-}
-
-/// Compact stepper used for each margin value.
-class _MarginStepper extends StatelessWidget {
-  const _MarginStepper({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.step,
-    required this.onChanged,
-  });
-
-  final String label;
-  final int value;
-  final int min;
-  final int max;
-  final int step;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.remove_outlined, size: 16),
-                onPressed: value > min ? () => onChanged(value - step) : null,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                visualDensity: VisualDensity.compact,
-                color: colorScheme.primary,
-                disabledColor: colorScheme.outline,
-              ),
-              Text(
-                '$value',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add_outlined, size: 16),
-                onPressed: value < max ? () => onChanged(value + step) : null,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                visualDensity: VisualDensity.compact,
-                color: colorScheme.primary,
-                disabledColor: colorScheme.outline,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Row-style toggle for "Follow System Theme" with a Switch on the right.
-class _FollowSystemSwitch extends StatelessWidget {
-  const _FollowSystemSwitch({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    this.icon = Icons.brightness_auto_outlined,
-  });
-
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Switch(value: value, onChanged: onChanged),
-        ],
-      ),
-    );
-  }
-}
-
-class _ThemeOptionChip extends StatelessWidget {
-  final ColorScheme colorScheme;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ThemeOptionChip({
-    required this.colorScheme,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? colorScheme.primary : colorScheme.secondary,
-            width: 1.5,
-          ),
-        ),
-        child: Icon(
-          isSelected ? Icons.check_outlined : Icons.text_format_outlined,
-          size: 32,
-          color: colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-/// Segmented selector for external link-handling behaviour.
-class _LinkHandlingSelector extends StatelessWidget {
-  const _LinkHandlingSelector({
-    required this.value,
-    required this.onChanged,
-    required this.askLabel,
-    required this.alwaysLabel,
-    required this.neverLabel,
-  });
-
-  final ReaderLinkHandling value;
-  final ValueChanged<ReaderLinkHandling> onChanged;
-  final String askLabel;
-  final String alwaysLabel;
-  final String neverLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    Widget chip(ReaderLinkHandling option, IconData icon, String label) {
-      final selected = value == option;
-      return Expanded(
-        child: InkWell(
-          onTap: () => onChanged(option),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: selected
-                  ? colorScheme.primaryContainer
-                  : colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: selected
-                    ? colorScheme.primary
-                    : colorScheme.outlineVariant,
-                width: 1.5,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: selected
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: selected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurfaceVariant,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
-        const SizedBox(width: 8),
-        chip(
-          ReaderLinkHandling.always,
-          Icons.open_in_new_outlined,
-          alwaysLabel,
-        ),
-        const SizedBox(width: 8),
-        chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
-      ],
     );
   }
 }

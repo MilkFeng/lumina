@@ -6,7 +6,7 @@ part of 'app_theme_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appThemeNotifierHash() => r'c6ce3a981ba2a0d632d861eeb1ba85ce6c200b6e';
+String _$appThemeNotifierHash() => r'274878e7d790d46473099be1c9fc84d2eac0b110';
 
 /// Keeps the user's chosen app-wide theme settings alive for the entire
 /// app session and persists them with [SharedPreferences].

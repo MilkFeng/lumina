@@ -255,6 +255,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       return const Center(child: CircularProgressIndicator(strokeWidth: 2));
     }
 
+    final bottomStatusBarHeight = MediaQuery.of(context).padding.bottom;
+
     return Stack(
       children: [
         NestedScrollView(
@@ -292,7 +294,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             milliseconds: AppTheme.defaultAnimationDurationMs,
           ),
           curve: Curves.easeInOut,
-          bottom: state.isSelectionMode ? 0 : -100,
+          bottom: state.isSelectionMode
+              ? 0
+              : -(AppTheme.kBottomAppBarHeight + bottomStatusBarHeight),
           left: 0,
           right: 0,
           child: LibrarySelectionBar(
@@ -331,6 +335,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       return const Center(child: CircularProgressIndicator(strokeWidth: 2));
     }
 
+    final bottomStatusBarHeight = MediaQuery.of(context).padding.bottom;
+
     // Use Builder to get the correct context inside NestedScrollView
     return Builder(
       builder: (BuildContext context) {
@@ -342,7 +348,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             ),
             _buildItemsGrid(context, ref, state, booksForTab),
             if (state.isSelectionMode)
-              const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: AppTheme.kBottomAppBarHeight + bottomStatusBarHeight,
+                ),
+              ),
           ],
         );
       },

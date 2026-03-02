@@ -669,6 +669,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerHandleIntraLink => '跟随书内链接';
 
   @override
+  String get readerPageAnimationSection => '翻页动画';
+
+  @override
+  String get readerPageAnimationNone => '无动画';
+
+  @override
+  String get readerPageAnimationSlide => '滑动翻页';
+
+  @override
   String cannotOpenLink(String url) {
     return '无法打开链接：$url';
   }

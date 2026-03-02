@@ -688,6 +688,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerHandleIntraLink => 'Follow in-book links';
 
   @override
+  String get readerPageAnimationSection => 'Page Animation';
+
+  @override
+  String get readerPageAnimationNone => 'None';
+
+  @override
+  String get readerPageAnimationSlide => 'Slide';
+
+  @override
   String cannotOpenLink(String url) {
     return 'Cannot open this link: $url';
   }
