@@ -189,7 +189,9 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     );
     _iosPageTurnSession = IOSPageTurnSession();
     _currentTheme = widget.initializeTheme;
-    _needPageTurnAnimation = false;
+    _needPageTurnAnimation =
+        ref.read(readerSettingsNotifierProvider).pageAnimation !=
+        ReaderPageAnimation.none;
   }
 
   @override
