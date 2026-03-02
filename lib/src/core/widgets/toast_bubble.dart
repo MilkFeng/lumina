@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 enum ToastBubbleType { success, error, info }
@@ -21,24 +20,16 @@ class ToastBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = _backgroundColor(type, colorScheme);
+    final bgAlpha = useBlur ? 0.8 : 1.0;
+    final backgroundColor = _backgroundColor(
+      type,
+      colorScheme,
+    ).withValues(alpha: bgAlpha);
     final contentColor = _contentColor(type, colorScheme);
     final icon = iconOverride ?? _iconForType(type);
 
-    final bubble = Container(
+    final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: isDark ? 0.4 : 0.15),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -61,14 +52,24 @@ class ToastBubble extends StatelessWidget {
       ),
     );
 
-    if (!useBlur) return bubble;
-
-    return ClipRRect(
+    final glassDecoration = BoxDecoration(
+      color: backgroundColor,
       borderRadius: BorderRadius.circular(999),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: bubble,
-      ),
+    );
+
+    final innerBubble = useBlur
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(decoration: glassDecoration, child: content),
+            ),
+          )
+        : Container(decoration: glassDecoration, child: content);
+
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(999)),
+      child: innerBubble,
     );
   }
 
@@ -76,7 +77,7 @@ class ToastBubble extends StatelessWidget {
     switch (type) {
       case ToastBubbleType.success:
       case ToastBubbleType.info:
-        return colorScheme.inverseSurface.withValues(alpha: 0.6);
+        return colorScheme.inverseSurface;
       case ToastBubbleType.error:
         return colorScheme.error;
     }
