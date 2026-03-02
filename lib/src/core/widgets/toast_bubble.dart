@@ -78,7 +78,7 @@ class ToastBubble extends StatelessWidget {
       case ToastBubbleType.info:
         return colorScheme.inverseSurface.withValues(alpha: 0.6);
       case ToastBubbleType.error:
-        return colorScheme.error.withValues(alpha: 0.6);
+        return colorScheme.error;
     }
   }
 

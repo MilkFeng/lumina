@@ -628,14 +628,23 @@ class EpubReader {
     });
   }
 
-  _applyOriginalBackgroundColor() {
-    const iframe = this._frameElement('curr');
-    if (!iframe || !iframe.contentDocument) return;
+  _getOriginalBackgroundColor(iframe) {
+    if (!iframe || !iframe.contentDocument) return null;
     const doc = iframe.contentDocument;
     const win = iframe.contentWindow;
     const bgColor = win.getComputedStyle(doc.body).backgroundColor;
     if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-      document.documentElement.style.setProperty('--lumina-epub-original-bg-color', bgColor);
+      return bgColor;
+    }
+    return null;
+  }
+
+  _applyOriginalBackgroundColor() {
+    const iframe = this._frameElement('curr');
+    if (!iframe) return;
+    const originalBgColor = this._getOriginalBackgroundColor(iframe);
+    if (originalBgColor) {
+      document.documentElement.style.setProperty('--lumina-epub-original-bg-color', originalBgColor);
     } else {
       document.documentElement.style.removeProperty('--lumina-epub-original-bg-color');
     }
@@ -656,7 +665,8 @@ class EpubReader {
       variableStyle.innerHTML = this.state.config.theme.variableCss;
       doc.head.appendChild(variableStyle);
 
-      if (this.state.config.theme.shouldOverrideTextColor) {
+      const originalBgColor = this._getOriginalBackgroundColor(iframe);
+      if (this.state.config.theme.shouldOverrideTextColor && originalBgColor == null) {
         doc.body.classList.add('lumina-override-color');
       } else {
         doc.body.classList.remove('lumina-override-color');
@@ -940,7 +950,7 @@ class EpubReader {
     this.jumpToPageFor(slot, pageCount - 1);
   }
 
-  _updateCSSVariables(doc, styleId = 'injected-variable-style') {
+  _updateCSSVariables(doc, styleId = 'injected-variable-style', iframe = null) {
     const root = doc.documentElement;
     const body = doc.body;
 
@@ -963,10 +973,19 @@ class EpubReader {
     root.style.setProperty('--lumina-surface-container', this.state.config.theme.surfaceContainerColor);
     root.style.setProperty('--lumina-surface-container-high', this.state.config.theme.surfaceContainerHighColor);
 
-    if (this.state.config.theme.shouldOverrideTextColor) {
-      body.classList.add('lumina-override-color');
+    if (iframe != null) {
+      const originalBgColor = this._getOriginalBackgroundColor(iframe);
+      if (this.state.config.theme.shouldOverrideTextColor && originalBgColor == null) {
+        body.classList.add('lumina-override-color');
+      } else {
+        body.classList.remove('lumina-override-color');
+      }
     } else {
-      body.classList.remove('lumina-override-color');
+      if (this.state.config.theme.shouldOverrideTextColor) {
+        body.classList.add('lumina-override-color');
+      } else {
+        body.classList.remove('lumina-override-color');
+      }
     }
 
     const existingStyle = doc.getElementById(styleId);
@@ -1053,7 +1072,7 @@ class EpubReader {
         const pageIndex = this._calculateCurrentPageIndex();
         const pageCount = this._calculatePageCount(iframe);
         const pageIndexPercentage = pageCount > 0 ? pageIndex / pageCount : 0;
-        this._updateCSSVariables(doc, 'injected-variable-style');
+        this._updateCSSVariables(doc, 'injected-variable-style', iframe);
         requestAnimationFrame(() => {
           this._reloadFrame(iframe, pageIndexPercentage);
         });
