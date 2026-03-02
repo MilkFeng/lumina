@@ -120,6 +120,9 @@ class _LibraryAppBarState extends State<LibraryAppBar>
                         minWidth: 48,
                         minHeight: 48,
                       ),
+                      hoverColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      splashColor: Colors.transparent,
                       onPressed: () => context.push('/settings'),
                       icon: SvgPicture.asset(
                         logoSvgPath,
