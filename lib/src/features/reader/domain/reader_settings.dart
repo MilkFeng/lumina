@@ -5,6 +5,9 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 /// Controls how the reader handles external link taps.
 enum ReaderLinkHandling { ask, always, never }
 
+/// Controls the page-turning animation style.
+enum ReaderPageAnimation { none, slide }
+
 class ReaderSettings {
   final double zoom;
   final bool followAppTheme;
@@ -17,6 +20,7 @@ class ReaderSettings {
   final double marginRight;
   final ReaderLinkHandling linkHandling;
   final bool handleIntraLink;
+  final ReaderPageAnimation pageAnimation;
 
   const ReaderSettings({
     this.zoom = 1.0,
@@ -28,6 +32,7 @@ class ReaderSettings {
     this.marginRight = 16.0,
     this.linkHandling = ReaderLinkHandling.ask,
     this.handleIntraLink = true,
+    this.pageAnimation = ReaderPageAnimation.slide,
   });
 
   ReaderSettings copyWith({
@@ -40,6 +45,7 @@ class ReaderSettings {
     double? marginRight,
     ReaderLinkHandling? linkHandling,
     bool? handleIntraLink,
+    ReaderPageAnimation? pageAnimation,
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
@@ -51,6 +57,7 @@ class ReaderSettings {
       marginRight: marginRight ?? this.marginRight,
       linkHandling: linkHandling ?? this.linkHandling,
       handleIntraLink: handleIntraLink ?? this.handleIntraLink,
+      pageAnimation: pageAnimation ?? this.pageAnimation,
     );
   }
 

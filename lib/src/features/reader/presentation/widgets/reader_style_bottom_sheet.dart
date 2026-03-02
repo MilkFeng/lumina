@@ -26,6 +26,7 @@ class _ReaderStyleBottomSheetState
   late int _themeIndex;
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
+  late ReaderPageAnimation _pageAnimation;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -44,6 +45,7 @@ class _ReaderStyleBottomSheetState
     _themeIndex = s.themeIndex;
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
+    _pageAnimation = s.pageAnimation;
   }
 
   @override
@@ -252,6 +254,21 @@ class _ReaderStyleBottomSheetState
                 setState(() => _handleIntraLink = v);
                 _notifier.setHandleIntraLink(v);
               },
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Section 4: Page Animation ─────────────────────────────────
+            _SectionTitle(label: l10n.readerPageAnimationSection),
+            const SizedBox(height: 12),
+            _PageAnimationSelector(
+              value: _pageAnimation,
+              onChanged: (v) {
+                setState(() => _pageAnimation = v);
+                _notifier.setPageAnimation(v);
+              },
+              noneLabel: l10n.readerPageAnimationNone,
+              slideLabel: l10n.readerPageAnimationSlide,
             ),
           ],
         ),
@@ -589,6 +606,89 @@ class _LinkHandlingSelector extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
+      ],
+    );
+  }
+}
+
+/// Segmented selector for page-turning animation style.
+class _PageAnimationSelector extends StatelessWidget {
+  const _PageAnimationSelector({
+    required this.value,
+    required this.onChanged,
+    required this.noneLabel,
+    required this.slideLabel,
+  });
+
+  final ReaderPageAnimation value;
+  final ValueChanged<ReaderPageAnimation> onChanged;
+  final String noneLabel;
+  final String slideLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    Widget chip(ReaderPageAnimation option, IconData icon, String label) {
+      final selected = value == option;
+      return Expanded(
+        child: InkWell(
+          onTap: () => onChanged(option),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: selected
+                  ? colorScheme.primaryContainer
+                  : colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.outlineVariant,
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: selected
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: selected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurfaceVariant,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        chip(
+          ReaderPageAnimation.none,
+          Icons.not_interested_outlined,
+          noneLabel,
+        ),
+        const SizedBox(width: 8),
+        chip(ReaderPageAnimation.slide, Icons.swipe_outlined, slideLabel),
       ],
     );
   }
