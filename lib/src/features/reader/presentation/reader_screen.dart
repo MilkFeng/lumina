@@ -61,6 +61,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   ThemeData? _currentTheme;
   Timer? _themeUpdateDebouncer;
 
+  String _displayProgress = "0.00%";
+  Timer? _progressDebouncer;
+
   OverlayEntry? _footnoteOverlayEntry;
   final GlobalKey<FootnotePopupOverlayState> _footnoteKey =
       GlobalKey<FootnotePopupOverlayState>();
@@ -91,6 +94,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         _shouldShowWebView = true;
       }
     });
+    _hideBottomNavigationBar();
   }
 
   @override
@@ -100,6 +104,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     _routeAnimation = null;
     _themeUpdateDebouncer?.cancel();
     _removeFootnoteOverlay(animate: false);
+    _restoreSystemUI();
     super.dispose();
   }
 
@@ -110,6 +115,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         state == AppLifecycleState.detached) {
       _saveProgress();
     }
+  }
+
+  void _hideBottomNavigationBar() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: [SystemUiOverlay.top],
+    );
+  }
+
+  void _restoreSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   @override
@@ -150,6 +166,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         _currentSpineItemIndex = _bookSession.initialChapterIndex;
         _initialProgressToRestore = _bookSession.initialScrollPosition;
       });
+      _updateProgressDebounced();
     } catch (e) {
       if (mounted) {
         ToastService.showError(
@@ -170,7 +187,40 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
+  double _calculateProgressRatio() {
+    if (_totalPagesInChapter == 0) return 0.0;
+    final pageProgress = (_currentPageInChapter + 1) / _totalPagesInChapter;
+    final chapterProgress =
+        (_currentSpineItemIndex + 1) / _bookSession.spine.length;
+    return (chapterProgress + pageProgress / _bookSession.spine.length).clamp(
+      0.0,
+      1.0,
+    );
+  }
+
+  void _updateProgressDebounced() {
+    _progressDebouncer?.cancel();
+    _progressDebouncer = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      if (_isWebViewLoading) return;
+
+      final ratio = _calculateProgressRatio();
+      final newProgress = '${(ratio * 100.0).toStringAsFixed(2)}%';
+
+      if (_displayProgress != newProgress) {
+        setState(() {
+          _displayProgress = newProgress;
+        });
+      }
+    });
+  }
+
   void _toggleControls() {
+    if (_showControls) {
+      _hideBottomNavigationBar();
+    } else {
+      _restoreSystemUI();
+    }
     setState(() {
       _showControls = !_showControls;
     });
@@ -188,6 +238,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _currentPageInChapter = 0; // Reset to first page of new chapter
       _initialProgressToRestore = null;
     });
+    _updateProgressDebounced();
 
     await _loadCarousel(anchor);
     _saveProgress();
@@ -241,6 +292,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _currentPageInChapter = 0;
       _initialProgressToRestore = null;
     });
+    _updateProgressDebounced();
 
     _preloadPreviousOf(_currentSpineItemIndex);
     _saveProgress();
@@ -262,6 +314,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       _currentPageInChapter = 0;
       _initialProgressToRestore = null;
     });
+    _updateProgressDebounced();
 
     _preloadNextOf(_currentSpineItemIndex);
     _saveProgress();
@@ -358,6 +411,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     setState(() {
       _currentPageInChapter = pageIndex;
     });
+    _updateProgressDebounced();
 
     await _rendererController.jumpToPage(pageIndex);
     _saveProgress();
@@ -586,6 +640,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           if (_currentPageInChapter >= _totalPagesInChapter) {
                             _currentPageInChapter = _totalPagesInChapter - 1;
                           }
+                          _updateProgressDebounced();
                         });
                         if (_initialProgressToRestore != null) {
                           final ratio = _initialProgressToRestore ?? 0.0;
@@ -599,6 +654,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         setState(() {
                           _currentPageInChapter = pageIndex;
                         });
+                        _updateProgressDebounced();
                         _saveProgress();
                       },
                       onRendererInitialized: () async {
@@ -615,6 +671,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       shouldHandleLinkTap: _shouldHandleLinkTap,
                       shouldShowWebView: _shouldShowWebView,
                       initializeTheme: settings.toEpubTheme(context),
+                      statusBarLeftContent: activateTocTitle,
+                      statusBarRightContent: _displayProgress,
                     ),
 
                     ControlPanel(

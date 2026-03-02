@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -111,6 +112,8 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final bool Function(String url, Rect rect) shouldHandleLinkTap;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
+  final String statusBarLeftContent;
+  final String statusBarRightContent;
 
   const ReaderRenderer({
     super.key,
@@ -134,6 +137,8 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.shouldHandleLinkTap,
     required this.shouldShowWebView,
     required this.initializeTheme,
+    required this.statusBarLeftContent,
+    required this.statusBarRightContent,
   });
 
   bool get isVertical {
@@ -157,11 +162,12 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
 
   EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
     final safePaddings = MediaQuery.paddingOf(context);
+    final safeBottomPadding = max(safePaddings.bottom, 32);
     return EdgeInsets.fromLTRB(
       basePadding.left + safePaddings.left,
       basePadding.top + safePaddings.top,
       basePadding.right + safePaddings.right,
-      basePadding.bottom + safePaddings.bottom,
+      basePadding.bottom + safeBottomPadding,
     );
   }
 
@@ -315,18 +321,69 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
         onLongPressStart: widget.shouldShowWebView
             ? _handleLongPressStart
             : null,
-        child: Platform.isAndroid
-            ? _androidPageTurnSession.buildAnimatedContainer(
-                context,
-                _buildWebView(),
-                _buildScreenshotContainer,
-              )
-            : _iosPageTurnSession.buildAnimatedContainer(
-                context,
-                _buildWebView(),
-              ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [_buildBody(), _buildBottomStatusBarOverlay()],
+        ),
       ),
     );
+  }
+
+  Widget _buildBottomStatusBarOverlay() {
+    Widget buildBadge(String content, bool tabular) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: _currentTheme.colorScheme.surfaceContainer,
+        ),
+        child: Text(
+          content,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
+          ),
+        ),
+      );
+    }
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        padding: const EdgeInsets.only(left: 32, right: 32, bottom: 8),
+        constraints: const BoxConstraints(minHeight: 32, maxHeight: 32),
+        child: AnimatedOpacity(
+          duration: (widget.isLoading || !widget.shouldShowWebView)
+              ? Duration.zero
+              : const Duration(
+                  milliseconds: AppTheme.defaultAnimationDurationMs,
+                ),
+          curve: Curves.easeOut,
+          opacity: (widget.isLoading || !widget.shouldShowWebView) ? 0.0 : 1.0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              buildBadge(widget.statusBarLeftContent, false),
+              buildBadge(widget.statusBarRightContent, true),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    return Platform.isAndroid
+        ? _androidPageTurnSession.buildAnimatedContainer(
+            context,
+            _buildWebView(),
+            _buildScreenshotContainer,
+          )
+        : _iosPageTurnSession.buildAnimatedContainer(context, _buildWebView());
   }
 
   Widget _buildContentWrapper(Widget child) {
