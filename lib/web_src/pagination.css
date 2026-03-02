@@ -201,3 +201,9 @@ span.notes,
   text-decoration: underline dotted !important;
   cursor: pointer;
 }
+
+/* Custom font override – applied when the user enables "Override Book Font" */
+body.lumina-override-font,
+body.lumina-override-font * {
+  font-family: var(--lumina-font-family, inherit) !important;
+}

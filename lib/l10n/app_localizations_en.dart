@@ -697,6 +697,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerPageAnimationSlide => 'Slide';
 
   @override
+  String get readerFontSection => 'Font';
+
+  @override
+  String get readerFontDefault => 'Book Default';
+
+  @override
+  String get readerOverrideFontFamily => 'Override Book Font';
+
+  @override
+  String get readerNoCustomFonts => 'No custom fonts imported yet.';
+
+  @override
+  String get readerManageFonts => 'Manage Fonts';
+
+  @override
+  String get fontManagement => 'Font Management';
+
+  @override
+  String get fontManagementSubtitle => 'Custom fonts (.ttf / .otf)';
+
+  @override
+  String get importFont => 'Import Font';
+
+  @override
+  String importFontSuccess(String name) {
+    return 'Font \"$name\" imported.';
+  }
+
+  @override
+  String importFontFailed(String error) {
+    return 'Failed to import font: $error';
+  }
+
+  @override
+  String deleteFontConfirm(String name) {
+    return 'Remove font \"$name\"?';
+  }
+
+  @override
+  String get noFontsHint =>
+      'No custom fonts yet.\nTap \"+\" to import a .ttf or .otf file.';
+
+  @override
   String cannotOpenLink(String url) {
     return 'Cannot open this link: $url';
   }

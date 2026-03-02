@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:lumina/src/features/reader/data/epub_webview_handler.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/web_src/reader_assets.dart';
 
@@ -23,7 +24,20 @@ String _generateVariableStyle(
 
   final primaryColor = theme.overridePrimaryColor ?? colorScheme.primary;
 
+  final fontFaceBlock = theme.fontFileName != null
+      ? '''
+    @font-face {
+      font-family: 'LuminaCustomFont';
+      src: url('${EpubWebViewHandler.getFontUrl(theme.fontFileName!)}');
+    }'''
+      : '';
+
+  final fontFamilyVar = theme.fontFileName != null
+      ? "      --lumina-font-family: 'LuminaCustomFont';"
+      : '';
+
   return '''
+    $fontFaceBlock
     :root {
       --lumina-zoom: ${theme.zoom};
       --lumina-safe-width: ${safeWidth}px;
@@ -42,6 +56,7 @@ String _generateVariableStyle(
       --lumina-outline-variant-color: ${colorToHex(colorScheme.outlineVariant)};
       --lumina-surface-container-color: ${colorToHex(colorScheme.surfaceContainer)};
       --lumina-surface-container-high-color: ${colorToHex(colorScheme.surfaceContainerHigh)};
+$fontFamilyVar
     }
   ''';
 }
@@ -89,6 +104,8 @@ String generateSkeletonHtml(
       'outlineVariantColor': colorToHex(colorScheme.outlineVariant),
       'surfaceContainerColor': colorToHex(colorScheme.surfaceContainer),
       'surfaceContainerHighColor': colorToHex(colorScheme.surfaceContainerHigh),
+      'fontFileName': theme.fontFileName,
+      'overrideFontFamily': theme.overrideFontFamily,
     },
   });
 

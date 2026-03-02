@@ -1310,6 +1310,78 @@ abstract class AppLocalizations {
   /// **'Slide'**
   String get readerPageAnimationSlide;
 
+  /// Reader style sheet section title for font settings
+  ///
+  /// In en, this message translates to:
+  /// **'Font'**
+  String get readerFontSection;
+
+  /// Font picker option meaning use the epub's own font
+  ///
+  /// In en, this message translates to:
+  /// **'Book Default'**
+  String get readerFontDefault;
+
+  /// Switch label to force the selected custom font over the epub's own font
+  ///
+  /// In en, this message translates to:
+  /// **'Override Book Font'**
+  String get readerOverrideFontFamily;
+
+  /// Hint shown in the font picker when no fonts have been imported
+  ///
+  /// In en, this message translates to:
+  /// **'No custom fonts imported yet.'**
+  String get readerNoCustomFonts;
+
+  /// Button/link label to navigate to the font management screen
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Fonts'**
+  String get readerManageFonts;
+
+  /// Title of the font management screen
+  ///
+  /// In en, this message translates to:
+  /// **'Font Management'**
+  String get fontManagement;
+
+  /// Subtitle shown on the font management settings tile
+  ///
+  /// In en, this message translates to:
+  /// **'Custom fonts (.ttf / .otf)'**
+  String get fontManagementSubtitle;
+
+  /// Button label to import a font file
+  ///
+  /// In en, this message translates to:
+  /// **'Import Font'**
+  String get importFont;
+
+  /// Toast shown after successfully importing a font
+  ///
+  /// In en, this message translates to:
+  /// **'Font \"{name}\" imported.'**
+  String importFontSuccess(String name);
+
+  /// Toast shown when font import fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import font: {error}'**
+  String importFontFailed(String error);
+
+  /// Confirmation dialog title for deleting a font
+  ///
+  /// In en, this message translates to:
+  /// **'Remove font \"{name}\"?'**
+  String deleteFontConfirm(String name);
+
+  /// Placeholder text shown on the font management screen when no fonts exist
+  ///
+  /// In en, this message translates to:
+  /// **'No custom fonts yet.\nTap \"+\" to import a .ttf or .otf file.'**
+  String get noFontsHint;
+
   /// Error message shown when the user tries to open a link that cannot be handled by the system
   ///
   /// In en, this message translates to:

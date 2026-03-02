@@ -4,6 +4,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
@@ -62,6 +63,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SettingsInfoSection(
             title: l10n.library,
             children: const [BackupTile()],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Fonts section
+          SettingsInfoSection(
+            title: l10n.fontManagement,
+            children: [
+              SettingsInfoTile(
+                icon: Icons.font_download_outlined,
+                title: l10n.fontManagement,
+                subtitle: l10n.fontManagementSubtitle,
+                onTap: () => context.push('/settings/fonts'),
+              ),
+            ],
           ),
 
           const SizedBox(height: 24),

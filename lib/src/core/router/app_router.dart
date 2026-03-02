@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/features/fonts/presentation/font_management_screen.dart';
 import 'package:lumina/src/features/library/domain/shelf_book.dart';
 import 'package:lumina/src/global_share_handler.dart';
 import '../services/toast_service.dart';
@@ -72,6 +73,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return MaterialPage(
             key: state.pageKey,
             child: const SettingsScreen(),
+          );
+        },
+      ),
+
+      // Font Management Screen
+      GoRoute(
+        path: '/settings/fonts',
+        name: 'font-management',
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: const FontManagementScreen(),
           );
         },
       ),

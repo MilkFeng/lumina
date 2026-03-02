@@ -18,6 +18,8 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   static const _kLinkHandling = 'reader_link_handling';
   static const _kHandleIntraLink = 'reader_handle_intra_link';
   static const _kPageAnimation = 'reader_page_animation';
+  static const _kFontFileName = 'reader_font_file_name';
+  static const _kOverrideFontFamily = 'reader_override_font_family';
 
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
@@ -41,6 +43,8 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
       pageAnimation: pageAnimationIndex != null
           ? ReaderPageAnimation.values.elementAt(pageAnimationIndex)
           : null,
+      fontFileName: prefs.getString(_kFontFileName),
+      overrideFontFamily: prefs.getBool(_kOverrideFontFamily),
     );
   }
 
@@ -101,5 +105,19 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setPageAnimation(ReaderPageAnimation value) async {
     await _prefs.setInt(_kPageAnimation, value.index);
     state = state.copyWith(pageAnimation: value);
+  }
+
+  Future<void> setFontFileName(String? value) async {
+    if (value == null) {
+      await _prefs.remove(_kFontFileName);
+    } else {
+      await _prefs.setString(_kFontFileName, value);
+    }
+    state = state.copyWith(fontFileName: value);
+  }
+
+  Future<void> setOverrideFontFamily(bool value) async {
+    await _prefs.setBool(_kOverrideFontFamily, value);
+    state = state.copyWith(overrideFontFamily: value);
   }
 }

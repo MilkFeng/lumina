@@ -126,4 +126,3 @@ html,body{margin:0 !important;padding:0 !important;width:var(--lumina-safe-width
 const String kSkeletonCss = r'''
 html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background-color:var(--lumina-epub-original-bg-color,var(--lumina-surface-color,#fff)) !important}#frame-container{position:absolute;top:var(--lumina-padding-top,0);left:var(--lumina-padding-left,0);right:var(--lumina-padding-right,0);bottom:var(--lumina-padding-bottom,0);background-color:var(--lumina-epub-original-bg-color,var(--lumina-surface-color,#fff)) !important;overflow:hidden}iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;background-color:var(--lumina-epub-original-bg-color,var(--lumina-surface-color,#fff)) !important;will-change:opacity;transition:none;pointer-events:none}
 ''';
-

@@ -678,6 +678,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerPageAnimationSlide => '滑动翻页';
 
   @override
+  String get readerFontSection => '字体';
+
+  @override
+  String get readerFontDefault => '书籍默认';
+
+  @override
+  String get readerOverrideFontFamily => '强制使用该字体';
+
+  @override
+  String get readerNoCustomFonts => '暂未导入任何自定义字体。';
+
+  @override
+  String get readerManageFonts => '管理字体';
+
+  @override
+  String get fontManagement => '字体管理';
+
+  @override
+  String get fontManagementSubtitle => '自定义字体（.ttf / .otf）';
+
+  @override
+  String get importFont => '导入字体';
+
+  @override
+  String importFontSuccess(String name) {
+    return '字体「$name」已导入。';
+  }
+
+  @override
+  String importFontFailed(String error) {
+    return '导入字体失败：$error';
+  }
+
+  @override
+  String deleteFontConfirm(String name) {
+    return '移除字体「$name」？';
+  }
+
+  @override
+  String get noFontsHint => '暂无自定义字体。\n点击[+]导入 .ttf 或 .otf 文件。';
+
+  @override
   String cannotOpenLink(String url) {
     return '无法打开链接：$url';
   }

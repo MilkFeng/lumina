@@ -9,12 +9,20 @@ class EpubTheme {
   final Color? overridePrimaryColor;
   final EdgeInsets padding;
 
+  /// File name (with extension) of the custom font, or null for epub default.
+  final String? fontFileName;
+
+  /// When true, force the custom font on top of the epub's own font rules.
+  final bool overrideFontFamily;
+
   EpubTheme({
     required this.zoom,
     required this.shouldOverrideTextColor,
     required this.colorScheme,
     this.overridePrimaryColor,
     required this.padding,
+    this.fontFileName,
+    this.overrideFontFamily = false,
   });
 
   bool get isDark => colorScheme.brightness == Brightness.dark;
@@ -29,6 +37,8 @@ class EpubTheme {
     ColorScheme? colorScheme,
     Color? overridePrimaryColor,
     EdgeInsets? padding,
+    Object? fontFileName = _kUnset,
+    bool? overrideFontFamily,
   }) {
     return EpubTheme(
       zoom: zoom ?? this.zoom,
@@ -37,8 +47,14 @@ class EpubTheme {
       colorScheme: colorScheme ?? this.colorScheme,
       overridePrimaryColor: overridePrimaryColor ?? this.overridePrimaryColor,
       padding: padding ?? this.padding,
+      fontFileName: identical(fontFileName, _kUnset)
+          ? this.fontFileName
+          : fontFileName as String?,
+      overrideFontFamily: overrideFontFamily ?? this.overrideFontFamily,
     );
   }
+
+  static const Object _kUnset = Object();
 
   Map<String, dynamic> toMap() {
     return {
@@ -68,6 +84,8 @@ class EpubTheme {
         'right': padding.right,
         'bottom': padding.bottom,
       },
+      'fontFileName': fontFileName,
+      'overrideFontFamily': overrideFontFamily,
     };
   }
 
@@ -80,7 +98,9 @@ class EpubTheme {
         other.shouldOverrideTextColor == shouldOverrideTextColor &&
         other.colorScheme == colorScheme &&
         other.overridePrimaryColor == overridePrimaryColor &&
-        other.padding == padding;
+        other.padding == padding &&
+        other.fontFileName == fontFileName &&
+        other.overrideFontFamily == overrideFontFamily;
   }
 
   @override
@@ -90,5 +110,7 @@ class EpubTheme {
     colorScheme,
     overridePrimaryColor,
     padding,
+    fontFileName,
+    overrideFontFamily,
   );
 }

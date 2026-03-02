@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/theme/app_theme_settings.dart';
@@ -8,6 +9,7 @@ import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
 import 'package:lumina/src/core/widgets/settings_section_title.dart';
 import 'package:lumina/src/core/widgets/settings_sub_label.dart';
 import 'package:lumina/src/core/widgets/theme_variant_chip.dart';
+import 'package:lumina/src/features/fonts/application/font_manager_notifier.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
 import 'reader_link_handling_selector.dart';
@@ -35,6 +37,8 @@ class _ReaderStyleBottomSheetState
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
   late ReaderPageAnimation _pageAnimation;
+  late String? _fontFileName;
+  late bool _overrideFontFamily;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -54,6 +58,8 @@ class _ReaderStyleBottomSheetState
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
     _pageAnimation = s.pageAnimation;
+    _fontFileName = s.fontFileName;
+    _overrideFontFamily = s.overrideFontFamily;
   }
 
   @override
@@ -255,7 +261,23 @@ class _ReaderStyleBottomSheetState
 
             const SizedBox(height: 24),
 
-            // ── Section 3: Links ──────────────────────────────────────────
+            // ── Section 3: Font ────────────────────────────────────────────
+            _FontSection(
+              fontFileName: _fontFileName,
+              overrideFontFamily: _overrideFontFamily,
+              onFontChanged: (v) {
+                setState(() => _fontFileName = v);
+                _notifier.setFontFileName(v);
+              },
+              onOverrideChanged: (v) {
+                setState(() => _overrideFontFamily = v);
+                _notifier.setOverrideFontFamily(v);
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Section 4: Links ──────────────────────────────────────────
             SettingsSectionTitle(label: l10n.readerLinkHandlingSection),
             const SizedBox(height: 12),
             ReaderLinkHandlingSelector(
@@ -281,7 +303,7 @@ class _ReaderStyleBottomSheetState
 
             const SizedBox(height: 24),
 
-            // ── Section 4: Page Animation ─────────────────────────────────
+            // ── Section 5: Page Animation ─────────────────────────────────
             SettingsSectionTitle(label: l10n.readerPageAnimationSection),
             const SizedBox(height: 12),
             ReaderPageAnimationSelector(
@@ -296,6 +318,109 @@ class _ReaderStyleBottomSheetState
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Font Section Widget
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FontSection extends ConsumerWidget {
+  const _FontSection({
+    required this.fontFileName,
+    required this.overrideFontFamily,
+    required this.onFontChanged,
+    required this.onOverrideChanged,
+  });
+
+  final String? fontFileName;
+  final bool overrideFontFamily;
+  final ValueChanged<String?> onFontChanged;
+  final ValueChanged<bool> onOverrideChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final fonts = ref.watch(fontManagerNotifierProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SettingsSectionTitle(label: l10n.readerFontSection),
+        const SizedBox(height: 12),
+
+        if (fonts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.readerNoCustomFonts,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.push('/settings/fonts');
+                  },
+                  child: Text(l10n.readerManageFonts),
+                ),
+              ],
+            ),
+          )
+        else ...[
+          // Font picker chip list
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              // "Book Default" chip
+              ChoiceChip(
+                label: Text(l10n.readerFontDefault),
+                selected: fontFileName == null,
+                onSelected: (_) => onFontChanged(null),
+              ),
+              ...fonts.map(
+                (f) => ChoiceChip(
+                  label: Text(f.displayName),
+                  selected: fontFileName == f.fileName,
+                  onSelected: (_) => onFontChanged(f.fileName),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          if (fontFileName != null)
+            LabeledSwitchTile(
+              label: l10n.readerOverrideFontFamily,
+              icon: Icons.font_download_outlined,
+              value: overrideFontFamily,
+              onChanged: onOverrideChanged,
+            ),
+
+          // Manage fonts shortcut
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              icon: const Icon(Icons.settings_outlined, size: 16),
+              label: Text(l10n.readerManageFonts),
+              onPressed: () {
+                Navigator.pop(context);
+                context.push('/settings/fonts');
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

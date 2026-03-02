@@ -1183,6 +1183,75 @@
     "description": "翻页动画选项：滑动过渡"
   },
 
+  "readerFontSection": "字体",
+  "@readerFontSection": {
+    "description": "阅读器样式面板字体区块标题"
+  },
+
+  "readerFontDefault": "书籍默认",
+  "@readerFontDefault": {
+    "description": "字体选择器中代表使用 epub 内置字体的选项"
+  },
+
+  "readerOverrideFontFamily": "强制使用该字体",
+  "@readerOverrideFontFamily": {
+    "description": "强制将自定义字体覆盖 epub 内置字体的开关标签"
+  },
+
+  "readerNoCustomFonts": "暂未导入任何自定义字体。",
+  "@readerNoCustomFonts": {
+    "description": "字体选择器为空时的提示文字"
+  },
+
+  "readerManageFonts": "管理字体",
+  "@readerManageFonts": {
+    "description": "跳转到字体管理页的按钮/链接标签"
+  },
+
+  "fontManagement": "字体管理",
+  "@fontManagement": {
+    "description": "字体管理页面标题"
+  },
+
+  "fontManagementSubtitle": "自定义字体（.ttf / .otf）",
+  "@fontManagementSubtitle": {
+    "description": "设置项中字体管理条目的副标题"
+  },
+
+  "importFont": "导入字体",
+  "@importFont": {
+    "description": "导入字体文件的按钮标签"
+  },
+
+  "importFontSuccess": "字体「{name}」已导入。",
+  "@importFontSuccess": {
+    "description": "成功导入字体后显示的提示",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "importFontFailed": "导入字体失败：{error}",
+  "@importFontFailed": {
+    "description": "导入字体失败时显示的提示",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "deleteFontConfirm": "移除字体「{name}」？",
+  "@deleteFontConfirm": {
+    "description": "删除字体的确认对话框标题",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "noFontsHint": "暂无自定义字体。\n点击[+]导入 .ttf 或 .otf 文件。",
+  "@noFontsHint": {
+    "description": "字体管理页为空时显示的占位文字"
+  },
+
   "cannotOpenLink": "无法打开链接：{url}",
   "@cannotOpenLink": {
     "description": "无法打开链接的错误提示",
