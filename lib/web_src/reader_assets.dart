@@ -1262,14 +1262,6 @@ figure {
 a {
   pointer-events: none !important;
   cursor: default !important;
-  text-decoration: none;
-}
-
-a:visited {
-  color: currentColor !important;
-  text-decoration: inherit !important;
-  border-bottom: inherit !important;
-  opacity: 1 !important;
 }
 
 body.lumina-override-color {
@@ -1300,6 +1292,7 @@ body.lumina-override-color a:link,
 body.lumina-override-color a:visited,
 body.lumina-override-color a:active {
   color: var(--lumina-primary-color);
+  text-decoration: none;
 }
 
 body.lumina-override-color a:visited {
