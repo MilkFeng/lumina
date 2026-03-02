@@ -4,7 +4,7 @@ body {
   padding: 0 !important;
   width: var(--lumina-safe-width) !important;
   height: var(--lumina-safe-height) !important;
-  background-color: transparent !important;
+  background-color: transparent;
   touch-action: none !important;
 
   -webkit-user-select: none;

@@ -603,6 +603,19 @@ class EpubReader {
     });
   }
 
+  _applyOriginalBackgroundColor() {
+    const iframe = this._frameElement('curr');
+    if (!iframe || !iframe.contentDocument) return;
+    const doc = iframe.contentDocument;
+    const win = iframe.contentWindow;
+    const bgColor = win.getComputedStyle(doc.body).backgroundColor;
+    if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+      document.documentElement.style.setProperty('--lumina-epub-original-bg-color', bgColor);
+    } else {
+      document.documentElement.style.removeProperty('--lumina-epub-original-bg-color');
+    }
+  }
+
   _onFrameLoad(iframe) {
     if (!iframe || !iframe.contentDocument) return;
 
@@ -642,6 +655,9 @@ class EpubReader {
 
       // Apply polyfill for break properties to support more pagination-related CSS in WebKit-based browsers (like iOS)
       this._polyfillCss(doc);
+
+      // Apply original background color of the page to the iframe
+      this._applyOriginalBackgroundColor();
     }
 
     const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
@@ -722,6 +738,8 @@ class EpubReader {
     const doc = iframe.contentDocument;
 
     if (!iframe.contentWindow) return;
+
+    this._applyOriginalBackgroundColor();
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -875,6 +893,9 @@ class EpubReader {
       this.state.anchors.curr = this.state.anchors.prev;
       this.state.anchors.prev = tempAnchors;
     }
+
+    // Apply original background color of the page to the iframe
+    this._applyOriginalBackgroundColor();
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -1163,7 +1184,7 @@ body {
   padding: 0 !important;
   width: var(--lumina-safe-width) !important;
   height: var(--lumina-safe-height) !important;
-  background-color: transparent !important;
+  background-color: transparent;
   touch-action: none !important;
 
   -webkit-user-select: none;
@@ -1372,7 +1393,7 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--lumina-surface-color, #FFFFFF) !important;
+  background-color: var(--lumina-epub-original-bg-color, var(--lumina-surface-color, #FFFFFF)) !important;
 }
 
 /* Container for iframes */
@@ -1382,6 +1403,7 @@ body {
   left: var(--lumina-padding-left, 0px);
   right: var(--lumina-padding-right, 0px);
   bottom: var(--lumina-padding-bottom, 0px);
+  background-color: var(--lumina-epub-original-bg-color, var(--lumina-surface-color, #FFFFFF)) !important;
   overflow: hidden;
 }
 
@@ -1393,7 +1415,7 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
-  background-color: var(--lumina-surface-color, #FFFFFF) !important;
+  background-color: var(--lumina-epub-original-bg-color, var(--lumina-surface-color, #FFFFFF)) !important;
   will-change: opacity;
   transition: none;
   pointer-events: none;
