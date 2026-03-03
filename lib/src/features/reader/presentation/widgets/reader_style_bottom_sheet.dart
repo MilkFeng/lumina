@@ -159,7 +159,22 @@ class _ReaderStyleBottomSheetState
             const SizedBox(height: 16),
 
             // Scale
-            SettingsSubLabel(label: l10n.readerScale),
+            Row(
+              children: [
+                SettingsSubLabel(label: l10n.readerScale),
+                const Spacer(),
+                Text(
+                  '${_scale.toStringAsFixed(1)}x',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
             ReaderScaleSlider(
               value: _scale,
