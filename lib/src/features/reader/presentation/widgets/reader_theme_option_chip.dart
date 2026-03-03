@@ -21,10 +21,13 @@ class ReaderThemeOptionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
         width: 56,
         height: 56,
         decoration: BoxDecoration(
@@ -32,17 +35,25 @@ class ReaderThemeOptionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
-                : Theme.of(
-                    context,
-                  ).colorScheme.secondary.withValues(alpha: 0.3),
+                ? appColorScheme.primary.withValues(alpha: 0.5)
+                : appColorScheme.secondary.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
-        child: Icon(
-          isSelected ? Icons.check_outlined : Icons.text_format_outlined,
-          size: 32,
-          color: colorScheme.primary,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, animation) => ScaleTransition(
+            scale: animation,
+            child: FadeTransition(opacity: animation, child: child),
+          ),
+          child: Icon(
+            isSelected ? Icons.check_outlined : Icons.text_format_outlined,
+            key: ValueKey(isSelected),
+            size: 32,
+            color: colorScheme.primary,
+          ),
         ),
       ),
     );
