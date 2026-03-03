@@ -7,12 +7,12 @@ import 'package:lumina/src/core/widgets/integer_stepper.dart';
 import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
 import 'package:lumina/src/core/widgets/settings_section_title.dart';
 import 'package:lumina/src/core/widgets/settings_sub_label.dart';
+import 'package:lumina/src/core/widgets/theme_variant_chip.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
 import 'reader_link_handling_selector.dart';
 import 'reader_page_animation_selector.dart';
 import 'reader_scale_slider.dart';
-import 'reader_theme_option_chip.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
 class ReaderStyleBottomSheet extends ConsumerStatefulWidget {

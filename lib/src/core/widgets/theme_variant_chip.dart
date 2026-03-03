@@ -37,13 +37,15 @@ class ThemeVariantChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? appColorScheme.primary.withValues(alpha: 0.5)
-                : appColorScheme.secondary.withValues(alpha: 0.3),
+                ? appColorScheme.primary
+                : appColorScheme.outlineVariant,
             width: 1.5,
           ),
         ),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(
+            milliseconds: AppTheme.defaultAnimationDurationMs,
+          ),
           switchInCurve: Curves.easeOut,
           switchOutCurve: Curves.easeIn,
           transitionBuilder: (child, animation) => ScaleTransition(
