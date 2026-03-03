@@ -98,8 +98,8 @@ class ReaderWebViewCallbacks {
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
   final Function(String innerHtml, Rect rect) onFootnoteTap;
-  final Function(String url, Rect rect) onLinkTap;
-  final bool Function(String url, Rect rect) shouldHandleLinkTap;
+  final Function(String url) onLinkTap;
+  final bool Function(String url) shouldHandleLinkTap;
 
   const ReaderWebViewCallbacks({
     required this.onInitialized,
@@ -460,16 +460,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       callback: (args) {
         if (args.isEmpty) return;
         final url = args[0] as String;
-        final rect = Rect.fromLTWH(
-          (args[1] as num).toDouble(),
-          (args[2] as num).toDouble(),
-          (args[3] as num).toDouble(),
-          (args[4] as num).toDouble(),
-        );
-        final x = (args[5] as num).toDouble();
-        final y = (args[6] as num).toDouble();
-        if (widget.callbacks.shouldHandleLinkTap(url, rect)) {
-          widget.callbacks.onLinkTap(url, rect);
+        final x = (args[1] as num).toDouble();
+        final y = (args[2] as num).toDouble();
+        if (widget.callbacks.shouldHandleLinkTap(url)) {
+          widget.callbacks.onLinkTap(url);
         } else {
           widget.callbacks.onTap(x, y);
         }

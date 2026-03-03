@@ -10,7 +10,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();
 
-  bool shouldHandleLinkTap(String url, Rect rect) {
+  bool shouldHandleLinkTap(String url) {
     final settings = ref.read(readerSettingsNotifierProvider);
     if (url.startsWith('epub://')) {
       if (!settings.handleIntraLink) return false;
@@ -21,7 +21,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
     }
   }
 
-  Future<void> handleLinkTap(String url, Rect rect) async {
+  Future<void> handleLinkTap(String url) async {
     if (url.startsWith('epub://')) {
       final index = bookSession.findSpineIndexByUrl(url);
       if (index != null) {

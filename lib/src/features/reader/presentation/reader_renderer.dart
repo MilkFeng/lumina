@@ -108,8 +108,8 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(String innerHtml, Rect rect) onFootnoteTap;
-  final Function(String url, Rect rect) onLinkTap;
-  final bool Function(String url, Rect rect) shouldHandleLinkTap;
+  final Function(String url) onLinkTap;
+  final bool Function(String url) shouldHandleLinkTap;
   final bool shouldShowWebView;
   final EpubTheme initializeTheme;
   final String statusBarLeftContent;

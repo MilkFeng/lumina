@@ -527,7 +527,6 @@ class EpubReader {
         if (!link) continue;
 
         const href = link.getAttribute('href');
-        const fullHref = link.href;
         const epubType = link.getAttribute('epub:type');
         let innerHtml = '';
 
@@ -557,12 +556,11 @@ class EpubReader {
           // Regular link
         }
 
-        if (isFootnote && (!innerHtml || innerHtml.trim() === '')) {
+        if (!isFootnote || (!innerHtml || innerHtml.trim() === '')) {
           continue;
         }
 
         const rects = link.getClientRects();
-
         for (let j = 0; j < rects.length; j++) {
           const rect = rects[j];
           if (!rect || rect.width < 5 || rect.height < 5) continue;
@@ -570,29 +568,16 @@ class EpubReader {
           const docX = rect.left + body.scrollLeft - bodyRect.left;
           const docY = rect.top + body.scrollTop - bodyRect.top;
 
-          if (isFootnote) {
-            quadTree.insert({
-              type: 'footnote',
-              rect: {
-                x: docX,
-                y: docY,
-                width: rect.width,
-                height: rect.height,
-              },
-              data: innerHtml,
-            });
-          } else {
-            quadTree.insert({
-              type: 'link',
-              rect: {
-                x: docX,
-                y: docY,
-                width: rect.width,
-                height: rect.height,
-              },
-              data: fullHref,
-            });
-          }
+          quadTree.insert({
+            type: 'footnote',
+            rect: {
+              x: docX,
+              y: docY,
+              width: rect.width,
+              height: rect.height,
+            },
+            data: innerHtml,
+          });
         }
       }
 
@@ -1142,7 +1127,7 @@ class EpubReader {
 
   checkTapElementAt(x, y) {
     const bestCandidate = this._checkElementAt(x, y, (candidate) => {
-      if (candidate.type === 'footnote' || candidate.type === 'link') {
+      if (candidate.type === 'footnote') {
         return true;
       }
       return false;
@@ -1164,19 +1149,32 @@ class EpubReader {
           'onFootnoteTap', bestCandidate.data,
           absoluteLeft, absoluteTop, rect.width, rect.height
         );
-      } else if (bestCandidate.type === 'link') {
-        window.flutter_inappwebview.callHandler(
-          'onLinkTap', bestCandidate.data,
-          absoluteLeft, absoluteTop, rect.width, rect.height,
-          x, y
-        );
-      } else {
-        window.flutter_inappwebview.callHandler('onTap', x, y);
+        return;
       }
-    } else {
-      // Fall back to just sending tap coordinates if no interactive element is found nearby
-      window.flutter_inappwebview.callHandler('onTap', x, y);
     }
+
+    // Use javascript's elementFromPoint as a fallback to detect taps on links
+    const iframe = this._frameElement('curr');
+    if (iframe && iframe.contentDocument) {
+      const doc = iframe.contentDocument;
+      // Add scroll offsets and padding to the coordinates to get the correct position relative to the iframe's content
+      const xx = x - this.state.config.padding.left + (doc.body.scrollLeft || 0);
+      const yy = y - this.state.config.padding.top + (doc.body.scrollTop || 0);
+      const elementAtPoint = doc.elementFromPoint(xx, yy);
+      if (elementAtPoint) {
+        const linkEl = elementAtPoint.closest('a');
+        if (linkEl) {
+          const href = linkEl.getAttribute('href');
+          if (href) {
+            window.flutter_inappwebview.callHandler('onLinkTap', linkEl.href, x, y);
+            return;
+          }
+        }
+      }
+    }
+
+    // Fall back to just sending tap coordinates if no interactive element is found nearby
+    window.flutter_inappwebview.callHandler('onTap', x, y);
   }
 
   checkElementAt(x, y) {
@@ -1325,7 +1323,6 @@ figure {
 }
 
 a {
-  pointer-events: none !important;
   cursor: default !important;
 }
 
