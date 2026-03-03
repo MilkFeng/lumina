@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 
 /// A square 56×56 chip that previews a [ColorScheme] and indicates selection.
 ///
@@ -25,7 +26,9 @@ class ThemeVariantChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(
+          milliseconds: AppTheme.defaultAnimationDurationMs,
+        ),
         curve: Curves.easeOut,
         width: 56,
         height: 56,

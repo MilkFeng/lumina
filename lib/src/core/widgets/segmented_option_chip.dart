@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 
 /// A single option chip used inside a segmented chip-row.
 ///
@@ -53,48 +54,62 @@ class SegmentedOptionChip extends StatelessWidget {
     final effectiveUnselectedBorder =
         unselectedBorderColor ?? cs.outlineVariant;
 
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? effectiveSelectedBg
-                : cs.surfaceContainerHighest,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: isSelected ? 1.0 : 0.0),
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
+      curve: Curves.easeOut,
+      builder: (context, t, _) {
+        final bg = Color.lerp(
+          cs.surfaceContainerHighest,
+          effectiveSelectedBg,
+          t,
+        )!;
+        final fg = Color.lerp(cs.onSurfaceVariant, effectiveOnSelected, t)!;
+        final border = Color.lerp(
+          effectiveUnselectedBorder,
+          effectiveSelectedBorder,
+          t,
+        )!;
+
+        return Expanded(
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? effectiveSelectedBorder
-                  : effectiveUnselectedBorder,
-              width: 1.5,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: border, width: 1.5),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 20, color: fg),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: fg,
+                      fontWeight: FontWeight.lerp(
+                        FontWeight.normal,
+                        FontWeight.w600,
+                        t,
+                      ),
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: isSelected ? effectiveOnSelected : cs.onSurfaceVariant,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isSelected ? effectiveOnSelected : cs.onSurfaceVariant,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
