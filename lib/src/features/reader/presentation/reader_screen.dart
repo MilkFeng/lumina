@@ -189,7 +189,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   double _calculateProgressRatio() {
     if (_totalPagesInChapter == 0) return 0.0;
-    final pageProgress = (_currentPageInChapter + 1) / _totalPagesInChapter;
+    final pageProgress = _currentPageInChapter / _totalPagesInChapter;
     final chapterProgress =
         (_currentSpineItemIndex + 1) / _bookSession.spine.length;
     return (chapterProgress + pageProgress / _bookSession.spine.length).clamp(
