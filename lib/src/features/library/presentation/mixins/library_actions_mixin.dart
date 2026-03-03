@@ -6,13 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/features/library/presentation/widgets/import_progress_dialog.dart';
 import 'package:lumina/src/features/library/presentation/widgets/restore_progress_dialog.dart';
-import '../../../../l10n/app_localizations.dart';
-import '../../../core/services/toast_service.dart';
-import '../application/bookshelf_notifier.dart';
-import '../application/library_notifier.dart';
-import '../data/services/unified_import_service_provider.dart';
-import '../domain/shelf_group.dart';
-import 'widgets/group_selection_dialog.dart';
+import '../../../../../l10n/app_localizations.dart';
+import '../../../../core/services/toast_service.dart';
+import '../../application/bookshelf_notifier.dart';
+import '../../application/library_notifier.dart';
+import '../../data/services/unified_import_service_provider.dart';
+import '../../domain/shelf_group.dart';
+import '../widgets/group_selection_dialog.dart';
 
 /// Mixin that provides action methods for LibraryScreen.
 /// Handles imports, deletions, group management, and file operations.
