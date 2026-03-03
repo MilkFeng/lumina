@@ -22,42 +22,48 @@ class ThemeVariantChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appColorScheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: isSelected ? 1.0 : 0.0),
+      duration: const Duration(
+        milliseconds: AppTheme.defaultAnimationDurationMs,
+      ),
+      curve: Curves.easeOut,
+      builder: (context, t, child) {
+        final borderColor = Color.lerp(
+          appColorScheme.outlineVariant,
+          appColorScheme.primary,
+          t,
+        )!;
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderColor, width: 1.5),
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: AnimatedSwitcher(
         duration: const Duration(
           milliseconds: AppTheme.defaultAnimationDurationMs,
         ),
-        curve: Curves.easeOut,
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? appColorScheme.primary
-                : appColorScheme.outlineVariant,
-            width: 1.5,
-          ),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) => ScaleTransition(
+          scale: animation,
+          child: FadeTransition(opacity: animation, child: child),
         ),
-        child: AnimatedSwitcher(
-          duration: const Duration(
-            milliseconds: AppTheme.defaultAnimationDurationMs,
-          ),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, animation) => ScaleTransition(
-            scale: animation,
-            child: FadeTransition(opacity: animation, child: child),
-          ),
-          child: Icon(
-            isSelected ? Icons.check_outlined : Icons.text_format_outlined,
-            key: ValueKey(isSelected),
-            size: 32,
-            color: colorScheme.primary,
-          ),
+        child: Icon(
+          isSelected ? Icons.check_outlined : Icons.text_format_outlined,
+          key: ValueKey(isSelected),
+          size: 32,
+          color: colorScheme.primary,
         ),
       ),
     );
