@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumina/src/core/widgets/segmented_option_chip.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 
 /// A segmented chip-row for choosing how external hyperlinks are handled.
@@ -24,70 +25,28 @@ class ReaderLinkHandlingSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    Widget chip(ReaderLinkHandling option, IconData icon, String label) {
-      final selected = value == option;
-      return Expanded(
-        child: InkWell(
-          onTap: () => onChanged(option),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: selected
-                  ? colorScheme.primaryContainer
-                  : colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: selected
-                    ? colorScheme.primary
-                    : colorScheme.outlineVariant,
-                width: 1.5,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: selected
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: selected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurfaceVariant,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
     return Row(
       children: [
-        chip(ReaderLinkHandling.ask, Icons.help_outline, askLabel),
-        const SizedBox(width: 8),
-        chip(
-          ReaderLinkHandling.always,
-          Icons.open_in_new_outlined,
-          alwaysLabel,
+        SegmentedOptionChip(
+          icon: Icons.help_outline,
+          label: askLabel,
+          isSelected: value == ReaderLinkHandling.ask,
+          onTap: () => onChanged(ReaderLinkHandling.ask),
         ),
         const SizedBox(width: 8),
-        chip(ReaderLinkHandling.never, Icons.link_off_outlined, neverLabel),
+        SegmentedOptionChip(
+          icon: Icons.open_in_new_outlined,
+          label: alwaysLabel,
+          isSelected: value == ReaderLinkHandling.always,
+          onTap: () => onChanged(ReaderLinkHandling.always),
+        ),
+        const SizedBox(width: 8),
+        SegmentedOptionChip(
+          icon: Icons.link_off_outlined,
+          label: neverLabel,
+          isSelected: value == ReaderLinkHandling.never,
+          onTap: () => onChanged(ReaderLinkHandling.never),
+        ),
       ],
     );
   }
