@@ -106,16 +106,6 @@ class ShelfBookRepository {
         .findAll();
   }
 
-  /// Get all groups (for move dialog)
-  Future<List<ShelfGroup>> getAllGroups() async {
-    final isar = _isar;
-    return await isar.shelfGroups
-        .filter()
-        .isDeletedEqualTo(false)
-        .sortByName()
-        .findAll();
-  }
-
   /// Get group by ID
   Future<ShelfGroup?> getGroupById(int id) async {
     final isar = _isar;
@@ -280,13 +270,18 @@ class ShelfBookRepository {
       final isar = _isar;
       final now = DateTime.now().millisecondsSinceEpoch;
       await isar.writeTxn(() async {
-        for (final bookId in bookIds) {
-          final book = await isar.shelfBooks.get(bookId);
+        // Batch fetch all books in a single round-trip, then batch write.
+        final books = await isar.shelfBooks.getAll(bookIds.toList());
+        final toUpdate = <ShelfBook>[];
+        for (final book in books) {
           if (book != null) {
             book.groupName = targetGroupName;
             book.updatedAt = now;
-            await isar.shelfBooks.put(book);
+            toUpdate.add(book);
           }
+        }
+        if (toUpdate.isNotEmpty) {
+          await isar.shelfBooks.putAll(toUpdate);
         }
       });
       return right(true);

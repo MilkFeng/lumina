@@ -235,16 +235,13 @@ class LibraryNotifier extends _$LibraryNotifier {
       final repository = ref.read(shelfBookRepositoryProvider);
       final importService = ref.read(epubImportServiceProvider);
 
-      // Get book
+      // Soft-delete first; only proceed with file cleanup when confirmed.
       final result = await repository.softDeleteBook(bookId);
-      if (result.isRight()) {
-        await refresh();
-
-        if (result.getRight().toNullable() == false) {
-          return left('Delete failed');
-        }
-      } else {
+      if (result.isLeft()) {
         return left(result.getLeft().toNullable()!);
+      }
+      if (result.getRight().toNullable() == false) {
+        return left('Delete failed');
       }
 
       final book = await repository.getBookById(bookId);
@@ -252,13 +249,13 @@ class LibraryNotifier extends _$LibraryNotifier {
         return left('Book not found');
       }
 
-      // Delete using import service (handles files + database)
+      // Remove physical files + manifest record.
       final deleteResult = await importService.deleteBook(book);
       if (deleteResult.isLeft()) {
         return left(deleteResult.getLeft().toNullable()!);
       }
 
-      // Refresh list
+      // Refresh list only after everything has succeeded.
       await refresh();
 
       return right(true);

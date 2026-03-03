@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/features/library/application/progress_log.dart';
+import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
 import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
 import 'package:path/path.dart' as p;
@@ -108,9 +109,6 @@ class BackupImportProgress extends ProgressLog {
 ///   Only the JSON payloads (shelf.json + individual manifest files) are
 ///   materialised in memory, and those are small by design.
 class ImportBackupService {
-  static const _kBooksDir = 'books';
-  static const _kCoversDir = 'covers';
-
   final ShelfBookRepository _shelfBookRepository;
   final BookManifestRepository _bookManifestRepository;
   final UnifiedImportService _importService;
@@ -180,11 +178,11 @@ class ImportBackupService {
       // 3. Ensure internal storage directories exist.
       // -----------------------------------------------------------------------
       final internalBooksDir = await Directory(
-        p.join(AppStorage.documentsPath, _kBooksDir),
+        p.join(AppStorage.documentsPath, AppStorageConstants.booksDir),
       ).create(recursive: true);
 
       final internalCoversDir = await Directory(
-        p.join(AppStorage.documentsPath, _kCoversDir),
+        p.join(AppStorage.documentsPath, AppStorageConstants.coversDir),
       ).create(recursive: true);
 
       // -----------------------------------------------------------------------
@@ -239,7 +237,8 @@ class ImportBackupService {
               p.join(internalCoversDir.path, coverFileName),
             );
             await destCover.writeAsBytes(coverBytes);
-            restoredCoverPath = '$_kCoversDir/$coverFileName';
+            restoredCoverPath =
+                '${AppStorageConstants.coversDir}/$coverFileName';
           } catch (e) {
             debugPrint('[ImportBackup] Failed to process cover for $hash: $e');
             yield ProgressLog(
@@ -260,7 +259,7 @@ class ImportBackupService {
         // -- D. Build ShelfBook and upsert immediately --
         final book = _mapToShelfBook(
           bookMap,
-          filePath: '$_kBooksDir/$hash.epub',
+          filePath: '${AppStorageConstants.booksDir}/$hash.epub',
           coverPath: restoredCoverPath,
         );
         await _mergeBook(book);

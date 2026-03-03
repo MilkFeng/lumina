@@ -26,7 +26,8 @@ class BookshelfState {
   final bool isSelectionMode;
   final List<ShelfGroup> availableGroups;
   final Map<int?, List<ShelfBook>> cachedBooks;
-  final List<int?> cacheOrder;
+  // Note: cacheOrder (LRU eviction order) is managed internally by
+  // BookshelfNotifier._cacheOrder and is *not* part of the UI state.
 
   BookshelfState.bookshelfState({
     required this.books,
@@ -39,7 +40,6 @@ class BookshelfState {
     this.isSelectionMode = false,
     this.availableGroups = const [],
     this.cachedBooks = const {},
-    this.cacheOrder = const [],
   });
 
   BookshelfState copyWith({
@@ -53,7 +53,6 @@ class BookshelfState {
     bool? isSelectionMode,
     List<ShelfGroup>? availableGroups,
     Map<int?, List<ShelfBook>>? cachedBooks,
-    List<int?>? cacheOrder,
     bool clearGroup = false,
     bool clearFilter = false,
   }) {
@@ -70,7 +69,6 @@ class BookshelfState {
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       availableGroups: availableGroups ?? this.availableGroups,
       cachedBooks: cachedBooks ?? this.cachedBooks,
-      cacheOrder: cacheOrder ?? this.cacheOrder,
     );
   }
 
@@ -84,6 +82,10 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   static const int _maxCachedTabs = 8;
   static const String _sortOrderKey = 'bookshelf_sort_order';
   static const String _viewModeKey = 'bookshelf_view_mode';
+
+  // LRU cache eviction order — stored here, not in BookshelfState, because it
+  // is an internal optimization detail that widgets never need to read.
+  final List<int?> _cacheOrder = [];
 
   // Cached SharedPreferences instance, set during build.
   SharedPreferences? _prefs;
@@ -148,14 +150,14 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       groupName: actualFilterGroupId == -1 ? null : filterGroupName,
       includeAll: !shouldFilterByGroup,
     );
-    final allGroups = await _repository.getAllGroups();
+    final allGroups = await _repository.getGroups();
     final updatedCache = Map<int?, List<ShelfBook>>.from(
       currentState.cachedBooks,
     );
     final cacheKey = shouldFilterByGroup ? actualFilterGroupId : null;
     updatedCache[cacheKey] = books;
-    final updatedOrder = _touchCacheKey(currentState.cacheOrder, cacheKey);
-    _trimCache(updatedCache, updatedOrder);
+    _touchCacheKey(cacheKey);
+    _trimCache(updatedCache);
 
     return BookshelfState.bookshelfState(
       books: books,
@@ -168,7 +170,6 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       selectedGroupIds: currentState.selectedGroupIds,
       isSelectionMode: currentState.isSelectionMode,
       cachedBooks: updatedCache,
-      cacheOrder: updatedOrder,
     );
   }
 
@@ -379,46 +380,13 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   }
 
   Future<bool> reloadQuietly() async {
-    final currentState = state.valueOrNull;
-    if (currentState == null) return true;
-
+    if (state.valueOrNull == null) return true;
     try {
-      // Use filterGroupId if set, otherwise use currentGroupId
-      final isUncategorized = currentState.filterGroupId == -1;
-      final effectiveGroupId = isUncategorized
-          ? null
-          : (currentState.filterGroupId ?? currentState.currentGroupId);
-
-      // Get group name for filtering
-      String? filterGroupName;
-      if (effectiveGroupId != null) {
-        final group = await _repository.getGroupById(effectiveGroupId);
-        filterGroupName = group?.name;
-      }
-
-      final books = await _repository.getBooksSorted(
-        sortBy: currentState.sortBy,
-        groupName: filterGroupName,
-        includeAll: effectiveGroupId == null && !isUncategorized,
-      );
-      final allGroups = await _repository.getAllGroups();
-      final updatedCache = Map<int?, List<ShelfBook>>.from(
-        currentState.cachedBooks,
-      );
-      final cacheKey = isUncategorized ? -1 : effectiveGroupId;
-      updatedCache[cacheKey] = books;
-      final updatedOrder = _touchCacheKey(currentState.cacheOrder, cacheKey);
-      _trimCache(updatedCache, updatedOrder);
-
-      state = AsyncValue.data(
-        currentState.copyWith(
-          books: books,
-          availableGroups: allGroups,
-          cachedBooks: updatedCache,
-          cacheOrder: updatedOrder,
-        ),
-      );
-
+      // Re-use _loadBooks so the filter/sort/cache logic is in one place.
+      // Unlike refresh(), we do NOT emit AsyncLoading first, so the UI keeps
+      // showing the existing books during the background reload.
+      final newState = await _loadBooks();
+      state = AsyncValue.data(newState);
       return true;
     } catch (e) {
       return false;
@@ -453,29 +421,25 @@ class BookshelfNotifier extends _$BookshelfNotifier {
         clearFilter: clearFilter,
         clearGroup: clearGroup,
       );
+      // Remove the deleted group from the LRU cache.
+      _cacheOrder.remove(groupId);
       final updatedCache = Map<int?, List<ShelfBook>>.from(newState.cachedBooks)
         ..remove(groupId);
-      final updatedOrder = List<int?>.from(newState.cacheOrder)
-        ..remove(groupId);
-      state = AsyncValue.data(
-        newState.copyWith(cachedBooks: updatedCache, cacheOrder: updatedOrder),
-      );
+      state = AsyncValue.data(newState.copyWith(cachedBooks: updatedCache));
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  List<int?> _touchCacheKey(List<int?> order, int? key) {
-    final updated = List<int?>.from(order);
-    updated.remove(key);
-    updated.add(key);
-    return updated;
+  void _touchCacheKey(int? key) {
+    _cacheOrder.remove(key);
+    _cacheOrder.add(key);
   }
 
-  void _trimCache(Map<int?, List<ShelfBook>> cache, List<int?> order) {
-    while (order.length > _maxCachedTabs) {
-      final removedKey = order.removeAt(0);
+  void _trimCache(Map<int?, List<ShelfBook>> cache) {
+    while (_cacheOrder.length > _maxCachedTabs) {
+      final removedKey = _cacheOrder.removeAt(0);
       cache.remove(removedKey);
     }
   }

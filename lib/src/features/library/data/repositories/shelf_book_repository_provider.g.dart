@@ -7,7 +7,7 @@ part of 'shelf_book_repository_provider.dart';
 // **************************************************************************
 
 String _$shelfBookRepositoryHash() =>
-    r'fb02c3eb727553e833e46b83d8fe8a380f3a7498';
+    r'ff93e78a9f0967dd53a743fbadd70549f466cda8';
 
 /// Provider for ShelfBookRepository
 /// Repository for managing shelf book CRUD operations

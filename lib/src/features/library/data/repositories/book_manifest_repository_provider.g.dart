@@ -7,7 +7,7 @@ part of 'book_manifest_repository_provider.dart';
 // **************************************************************************
 
 String _$bookManifestRepositoryHash() =>
-    r'f04c977bcd68c728742eb92bd60370be225e2495';
+    r'f68874a6298564a632630cc5b66eb5e176fe630a';
 
 /// Provider for BookManifestRepository
 /// Repository for managing book manifest CRUD operations

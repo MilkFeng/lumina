@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/services/epub_import_workers.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../domain/shelf_book.dart';
@@ -15,9 +16,6 @@ import '../book_manifest_repository.dart';
 /// - Parses metadata in-memory (no full unzip)
 /// - Saves to Isar: ShelfBook + BookManifest
 class EpubImportService {
-  static const String kBooksDir = 'books';
-  static const String kCoversDir = 'covers';
-
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;
 
@@ -209,7 +207,9 @@ class EpubImportService {
     String fileHash,
   ) async {
     try {
-      final booksDir = Directory('${AppStorage.documentsPath}$kBooksDir');
+      final booksDir = Directory(
+        '${AppStorage.documentsPath}${AppStorageConstants.booksDir}',
+      );
       if (!await booksDir.exists()) {
         await booksDir.create(recursive: true);
       }
@@ -242,7 +242,9 @@ class EpubImportService {
     }
 
     try {
-      final coversDir = Directory('${AppStorage.documentsPath}$kCoversDir');
+      final coversDir = Directory(
+        '${AppStorage.documentsPath}${AppStorageConstants.coversDir}',
+      );
       if (!await coversDir.exists()) {
         await coversDir.create(recursive: true);
       }
@@ -278,7 +280,7 @@ class EpubImportService {
       final outputPath = '${coversDir.path}/$fileHash$extension';
       await File(outputPath).writeAsBytes(coverData as List<int>);
 
-      return '$kCoversDir/$fileHash$extension';
+      return '${AppStorageConstants.coversDir}/$fileHash$extension';
     } catch (e) {
       // Cover extraction is non-critical, log and continue
       debugPrint('Cover extraction failed: $e');

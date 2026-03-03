@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
 import 'package:path/path.dart' as p;
 
@@ -10,9 +11,6 @@ import '../shelf_book_repository.dart';
 /// Service that scans physical storage directories and removes files
 /// that have no corresponding database record (orphan files).
 class StorageCleanupService {
-  static const String _kBooksDir = 'books';
-  static const String _kCoversDir = 'covers';
-
   static const String _kShareDir = 'share';
 
   final ShelfBookRepository _shelfBookRepo;
@@ -36,11 +34,11 @@ class StorageCleanupService {
 
     int deletedCount = 0;
     deletedCount += await _cleanDirectory(
-      p.join(AppStorage.documentsPath, _kBooksDir),
+      p.join(AppStorage.documentsPath, AppStorageConstants.booksDir),
       validHashes,
     );
     deletedCount += await _cleanDirectory(
-      p.join(AppStorage.documentsPath, _kCoversDir),
+      p.join(AppStorage.documentsPath, AppStorageConstants.coversDir),
       validHashes,
     );
     return deletedCount;

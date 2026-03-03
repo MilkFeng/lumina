@@ -12,6 +12,7 @@ import '../../domain/shelf_group.dart';
 import '../book_manifest_repository.dart';
 import '../shelf_book_repository.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:lumina/src/core/storage/app_storage_constants.dart';
 
 /// Result of an export operation.
 sealed class ExportResult {
@@ -47,10 +48,6 @@ final class ExportFailure extends ExportResult {
 ///   Dart heap.  Only the JSON payloads (manifest + shelf metadata) are
 ///   materialised in memory, and those are small by design.
 class ExportBackupService {
-  static const _kBooksDir = 'books';
-  static const _kCoversDir = 'covers';
-  static const _kManifestsDir = 'manifests';
-  static const _kShelfFile = 'shelf.json';
   static const _kIOSBackupSubdir = 'backup';
 
   final ShelfBookRepository _shelfBookRepo;
@@ -100,13 +97,13 @@ class ExportBackupService {
       // 2. Create sub-directories.
       // -----------------------------------------------------------------------
       final booksOutDir = await Directory(
-        p.join(targetDir.path, _kBooksDir),
+        p.join(targetDir.path, AppStorageConstants.booksDir),
       ).create(recursive: true);
       final coversOutDir = await Directory(
-        p.join(targetDir.path, _kCoversDir),
+        p.join(targetDir.path, AppStorageConstants.coversDir),
       ).create(recursive: true);
       final manifestsOutDir = await Directory(
-        p.join(targetDir.path, _kManifestsDir),
+        p.join(targetDir.path, AppStorageConstants.manifestsDir),
       ).create(recursive: true);
 
       // -----------------------------------------------------------------------
@@ -123,7 +120,11 @@ class ExportBackupService {
 
         // -- Copy .epub (zero-memory: kernel copy, no Dart byte buffers) ------
         final epubSrc = File(
-          p.join(AppStorage.documentsPath, _kBooksDir, '$hash.epub'),
+          p.join(
+            AppStorage.documentsPath,
+            AppStorageConstants.booksDir,
+            '$hash.epub',
+          ),
         );
         if (epubSrc.existsSync()) {
           await epubSrc.copy(p.join(booksOutDir.path, '$hash.epub'));
@@ -138,7 +139,11 @@ class ExportBackupService {
         bool coverCopied = false;
         for (final ext in ['jpg', 'png', 'jpeg', 'webp']) {
           final coverSrc = File(
-            p.join(AppStorage.documentsPath, _kCoversDir, '$hash.$ext'),
+            p.join(
+              AppStorage.documentsPath,
+              AppStorageConstants.coversDir,
+              '$hash.$ext',
+            ),
           );
           if (coverSrc.existsSync()) {
             await coverSrc.copy(p.join(coversOutDir.path, '$hash.$ext'));
@@ -167,7 +172,9 @@ class ExportBackupService {
       // -----------------------------------------------------------------------
       final shelfMap = _shelfToMap(books, groups);
       final shelfJson = jsonEncode(shelfMap);
-      await File(p.join(targetDir.path, _kShelfFile)).writeAsString(shelfJson);
+      await File(
+        p.join(targetDir.path, AppStorageConstants.shelfFile),
+      ).writeAsString(shelfJson);
 
       // -----------------------------------------------------------------------
       // 6. Platform-specific delivery.

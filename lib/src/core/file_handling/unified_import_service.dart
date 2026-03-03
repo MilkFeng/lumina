@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:path/path.dart' as p;
 import 'package:saf_stream/saf_stream.dart';
 import 'platform_path.dart';
@@ -66,18 +66,12 @@ class UnifiedImportService {
   /// Returns a list of [PlatformPath] objects representing selected files.
   /// Returns empty list if user cancels or no files are selected.
   Future<List<PlatformPath>> pickFiles() async {
-    try {
-      if (Platform.isAndroid) {
-        return await _pickFilesAndroid();
-      } else if (Platform.isIOS) {
-        return await _pickFilesIOS();
-      } else {
-        throw UnsupportedError('Platform not supported');
-      }
-    } catch (e) {
-      // Log error but don't throw to maintain graceful degradation
-      ToastService.showError('Error picking files: $e');
-      return [];
+    if (Platform.isAndroid) {
+      return await _pickFilesAndroid();
+    } else if (Platform.isIOS) {
+      return await _pickFilesIOS();
+    } else {
+      throw UnsupportedError('Platform not supported');
     }
   }
 
@@ -89,18 +83,12 @@ class UnifiedImportService {
   /// Returns a list of [PlatformPath] objects for all EPUB files found.
   /// Returns empty list if user cancels or no EPUB files are found.
   Future<List<PlatformPath>> pickFolder() async {
-    try {
-      if (Platform.isAndroid) {
-        return await _pickFolderAndroid();
-      } else if (Platform.isIOS) {
-        return await _pickFolderIOS();
-      } else {
-        throw UnsupportedError('Platform not supported');
-      }
-    } catch (e) {
-      // Log error but don't throw to maintain graceful degradation
-      ToastService.showError('Error picking folder: $e');
-      return [];
+    if (Platform.isAndroid) {
+      return await _pickFolderAndroid();
+    } else if (Platform.isIOS) {
+      return await _pickFolderIOS();
+    } else {
+      throw UnsupportedError('Platform not supported');
     }
   }
 
@@ -186,17 +174,12 @@ class UnifiedImportService {
   ///
   /// Returns null if the user cancels or the path cannot be resolved.
   Future<BackupPaths?> pickBackupFolder() async {
-    try {
-      if (Platform.isAndroid) {
-        return await _pickBackupFolderAndroid();
-      } else if (Platform.isIOS) {
-        return await _pickBackupFolderIOS();
-      } else {
-        throw UnsupportedError('Platform not supported');
-      }
-    } on PlatformException catch (e) {
-      ToastService.showError('Backup folder picker error: ${e.message}');
-      return null;
+    if (Platform.isAndroid) {
+      return await _pickBackupFolderAndroid();
+    } else if (Platform.isIOS) {
+      return await _pickBackupFolderIOS();
+    } else {
+      throw UnsupportedError('Platform not supported');
     }
   }
 
@@ -252,95 +235,37 @@ class UnifiedImportService {
   }
 
   Future<BackupPaths?> _pickBackupFolderAndroid() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickBackupFolder',
+    final result = await _channel.invokeMethod<List<Object?>>(
+      'pickBackupFolder',
+    );
+    if (result == null || result.isEmpty) return null;
+
+    final entries = result.whereType<String>().map((uriString) {
+      final decoded = Uri.decodeFull(uriString);
+      return (
+        displayPath: decoded,
+        platformPath: AndroidUriPath(uriString) as PlatformPath,
       );
+    }).toList();
 
-      if (result == null || result.isEmpty) {
-        return null;
-      }
+    final classified = _classifyBackupFiles(entries);
 
-      PlatformPath? shelfFile;
-      final Map<String, Map<String, PlatformPath>> tempBookComponents = {};
-
-      for (final item in result) {
-        if (item is! String) continue;
-
-        final uriString = item;
-        final platformPath = AndroidUriPath(uriString);
-
-        final decodedUri = Uri.decodeFull(uriString);
-
-        final fileName = p.basename(decodedUri);
-        final parentDirName = p.basename(p.dirname(decodedUri));
-
-        if (fileName.isEmpty) continue;
-
-        if (fileName == 'shelf.json') {
-          shelfFile = platformPath;
-          continue;
-        }
-
-        if (parentDirName == 'books' && fileName.endsWith('.epub')) {
-          final hash = fileName.replaceAll('.epub', '');
-          tempBookComponents.putIfAbsent(hash, () => {})['epub'] = platformPath;
-        } else if (parentDirName == 'manifests' && fileName.endsWith('.json')) {
-          final hash = fileName.replaceAll('.json', '');
-          tempBookComponents.putIfAbsent(hash, () => {})['manifest'] =
-              platformPath;
-        } else if (parentDirName == 'covers') {
-          final extIndex = fileName.lastIndexOf('.');
-          if (extIndex != -1) {
-            final hash = fileName.substring(0, extIndex);
-            tempBookComponents.putIfAbsent(hash, () => {})['cover'] =
-                platformPath;
-          }
-        }
-      }
-
-      if (shelfFile == null) {
-        ToastService.showError('Invalid backup: shelf.json not found');
-        return null;
-      }
-
-      final Map<String, BackupPathsForBook> bookPaths = {};
-
-      for (final entry in tempBookComponents.entries) {
-        final hash = entry.key;
-        final components = entry.value;
-
-        if (components.containsKey('epub') &&
-            components.containsKey('manifest')) {
-          bookPaths[hash] = BackupPathsForBook(
-            epubPath: components['epub']!,
-            manifestPath: components['manifest']!,
-            coverPath: components['cover'],
-          );
-        } else {
-          debugPrint(
-            'Warning: Missing EPUB or manifest file for hash $hash, skipping.',
-          );
-        }
-      }
-
-      final shelfUri = Uri.decodeFull((shelfFile as AndroidUriPath).uri);
-      final rootUri = p.dirname(shelfUri);
-      final rootPath = AndroidUriPath(rootUri);
-
-      return BackupPaths(
-        rootPath: rootPath,
-        shelfFile: shelfFile,
-        bookPaths: bookPaths,
+    if (classified.shelfFile == null) {
+      throw Exception(
+        'Invalid backup: ${AppStorageConstants.shelfFile} not found',
       );
-    } on PlatformException catch (e) {
-      ToastService.showError('Failed to pick backup folder: ${e.message}');
-      return null;
-    } catch (e, st) {
-      ToastService.showError('Unexpected error picking backup folder: $e');
-      debugPrint('Unexpected error picking backup folder: $e\n$st');
-      return null;
     }
+
+    final bookPaths = _buildBookPaths(classified.tempBookComponents);
+    final shelfUri = Uri.decodeFull(
+      (classified.shelfFile! as AndroidUriPath).uri,
+    );
+
+    return BackupPaths(
+      rootPath: AndroidUriPath(p.dirname(shelfUri)),
+      shelfFile: classified.shelfFile!,
+      bookPaths: bookPaths,
+    );
   }
 
   // ==================== iOS Implementation ====================
@@ -381,85 +306,113 @@ class UnifiedImportService {
 
   /// iOS: Pick backup folder and parse its structure (lazy – scope retained).
   Future<BackupPaths?> _pickBackupFolderIOS() async {
-    try {
-      final result = await _channel.invokeMethod<List<Object?>>(
-        'pickBackupFolder',
+    final result = await _channel.invokeMethod<List<Object?>>(
+      'pickBackupFolder',
+    );
+    if (result == null || result.isEmpty) return null;
+
+    final entries = result.whereType<String>().map((pathStr) {
+      return (
+        displayPath: pathStr,
+        platformPath: IOSFilePath(pathStr) as PlatformPath,
       );
-      if (result == null || result.isEmpty) return null;
+    }).toList();
 
-      PlatformPath? shelfFile;
-      final Map<String, Map<String, PlatformPath>> tempBookComponents = {};
+    final classified = _classifyBackupFiles(entries);
 
-      for (final item in result) {
-        if (item is! String) continue;
-
-        final pathStr = item;
-        final platformPath = IOSFilePath(pathStr);
-        final fileName = p.basename(pathStr);
-        final parentDirName = p.basename(p.dirname(pathStr));
-
-        if (fileName.isEmpty) continue;
-
-        if (fileName == 'shelf.json') {
-          shelfFile = platformPath;
-          continue;
-        }
-
-        if (parentDirName == 'books' && fileName.endsWith('.epub')) {
-          final hash = fileName.replaceAll('.epub', '');
-          tempBookComponents.putIfAbsent(hash, () => {})['epub'] = platformPath;
-        } else if (parentDirName == 'manifests' && fileName.endsWith('.json')) {
-          final hash = fileName.replaceAll('.json', '');
-          tempBookComponents.putIfAbsent(hash, () => {})['manifest'] =
-              platformPath;
-        } else if (parentDirName == 'covers') {
-          final extIndex = fileName.lastIndexOf('.');
-          if (extIndex != -1) {
-            final hash = fileName.substring(0, extIndex);
-            tempBookComponents.putIfAbsent(hash, () => {})['cover'] =
-                platformPath;
-          }
-        }
-      }
-
-      if (shelfFile == null) {
-        ToastService.showError('Invalid backup: shelf.json not found');
-        return null;
-      }
-
-      final Map<String, BackupPathsForBook> bookPaths = {};
-      for (final entry in tempBookComponents.entries) {
-        final hash = entry.key;
-        final components = entry.value;
-        if (components.containsKey('epub') &&
-            components.containsKey('manifest')) {
-          bookPaths[hash] = BackupPathsForBook(
-            epubPath: components['epub']!,
-            manifestPath: components['manifest']!,
-            coverPath: components['cover'],
-          );
-        } else {
-          debugPrint(
-            'Warning: Missing EPUB or manifest for hash $hash, skipping.',
-          );
-        }
-      }
-
-      final rootPath = IOSFilePath(p.dirname((shelfFile as IOSFilePath).path));
-
-      return BackupPaths(
-        rootPath: rootPath,
-        shelfFile: shelfFile,
-        bookPaths: bookPaths,
+    if (classified.shelfFile == null) {
+      throw Exception(
+        'Invalid backup: ${AppStorageConstants.shelfFile} not found',
       );
-    } on PlatformException catch (e) {
-      ToastService.showError('Failed to pick backup folder: ${e.message}');
-      return null;
-    } catch (e, st) {
-      ToastService.showError('Unexpected error picking backup folder: $e');
-      debugPrint('Unexpected error picking backup folder: $e\n$st');
-      return null;
     }
+
+    final bookPaths = _buildBookPaths(classified.tempBookComponents);
+    final rootPath = IOSFilePath(
+      p.dirname((classified.shelfFile! as IOSFilePath).path),
+    );
+
+    return BackupPaths(
+      rootPath: rootPath,
+      shelfFile: classified.shelfFile!,
+      bookPaths: bookPaths,
+    );
+  }
+
+  // ==================== Shared Backup Helpers ====================
+
+  /// Classifies a flat list of backup file entries into shelf / books / covers
+  /// / manifests buckets.
+  ///
+  /// [entries] contains one record per file: [displayPath] is a decoded
+  /// absolute path used purely for basename/dirname inspection; [platformPath]
+  /// is the opaque handle ([AndroidUriPath] or [IOSFilePath]) stored in the
+  /// result.
+  static ({
+    PlatformPath? shelfFile,
+    Map<String, Map<String, PlatformPath>> tempBookComponents,
+  }) _classifyBackupFiles(
+    List<({String displayPath, PlatformPath platformPath})> entries,
+  ) {
+    PlatformPath? shelfFile;
+    final tempBookComponents = <String, Map<String, PlatformPath>>{};
+
+    for (final entry in entries) {
+      final fileName = p.basename(entry.displayPath);
+      final parentDirName = p.basename(p.dirname(entry.displayPath));
+      if (fileName.isEmpty) continue;
+
+      if (fileName == AppStorageConstants.shelfFile) {
+        shelfFile = entry.platformPath;
+        continue;
+      }
+
+      if (parentDirName == AppStorageConstants.booksDir &&
+          fileName.endsWith('.epub')) {
+        final hash = fileName.replaceAll('.epub', '');
+        tempBookComponents.putIfAbsent(hash, () => {})['epub'] =
+            entry.platformPath;
+      } else if (parentDirName == AppStorageConstants.manifestsDir &&
+          fileName.endsWith('.json')) {
+        final hash = fileName.replaceAll('.json', '');
+        tempBookComponents.putIfAbsent(hash, () => {})['manifest'] =
+            entry.platformPath;
+      } else if (parentDirName == AppStorageConstants.coversDir) {
+        final extIndex = fileName.lastIndexOf('.');
+        if (extIndex != -1) {
+          final hash = fileName.substring(0, extIndex);
+          tempBookComponents.putIfAbsent(hash, () => {})['cover'] =
+              entry.platformPath;
+        }
+      }
+    }
+
+    return (
+      shelfFile: shelfFile,
+      tempBookComponents: tempBookComponents,
+    );
+  }
+
+  /// Assembles a [BackupPathsForBook] map from parsed component buckets,
+  /// skipping entries that are missing an epub or manifest file.
+  static Map<String, BackupPathsForBook> _buildBookPaths(
+    Map<String, Map<String, PlatformPath>> components,
+  ) {
+    final result = <String, BackupPathsForBook>{};
+    for (final entry in components.entries) {
+      final c = entry.value;
+      if (c.containsKey('epub') && c.containsKey('manifest')) {
+        result[entry.key] = BackupPathsForBook(
+          epubPath: c['epub']!,
+          manifestPath: c['manifest']!,
+          coverPath: c['cover'],
+        );
+      } else {
+        debugPrint(
+          'Warning: Missing epub or manifest for hash ${entry.key}, skipping.',
+        );
+      }
+    }
+    return result;
   }
 
   // ==================== Utility Methods ====================

@@ -95,15 +95,6 @@ class MockShelfBookRepository extends _i1.Mock
       ) as _i4.Future<List<_i2.ShelfGroup>>);
 
   @override
-  _i4.Future<List<_i2.ShelfGroup>> getAllGroups() => (super.noSuchMethod(
-        Invocation.method(
-          #getAllGroups,
-          [],
-        ),
-        returnValue: _i4.Future<List<_i2.ShelfGroup>>.value(<_i2.ShelfGroup>[]),
-      ) as _i4.Future<List<_i2.ShelfGroup>>);
-
-  @override
   _i4.Future<_i2.ShelfGroup?> getGroupById(int? id) => (super.noSuchMethod(
         Invocation.method(
           #getGroupById,
