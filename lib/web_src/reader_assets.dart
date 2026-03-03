@@ -1158,8 +1158,8 @@ class EpubReader {
     if (iframe && iframe.contentDocument) {
       const doc = iframe.contentDocument;
       // Add scroll offsets and padding to the coordinates to get the correct position relative to the iframe's content
-      const xx = x - this.state.config.padding.left + (doc.body.scrollLeft || 0);
-      const yy = y - this.state.config.padding.top + (doc.body.scrollTop || 0);
+      const xx = x - this.state.config.padding.left;
+      const yy = y - this.state.config.padding.top;
       const elementAtPoint = doc.elementFromPoint(xx, yy);
       if (elementAtPoint) {
         const linkEl = elementAtPoint.closest('a');
