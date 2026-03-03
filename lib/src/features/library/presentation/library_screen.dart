@@ -5,7 +5,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
-import 'library_actions_mixin.dart';
+import 'mixins/library_actions_mixin.dart';
 import 'widgets/book_grid_item.dart';
 import 'widgets/library_app_bar.dart';
 import 'widgets/library_selection_bar.dart';
