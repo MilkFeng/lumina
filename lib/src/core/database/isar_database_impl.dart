@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import '../../features/library/domain/shelf_book.dart';
@@ -23,7 +24,7 @@ class IsarDatabaseImpl implements IsarDatabase {
         BookManifestSchema, // Heavy reader entity
       ],
       directory: AppStorage.supportPath,
-      inspector: true, // Enable Isar Inspector for debugging
+      inspector: kDebugMode, // Isar Inspector for debug builds only
     );
 
     return _instance!;

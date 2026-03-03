@@ -17,6 +17,8 @@ import '../data/book_session.dart';
 import './reader_renderer.dart';
 import './control_panel.dart';
 import '../data/services/epub_stream_service_provider.dart';
+import '../../library/data/repositories/shelf_book_repository_provider.dart';
+import '../../library/data/repositories/book_manifest_repository_provider.dart';
 import '../data/epub_webview_handler.dart';
 import './toc_drawer.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -120,7 +122,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     webViewHandler = EpubWebViewHandler(
       streamService: ref.read(epubStreamServiceProvider),
     );
-    bookSession = BookSession(fileHash: widget.fileHash);
+    bookSession = BookSession(
+      fileHash: widget.fileHash,
+      shelfBookRepository: ref.read(shelfBookRepositoryProvider),
+      manifestRepository: ref.read(bookManifestRepositoryProvider),
+    );
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
@@ -196,7 +202,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   /// Load ShelfBook + BookManifest from database
   Future<void> _loadBook() async {
     try {
-      final loaded = await bookSession.loadBook(ref);
+      final loaded = await bookSession.loadBook();
 
       if (!loaded) {
         if (mounted) {

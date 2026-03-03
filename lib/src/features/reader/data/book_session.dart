@@ -1,9 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../library/domain/shelf_book.dart';
 import '../../library/domain/book_manifest.dart';
-import '../../library/data/repositories/shelf_book_repository_provider.dart';
-import '../../library/data/repositories/book_manifest_repository_provider.dart';
+import '../../library/data/shelf_book_repository.dart';
+import '../../library/data/book_manifest_repository.dart';
 import 'epub_webview_handler.dart';
 
 /// Manages the current reading session including book data, manifest, and TOC state
@@ -19,10 +17,17 @@ class BookSession {
   Set<String> _activeAnchors = {};
 
   final String fileHash;
+  final ShelfBookRepository _shelfBookRepo;
+  final BookManifestRepository _manifestRepo;
   final List<SpineItem> _spine = [];
   final List<SpineItem> _noLinearSpine = [];
 
-  BookSession({required this.fileHash});
+  BookSession({
+    required this.fileHash,
+    required ShelfBookRepository shelfBookRepository,
+    required BookManifestRepository manifestRepository,
+  }) : _shelfBookRepo = shelfBookRepository,
+       _manifestRepo = manifestRepository;
 
   // Getters
   ShelfBook? get book => _book;
@@ -35,17 +40,15 @@ class BookSession {
   int get direction => _book?.direction ?? 0;
 
   /// Load ShelfBook and BookManifest from database
-  Future<bool> loadBook(WidgetRef ref) async {
+  Future<bool> loadBook() async {
     // Load ShelfBook
-    final shelfBookRepo = ref.read(shelfBookRepositoryProvider);
-    final book = await shelfBookRepo.getBookByHash(fileHash);
+    final book = await _shelfBookRepo.getBookByHash(fileHash);
     if (book == null) {
       return false;
     }
 
     // Load BookManifest
-    final manifestRepo = ref.read(bookManifestRepositoryProvider);
-    final manifest = await manifestRepo.getManifestByHash(fileHash);
+    final manifest = await _manifestRepo.getManifestByHash(fileHash);
     if (manifest == null) {
       return false;
     }
@@ -118,8 +121,7 @@ class BookSession {
   }
 
   /// Save reading progress to database
-  Future<void> saveProgress(
-    WidgetRef ref, {
+  Future<void> saveProgress({
     required int currentChapterIndex,
     required int currentPageInChapter,
     required int totalPagesInChapter,
@@ -141,8 +143,7 @@ class BookSession {
       }
     }
 
-    final shelfBookRepo = ref.read(shelfBookRepositoryProvider);
-    await shelfBookRepo.updateProgress(
+    await _shelfBookRepo.updateProgress(
       bookId: _book!.id,
       currentChapterIndex: currentChapterIndex,
       progress: progress,

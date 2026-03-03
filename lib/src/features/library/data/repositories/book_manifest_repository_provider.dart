@@ -8,6 +8,17 @@ part 'book_manifest_repository_provider.g.dart';
 /// Repository for managing book manifest CRUD operations
 @riverpod
 BookManifestRepository bookManifestRepository(BookManifestRepositoryRef ref) {
-  final isar = ref.watch(isarProvider).requireValue;
-  return BookManifestRepository(isar: isar);
+  return ref
+      .watch(isarProvider)
+      .when(
+        data: (isar) => BookManifestRepository(isar: isar),
+        loading: () => throw StateError(
+          'Database is still initializing. '
+          'Ensure the app awaits database initialization before accessing repositories.',
+        ),
+        error: (e, stack) => Error.throwWithStackTrace(
+          StateError('Database initialization failed: $e'),
+          stack,
+        ),
+      );
 }

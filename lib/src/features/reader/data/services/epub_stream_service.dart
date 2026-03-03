@@ -22,12 +22,22 @@ class EpubStreamService {
     _initCompleter = Completer<void>();
 
     try {
-      _worker = await _EpubWorker.spawn();
+      _worker = await _EpubWorker.spawn(onDied: _onWorkerDied);
       _initCompleter!.complete();
+      _initCompleter = null; // Reset so re-warmup works after a worker death.
     } catch (e) {
       _initCompleter!.completeError(e);
       _initCompleter = null;
+      rethrow;
     }
+  }
+
+  /// Called by [_EpubWorker] when its isolate exits unexpectedly.
+  /// Clears all stale references so the next [warmUp] spawns a fresh isolate.
+  void _onWorkerDied() {
+    _worker = null;
+    _currentBookPath = null;
+    _initCompleter = null;
   }
 
   /// Open a book session.
@@ -118,12 +128,19 @@ class _EpubWorker {
   final _loadCompleters = <int, Completer<void>>{};
   int _nextRequestId = 0;
 
-  _EpubWorker._(this._isolate, this._sendPort, this._receivePort) {
+  final void Function() onDied;
+
+  _EpubWorker._(
+    this._isolate,
+    this._sendPort,
+    this._receivePort, {
+    required this.onDied,
+  }) {
     _receivePort.listen(_handleResponse);
     _isolate.addOnExitListener(_receivePort.sendPort, response: 'EXIT');
   }
 
-  static Future<_EpubWorker> spawn() async {
+  static Future<_EpubWorker> spawn({required void Function() onDied}) async {
     final receivePort = ReceivePort();
     // Start the isolate
     final isolate = await Isolate.spawn(
@@ -140,7 +157,7 @@ class _EpubWorker {
     // Tell the worker where to send responses for data requests
     sendPort.send(responsePort.sendPort);
 
-    return _EpubWorker._(isolate, sendPort, responsePort);
+    return _EpubWorker._(isolate, sendPort, responsePort, onDied: onDied);
   }
 
   Future<void> loadBook(String path) {
@@ -169,6 +186,7 @@ class _EpubWorker {
       }
       _pendingRequests.clear();
       _loadCompleters.clear();
+      onDied(); // Notify EpubStreamService to clear its stale reference.
       return;
     }
 

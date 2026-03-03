@@ -121,18 +121,25 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
 
     setState(() => _isSaving = true);
 
-    try {
-      final newAuthors = _authorsController.text
-          .split(',')
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
-      final newDescription = _descriptionController.text.trim();
+    final newAuthors = _authorsController.text
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final newDescription = _descriptionController.text.trim();
 
-      // Mutate the Isar object fields directly (no copyWith on Isar collections).
-      book.title = newTitle.isNotEmpty ? newTitle : book.title;
+    // Snapshot original values so we can roll back if the save fails,
+    // keeping the in-memory Isar object consistent with the database.
+    final originalTitle = book.title;
+    final originalAuthors = List<String>.from(book.authors);
+    final originalAuthor = book.author;
+    final originalDescription = book.description;
+    final originalUpdatedAt = book.updatedAt;
+
+    try {
+      book.title = newTitle;
       book.authors = newAuthors;
-      book.author = book.authors.isNotEmpty ? book.authors.first : "";
+      book.author = newAuthors.isNotEmpty ? newAuthors.first : '';
       book.description = newDescription.isEmpty ? null : newDescription;
       book.updatedAt = DateTime.now().millisecondsSinceEpoch;
 
@@ -140,6 +147,12 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
 
       result.fold(
         (error) {
+          // Roll back the in-memory mutation so the object stays consistent with DB.
+          book.title = originalTitle;
+          book.authors = originalAuthors;
+          book.author = originalAuthor;
+          book.description = originalDescription;
+          book.updatedAt = originalUpdatedAt;
           if (mounted) {
             ToastService.showError(
               AppLocalizations.of(context)!.bookSaveFailed(error),
@@ -157,6 +170,12 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         },
       );
     } catch (e) {
+      // Roll back the in-memory mutation so the object stays consistent with DB.
+      book.title = originalTitle;
+      book.authors = originalAuthors;
+      book.author = originalAuthor;
+      book.description = originalDescription;
+      book.updatedAt = originalUpdatedAt;
       if (mounted) {
         ToastService.showError(
           AppLocalizations.of(context)!.bookSaveFailed(e.toString()),
