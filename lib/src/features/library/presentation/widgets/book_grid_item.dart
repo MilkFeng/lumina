@@ -30,22 +30,19 @@ class BookGridItem extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _handleTap(context, ref),
       onLongPress: onLongPress,
-      child: RepaintBoundary(
-        child: Stack(
-          children: [
-            // Main mode-specific layout
-            switch (viewMode) {
-              ViewMode.relaxed => _buildRelaxed(context),
-              ViewMode.compact => Positioned.fill(
-                child: _buildCompact(context),
-              ),
-            },
 
-            // Selection checkbox (top-left, all modes)
-            if (isSelectionMode)
-              Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
-          ],
-        ),
+      child: Stack(
+        children: [
+          // Main mode-specific layout
+          switch (viewMode) {
+            ViewMode.relaxed => _buildRelaxed(context),
+            ViewMode.compact => Positioned.fill(child: _buildCompact(context)),
+          },
+
+          // Selection checkbox (top-left, all modes)
+          if (isSelectionMode)
+            Positioned(top: 8, left: 8, child: _buildCheckbox(context)),
+        ],
       ),
     );
   }
