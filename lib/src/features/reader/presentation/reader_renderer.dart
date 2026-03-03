@@ -330,9 +330,14 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   }
 
   Widget _buildBottomStatusBarOverlay() {
-    Widget buildBadge(String content, bool tabular) {
+    Widget buildBadge(
+      String content,
+      bool tabular, {
+      TextOverflow overflow = TextOverflow.clip,
+    }) {
       return Text(
         content,
+        overflow: overflow,
         style: TextStyle(
           color: Theme.of(
             context,
@@ -371,7 +376,14 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              buildBadge(widget.statusBarLeftContent, false),
+              Flexible(
+                child: buildBadge(
+                  widget.statusBarLeftContent,
+                  false,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               buildBadge(widget.statusBarRightContent, true),
             ],
           ),
