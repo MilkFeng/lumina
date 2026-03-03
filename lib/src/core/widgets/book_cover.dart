@@ -11,6 +11,7 @@ class BookCover extends ConsumerWidget {
   final String? relativePath;
   final BorderRadius radius;
   final bool enableBorder;
+  final int cacheHeight;
   static const int globalCacheHeight = 900;
 
   const BookCover({
@@ -18,6 +19,7 @@ class BookCover extends ConsumerWidget {
     required this.relativePath,
     this.radius = BorderRadius.zero,
     this.enableBorder = true,
+    this.cacheHeight = globalCacheHeight,
   });
 
   @override
@@ -45,7 +47,7 @@ class BookCover extends ConsumerWidget {
           child: Image.file(
             file,
             fit: BoxFit.cover,
-            cacheHeight: globalCacheHeight,
+            cacheHeight: cacheHeight,
             // Prevent white flash during Hero transitions and rebuilds
             gaplessPlayback: true,
             // Smooth fade-in effect (300ms)
@@ -88,8 +90,8 @@ class BookCover extends ConsumerWidget {
               : null,
         ),
         constraints: BoxConstraints(
-          maxHeight: globalCacheHeight.toDouble(),
-          maxWidth: globalCacheHeight.toDouble() * (210 / 297),
+          maxHeight: cacheHeight.toDouble(),
+          maxWidth: cacheHeight.toDouble() * (210 / 297),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
