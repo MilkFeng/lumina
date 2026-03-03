@@ -106,7 +106,7 @@ class _ReaderStyleBottomSheetState
                               children: presets.map((preset) {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 16),
-                                  child: ReaderThemeOptionChip(
+                                  child: ThemeVariantChip(
                                     colorScheme: preset.colorScheme,
                                     isSelected: _themeIndex == preset.index,
                                     onTap: () {

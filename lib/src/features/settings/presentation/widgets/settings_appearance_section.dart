@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/theme/app_theme_notifier.dart';
 import 'package:lumina/src/core/theme/app_theme_settings.dart';
+import 'package:lumina/src/features/reader/presentation/widgets/reader_theme_option_chip.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_theme_chips.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -86,7 +87,7 @@ class SettingsAppearanceSection extends ConsumerWidget {
                   children: AppThemeVariant.values.map((variant) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 16),
-                      child: AppThemeVariantChip(
+                      child: ThemeVariantChip(
                         colorScheme: AppThemeSettings.colorSchemeFor(
                           variant,
                           effectiveBrightness,

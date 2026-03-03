@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// A square chip that represents a single reader colour theme option.
+/// A square 56×56 chip that previews a [ColorScheme] and indicates selection.
 ///
-/// Shows a [Icons.check_outlined] icon when [isSelected] is `true`, otherwise
-/// shows [Icons.text_format_outlined].  The chip's surface and icon colours are
-/// driven entirely by the supplied [colorScheme] so it accurately previews the
-/// theme it represents.
-class ReaderThemeOptionChip extends StatelessWidget {
-  const ReaderThemeOptionChip({
+/// Shows [Icons.check_outlined] with a scale+fade animation when [isSelected]
+/// is `true`, otherwise shows [Icons.text_format_outlined].  The border color
+/// also animates between selected / unselected states.
+class ThemeVariantChip extends StatelessWidget {
+  const ThemeVariantChip({
     super.key,
     required this.colorScheme,
     required this.isSelected,
