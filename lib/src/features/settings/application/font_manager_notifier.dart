@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/fonts/domain/imported_font.dart';
+import 'package:lumina/src/features/settings/domain/imported_font.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'font_manager_notifier.g.dart';
