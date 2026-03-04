@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fpdart/fpdart.dart';
@@ -27,6 +28,27 @@ class EpubWebViewHandler {
     required WebUri requestUrl,
   }) async {
     try {
+      // Serve user-imported fonts.
+      if (isFontRequest(requestUrl)) {
+        final result = await _readFontFile(requestUrl);
+        if (result.isLeft()) {
+          return WebResourceResponse(
+            statusCode: 404,
+            reasonPhrase: 'Not Found',
+            data: Uint8List.fromList('Font not found'.codeUnits),
+          );
+        }
+        final data = result.getRight().toNullable()!.$1;
+        final mimeType = result.getRight().toNullable()!.$2;
+        return WebResourceResponse(
+          contentType: mimeType,
+          statusCode: 200,
+          reasonPhrase: 'OK',
+          data: data,
+          headers: _headers,
+        );
+      }
+
       // Read file from EPUB
       final result = await _readFileFromEpub(epubPath, fileHash, requestUrl);
 
@@ -66,6 +88,21 @@ class EpubWebViewHandler {
     required WebUri requestUrl,
   }) async {
     try {
+      // Serve user-imported fonts.
+      if (isFontRequest(requestUrl)) {
+        final result = await _readFontFile(requestUrl);
+        if (result.isLeft()) {
+          final msg = result.getLeft().toNullable()!;
+          return CustomSchemeResponse(
+            contentType: 'text/plain',
+            data: Uint8List.fromList(msg.codeUnits),
+          );
+        }
+        final data = result.getRight().toNullable()!.$1;
+        final mimeType = result.getRight().toNullable()!.$2;
+        return CustomSchemeResponse(contentType: mimeType, data: data);
+      }
+
       final result = await _readFileFromEpub(epubPath, fileHash, requestUrl);
 
       if (result.isLeft()) {
@@ -125,6 +162,39 @@ class EpubWebViewHandler {
     return right((data, mimeType));
   }
 
+  /// Reads a font file from the app's fonts directory.
+  /// URL format: epub://localhost/fonts/<fileName>
+  Future<Either<String, (Uint8List, String)>> _readFontFile(
+    WebUri requestUrl,
+  ) async {
+    const prefix = '/fonts/';
+    if (!requestUrl.path.startsWith(prefix)) {
+      return left('Invalid font path');
+    }
+    final fileName = Uri.decodeComponent(
+      requestUrl.path.substring(prefix.length),
+    );
+    if (fileName.isEmpty || fileName.contains('/')) {
+      return left('Invalid font file name');
+    }
+    final filePath = '${AppStorage.documentsPath}fonts/$fileName';
+    final file = File(filePath);
+    if (!await file.exists()) {
+      return left('Font file not found: $fileName');
+    }
+    final bytes = await file.readAsBytes();
+    final ext = fileName.toLowerCase().split('.').last;
+    final mimeType = _fontMimeTypes[ext] ?? 'application/octet-stream';
+    return right((bytes, mimeType));
+  }
+
+  static const _fontMimeTypes = {
+    'ttf': 'font/ttf',
+    'otf': 'font/otf',
+    'woff': 'font/woff',
+    'woff2': 'font/woff2',
+  };
+
   /// Generate base URL for a chapter
   /// This URL should be used as the baseUrl parameter when loading HTML
   static String getBaseUrl() {
@@ -138,10 +208,23 @@ class EpubWebViewHandler {
     return Uri.encodeFull(url);
   }
 
+  /// Generate URL for a user-imported font file.
+  /// Format: epub://localhost/fonts/<fileName>
+  static String getFontUrl(String fileName) {
+    return '$virtualScheme://$virtualDomain/fonts/$fileName';
+  }
+
   /// Check if a request is for an EPUB file
   static bool isEpubRequest(WebUri requestUrl) {
     return requestUrl.scheme == virtualScheme &&
         requestUrl.host == virtualDomain &&
         requestUrl.path.startsWith('/book/');
+  }
+
+  /// Check if a request is for a user-imported font.
+  static bool isFontRequest(WebUri requestUrl) {
+    return requestUrl.scheme == virtualScheme &&
+        requestUrl.host == virtualDomain &&
+        requestUrl.path.startsWith('/fonts/');
   }
 }

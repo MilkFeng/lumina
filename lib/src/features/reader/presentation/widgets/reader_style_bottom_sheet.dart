@@ -10,6 +10,7 @@ import 'package:lumina/src/core/widgets/settings_sub_label.dart';
 import 'package:lumina/src/core/widgets/theme_variant_chip.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../../application/reader_settings_notifier.dart';
+import 'reader_font_selector.dart';
 import 'reader_link_handling_selector.dart';
 import 'reader_page_animation_selector.dart';
 import 'reader_scale_slider.dart';
@@ -35,6 +36,8 @@ class _ReaderStyleBottomSheetState
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
   late ReaderPageAnimation _pageAnimation;
+  late String? _fontFileName;
+  late bool _overrideFontFamily;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -54,6 +57,8 @@ class _ReaderStyleBottomSheetState
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
     _pageAnimation = s.pageAnimation;
+    _fontFileName = s.fontFileName;
+    _overrideFontFamily = s.overrideFontFamily;
   }
 
   @override
@@ -255,7 +260,23 @@ class _ReaderStyleBottomSheetState
 
             const SizedBox(height: 24),
 
-            // ── Section 3: Links ──────────────────────────────────────────
+            // Custom font subsection (part of Typography & Layout)
+            ReaderFontSelector(
+              fontFileName: _fontFileName,
+              overrideFontFamily: _overrideFontFamily,
+              onFontChanged: (v) {
+                setState(() => _fontFileName = v);
+                _notifier.setFontFileName(v);
+              },
+              onOverrideChanged: (v) {
+                setState(() => _overrideFontFamily = v);
+                _notifier.setOverrideFontFamily(v);
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            // ── Section 3: Links ────────────────────────────────────────────────────
             SettingsSectionTitle(label: l10n.readerLinkHandlingSection),
             const SizedBox(height: 12),
             ReaderLinkHandlingSelector(

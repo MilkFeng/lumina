@@ -160,7 +160,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   late EpubTheme _currentTheme;
 
   int _currentToken = 0;
-  final Map<int, Completer<void>> _renderCompleters = {};
+  final Map<int, Completer<void>> _completers = {};
 
   @override
   void initState() {
@@ -203,19 +203,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final int token = _currentToken;
 
     final completer = Completer<void>();
-    _renderCompleters[token] = completer;
+    _completers[token] = completer;
 
     await _evaluateJavascript("window.reader.waitForRender($token)");
-
-    return completer.future.timeout(
-      const Duration(milliseconds: 1000),
-      onTimeout: () {
-        if (_renderCompleters.containsKey(token)) {
-          _renderCompleters.remove(token);
-          debugPrint('waitForRender timeout for token: $token');
-        }
-      },
-    );
+    await _waitForEvent(token, 1000);
   }
 
   Future<void> _waitForRender() async {
@@ -494,13 +485,13 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onRendered',
+      handlerName: 'onEventFinished',
       callback: (args) {
         if (args.isNotEmpty) {
           final int returnedToken = args[0] as int;
-          if (_renderCompleters.containsKey(returnedToken)) {
-            _renderCompleters[returnedToken]?.complete();
-            _renderCompleters.remove(returnedToken);
+          if (_completers.containsKey(returnedToken)) {
+            _completers[returnedToken]?.complete();
+            _completers.remove(returnedToken);
           }
         }
       },
@@ -526,16 +517,43 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
+  Future<void> _waitForEvent(int token, [int timeoutMs = 10000]) async {
+    final completer = _completers[token];
+    if (completer == null) {
+      debugPrint('No completer found for token: $token');
+      return;
+    }
+    return completer.future.timeout(
+      Duration(milliseconds: timeoutMs),
+      onTimeout: () {
+        if (_completers.containsKey(token)) {
+          _completers.remove(token);
+          debugPrint('waitForRender timeout for token: $token');
+        }
+      },
+    );
+  }
+
   Future<void> _updateTheme(EpubTheme theme) async {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
+    if (_controller == null) return;
+
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+
     _currentTheme = theme;
     final themeJson = jsonEncode(theme.toMap());
     await _evaluateJavascript("""window.reader.updateTheme(
+      $token,
       $width,
       $height,
       $themeJson,
     )""");
+    await _waitForEvent(token);
   }
 }

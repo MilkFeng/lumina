@@ -1310,6 +1310,96 @@ abstract class AppLocalizations {
   /// **'Slide'**
   String get readerPageAnimationSlide;
 
+  /// Reader style sheet subsection label for custom font settings
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Font'**
+  String get readerFontSection;
+
+  /// Font picker option meaning use the epub's own font
+  ///
+  /// In en, this message translates to:
+  /// **'Book Default'**
+  String get readerFontDefault;
+
+  /// Switch label to force the selected custom font over the epub's own font
+  ///
+  /// In en, this message translates to:
+  /// **'Override Book Font'**
+  String get readerOverrideFontFamily;
+
+  /// Hint shown in the font picker when no fonts have been imported
+  ///
+  /// In en, this message translates to:
+  /// **'No custom fonts imported yet'**
+  String get readerNoCustomFonts;
+
+  /// Button/link label to navigate to the font management screen
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Fonts'**
+  String get readerManageFonts;
+
+  /// Tip shown in the reader font subsection directing users to the settings screen
+  ///
+  /// In en, this message translates to:
+  /// **'Manage custom fonts in Settings.'**
+  String get readerFontManageTip;
+
+  /// Title of the font management screen
+  ///
+  /// In en, this message translates to:
+  /// **'Font Management'**
+  String get fontManagement;
+
+  /// Subtitle shown on the font management settings tile
+  ///
+  /// In en, this message translates to:
+  /// **'Custom fonts (.ttf / .otf)'**
+  String get fontManagementSubtitle;
+
+  /// Button label to import a font file
+  ///
+  /// In en, this message translates to:
+  /// **'Import Font'**
+  String get importFont;
+
+  /// Toast shown after successfully importing a single font
+  ///
+  /// In en, this message translates to:
+  /// **'Font \"{name}\" imported'**
+  String importFontSuccess(String name);
+
+  /// Toast shown after importing multiple fonts at once
+  ///
+  /// In en, this message translates to:
+  /// **'{count} fonts imported'**
+  String importFontsSuccess(int count);
+
+  /// Toast shown when font import fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import font: {error}'**
+  String importFontFailed(String error);
+
+  /// Confirmation dialog title for deleting a font
+  ///
+  /// In en, this message translates to:
+  /// **'Remove font'**
+  String get deleteFontConfirm;
+
+  /// Confirmation dialog message for deleting a font
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove the font \"{name}\"? This will not delete the original font file, only remove it from the app.'**
+  String deleteFontConfirmText(String name);
+
+  /// Placeholder text shown on the font management screen when no fonts exist
+  ///
+  /// In en, this message translates to:
+  /// **'No custom fonts yet'**
+  String get noFontsHint;
+
   /// Error message shown when the user tries to open a link that cannot be handled by the system
   ///
   /// In en, this message translates to:

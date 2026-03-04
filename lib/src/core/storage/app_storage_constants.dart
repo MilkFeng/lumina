@@ -15,6 +15,9 @@ class AppStorageConstants {
   /// Sub-directory that holds serialised [BookManifest] JSON files.
   static const String manifestsDir = 'manifests';
 
+  /// Sub-directory that holds user-imported font files.
+  static const String fontsDir = 'fonts';
+
   /// Shelf metadata file name used in backup archives.
   static const String shelfFile = 'shelf.json';
 }

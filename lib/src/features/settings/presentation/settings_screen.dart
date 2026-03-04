@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/settings_font_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/backup_tile.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/clean_cache_tile.dart';
@@ -81,6 +82,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+
+          const SizedBox(height: 24),
+
+          // Fonts section (inline management)
+          const SettingsFontSection(),
 
           const SizedBox(height: 24),
 

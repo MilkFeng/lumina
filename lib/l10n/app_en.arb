@@ -1173,6 +1173,93 @@
     "description": "Page animation option: slide/swipe transition"
   },
 
+  "readerFontSection": "Custom Font",
+  "@readerFontSection": {
+    "description": "Reader style sheet subsection label for custom font settings"
+  },
+
+  "readerFontDefault": "Book Default",
+  "@readerFontDefault": {
+    "description": "Font picker option meaning use the epub's own font"
+  },
+
+  "readerOverrideFontFamily": "Override Book Font",
+  "@readerOverrideFontFamily": {
+    "description": "Switch label to force the selected custom font over the epub's own font"
+  },
+
+  "readerNoCustomFonts": "No custom fonts imported yet",
+  "@readerNoCustomFonts": {
+    "description": "Hint shown in the font picker when no fonts have been imported"
+  },
+
+  "readerManageFonts": "Manage Fonts",
+  "@readerManageFonts": {
+    "description": "Button/link label to navigate to the font management screen"
+  },
+
+  "readerFontManageTip": "Manage custom fonts in Settings.",
+  "@readerFontManageTip": {
+    "description": "Tip shown in the reader font subsection directing users to the settings screen"
+  },
+
+  "fontManagement": "Font Management",
+  "@fontManagement": {
+    "description": "Title of the font management screen"
+  },
+
+  "fontManagementSubtitle": "Custom fonts (.ttf / .otf)",
+  "@fontManagementSubtitle": {
+    "description": "Subtitle shown on the font management settings tile"
+  },
+
+  "importFont": "Import Font",
+  "@importFont": {
+    "description": "Button label to import a font file"
+  },
+
+  "importFontSuccess": "Font \"{name}\" imported",
+  "@importFontSuccess": {
+    "description": "Toast shown after successfully importing a single font",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "importFontsSuccess": "{count} fonts imported",
+  "@importFontsSuccess": {
+    "description": "Toast shown after importing multiple fonts at once",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "importFontFailed": "Failed to import font: {error}",
+  "@importFontFailed": {
+    "description": "Toast shown when font import fails",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "deleteFontConfirm": "Remove font",
+  "@deleteFontConfirm": {
+    "description": "Confirmation dialog title for deleting a font"
+  },
+
+  "deleteFontConfirmText": "Are you sure you want to remove the font \"{name}\"? This will not delete the original font file, only remove it from the app.",
+  "@deleteFontConfirmText": {
+    "description": "Confirmation dialog message for deleting a font",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "noFontsHint": "No custom fonts yet",
+  "@noFontsHint": {
+    "description": "Placeholder text shown on the font management screen when no fonts exist"
+  },
+
   "cannotOpenLink": "Cannot open this link: {url}",
   "@cannotOpenLink": {
     "description": "Error message shown when the user tries to open a link that cannot be handled by the system",

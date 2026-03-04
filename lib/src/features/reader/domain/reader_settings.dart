@@ -22,6 +22,13 @@ class ReaderSettings {
   final bool handleIntraLink;
   final ReaderPageAnimation pageAnimation;
 
+  /// File name (with extension) of the user-imported font to use, or null to
+  /// use the epub's own fonts.
+  final String? fontFileName;
+
+  /// When true the custom font overrides the epub's own font-family rules.
+  final bool overrideFontFamily;
+
   const ReaderSettings({
     this.zoom = 1.0,
     this.followAppTheme = true,
@@ -33,7 +40,13 @@ class ReaderSettings {
     this.linkHandling = ReaderLinkHandling.ask,
     this.handleIntraLink = true,
     this.pageAnimation = ReaderPageAnimation.slide,
+    this.fontFileName,
+    this.overrideFontFamily = false,
   });
+
+  // Sentinel: lets copyWith(fontFileName: null) mean "set to null" rather than
+  // "leave unchanged". Used only for the nullable fontFileName field.
+  static const Object _kUnset = Object();
 
   ReaderSettings copyWith({
     double? zoom,
@@ -46,6 +59,8 @@ class ReaderSettings {
     ReaderLinkHandling? linkHandling,
     bool? handleIntraLink,
     ReaderPageAnimation? pageAnimation,
+    Object? fontFileName = _kUnset,
+    bool? overrideFontFamily,
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
@@ -58,6 +73,10 @@ class ReaderSettings {
       linkHandling: linkHandling ?? this.linkHandling,
       handleIntraLink: handleIntraLink ?? this.handleIntraLink,
       pageAnimation: pageAnimation ?? this.pageAnimation,
+      fontFileName: identical(fontFileName, _kUnset)
+          ? this.fontFileName
+          : fontFileName as String?,
+      overrideFontFamily: overrideFontFamily ?? this.overrideFontFamily,
     );
   }
 
@@ -89,6 +108,8 @@ class ReaderSettings {
         left: marginLeft,
         right: marginRight,
       ),
+      fontFileName: fontFileName,
+      overrideFontFamily: overrideFontFamily,
     );
   }
 

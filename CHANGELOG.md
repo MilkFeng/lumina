@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 底部添加状态栏，可以显示当前标题与阅读进度
 - 增加一些过渡动画，优化书架显示性能
 - 修复链接点击相关问题
+- 字体选择
 
 ## [v0.2.1] - 2026-03-01
 
