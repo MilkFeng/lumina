@@ -101,9 +101,15 @@ class SettingsFontSection extends ConsumerWidget {
     AppLocalizations l10n,
   ) async {
     try {
-      final font = await notifier.importFont();
-      if (font == null) return;
-      ToastService.showSuccess(l10n.importFontSuccess(font.displayName));
+      final fonts = await notifier.importFonts();
+      if (fonts.isEmpty) return;
+      if (fonts.length == 1) {
+        ToastService.showSuccess(
+          l10n.importFontSuccess(fonts.first.displayName),
+        );
+      } else {
+        ToastService.showSuccess(l10n.importFontsSuccess(fonts.length));
+      }
     } catch (e) {
       ToastService.showError(l10n.importFontFailed(e.toString()));
     }

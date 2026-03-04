@@ -30,9 +30,10 @@ class FontManagerNotifier extends _$FontManagerNotifier {
     }
   }
 
-  /// Opens the system file picker and copies the selected font into the app's
-  /// fonts directory. Returns the imported [ImportedFont] or null if cancelled.
-  Future<ImportedFont?> importFont() async {
+  /// Opens the system file picker and copies all selected fonts into the app's
+  /// fonts directory. Returns the list of successfully imported [ImportedFont]s,
+  /// or an empty list if the picker was cancelled.
+  Future<List<ImportedFont>> importFonts() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['ttf', 'otf'],
@@ -40,13 +41,7 @@ class FontManagerNotifier extends _$FontManagerNotifier {
       withReadStream: false,
       allowMultiple: true,
     );
-    if (result == null || result.files.isEmpty) return null;
-
-    final picked = result.files.first;
-    final sourcePath = picked.path;
-    if (sourcePath == null) return null;
-
-    final fileName = picked.name;
+    if (result == null || result.files.isEmpty) return [];
 
     // Ensure fonts directory exists.
     final fontsDir = Directory('${AppStorage.documentsPath}fonts');
@@ -54,19 +49,34 @@ class FontManagerNotifier extends _$FontManagerNotifier {
       await fontsDir.create(recursive: true);
     }
 
-    final destPath = '${fontsDir.path}/$fileName';
-    await File(sourcePath).copy(destPath);
+    final imported = <ImportedFont>[];
+    var current = state;
 
-    // Avoid duplicate entries.
-    if (state.any((f) => f.fileName == fileName)) {
-      return ImportedFont.fromFileName(fileName);
+    for (final picked in result.files) {
+      final sourcePath = picked.path;
+      if (sourcePath == null) continue;
+
+      final fileName = picked.name;
+      final destPath = '${fontsDir.path}/$fileName';
+      await File(sourcePath).copy(destPath);
+
+      // Avoid duplicate entries in state.
+      if (current.any((f) => f.fileName == fileName)) {
+        imported.add(ImportedFont.fromFileName(fileName));
+        continue;
+      }
+
+      final font = ImportedFont.fromFileName(fileName);
+      current = [...current, font];
+      imported.add(font);
     }
 
-    final font = ImportedFont.fromFileName(fileName);
-    final updated = [...state, font];
-    await _persist(updated);
-    state = updated;
-    return font;
+    if (current != state) {
+      await _persist(current);
+      state = current;
+    }
+
+    return imported;
   }
 
   /// Removes the given font from the list and deletes its file.

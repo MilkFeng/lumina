@@ -710,6 +710,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String importFontsSuccess(int count) {
+    return '已导入 $count 个字体';
+  }
+
+  @override
   String importFontFailed(String error) {
     return '导入字体失败：$error';
   }

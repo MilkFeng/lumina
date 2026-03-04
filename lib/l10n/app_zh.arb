@@ -1230,9 +1230,17 @@
 
   "importFontSuccess": "字体“{name}”已导入",
   "@importFontSuccess": {
-    "description": "成功导入字体后显示的提示",
+    "description": "成功导入单个字体后显示的提示",
     "placeholders": {
       "name": { "type": "String" }
+    }
+  },
+
+  "importFontsSuccess": "已导入 {count} 个字体",
+  "@importFontsSuccess": {
+    "description": "一次性导入多个字体后显示的提示",
+    "placeholders": {
+      "count": { "type": "int" }
     }
   },
 

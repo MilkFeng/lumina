@@ -729,6 +729,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String importFontsSuccess(int count) {
+    return '$count fonts imported';
+  }
+
+  @override
   String importFontFailed(String error) {
     return 'Failed to import font: $error';
   }

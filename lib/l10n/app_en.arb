@@ -1220,9 +1220,17 @@
 
   "importFontSuccess": "Font \"{name}\" imported",
   "@importFontSuccess": {
-    "description": "Toast shown after successfully importing a font",
+    "description": "Toast shown after successfully importing a single font",
     "placeholders": {
       "name": { "type": "String" }
+    }
+  },
+
+  "importFontsSuccess": "{count} fonts imported",
+  "@importFontsSuccess": {
+    "description": "Toast shown after importing multiple fonts at once",
+    "placeholders": {
+      "count": { "type": "int" }
     }
   },
 

@@ -1364,11 +1364,17 @@ abstract class AppLocalizations {
   /// **'Import Font'**
   String get importFont;
 
-  /// Toast shown after successfully importing a font
+  /// Toast shown after successfully importing a single font
   ///
   /// In en, this message translates to:
   /// **'Font \"{name}\" imported'**
   String importFontSuccess(String name);
+
+  /// Toast shown after importing multiple fonts at once
+  ///
+  /// In en, this message translates to:
+  /// **'{count} fonts imported'**
+  String importFontsSuccess(int count);
 
   /// Toast shown when font import fails
   ///
