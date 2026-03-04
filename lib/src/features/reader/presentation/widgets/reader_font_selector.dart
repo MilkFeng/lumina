@@ -75,17 +75,18 @@ class ReaderFontSelector extends ConsumerWidget {
               duration: const Duration(milliseconds: 200),
               opacity: fontFileName != null ? 1.0 : 0.0,
               child: fontFileName != null
-                  ? LabeledSwitchTile(
-                      label: l10n.readerOverrideFontFamily,
-                      icon: Icons.font_download_outlined,
-                      value: overrideFontFamily,
-                      onChanged: onOverrideChanged,
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: LabeledSwitchTile(
+                        label: l10n.readerOverrideFontFamily,
+                        icon: Icons.font_download_outlined,
+                        value: overrideFontFamily,
+                        onChanged: onOverrideChanged,
+                      ),
                     )
                   : const SizedBox(width: double.infinity),
             ),
           ),
-
-          const SizedBox(height: 8),
         ],
 
         // Tip: direct users to Settings for font management.
