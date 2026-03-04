@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
 import 'package:lumina/src/core/widgets/settings_sub_label.dart';
 import 'package:lumina/src/features/settings/application/font_manager_notifier.dart';
@@ -37,36 +38,52 @@ class ReaderFontSelector extends ConsumerWidget {
         const SizedBox(height: 8),
 
         if (fonts.isNotEmpty) ...[
-          // Font picker chip list
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              // "Book Default" chip
-              ChoiceChip(
-                label: Text(l10n.readerFontDefault),
-                selected: fontFileName == null,
-                onSelected: (_) => onFontChanged(null),
-              ),
-              ...fonts.map(
-                (f) => ChoiceChip(
-                  label: Text(f.displayName),
-                  selected: fontFileName == f.fileName,
-                  onSelected: (_) => onFontChanged(f.fileName),
+          // Font picker chip list — single-row horizontal scroll
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // "Book Default" chip
+                ChoiceChip(
+                  label: Text(l10n.readerFontDefault),
+                  selected: fontFileName == null,
+                  onSelected: (_) => onFontChanged(null),
                 ),
-              ),
-            ],
+                ...fonts.map(
+                  (f) => Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: ChoiceChip(
+                      label: Text(f.displayName),
+                      selected: fontFileName == f.fileName,
+                      onSelected: (_) => onFontChanged(f.fileName),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 12),
 
-          if (fontFileName != null)
-            LabeledSwitchTile(
-              label: l10n.readerOverrideFontFamily,
-              icon: Icons.font_download_outlined,
-              value: overrideFontFamily,
-              onChanged: onOverrideChanged,
+          AnimatedSize(
+            duration: const Duration(
+              milliseconds: AppTheme.defaultAnimationDurationMs,
             ),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: fontFileName != null ? 1.0 : 0.0,
+              child: fontFileName != null
+                  ? LabeledSwitchTile(
+                      label: l10n.readerOverrideFontFamily,
+                      icon: Icons.font_download_outlined,
+                      value: overrideFontFamily,
+                      onChanged: onOverrideChanged,
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
+          ),
 
           const SizedBox(height: 8),
         ],
