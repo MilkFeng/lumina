@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lumina/src/core/storage/app_storage.dart';
 import '../shelf_book_repository.dart';
@@ -13,14 +15,20 @@ import '../shelf_book_repository.dart';
 class StorageCleanupService {
   static const String _kShareDir = 'share';
 
+  /// SharedPreferences key used by [FontManagerNotifier] to persist the font list.
+  static const String _kImportedFonts = 'imported_fonts';
+
   final ShelfBookRepository _shelfBookRepo;
   final ExportBackupService _exportBackupService;
+  final SharedPreferences _prefs;
 
   StorageCleanupService({
     required ShelfBookRepository shelfBookRepo,
     required ExportBackupService exportBackupService,
+    required SharedPreferences sharedPreferences,
   }) : _shelfBookRepo = shelfBookRepo,
-       _exportBackupService = exportBackupService;
+       _exportBackupService = exportBackupService,
+       _prefs = sharedPreferences;
 
   /// Scans [books/] and [covers/] inside [AppStorage.documentsPath] and
   /// deletes every file whose name (without extension) is not present in the
@@ -42,6 +50,30 @@ class StorageCleanupService {
       validHashes,
     );
     return deletedCount;
+  }
+
+  /// Scans [fonts/] inside [AppStorage.documentsPath] and deletes every font
+  /// file whose name is not present in the persisted font list
+  /// (SharedPreferences key `imported_fonts`).
+  ///
+  /// Returns the total number of files deleted.
+  Future<int> cleanOrphanFontFiles() async {
+    final jsonStr = _prefs.getString(_kImportedFonts);
+    final validFileNames = <String>{};
+    if (jsonStr != null) {
+      try {
+        final list = jsonDecode(jsonStr) as List<dynamic>;
+        validFileNames.addAll(list.whereType<String>());
+      } catch (_) {
+        // Malformed JSON – treat all files as orphans.
+      }
+    }
+
+    return _cleanDirectory(
+      p.join(AppStorage.documentsPath, AppStorageConstants.fontsDir),
+      validFileNames,
+      withExtension: true,
+    );
   }
 
   Future<void> cleanCacheFiles() async {
@@ -71,8 +103,12 @@ class StorageCleanupService {
   }
 
   /// Iterates [dirPath], deletes any [File] whose name (without extension)
-  /// is absent from [validHashes], and returns the number of files removed.
-  Future<int> _cleanDirectory(String dirPath, Set<String> validHashes) async {
+  /// is absent from [validFileNames], and returns the number of files removed.
+  Future<int> _cleanDirectory(
+    String dirPath,
+    Set<String> validFileNames, {
+    bool withExtension = false,
+  }) async {
     final dir = Directory(dirPath);
     if (!await dir.exists()) return 0;
 
@@ -80,7 +116,11 @@ class StorageCleanupService {
     await for (final entity in dir.list()) {
       if (entity is! File) continue;
       final nameWithoutExt = p.basenameWithoutExtension(entity.path);
-      if (!validHashes.contains(nameWithoutExt)) {
+      final nameWithExt = p.basename(entity.path);
+      final isValid = withExtension
+          ? validFileNames.contains(nameWithExt)
+          : validFileNames.contains(nameWithoutExt);
+      if (!isValid) {
         try {
           await entity.delete();
           deleted++;

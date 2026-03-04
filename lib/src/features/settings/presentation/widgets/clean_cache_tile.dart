@@ -22,8 +22,11 @@ class _CleanCacheTileState extends ConsumerState<CleanCacheTile> {
 
     final service = ref.read(storageCleanupServiceProvider);
     await service.cleanCacheFiles();
-    final deletedCount = await service.cleanOrphanFiles();
+    final deletedBookCount = await service.cleanOrphanFiles();
     await service.cleanShareFiles();
+    final deletedFontCount = await service.cleanOrphanFontFiles();
+
+    final deletedCount = deletedBookCount + deletedFontCount;
 
     await Future.delayed(const Duration(milliseconds: 200));
 
