@@ -242,7 +242,7 @@ class EpubZipParser {
           final navDir = navPath.contains('/')
               ? navPath.substring(0, navPath.lastIndexOf('/'))
               : '';
-          toc = _parseNav(navContent, navDir, spineIndexMap);
+          toc = _parseNav(navContent, navDir, spineIndexMap, navPath);
         }
       }
 
@@ -596,6 +596,7 @@ class EpubZipParser {
     String content,
     String baseDir,
     Map<String, int> spineIndexMap,
+    String navPath,
   ) {
     try {
       final doc = XmlDocument.parse(content);
@@ -628,6 +629,7 @@ class EpubZipParser {
         0,
         baseDir,
         spineIndexMap,
+        navPath,
       );
     } catch (e) {
       return [];
@@ -640,6 +642,7 @@ class EpubZipParser {
     int depth,
     String baseDir,
     Map<String, int> spineIndexMap,
+    String navPath,
   ) {
     final chapters = <TocItem>[];
 
@@ -662,11 +665,17 @@ class EpubZipParser {
       Href? href;
       int spineIdx = -1;
       if (hrefValue != null && hrefValue.trim().isNotEmpty) {
-        final hrefStr = _resolveRelativePath(baseDir, hrefValue);
-        href = _resolveHref(hrefStr);
-        if (href != null) {
-          final normalizedPath = _normalizePath(href.path);
-          spineIdx = spineIndexMap[normalizedPath] ?? -1;
+        if (hrefValue == '#') {
+          href = Href()
+            ..path = navPath
+            ..anchor = 'top';
+        } else {
+          final hrefStr = _resolveRelativePath(baseDir, hrefValue);
+          href = _resolveHref(hrefStr);
+          if (href != null) {
+            final normalizedPath = _normalizePath(href.path);
+            spineIdx = spineIndexMap[normalizedPath] ?? -1;
+          }
         }
       }
 
@@ -681,6 +690,7 @@ class EpubZipParser {
               depth + 1,
               baseDir,
               spineIndexMap,
+              navPath,
             );
 
       chapters.add(
