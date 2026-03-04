@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **Footnote Support**: Enhanced parsing and support for various footnote formats.
 * **Performance & Animations**: Added transition animations and optimized the rendering performance of the bookshelf.
 * **Bottom Sheet Interactions**: Made the 'A' icons next to the zoom slider in the bottom sheet clickable for easier text size adjustment.
+* **Optimized page-turning experience**
 
 #### Fixed
 
@@ -47,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **脚注支持**：增加对更多书籍脚注格式的兼容与支持。
 * **性能与动效**：增加部分过渡动画，并优化了书架列表的显示性能。
 * **交互优化**：Bottom Sheet 中缩放调节滑块两端的“A”图标现在支持直接点击调节。
+* **优化翻页体验**
 
 #### 修复
 

@@ -9,6 +9,9 @@ class IOSPageTurnSession {
     'lumina/reader_page_turn',
   );
 
+  int _currentToken = 0;
+  bool _isAnimating = false;
+
   Future<void> _prepareIOSPageTurn() async {
     if (!Platform.isIOS) return;
     try {
@@ -23,10 +26,16 @@ class IOSPageTurnSession {
   Future<void> _animateIOSPageTurn(bool isNext, bool isVertical) async {
     if (!Platform.isIOS) return;
     try {
+      final token = ++_currentToken;
+      _isAnimating = true;
       await _nativePageTurnChannel.invokeMethod<void>('animatePageTurn', {
         'isNext': isNext,
         'isVertical': isVertical,
       });
+      if (token == _currentToken) {
+        _isAnimating = false;
+        return;
+      }
     } on MissingPluginException {
       // no-op for configurations without iOS native channel
     } catch (e) {
@@ -53,4 +62,6 @@ class IOSPageTurnSession {
   Widget buildAnimatedContainer(BuildContext context, Widget child) {
     return child;
   }
+
+  bool get isAnimating => _isAnimating;
 }
