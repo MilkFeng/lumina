@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 增加一些过渡动画，优化书架显示性能
 - 修复链接点击相关问题
 - 字体选择
+- 优化翻页体验
 
 ## [v0.2.1] - 2026-03-01
 
