@@ -6,20 +6,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.2.2] - 2026-03-04
 
-- 设置界面和阅读器下拉菜单中主题方块的一致性
-- 兼容书籍中自定义的页面颜色
-- 导入 Dialog 的 BUG
-- 更多脚注格式的支持
-- 去除主页下方的白条
-- Bottom Sheet 中缩放调节滑块的旁边两个 A 可以点击
-- 翻页动画可以选择开关了
-- 底部添加状态栏，可以显示当前标题与阅读进度
-- 增加一些过渡动画，优化书架显示性能
-- 修复链接点击相关问题
-- 字体选择
-- 优化翻页体验
+这里是为你拆分好的纯英文和纯中文两部分更新日志：
+
+### English
+
+#### Added
+
+* **Font Selection**: Added font selection support.
+* **Status Bar**: Added a bottom status bar to display the current chapter title and reading progress.
+* **Animation Toggle**: Added a toggle switch for page-turning animations.
+
+#### Changed
+
+* **UI Consistency**: Improved the visual consistency of theme color blocks between the settings interface and the reader's dropdown menu.
+* **Book Compatibility**: Improved compatibility with custom page colors defined within books.
+* **Footnote Support**: Enhanced parsing and support for various footnote formats.
+* **Performance & Animations**: Added transition animations and optimized the rendering performance of the bookshelf.
+* **Bottom Sheet Interactions**: Made the 'A' icons next to the zoom slider in the bottom sheet clickable for easier text size adjustment.
+* **Optimized page-turning experience**
+
+#### Fixed
+
+* **Import Dialog**: Fixed a bug related to the import dialog not functioning correctly.
+* **Home Page UI**: Fixed a UI issue where a blank white bar appeared at the bottom of the home page.
+* **Link Interactions**: Fixed issues related to clicking internal and external links within the reader.
+
+### Chinese
+
+#### 新增
+
+* **字体选择**：新增字体选择功能。
+* **底部状态栏**：阅读器底部新增状态栏，可实时显示当前标题与阅读进度。
+* **动画开关**：新增翻页动画的开启与关闭选项。
+
+#### 变更与优化
+
+* **界面一致性**：统一了设置界面和阅读器下拉菜单中主题方块的视觉样式。
+* **兼容性提升**：更好地兼容了书籍自带的自定义页面颜色。
+* **脚注支持**：增加对更多书籍脚注格式的兼容与支持。
+* **性能与动效**：增加部分过渡动画，并优化了书架列表的显示性能。
+* **交互优化**：Bottom Sheet 中缩放调节滑块两端的“A”图标现在支持直接点击调节。
+* **优化翻页体验**
+
+#### 修复
+
+* **导入修复**：修复了书籍导入 Dialog 相关的 BUG。
+* **界面修复**：去除了主页底部异常显示的白条。
+* **链接修复**：修复了阅读器内链接点击的相关问题。
+
 
 ## [v0.2.1] - 2026-03-01
 
@@ -42,18 +78,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 简体中文
 
-#### Added
+#### 新增
 - 上线全新全局主题系统，支持独立的明暗模式切换
 - 新增 6 款阅读主题预设
 - 新增设置中心（替代原“关于”页面），集成配置项及开源协议说明
 - 新增对多看平台脚注格式的支持
 
-#### Changed
+#### 变更与优化
 - 书架界面视觉重构：优化多选模式下的复选框样式与选中颜色表现；重构顶部与底部导航栏，并添加过渡动画
 - 全面提升 UI 一致性：优化应用内弹窗、下拉抽屉、提示条、按钮边框及阴影色彩，确保在所有主题下的视觉协调性
 - EPUB 解析逻辑升级：大幅提升书籍封面解析成功率及目录相对路径识别准确率
 - 交互细节优化：优化主题面板的交互体验
 
-#### Fixed
+#### 修复
 - 修复部分书籍中字体大小和行高无法被正确应用的问题
 - 提升正文阅读中链接点击的精确度
