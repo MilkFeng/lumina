@@ -712,8 +712,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerManageFonts => 'Manage Fonts';
 
   @override
-  String get readerFontManageTip =>
-      'Manage custom fonts in Settings → Font Management';
+  String get readerFontManageTip => 'Manage custom fonts in Settings.';
 
   @override
   String get fontManagement => 'Font Management';

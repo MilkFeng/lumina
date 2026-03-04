@@ -1198,7 +1198,7 @@
     "description": "Button/link label to navigate to the font management screen"
   },
 
-  "readerFontManageTip": "Manage custom fonts in Settings → Font Management",
+  "readerFontManageTip": "Manage custom fonts in Settings.",
   "@readerFontManageTip": {
     "description": "Tip shown in the reader font subsection directing users to the settings screen"
   },

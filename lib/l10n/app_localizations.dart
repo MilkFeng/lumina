@@ -1343,7 +1343,7 @@ abstract class AppLocalizations {
   /// Tip shown in the reader font subsection directing users to the settings screen
   ///
   /// In en, this message translates to:
-  /// **'Manage custom fonts in Settings → Font Management'**
+  /// **'Manage custom fonts in Settings.'**
   String get readerFontManageTip;
 
   /// Title of the font management screen
