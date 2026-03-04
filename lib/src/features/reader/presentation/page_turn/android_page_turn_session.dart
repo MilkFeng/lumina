@@ -161,4 +161,6 @@ class AndroidPageTurnSession {
       ],
     );
   }
+
+  bool get isAnimating => _isAnimating;
 }

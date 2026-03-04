@@ -233,7 +233,9 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   void _handleTap(TapUpDetails details) {
     if (widget.showControls) {
       widget.onToggleControls();
-      return;
+    } else if (_androidPageTurnSession.isAnimating ||
+        _iosPageTurnSession.isAnimating) {
+      _handleTapZone(details.globalPosition.dx, details.globalPosition.dy);
     } else {
       _webViewController.checkTapElementAt(
         details.globalPosition.dx,
