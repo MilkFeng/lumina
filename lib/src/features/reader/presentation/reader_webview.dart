@@ -160,7 +160,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   late EpubTheme _currentTheme;
 
   int _currentToken = 0;
-  final Map<int, Completer<void>> _renderCompleters = {};
+  final Map<int, Completer<void>> _completers = {};
 
   @override
   void initState() {
@@ -203,15 +203,15 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final int token = _currentToken;
 
     final completer = Completer<void>();
-    _renderCompleters[token] = completer;
+    _completers[token] = completer;
 
     await _evaluateJavascript("window.reader.waitForRender($token)");
 
     return completer.future.timeout(
       const Duration(milliseconds: 1000),
       onTimeout: () {
-        if (_renderCompleters.containsKey(token)) {
-          _renderCompleters.remove(token);
+        if (_completers.containsKey(token)) {
+          _completers.remove(token);
           debugPrint('waitForRender timeout for token: $token');
         }
       },
@@ -494,13 +494,13 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onRendered',
+      handlerName: 'onEventFinished',
       callback: (args) {
         if (args.isNotEmpty) {
           final int returnedToken = args[0] as int;
-          if (_renderCompleters.containsKey(returnedToken)) {
-            _renderCompleters[returnedToken]?.complete();
-            _renderCompleters.remove(returnedToken);
+          if (_completers.containsKey(returnedToken)) {
+            _completers[returnedToken]?.complete();
+            _completers.remove(returnedToken);
           }
         }
       },
@@ -530,12 +530,31 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
 
+    if (_controller == null) return;
+
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+
     _currentTheme = theme;
     final themeJson = jsonEncode(theme.toMap());
     await _evaluateJavascript("""window.reader.updateTheme(
+      $token,
       $width,
       $height,
       $themeJson,
     )""");
+
+    return completer.future.timeout(
+      const Duration(milliseconds: 2000),
+      onTimeout: () {
+        if (_completers.containsKey(token)) {
+          _completers.remove(token);
+          debugPrint('waitForRender timeout for token: $token');
+        }
+      },
+    );
   }
 }
