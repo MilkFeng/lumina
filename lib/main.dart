@@ -4,7 +4,6 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import 'package:lumina/src/features/reader/data/services/epub_stream_service_provider.dart';
 import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,9 +57,4 @@ void main() async {
       child: const LuminaReaderApp(),
     ),
   );
-
-  Future.delayed(const Duration(seconds: 3), () {
-    container.read(storageCleanupServiceProvider).cleanCacheFiles();
-    container.read(storageCleanupServiceProvider).cleanShareFiles();
-  });
 }
