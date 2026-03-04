@@ -59,16 +59,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // Fonts section (inline management)
+          const SettingsFontSection(),
+
+          const SizedBox(height: 24),
+
           // Library section
           SettingsInfoSection(
             title: l10n.library,
             children: const [BackupTile()],
           ),
-
-          const SizedBox(height: 24),
-
-          // Fonts section (inline management)
-          const SettingsFontSection(),
 
           const SizedBox(height: 24),
 

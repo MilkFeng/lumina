@@ -38,6 +38,7 @@ class FontManagerNotifier extends _$FontManagerNotifier {
       allowedExtensions: ['ttf', 'otf'],
       withData: false,
       withReadStream: false,
+      allowMultiple: true,
     );
     if (result == null || result.files.isEmpty) return null;
 
