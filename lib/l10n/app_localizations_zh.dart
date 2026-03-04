@@ -678,7 +678,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerPageAnimationSlide => '滑动翻页';
 
   @override
-  String get readerFontSection => '字体';
+  String get readerFontSection => '自定义字体';
 
   @override
   String get readerFontDefault => '书籍默认';
@@ -687,10 +687,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerOverrideFontFamily => '强制使用该字体';
 
   @override
-  String get readerNoCustomFonts => '暂未导入任何自定义字体。';
+  String get readerNoCustomFonts => '暂未导入任何自定义字体';
 
   @override
   String get readerManageFonts => '管理字体';
+
+  @override
+  String get readerFontManageTip => '前往设置页面管理自定义字体';
 
   @override
   String get fontManagement => '字体管理';

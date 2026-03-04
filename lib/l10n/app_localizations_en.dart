@@ -697,7 +697,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerPageAnimationSlide => 'Slide';
 
   @override
-  String get readerFontSection => 'Font';
+  String get readerFontSection => 'Custom Font';
 
   @override
   String get readerFontDefault => 'Book Default';
@@ -706,10 +706,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerOverrideFontFamily => 'Override Book Font';
 
   @override
-  String get readerNoCustomFonts => 'No custom fonts imported yet.';
+  String get readerNoCustomFonts => 'No custom fonts imported yet';
 
   @override
   String get readerManageFonts => 'Manage Fonts';
+
+  @override
+  String get readerFontManageTip =>
+      'Manage custom fonts in Settings → Font Management';
 
   @override
   String get fontManagement => 'Font Management';

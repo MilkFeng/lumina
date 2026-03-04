@@ -1310,10 +1310,10 @@ abstract class AppLocalizations {
   /// **'Slide'**
   String get readerPageAnimationSlide;
 
-  /// Reader style sheet section title for font settings
+  /// Reader style sheet subsection label for custom font settings
   ///
   /// In en, this message translates to:
-  /// **'Font'**
+  /// **'Custom Font'**
   String get readerFontSection;
 
   /// Font picker option meaning use the epub's own font
@@ -1331,7 +1331,7 @@ abstract class AppLocalizations {
   /// Hint shown in the font picker when no fonts have been imported
   ///
   /// In en, this message translates to:
-  /// **'No custom fonts imported yet.'**
+  /// **'No custom fonts imported yet'**
   String get readerNoCustomFonts;
 
   /// Button/link label to navigate to the font management screen
@@ -1339,6 +1339,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage Fonts'**
   String get readerManageFonts;
+
+  /// Tip shown in the reader font subsection directing users to the settings screen
+  ///
+  /// In en, this message translates to:
+  /// **'Manage custom fonts in Settings → Font Management'**
+  String get readerFontManageTip;
 
   /// Title of the font management screen
   ///

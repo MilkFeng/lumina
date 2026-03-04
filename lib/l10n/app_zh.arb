@@ -1183,9 +1183,9 @@
     "description": "翻页动画选项：滑动过渡"
   },
 
-  "readerFontSection": "字体",
+  "readerFontSection": "自定义字体",
   "@readerFontSection": {
-    "description": "阅读器样式面板字体区块标题"
+    "description": "阅读器样式面板自定义字体子区块标签"
   },
 
   "readerFontDefault": "书籍默认",
@@ -1198,7 +1198,7 @@
     "description": "强制将自定义字体覆盖 epub 内置字体的开关标签"
   },
 
-  "readerNoCustomFonts": "暂未导入任何自定义字体。",
+  "readerNoCustomFonts": "暂未导入任何自定义字体",
   "@readerNoCustomFonts": {
     "description": "字体选择器为空时的提示文字"
   },
@@ -1206,6 +1206,11 @@
   "readerManageFonts": "管理字体",
   "@readerManageFonts": {
     "description": "跳转到字体管理页的按钮/链接标签"
+  },
+
+  "readerFontManageTip": "前往设置页面管理自定义字体",
+  "@readerFontManageTip": {
+    "description": "阅读器自定义字体子区块显示的提示，引导用户前往设置页面"
   },
 
   "fontManagement": "字体管理",

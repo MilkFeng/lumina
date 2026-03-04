@@ -1173,9 +1173,9 @@
     "description": "Page animation option: slide/swipe transition"
   },
 
-  "readerFontSection": "Font",
+  "readerFontSection": "Custom Font",
   "@readerFontSection": {
-    "description": "Reader style sheet section title for font settings"
+    "description": "Reader style sheet subsection label for custom font settings"
   },
 
   "readerFontDefault": "Book Default",
@@ -1188,7 +1188,7 @@
     "description": "Switch label to force the selected custom font over the epub's own font"
   },
 
-  "readerNoCustomFonts": "No custom fonts imported yet.",
+  "readerNoCustomFonts": "No custom fonts imported yet",
   "@readerNoCustomFonts": {
     "description": "Hint shown in the font picker when no fonts have been imported"
   },
@@ -1196,6 +1196,11 @@
   "readerManageFonts": "Manage Fonts",
   "@readerManageFonts": {
     "description": "Button/link label to navigate to the font management screen"
+  },
+
+  "readerFontManageTip": "Manage custom fonts in Settings → Font Management",
+  "@readerFontManageTip": {
+    "description": "Tip shown in the reader font subsection directing users to the settings screen"
   },
 
   "fontManagement": "Font Management",
