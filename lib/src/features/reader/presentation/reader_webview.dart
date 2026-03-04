@@ -206,16 +206,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     _completers[token] = completer;
 
     await _evaluateJavascript("window.reader.waitForRender($token)");
-
-    return completer.future.timeout(
-      const Duration(milliseconds: 1000),
-      onTimeout: () {
-        if (_completers.containsKey(token)) {
-          _completers.remove(token);
-          debugPrint('waitForRender timeout for token: $token');
-        }
-      },
-    );
+    await _waitForEvent(token, 1000);
   }
 
   Future<void> _waitForRender() async {
@@ -526,6 +517,23 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
+  Future<void> _waitForEvent(int token, [int timeoutMs = 10000]) async {
+    final completer = _completers[token];
+    if (completer == null) {
+      debugPrint('No completer found for token: $token');
+      return;
+    }
+    return completer.future.timeout(
+      Duration(milliseconds: timeoutMs),
+      onTimeout: () {
+        if (_completers.containsKey(token)) {
+          _completers.remove(token);
+          debugPrint('waitForRender timeout for token: $token');
+        }
+      },
+    );
+  }
+
   Future<void> _updateTheme(EpubTheme theme) async {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
@@ -546,15 +554,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       $height,
       $themeJson,
     )""");
-
-    return completer.future.timeout(
-      const Duration(milliseconds: 2000),
-      onTimeout: () {
-        if (_completers.containsKey(token)) {
-          _completers.remove(token);
-          debugPrint('waitForRender timeout for token: $token');
-        }
-      },
-    );
+    await _waitForEvent(token);
   }
 }
