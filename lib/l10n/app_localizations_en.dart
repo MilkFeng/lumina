@@ -725,7 +725,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String importFontSuccess(String name) {
-    return 'Font \"$name\" imported.';
+    return 'Font \"$name\" imported';
   }
 
   @override
@@ -734,13 +734,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String deleteFontConfirm(String name) {
-    return 'Remove font \"$name\"?';
+  String get deleteFontConfirm => 'Remove font';
+
+  @override
+  String deleteFontConfirmText(String name) {
+    return 'Are you sure you want to remove the font \"$name\"? This will not delete the original font file, only remove it from the app.';
   }
 
   @override
-  String get noFontsHint =>
-      'No custom fonts yet.\nTap \"+\" to import a .ttf or .otf file.';
+  String get noFontsHint => 'No custom fonts yet';
 
   @override
   String cannotOpenLink(String url) {

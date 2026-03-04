@@ -1367,7 +1367,7 @@ abstract class AppLocalizations {
   /// Toast shown after successfully importing a font
   ///
   /// In en, this message translates to:
-  /// **'Font \"{name}\" imported.'**
+  /// **'Font \"{name}\" imported'**
   String importFontSuccess(String name);
 
   /// Toast shown when font import fails
@@ -1379,13 +1379,19 @@ abstract class AppLocalizations {
   /// Confirmation dialog title for deleting a font
   ///
   /// In en, this message translates to:
-  /// **'Remove font \"{name}\"?'**
-  String deleteFontConfirm(String name);
+  /// **'Remove font'**
+  String get deleteFontConfirm;
+
+  /// Confirmation dialog message for deleting a font
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove the font \"{name}\"? This will not delete the original font file, only remove it from the app.'**
+  String deleteFontConfirmText(String name);
 
   /// Placeholder text shown on the font management screen when no fonts exist
   ///
   /// In en, this message translates to:
-  /// **'No custom fonts yet.\nTap \"+\" to import a .ttf or .otf file.'**
+  /// **'No custom fonts yet'**
   String get noFontsHint;
 
   /// Error message shown when the user tries to open a link that cannot be handled by the system

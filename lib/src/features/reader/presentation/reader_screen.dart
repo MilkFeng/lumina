@@ -272,7 +272,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     ref.listen(readerSettingsNotifierProvider, (previous, next) {
       if (previous != null && previous != next) {
         // If zoom changed, use debounce to avoid excessive WebView reloads while dragging the slider
-        if (previous.zoom != next.zoom) {
+        if (previous.fontFileName != next.fontFileName ||
+            previous.overrideFontFamily != next.overrideFontFamily) {
+          updateWebViewTheme();
+        } else if (previous.zoom != next.zoom) {
           updateWebViewThemeWithDebounce();
         } else {
           updateWebViewTheme();

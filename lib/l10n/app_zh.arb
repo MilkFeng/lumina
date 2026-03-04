@@ -1228,7 +1228,7 @@
     "description": "导入字体文件的按钮标签"
   },
 
-  "importFontSuccess": "字体「{name}」已导入。",
+  "importFontSuccess": "字体“{name}”已导入",
   "@importFontSuccess": {
     "description": "成功导入字体后显示的提示",
     "placeholders": {
@@ -1244,15 +1244,20 @@
     }
   },
 
-  "deleteFontConfirm": "移除字体「{name}」？",
+  "deleteFontConfirm": "移除字体",
   "@deleteFontConfirm": {
-    "description": "删除字体的确认对话框标题",
+    "description": "删除字体的确认对话框标题"
+  },
+
+  "deleteFontConfirmText": "确定要删除字体“{name}”吗？此操作无法撤销",
+  "@deleteFontConfirmText": {
+    "description": "删除字体的确认对话框内容",
     "placeholders": {
       "name": { "type": "String" }
     }
   },
 
-  "noFontsHint": "暂无自定义字体。\n点击[+]导入 .ttf 或 .otf 文件。",
+  "noFontsHint": "暂无自定义字体",
   "@noFontsHint": {
     "description": "字体管理页为空时显示的占位文字"
   },

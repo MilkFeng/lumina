@@ -1218,7 +1218,7 @@
     "description": "Button label to import a font file"
   },
 
-  "importFontSuccess": "Font \"{name}\" imported.",
+  "importFontSuccess": "Font \"{name}\" imported",
   "@importFontSuccess": {
     "description": "Toast shown after successfully importing a font",
     "placeholders": {
@@ -1234,15 +1234,20 @@
     }
   },
 
-  "deleteFontConfirm": "Remove font \"{name}\"?",
+  "deleteFontConfirm": "Remove font",
   "@deleteFontConfirm": {
-    "description": "Confirmation dialog title for deleting a font",
+    "description": "Confirmation dialog title for deleting a font"
+  },
+
+  "deleteFontConfirmText": "Are you sure you want to remove the font \"{name}\"? This will not delete the original font file, only remove it from the app.",
+  "@deleteFontConfirmText": {
+    "description": "Confirmation dialog message for deleting a font",
     "placeholders": {
       "name": { "type": "String" }
     }
   },
 
-  "noFontsHint": "No custom fonts yet.\nTap \"+\" to import a .ttf or .otf file.",
+  "noFontsHint": "No custom fonts yet",
   "@noFontsHint": {
     "description": "Placeholder text shown on the font management screen when no fonts exist"
   },

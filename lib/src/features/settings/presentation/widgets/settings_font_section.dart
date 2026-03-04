@@ -41,13 +41,13 @@ class SettingsFontSection extends ConsumerWidget {
               ),
               leading: Icon(
                 Icons.font_download_outlined,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               title: Text(font.displayName),
               subtitle: Text(
                 font.fileName,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -107,7 +107,8 @@ class SettingsFontSection extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.deleteFontConfirm(font.displayName)),
+        title: Text(l10n.deleteFontConfirm),
+        content: Text(l10n.deleteFontConfirmText(font.displayName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),

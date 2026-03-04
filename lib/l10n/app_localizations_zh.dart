@@ -706,7 +706,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String importFontSuccess(String name) {
-    return '字体「$name」已导入。';
+    return '字体“$name”已导入';
   }
 
   @override
@@ -715,12 +715,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String deleteFontConfirm(String name) {
-    return '移除字体「$name」？';
+  String get deleteFontConfirm => '移除字体';
+
+  @override
+  String deleteFontConfirmText(String name) {
+    return '确定要删除字体“$name”吗？此操作无法撤销';
   }
 
   @override
-  String get noFontsHint => '暂无自定义字体。\n点击[+]导入 .ttf 或 .otf 文件。';
+  String get noFontsHint => '暂无自定义字体';
 
   @override
   String cannotOpenLink(String url) {
