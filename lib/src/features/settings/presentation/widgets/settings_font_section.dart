@@ -33,41 +33,30 @@ class SettingsFontSection extends ConsumerWidget {
             ),
           )
         else
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 6 * 75.0),
-            child: ListView(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              physics: const ClampingScrollPhysics(),
-              children: fonts
-                  .map(
-                    (font) => ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 0,
-                      ),
-                      leading: Icon(
-                        Icons.font_download_outlined,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      title: Text(font.displayName),
-                      subtitle: Text(
-                        font.fileName,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        color: Theme.of(context).colorScheme.error,
-                        tooltip: l10n.delete,
-                        onPressed: () =>
-                            _confirmDelete(context, notifier, font, l10n),
-                      ),
-                    ),
-                  )
-                  .toList(),
+          ...fonts.map(
+            (font) => ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 0,
+              ),
+              leading: Icon(
+                Icons.font_download_outlined,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              title: Text(font.displayName),
+              subtitle: Text(
+                font.fileName,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline),
+                color: Theme.of(context).colorScheme.error,
+                tooltip: l10n.delete,
+                onPressed: () => _confirmDelete(context, notifier, font, l10n),
+              ),
             ),
           ),
 
