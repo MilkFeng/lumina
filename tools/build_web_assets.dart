@@ -60,7 +60,6 @@ void main() async {
     'const String kSkeletonCss = r\'\'\'\n$minifiedSkeletonCss\n\'\'\';\n',
   );
 
-  // 写入生成的 Dart 文件
   final outFile = File(outputPath);
   if (!outFile.parent.existsSync()) {
     outFile.parent.createSync(recursive: true);
