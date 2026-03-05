@@ -1,48 +1,71 @@
 import 'dart:io';
 
-void main() {
-  const fileMap = {
-    'lib/web_src/controller.js': 'kControllerJs',
-    'lib/web_src/pagination.css': 'kPaginationCss',
-    'lib/web_src/skeleton.css': 'kSkeletonCss',
-  };
+void main() async {
+  print('🚀 start build lumina web assets...');
 
-  // Check if all source files exist
-  for (final path in fileMap.keys) {
-    if (!File(path).existsSync()) {
-      // ignore: avoid_print
-      print('❌ Cannot find source file: $path. Please ensure it exists.');
-      return;
+  const jsProjectDir = 'lib/web_src/controller.js';
+
+  String minifiedJs = '';
+  String minifiedPaginationCss = '';
+  String minifiedSkeletonCss = '';
+
+  Future<String> runEsbuild(List<String> args) async {
+    final result = await Process.run(
+      'npx',
+      ['esbuild', ...args],
+      workingDirectory: jsProjectDir,
+      runInShell: true,
+    );
+
+    if (result.exitCode != 0) {
+      print('❌ esbuild error:\n${result.stderr}');
+      exit(1);
     }
+    return (result.stdout as String).trim();
   }
 
-  Map<String, String> contentMap = {};
+  try {
+    print('📦 com: controller.js...');
+    minifiedJs = await runEsbuild([
+      'index.js',
+      '--bundle',
+      '--minify',
+      '--format=iife',
+    ]);
 
-  for (final entry in fileMap.entries) {
-    final content = File(entry.key).readAsStringSync();
-    contentMap.putIfAbsent(entry.value, () => content);
+    print('📦 com: pagination.css...');
+    minifiedPaginationCss = await runEsbuild(['../pagination.css', '--minify']);
+
+    print('📦 com: skeleton.css...');
+    minifiedSkeletonCss = await runEsbuild(['../skeleton.css', '--minify']);
+  } catch (e) {
+    print('❌ error: $e');
+    exit(1);
   }
 
-  String generatedContent = '''
-// ==========================================
-// 🚨 GENERATED CODE - DO NOT MODIFY BY HAND
-// ==========================================
-''';
+  final outputPath = 'lib/web_src/reader_assets.dart';
+  final buffer = StringBuffer();
 
-  contentMap.forEach((varName, content) {
-    generatedContent +=
-        'const String $varName = r\'\'\'\n$content\n\'\'\';\n\n';
-  });
+  buffer.writeln('// ==========================================');
+  buffer.writeln('// 🚨 GENERATED CODE - DO NOT MODIFY BY HAND');
+  buffer.writeln('// ==========================================\n');
 
-  final outFile = File('lib/web_src/reader_assets.dart');
+  buffer.writeln(
+    'const String kControllerJs = r\'\'\'\n$minifiedJs\n\'\'\';\n',
+  );
+  buffer.writeln(
+    'const String kPaginationCss = r\'\'\'\n$minifiedPaginationCss\n\'\'\';\n',
+  );
+  buffer.writeln(
+    'const String kSkeletonCss = r\'\'\'\n$minifiedSkeletonCss\n\'\'\';\n',
+  );
 
+  // 写入生成的 Dart 文件
+  final outFile = File(outputPath);
   if (!outFile.parent.existsSync()) {
     outFile.parent.createSync(recursive: true);
   }
+  await outFile.writeAsString(buffer.toString());
 
-  outFile.writeAsStringSync(generatedContent);
-  // ignore: avoid_print
-  print(
-    '✅ Web assets generated successfully at lib/web_src/reader_assets.dart',
-  );
+  print('✅ web assets generated: $outputPath');
 }
