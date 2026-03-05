@@ -182,10 +182,21 @@ class _UpdateDialog extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return AlertDialog(
-      title: Text(l10n.newVersionAvailable(remoteVersion)),
+      title: Text(l10n.newVersionAvailable),
       content: SizedBox(
         width: double.maxFinite,
-        child: SingleChildScrollView(child: SimpleMarkdown(text: updateLog)),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                remoteVersion,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SimpleMarkdown(text: updateLog),
+            ],
+          ),
+        ),
       ),
       actions: [
         FilledButton(

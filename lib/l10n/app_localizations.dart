@@ -971,8 +971,8 @@ abstract class AppLocalizations {
   /// New version available message
   ///
   /// In en, this message translates to:
-  /// **'New version {version} available'**
-  String newVersionAvailable(String version);
+  /// **'New version available'**
+  String get newVersionAvailable;
 
   /// Update via Lanzou cloud button label
   ///

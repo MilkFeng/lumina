@@ -7,7 +7,8 @@ class SimpleMarkdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<String> lines = text.split('\n');
+    String localizedText = _extractLocalizedLog(context, text);
+    List<String> lines = localizedText.split('\n');
     List<Widget> widgets = [];
 
     for (String line in lines) {
@@ -67,6 +68,37 @@ class SimpleMarkdown extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: widgets,
     );
+  }
+
+  String _extractLocalizedLog(BuildContext context, String fullText) {
+    final String languageCode = Localizations.localeOf(context).languageCode;
+    final String targetHeader = languageCode == 'zh'
+        ? '### Chinese'
+        : '### English';
+
+    int startIndex = fullText.indexOf(targetHeader);
+    if (startIndex == -1) {
+      startIndex = fullText.indexOf('### English');
+      if (startIndex == -1) return fullText;
+      return _extractBlock(fullText, startIndex, '### English');
+    }
+
+    return _extractBlock(fullText, startIndex, targetHeader);
+  }
+
+  String _extractBlock(String fullText, int startIndex, String header) {
+    int nextHeaderIndex = fullText.indexOf('\n### ', startIndex + 3);
+
+    String extractedText;
+    if (nextHeaderIndex == -1) {
+      extractedText = fullText.substring(startIndex + header.length);
+    } else {
+      extractedText = fullText.substring(
+        startIndex + header.length,
+        nextHeaderIndex,
+      );
+    }
+    return extractedText.trim();
   }
 
   Widget _buildInlineBold(BuildContext context, String text) {

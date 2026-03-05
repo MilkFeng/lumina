@@ -496,9 +496,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upToDate => 'Already up to date';
 
   @override
-  String newVersionAvailable(String version) {
-    return 'New version $version available';
-  }
+  String get newVersionAvailable => 'New version available';
 
   @override
   String get updateViaChinaCloud => 'Download via Lanzou';

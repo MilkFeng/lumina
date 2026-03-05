@@ -837,14 +837,9 @@
     "description": "Up to date message"
   },
 
-  "newVersionAvailable": "New version {version} available",
+  "newVersionAvailable": "New version available",
   "@newVersionAvailable": {
-    "description": "New version available message",
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
+    "description": "New version available message"
   },
 
   "updateViaChinaCloud": "Download via Lanzou",

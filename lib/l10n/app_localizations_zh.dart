@@ -488,9 +488,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get upToDate => '已是最新版本';
 
   @override
-  String newVersionAvailable(String version) {
-    return '发现新版本 $version';
-  }
+  String get newVersionAvailable => '发现新版本';
 
   @override
   String get updateViaChinaCloud => '蓝奏云下载';

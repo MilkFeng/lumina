@@ -847,14 +847,9 @@
     "description": "最新版本提示"
   },
 
-  "newVersionAvailable": "发现新版本 {version}",
+  "newVersionAvailable": "发现新版本",
   "@newVersionAvailable": {
-    "description": "发现新版本提示",
-    "placeholders": {
-      "version": {
-        "type": "String"
-      }
-    }
+    "description": "发现新版本提示"
   },
 
   "updateViaChinaCloud": "蓝奏云下载",
