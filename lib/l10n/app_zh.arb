@@ -827,6 +827,56 @@
     "description": "开源许可证副标题"
   },
 
+  "checkForUpdates": "检查更新",
+  "@checkForUpdates": {
+    "description": "检查更新标签"
+  },
+
+  "checkForUpdatesSubtitle": "检查是否有新版本可用",
+  "@checkForUpdatesSubtitle": {
+    "description": "检查更新副标题"
+  },
+
+  "checkingForUpdates": "正在检查更新...",
+  "@checkingForUpdates": {
+    "description": "正在检查更新提示"
+  },
+
+  "upToDate": "已是最新版本",
+  "@upToDate": {
+    "description": "最新版本提示"
+  },
+
+  "newVersionAvailable": "发现新版本 {version}",
+  "@newVersionAvailable": {
+    "description": "发现新版本提示",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
+  "updateViaChinaCloud": "蓝奏云下载",
+  "@updateViaChinaCloud": {
+    "description": "蓝奏云下载按钮标签"
+  },
+
+  "updateViaGithub": "GitHub 下载",
+  "@updateViaGithub": {
+    "description": "GitHub 下载按钮标签"
+  },
+
+  "passwordCopied": "密码已复制",
+  "@passwordCopied": {
+    "description": "密码复制成功提示"
+  },
+
+  "updateCheckFailed": "检查更新失败",
+  "@updateCheckFailed": {
+    "description": "检查更新失败提示"
+  },
+
   "tips": "使用提示",
   "@tips": {
     "description": "提示部分标题"

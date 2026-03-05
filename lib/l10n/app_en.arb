@@ -817,6 +817,56 @@
     "description": "Open source licenses subtitle"
   },
 
+  "checkForUpdates": "Check for Updates",
+  "@checkForUpdates": {
+    "description": "Check for updates label"
+  },
+
+  "checkForUpdatesSubtitle": "Check if a new version is available",
+  "@checkForUpdatesSubtitle": {
+    "description": "Check for updates subtitle"
+  },
+
+  "checkingForUpdates": "Checking for updates...",
+  "@checkingForUpdates": {
+    "description": "Checking for updates progress message"
+  },
+
+  "upToDate": "Already up to date",
+  "@upToDate": {
+    "description": "Up to date message"
+  },
+
+  "newVersionAvailable": "New version {version} available",
+  "@newVersionAvailable": {
+    "description": "New version available message",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+
+  "updateViaChinaCloud": "Download via Lanzou",
+  "@updateViaChinaCloud": {
+    "description": "Update via Lanzou cloud button label"
+  },
+
+  "updateViaGithub": "Download via GitHub",
+  "@updateViaGithub": {
+    "description": "Update via GitHub button label"
+  },
+
+  "passwordCopied": "Password copied",
+  "@passwordCopied": {
+    "description": "Password copied toast message"
+  },
+
+  "updateCheckFailed": "Failed to check for updates",
+  "@updateCheckFailed": {
+    "description": "Update check failed message"
+  },
+
   "tips": "Tips",
   "@tips": {
     "description": "Tips section title"

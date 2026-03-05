@@ -484,6 +484,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'View open source libraries used in the app and their licenses';
 
   @override
+  String get checkForUpdates => 'Check for Updates';
+
+  @override
+  String get checkForUpdatesSubtitle => 'Check if a new version is available';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates...';
+
+  @override
+  String get upToDate => 'Already up to date';
+
+  @override
+  String newVersionAvailable(String version) {
+    return 'New version $version available';
+  }
+
+  @override
+  String get updateViaChinaCloud => 'Download via Lanzou';
+
+  @override
+  String get updateViaGithub => 'Download via GitHub';
+
+  @override
+  String get passwordCopied => 'Password copied';
+
+  @override
+  String get updateCheckFailed => 'Failed to check for updates';
+
+  @override
   String get tips => 'Tips';
 
   @override
