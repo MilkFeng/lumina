@@ -16,7 +16,6 @@ export interface ReaderPadding {
 export interface ReaderTheme {
     zoom: number;
     paginationCss: string;
-    variableCss: string;
     surfaceColor: string;
     onSurfaceColor: string;
     shouldOverrideTextColor: boolean;

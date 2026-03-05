@@ -29,7 +29,6 @@ export class EpubReader {
                 theme: {
                     zoom: 1.0,
                     paginationCss: '',
-                    variableCss: '',
                     surfaceColor: '#FFFFFF',
                     onSurfaceColor: '#000000',
                     shouldOverrideTextColor: true,
@@ -227,7 +226,6 @@ export class EpubReader {
         this.state.config.theme.outlineVariantColor = newTheme.outlineVariantColor;
         this.state.config.theme.surfaceContainerColor = newTheme.surfaceContainerColor;
         this.state.config.theme.surfaceContainerHighColor = newTheme.surfaceContainerHighColor;
-        this.state.config.theme.variableCss = this._generateVariableStyle();
 
         this._updateCSSVariables(document, 'skeleton-variable-style');
 
@@ -800,7 +798,7 @@ export class EpubReader {
         body.classList.toggle('lumina-override-font', !!(t.overrideFontFamily && t.fontFileName));
 
         const existingStyle = doc.getElementById(styleId);
-        if (existingStyle) existingStyle.innerHTML = t.variableCss;
+        if (existingStyle) existingStyle.innerHTML = this._generateVariableStyle();
     }
 
     // ─── Frame Loading ─────────────────────────────────────────────────
@@ -812,11 +810,12 @@ export class EpubReader {
 
         const existingVariableStyle = doc.getElementById('injected-variable-style');
         if (existingVariableStyle) {
-            this._updateCSSVariables(doc, 'injected-variable-style');
+            existingVariableStyle.innerHTML = this._generateVariableStyle();
+            this._updateCSSVariables(doc, 'injected-variable-style', iframe);
         } else {
             const variableStyle = doc.createElement('style');
             variableStyle.id = 'injected-variable-style';
-            variableStyle.innerHTML = this.state.config.theme.variableCss;
+            variableStyle.innerHTML = this._generateVariableStyle();
             doc.head.appendChild(variableStyle);
 
             const originalBgColor = this._getOriginalBackgroundColor(iframe);
