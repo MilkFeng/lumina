@@ -94,7 +94,6 @@ String generateSkeletonHtml(
     'theme': {
       'zoom': theme.zoom,
       'paginationCss': kPaginationCss,
-      'variableCss': variableStyle,
       'shouldOverrideTextColor': theme.shouldOverrideTextColor,
       'primaryColor': colorToHex(primaryColor),
       'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
