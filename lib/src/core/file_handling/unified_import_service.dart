@@ -41,7 +41,7 @@ class BackupPaths {
 /// - Processing selected files into cached, hashed ImportableEpub objects
 ///
 /// Android: Uses native MethodChannel with SAF (Storage Access Framework)
-/// iOS: Currently unsupported (requires native implementation or file_picker package)
+/// iOS: Uses UIDocumentPickerViewController via native MethodChannel
 class UnifiedImportService {
   static const String _channelName = 'com.lumina.ereader/native_picker';
   static const MethodChannel _channel = MethodChannel(_channelName);
@@ -188,6 +188,31 @@ class UnifiedImportService {
   /// Delegates to [ImportCacheManager.clean]
   Future<void> cleanCache(File cacheFile) async {
     await _cacheManager.clean(cacheFile);
+  }
+
+  /// Pick multiple font files (.ttf / .otf) using platform-appropriate picker.
+  ///
+  /// Android: Uses native SAF document picker via MethodChannel.
+  /// iOS: Uses UIDocumentPickerViewController restricted to font UTTypes.
+  ///
+  /// Returns a list of [PlatformPath] objects representing selected files.
+  /// Returns empty list if user cancels or no files are selected.
+  Future<List<PlatformPath>> pickFontFiles() async {
+    if (Platform.isAndroid) {
+      return await _pickFontFilesAndroid();
+    } else if (Platform.isIOS) {
+      return await _pickFontFilesIOS();
+    } else {
+      throw UnsupportedError('Platform not supported');
+    }
+  }
+
+  /// Caches a font file from a [PlatformPath] into the import cache directory.
+  ///
+  /// Preserves the original file extension. The caller is responsible for
+  /// deleting the returned [File] via [cleanCache] when done.
+  Future<File> processFontFile(PlatformPath path) async {
+    return await _cacheManager.createRawCacheFile(path);
   }
 
   // ==================== Android Implementation ====================
@@ -338,6 +363,42 @@ class UnifiedImportService {
     );
   }
 
+  // ==================== Font File Picker Implementations ====================
+
+  /// Android: Pick font files (.ttf / .otf) using native SAF via MethodChannel.
+  Future<List<PlatformPath>> _pickFontFilesAndroid() async {
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'pickFontFiles',
+      );
+      if (result == null) return [];
+      return result
+          .whereType<String>()
+          .map((uri) => AndroidUriPath(uri))
+          .toList();
+    } on PlatformException catch (e) {
+      debugPrint('Android font picker error: ${e.message}');
+      return [];
+    }
+  }
+
+  /// iOS: Pick font files (.ttf / .otf) (lazy – security scope retained by Swift).
+  Future<List<PlatformPath>> _pickFontFilesIOS() async {
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'pickFontFiles',
+      );
+      if (result == null) return [];
+      return result
+          .whereType<String>()
+          .map((path) => IOSFilePath(path))
+          .toList();
+    } on PlatformException catch (e) {
+      debugPrint('iOS font picker error: ${e.message}');
+      return [];
+    }
+  }
+
   // ==================== Shared Backup Helpers ====================
 
   /// Classifies a flat list of backup file entries into shelf / books / covers
@@ -350,7 +411,8 @@ class UnifiedImportService {
   static ({
     PlatformPath? shelfFile,
     Map<String, Map<String, PlatformPath>> tempBookComponents,
-  }) _classifyBackupFiles(
+  })
+  _classifyBackupFiles(
     List<({String displayPath, PlatformPath platformPath})> entries,
   ) {
     PlatformPath? shelfFile;
@@ -386,10 +448,7 @@ class UnifiedImportService {
       }
     }
 
-    return (
-      shelfFile: shelfFile,
-      tempBookComponents: tempBookComponents,
-    );
+    return (shelfFile: shelfFile, tempBookComponents: tempBookComponents);
   }
 
   /// Assembles a [BackupPathsForBook] map from parsed component buckets,

@@ -36,6 +36,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     case epubFiles
     case epubFolder
     case backupFolder
+    case fontFiles
   }
 
   // -------------------------------------------------------------------------
@@ -66,6 +67,9 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
 
     case "pickBackupFolder":
       pickBackupFolder(result: result)
+
+    case "pickFontFiles":
+      pickFontFiles(result: result)
 
     case "fetchIosFile":
       guard let originalPath = call.arguments as? String else {
@@ -185,6 +189,46 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
   }
 
   // -------------------------------------------------------------------------
+  // MARK: - pickFontFiles  (lazy – files remain security-scoped)
+  // -------------------------------------------------------------------------
+
+  private func pickFontFiles(result: @escaping FlutterResult) {
+    // Release any previously held file scopes before starting a new pick.
+    releaseActiveFileUrls()
+
+    pendingPickerResult = result
+    pendingPickerMode = .fontFiles
+
+    DispatchQueue.main.async {
+      let picker: UIDocumentPickerViewController
+      if #available(iOS 14.0, *) {
+        var types: [UTType] = []
+        if let ttfType = UTType("public.truetype-ttf-font") {
+          types.append(ttfType)
+        }
+        if let otfType = UTType("public.opentype-font") {
+          types.append(otfType)
+        }
+        // Fallback to generic data if neither UTType resolves
+        if types.isEmpty { types = [UTType.data] }
+        picker = UIDocumentPickerViewController(
+          forOpeningContentTypes: types,
+          asCopy: false
+        )
+      } else {
+        picker = UIDocumentPickerViewController(
+          documentTypes: ["public.truetype-ttf-font", "public.opentype-font"],
+          in: .open
+        )
+      }
+      picker.allowsMultipleSelection = true
+      picker.delegate = self
+      picker.modalPresentationStyle = .formSheet
+      self.presentPicker(picker)
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // MARK: - fetchIosFile  (on-demand single-file copier)
   // -------------------------------------------------------------------------
 
@@ -284,6 +328,16 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
         // startAccessingSecurityScopedResource may return false for paths
         // that are already accessible (e.g. in-sandbox).  We keep the URL
         // either way; the OS grants access.
+        let _ = url.startAccessingSecurityScopedResource()
+        activeFileUrls.append(url)
+        paths.append(url.path)
+      }
+      result(paths)
+
+    // -- Multiple font files ------------------------------------------------
+    case .fontFiles:
+      var paths: [String] = []
+      for url in urls {
         let _ = url.startAccessingSecurityScopedResource()
         activeFileUrls.append(url)
         paths.append(url.path)

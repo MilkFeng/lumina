@@ -27,6 +27,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _version = '';
 
+  bool isSelectingFiles = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,107 +46,129 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        children: [
-          SettingsAppHeader(version: _version),
-
-          const SizedBox(height: 48),
-
-          const SettingsAppearanceSection(),
-
-          const SizedBox(height: 24),
-
-          // Library section
-          SettingsInfoSection(
-            title: l10n.library,
-            children: const [BackupTile()],
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           ),
-
-          const SizedBox(height: 24),
-
-          // Storage section
-          SettingsInfoSection(
-            title: l10n.storage,
+          body: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 32),
             children: [
-              const CleanCacheTile(),
-              SettingsInfoTile(
-                icon: Icons.folder_open_outlined,
-                title: l10n.openStorageLocation,
-                subtitle: l10n.openStorageLocationSubtitle,
-                onTap: () => Platform.isAndroid
-                    ? _openAndroidFolder(l10n)
-                    : _openIOSFolder(l10n),
+              SettingsAppHeader(version: _version),
+
+              const SizedBox(height: 48),
+
+              const SettingsAppearanceSection(),
+
+              const SizedBox(height: 24),
+
+              // Library section
+              SettingsInfoSection(
+                title: l10n.library,
+                children: const [BackupTile()],
               ),
+
+              const SizedBox(height: 24),
+
+              // Storage section
+              SettingsInfoSection(
+                title: l10n.storage,
+                children: [
+                  const CleanCacheTile(),
+                  SettingsInfoTile(
+                    icon: Icons.folder_open_outlined,
+                    title: l10n.openStorageLocation,
+                    subtitle: l10n.openStorageLocationSubtitle,
+                    onTap: () => Platform.isAndroid
+                        ? _openAndroidFolder(l10n)
+                        : _openIOSFolder(l10n),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Fonts section (inline management)
+              SettingsFontSection(
+                onChangeSelectingState: (state) {
+                  setState(() {
+                    isSelectingFiles = state;
+                  });
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Project info section
+              SettingsInfoSection(
+                title: l10n.projectInfo,
+                children: [
+                  SettingsInfoTile(
+                    icon: Icons.code_outlined,
+                    title: l10n.github,
+                    subtitle: 'github.com/MilkFeng/lumina.git',
+                    onTap: () =>
+                        _launchUrl('https://github.com/MilkFeng/lumina.git'),
+                  ),
+                  SettingsInfoTile(
+                    icon: Icons.person_outline_outlined,
+                    title: l10n.author,
+                    subtitle: 'Milk Feng',
+                  ),
+                  SettingsInfoTile(
+                    icon: Icons.attribution_outlined,
+                    title: l10n.openSourceLicenses,
+                    onTap: () => showLicensePage(
+                      context: context,
+                      applicationVersion: _version,
+                      useRootNavigator: true,
+                    ),
+                    subtitle: l10n.openSourceLicensesSubtitle,
+                  ),
+                  const CheckUpdateTile(),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Tips section
+              SettingsInfoSection(
+                title: l10n.tips,
+                children: [
+                  SettingsTipTile(
+                    icon: Icons.touch_app_outlined,
+                    tip: l10n.tipLongPressTab,
+                  ),
+                  SettingsTipTile(
+                    icon: Icons.keyboard_double_arrow_right_outlined,
+                    tip: l10n.tipLongPressNextTrack,
+                  ),
+                  SettingsTipTile(
+                    icon: Icons.image_outlined,
+                    tip: l10n.longPressToViewImage,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 128),
             ],
           ),
-
-          const SizedBox(height: 24),
-
-          // Fonts section (inline management)
-          const SettingsFontSection(),
-
-          const SizedBox(height: 24),
-
-          // Project info section
-          SettingsInfoSection(
-            title: l10n.projectInfo,
-            children: [
-              SettingsInfoTile(
-                icon: Icons.code_outlined,
-                title: l10n.github,
-                subtitle: 'github.com/MilkFeng/lumina.git',
-                onTap: () =>
-                    _launchUrl('https://github.com/MilkFeng/lumina.git'),
-              ),
-              SettingsInfoTile(
-                icon: Icons.person_outline_outlined,
-                title: l10n.author,
-                subtitle: 'Milk Feng',
-              ),
-              SettingsInfoTile(
-                icon: Icons.attribution_outlined,
-                title: l10n.openSourceLicenses,
-                onTap: () => showLicensePage(
-                  context: context,
-                  applicationVersion: _version,
-                  useRootNavigator: true,
+        ),
+        if (isSelectingFiles)
+          Positioned.fill(
+            child: Container(
+              color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.5),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
                 ),
-                subtitle: l10n.openSourceLicensesSubtitle,
               ),
-              const CheckUpdateTile(),
-            ],
+            ),
           ),
-
-          const SizedBox(height: 24),
-
-          // Tips section
-          SettingsInfoSection(
-            title: l10n.tips,
-            children: [
-              SettingsTipTile(
-                icon: Icons.touch_app_outlined,
-                tip: l10n.tipLongPressTab,
-              ),
-              SettingsTipTile(
-                icon: Icons.keyboard_double_arrow_right_outlined,
-                tip: l10n.tipLongPressNextTrack,
-              ),
-              SettingsTipTile(
-                icon: Icons.image_outlined,
-                tip: l10n.longPressToViewImage,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 128),
-        ],
-      ),
+      ],
     );
   }
 

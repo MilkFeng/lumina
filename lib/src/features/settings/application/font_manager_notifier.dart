@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
+import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
 import 'package:lumina/src/features/settings/domain/imported_font.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -30,18 +31,17 @@ class FontManagerNotifier extends _$FontManagerNotifier {
     }
   }
 
-  /// Opens the system file picker and copies all selected fonts into the app's
-  /// fonts directory. Returns the list of successfully imported [ImportedFont]s,
+  /// Picks font files via the platform-native picker and copies them into the
+  /// app's fonts directory one-by-one (cache → copy → clean), following the
+  /// same pipeline pattern used by [LibraryNotifier.importPipelineStream].
+  ///
+  /// Returns the list of successfully imported [ImportedFont]s,
   /// or an empty list if the picker was cancelled.
   Future<List<ImportedFont>> importFonts() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['ttf', 'otf'],
-      withData: false,
-      withReadStream: false,
-      allowMultiple: true,
-    );
-    if (result == null || result.files.isEmpty) return [];
+    final unifiedImportService = ref.read(unifiedImportServiceProvider);
+
+    final paths = await unifiedImportService.pickFontFiles();
+    if (paths.isEmpty) return [];
 
     // Ensure fonts directory exists.
     final fontsDir = Directory('${AppStorage.documentsPath}fonts');
@@ -52,23 +52,39 @@ class FontManagerNotifier extends _$FontManagerNotifier {
     final imported = <ImportedFont>[];
     var current = state;
 
-    for (final picked in result.files) {
-      final sourcePath = picked.path;
-      if (sourcePath == null) continue;
+    try {
+      for (final platformPath in paths) {
+        File? cacheFile;
+        try {
+          final fileName = platformPath.name;
 
-      final fileName = picked.name;
-      final destPath = '${fontsDir.path}/$fileName';
-      await File(sourcePath).copy(destPath);
+          // 1. Cache file from platform path to temp location.
+          cacheFile = await unifiedImportService.processFontFile(platformPath);
 
-      // Avoid duplicate entries in state.
-      if (current.any((f) => f.fileName == fileName)) {
-        imported.add(ImportedFont.fromFileName(fileName));
-        continue;
+          // 2. Copy cached file to fonts directory.
+          final destPath = '${fontsDir.path}/$fileName';
+          await cacheFile.copy(destPath);
+
+          // 3. Update state (avoid duplicate entries).
+          if (!current.any((f) => f.fileName == fileName)) {
+            final font = ImportedFont.fromFileName(fileName);
+            current = [...current, font];
+            imported.add(font);
+          } else {
+            imported.add(ImportedFont.fromFileName(fileName));
+          }
+        } catch (e) {
+          debugPrint('Failed to import font ${platformPath.name}: $e');
+        } finally {
+          // 4. Always clean the cache file immediately after use.
+          if (cacheFile != null) {
+            await unifiedImportService.cleanCache(cacheFile);
+          }
+        }
       }
-
-      final font = ImportedFont.fromFileName(fileName);
-      current = [...current, font];
-      imported.add(font);
+    } finally {
+      // Release iOS security-scoped resources after all files are processed.
+      await unifiedImportService.releaseIosAccess();
     }
 
     if (current != state) {

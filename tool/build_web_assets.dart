@@ -3,7 +3,7 @@ import 'dart:io';
 void main() async {
   print('🚀 start build lumina web assets...');
 
-  const jsProjectDir = 'lib/web_src/controller.js';
+  const jsProjectDir = 'web_viewer/controller.js';
 
   String minifiedJs = '';
   String minifiedPaginationCss = '';
@@ -43,7 +43,7 @@ void main() async {
     exit(1);
   }
 
-  final outputPath = 'lib/web_src/reader_assets.dart';
+  final outputPath = 'lib/src/web/web_assets.dart';
   final buffer = StringBuffer();
 
   buffer.writeln('// ==========================================');

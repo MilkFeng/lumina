@@ -38,6 +38,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var pickFilesLauncher: ActivityResultLauncher<Intent>? = null
     private var pickFolderLauncher: ActivityResultLauncher<Intent>? = null
     private var pickBackupFolderLauncher: ActivityResultLauncher<Intent>? = null
+    private var pickFontFilesLauncher: ActivityResultLauncher<Intent>? = null
 
     // -------------------------------------------------------------------------
     // FlutterPlugin
@@ -85,6 +86,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "pickEpubFiles" -> pickEpubFiles(result)
             "pickEpubFolder" -> pickEpubFolder(result)
             "pickBackupFolder" -> pickBackupFolder(result)
+            "pickFontFiles" -> pickFontFiles(result)
             else -> result.notImplemented()
         }
     }
@@ -140,12 +142,27 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 pendingResult.success(emptyList<String>())
             }
         }
+
+        pickFontFilesLauncher = registry.register(
+            "NativePickerPlugin_pickFontFiles",
+            lifecycleOwner,
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            val pendingResult = this.pendingResult ?: return@register
+            this.pendingResult = null
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                handlePickFontFilesResult(result.data!!, pendingResult)
+            } else {
+                pendingResult.success(emptyList<String>())
+            }
+        }
     }
 
     private fun clearLaunchers() {
         pickFilesLauncher = null
         pickFolderLauncher = null
         pickBackupFolderLauncher = null
+        pickFontFilesLauncher = null
     }
 
     // -------------------------------------------------------------------------
@@ -246,6 +263,49 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         } catch (e: Exception) {
             pendingResult = null
             result.error("PICKER_ERROR", "Failed to launch folder picker: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Launches file picker for selecting multiple font files (.ttf / .otf).
+     *
+     * Uses ACTION_OPEN_DOCUMENT with font MIME types to present a filtered
+     * file picker. Falls back to application/octet-stream for devices that
+     * do not recognize font MIME types.
+     */
+    private fun pickFontFiles(result: Result) {
+        if (pendingResult != null) {
+            result.error("ALREADY_ACTIVE", "File picker is already active", null)
+            return
+        }
+
+        pendingResult = result
+
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf(
+                    "font/ttf",
+                    "font/otf",
+                    "application/x-font-ttf",
+                    "application/x-font-otf",
+                    "application/octet-stream"
+                )
+            )
+        }
+
+        try {
+            pickFontFilesLauncher?.launch(intent)
+                ?: run {
+                    pendingResult = null
+                    result.error("NO_ACTIVITY", "Plugin not attached to an activity", null)
+                }
+        } catch (e: Exception) {
+            pendingResult = null
+            result.error("PICKER_ERROR", "Failed to launch font picker: ${e.message}", null)
         }
     }
 
@@ -377,6 +437,51 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
+    /**
+     * Handles the result of the font file picker.
+     *
+     * Extracts URIs from single or multiple file selection and filters for
+     * valid font files (.ttf / .otf). Runs ContentResolver work on Dispatchers.IO.
+     */
+    private fun handlePickFontFilesResult(data: Intent, result: Result) {
+        val lifecycleOwner = activity as? LifecycleOwner ?: run {
+            result.error("NO_ACTIVITY", "Plugin not attached to an activity", null)
+            return
+        }
+
+        lifecycleOwner.lifecycleScope.launch {
+            try {
+                val uris = withContext(Dispatchers.IO) {
+                    val validUris = mutableListOf<String>()
+
+                    // Multiple files
+                    data.clipData?.let { clipData ->
+                        for (i in 0 until clipData.itemCount) {
+                            val uri = clipData.getItemAt(i).uri
+                            if (isFontFile(uri)) validUris.add(uri.toString())
+                        }
+                    }
+
+                    // Single file fallback
+                    if (validUris.isEmpty()) {
+                        data.data?.let { uri ->
+                            if (isFontFile(uri)) validUris.add(uri.toString())
+                        }
+                    }
+
+                    validUris
+                }
+                result.success(uris)
+            } catch (e: Exception) {
+                result.error(
+                    "FILE_PROCESS_ERROR",
+                    "Failed to process selected font files: ${e.message}",
+                    null
+                )
+            }
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Folder traversal helpers  (run on Dispatchers.IO)
     // -------------------------------------------------------------------------
@@ -433,7 +538,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     // -------------------------------------------------------------------------
-    // File validation helper  (run on Dispatchers.IO)
+    // File validation helpers  (run on Dispatchers.IO)
     // -------------------------------------------------------------------------
 
     private fun isEpubFile(uri: Uri): Boolean {
@@ -455,6 +560,35 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
         val mimeType = activity.contentResolver.getType(uri)
         return mimeType == "application/epub+zip"
+    }
+
+    private fun isFontFile(uri: Uri): Boolean {
+        val activity = this.activity ?: return false
+
+        val displayName = try {
+            activity.contentResolver.query(
+                uri,
+                arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+                null, null, null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0) else null
+            }
+        } catch (_: Exception) {
+            null
+        }
+
+        if (displayName != null) {
+            val lower = displayName.lowercase()
+            if (lower.endsWith(".ttf") || lower.endsWith(".otf")) return true
+        }
+
+        val mimeType = activity.contentResolver.getType(uri)
+        return mimeType != null && (
+            mimeType == "font/ttf" ||
+            mimeType == "font/otf" ||
+            mimeType == "application/x-font-ttf" ||
+            mimeType == "application/x-font-otf"
+        )
     }
 
     // -------------------------------------------------------------------------
