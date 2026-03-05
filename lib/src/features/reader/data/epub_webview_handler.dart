@@ -4,7 +4,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/features/library/domain/book_manifest.dart';
-import 'services/epub_stream_service.dart';
+import 'package:lumina/src/features/reader/data/services/epub_stream_service.dart';
 
 /// WebView request handler for streaming EPUB content
 /// Intercepts requests to virtual domain and serves files from compressed EPUB
@@ -163,7 +163,7 @@ class EpubWebViewHandler {
   }
 
   /// Reads a font file from the app's fonts directory.
-  /// URL format: epub://localhost/fonts/<fileName>
+  /// URL format: epub://localhost/fonts/{fileName}
   Future<Either<String, (Uint8List, String)>> _readFontFile(
     WebUri requestUrl,
   ) async {
@@ -209,7 +209,7 @@ class EpubWebViewHandler {
   }
 
   /// Generate URL for a user-imported font file.
-  /// Format: epub://localhost/fonts/<fileName>
+  /// Format: epub://localhost/fonts/{fileName}
   static String getFontUrl(String fileName) {
     return '$virtualScheme://$virtualDomain/fonts/$fileName';
   }

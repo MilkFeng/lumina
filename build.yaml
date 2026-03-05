@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      riverpod_generator:
+        generate_for:
+          exclude:
+            - lib/src/rust/**
+      
+      isar_generator:
+        generate_for:
+          exclude:
+            - lib/src/rust/**

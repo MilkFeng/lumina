@@ -6,6 +6,7 @@ import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/features/reader/data/services/epub_stream_service_provider.dart';
 import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
+import 'package:lumina/src/rust/frb_generated.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'src/app.dart';
 import 'src/core/database/providers.dart';
@@ -24,6 +25,9 @@ void _preWarmWebView() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Rust FFI runtime (must be called before any Rust API functions)
+  await RustLib.init();
 
   // Initialize app storage paths
   await AppStorage.init();

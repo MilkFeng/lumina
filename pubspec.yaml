@@ -69,6 +69,11 @@ dependencies:
 
   # File Sharing (iOS Share Sheet)
   share_plus: ^12.0.1
+
+  # Rust FFI bridge
+  flutter_rust_bridge: 2.11.1
+  lumina_rust:
+    path: rust_builder
   
 
 dev_dependencies:
