@@ -39,12 +39,14 @@ class SettingsInfoTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.onTap,
+    this.trailing,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,7 @@ class SettingsInfoTile extends StatelessWidget {
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
+      trailing: trailing,
       onTap: onTap,
     );
   }

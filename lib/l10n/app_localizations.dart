@@ -944,6 +944,66 @@ abstract class AppLocalizations {
   /// **'View open source libraries used in the app and their licenses'**
   String get openSourceLicensesSubtitle;
 
+  /// Check for updates label
+  ///
+  /// In en, this message translates to:
+  /// **'Check for Updates'**
+  String get checkForUpdates;
+
+  /// Check for updates subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Check if a new version is available'**
+  String get checkForUpdatesSubtitle;
+
+  /// Checking for updates progress message
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get checkingForUpdates;
+
+  /// Up to date message
+  ///
+  /// In en, this message translates to:
+  /// **'Already up to date'**
+  String get upToDate;
+
+  /// New version available message
+  ///
+  /// In en, this message translates to:
+  /// **'New version available'**
+  String get newVersionAvailable;
+
+  /// Update via Lanzou cloud button label
+  ///
+  /// In en, this message translates to:
+  /// **'Download via Lanzou'**
+  String get updateViaChinaCloud;
+
+  /// Update via GitHub button label
+  ///
+  /// In en, this message translates to:
+  /// **'Download via GitHub'**
+  String get updateViaGithub;
+
+  /// Password copied toast message
+  ///
+  /// In en, this message translates to:
+  /// **'Password copied'**
+  String get passwordCopied;
+
+  /// Update check failed message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check for updates'**
+  String get updateCheckFailed;
+
+  /// The name of the current language in English, used to select the matching section in update logs
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageNameInEnglish;
+
   /// Tips section title
   ///
   /// In en, this message translates to:
