@@ -27,7 +27,7 @@ void main() async {
   try {
     print('📦 com: controller.js...');
     minifiedJs = await runEsbuild([
-      'index.js',
+      'index.ts',
       '--bundle',
       '--minify',
       '--format=iife',
