@@ -175,6 +175,39 @@ class ImportCacheManager {
     return hash.toString();
   }
 
+  /// Creates a cached copy of a generic file (e.g. a font) in the import
+  /// cache, preserving the original file extension.
+  ///
+  /// Unlike [createCacheAndHash], this method does NOT calculate a SHA-256
+  /// hash and is intended for file types that do not require deduplication
+  /// (e.g. `.ttf` / `.otf` font files).
+  ///
+  /// Returns the cached [File].
+  Future<File> createRawCacheFile(PlatformPath platformPath) async {
+    final cacheDir = await _getCacheDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final originalName = platformPath.name;
+    final dotIndex = originalName.lastIndexOf('.');
+    final ext = dotIndex >= 0 ? originalName.substring(dotIndex) : '';
+    final tempCachePath = path.join(cacheDir.path, 'temp_$timestamp$ext');
+    final tempCacheFile = File(tempCachePath);
+
+    switch (platformPath) {
+      case AndroidUriPath(:final uri):
+        await _streamAndHashFromSAF(uri, tempCacheFile);
+      case IOSFilePath(path: final originalPath):
+        final fetchCallback = _iosFetchCallback;
+        if (fetchCallback != null) {
+          final tempPath = await fetchCallback(originalPath);
+          await _moveAndHashFromFileSystem(tempPath, tempCacheFile);
+        } else {
+          await _copyAndHashFromFileSystem(originalPath, tempCacheFile);
+        }
+    }
+
+    return tempCacheFile;
+  }
+
   /// Safely deletes a cache file
   ///
   /// Checks if the file exists before attempting deletion.
