@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lumina/l10n/app_localizations.dart';
 
 class SimpleMarkdown extends StatelessWidget {
   final String text;
@@ -71,10 +72,8 @@ class SimpleMarkdown extends StatelessWidget {
   }
 
   String _extractLocalizedLog(BuildContext context, String fullText) {
-    final String languageCode = Localizations.localeOf(context).languageCode;
-    final String targetHeader = languageCode == 'zh'
-        ? '### Chinese'
-        : '### English';
+    final String langName = AppLocalizations.of(context)!.languageNameInEnglish;
+    final String targetHeader = '### $langName';
 
     int startIndex = fullText.indexOf(targetHeader);
     if (startIndex == -1) {

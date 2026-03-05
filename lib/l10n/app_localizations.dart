@@ -998,6 +998,12 @@ abstract class AppLocalizations {
   /// **'Failed to check for updates'**
   String get updateCheckFailed;
 
+  /// The name of the current language in English, used to select the matching section in update logs
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageNameInEnglish;
+
   /// Tips section title
   ///
   /// In en, this message translates to:

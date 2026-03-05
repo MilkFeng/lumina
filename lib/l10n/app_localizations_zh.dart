@@ -503,6 +503,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get updateCheckFailed => '检查更新失败';
 
   @override
+  String get languageNameInEnglish => 'Chinese';
+
+  @override
   String get tips => '使用提示';
 
   @override

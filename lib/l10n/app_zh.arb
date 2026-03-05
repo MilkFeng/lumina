@@ -872,6 +872,11 @@
     "description": "检查更新失败提示"
   },
 
+  "languageNameInEnglish": "Chinese",
+  "@languageNameInEnglish": {
+    "description": "当前语言的英文名称，用于在更新日志中选择对应的语言部分"
+  },
+
   "tips": "使用提示",
   "@tips": {
     "description": "提示部分标题"

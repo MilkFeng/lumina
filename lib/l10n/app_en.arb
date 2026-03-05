@@ -862,6 +862,11 @@
     "description": "Update check failed message"
   },
 
+  "languageNameInEnglish": "English",
+  "@languageNameInEnglish": {
+    "description": "The name of the current language in English, used to select the matching section in update logs"
+  },
+
   "tips": "Tips",
   "@tips": {
     "description": "Tips section title"

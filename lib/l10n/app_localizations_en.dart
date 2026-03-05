@@ -511,6 +511,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateCheckFailed => 'Failed to check for updates';
 
   @override
+  String get languageNameInEnglish => 'English';
+
+  @override
   String get tips => 'Tips';
 
   @override
