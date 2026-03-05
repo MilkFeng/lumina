@@ -11,7 +11,9 @@ import 'settings_info_section.dart';
 /// Lists all imported custom fonts with delete actions, and provides an
 /// "Import Font" action. No separate navigation screen is required.
 class SettingsFontSection extends ConsumerWidget {
-  const SettingsFontSection({super.key});
+  final Function(bool) onChangeSelectingState;
+
+  const SettingsFontSection({super.key, required this.onChangeSelectingState});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,6 +92,7 @@ class SettingsFontSection extends ConsumerWidget {
     AppLocalizations l10n,
   ) async {
     try {
+      onChangeSelectingState(true);
       final fonts = await notifier.importFonts();
       if (fonts.isEmpty) return;
       if (fonts.length == 1) {
@@ -101,6 +104,8 @@ class SettingsFontSection extends ConsumerWidget {
       }
     } catch (e) {
       ToastService.showError(l10n.importFontFailed(e.toString()));
+    } finally {
+      onChangeSelectingState(false);
     }
   }
 

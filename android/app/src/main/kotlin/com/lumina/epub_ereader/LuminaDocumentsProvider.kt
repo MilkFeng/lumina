@@ -97,7 +97,7 @@ class LuminaDocumentsProvider : DocumentsProvider() {
 
         parent.listFiles()?.forEach { file ->
             if (parentDocumentId == ROOT_ID) {
-                if (file.isDirectory && (file.name == "books" || file.name == "covers")) {
+                if (file.isDirectory && (file.name == "books" || file.name == "covers" || file.name == "fonts")) {
                     includeFile(result, file)
                 }
             } else {
