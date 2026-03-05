@@ -10,7 +10,7 @@ import 'package:lumina/src/features/settings/presentation/widgets/simple_markdow
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const _versionUrl = 'https://crtyka4a9j.sealosbja.site/version';
+const _versionUrl = 'https://lumina.milkfeng.top/version';
 
 /// Settings tile that checks for application updates from the remote server.
 class CheckUpdateTile extends StatefulWidget {
