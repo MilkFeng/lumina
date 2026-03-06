@@ -69,63 +69,63 @@ export class EpubReader {
         };
         this.state.config.theme = config.theme;
 
-        this._updateCSSVariables(document, 'skeleton-variable-style');
+        this.updateCSSVariables(document, 'skeleton-variable-style');
         window.removeEventListener('resize', this._onResize);
         window.addEventListener('resize', this._onResize, { passive: true });
     }
 
     loadFrame(slot: FrameSlot, url: string, anchors?: string[]): void {
-        const iframe = this._frameElement(slot);
+        const iframe = this.frameElement(slot);
         if (!iframe) return;
 
         this.state.anchors[slot] = anchors || [];
         iframe.onload = null;
 
         if (iframe.src == null || iframe.src === '' || iframe.src === 'about:blank') {
-            iframe.onload = () => { this._onFrameLoad(iframe); };
+            iframe.onload = () => { this.onFrameLoad(iframe); };
             iframe.src = url;
         } else {
             const currentUrl = new URL(iframe.src);
             const newUrl = new URL(url);
             if (currentUrl.origin === newUrl.origin && currentUrl.pathname === newUrl.pathname) {
-                iframe.onload = () => { this._onFrameLoad(iframe); };
+                iframe.onload = () => { this.onFrameLoad(iframe); };
                 iframe.src = url;
-                this._onFrameLoad(iframe);
+                this.onFrameLoad(iframe);
             } else {
-                iframe.onload = () => { this._onFrameLoad(iframe); };
+                iframe.onload = () => { this.onFrameLoad(iframe); };
                 iframe.src = url;
             }
         }
     }
 
     jumpToPage(pageIndex: number): void {
-        const iframe = this._frameElement('curr');
+        const iframe = this.frameElement('curr');
         if (!iframe || !iframe.contentWindow) return;
 
-        const scrollOffset = this._calculateScrollOffset(pageIndex);
-        this._scrollTo(iframe, scrollOffset);
+        const scrollOffset = this.calculateScrollOffset(pageIndex);
+        this.scrollTo(iframe, scrollOffset);
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-                this._detectActiveAnchor(iframe);
+                this.detectActiveAnchor(iframe);
             });
         });
     }
 
     jumpToPageFor(slot: FrameSlot, pageIndex: number): void {
-        const iframe = this._frameElement(slot);
+        const iframe = this.frameElement(slot);
         if (!iframe || !iframe.contentWindow) return;
 
-        const scrollOffset = this._calculateScrollOffset(pageIndex);
-        this._scrollTo(iframe, scrollOffset);
+        const scrollOffset = this.calculateScrollOffset(pageIndex);
+        this.scrollTo(iframe, scrollOffset);
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 if (iframe.id === 'frame-curr') {
                     window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
                 }
-                this._detectActiveAnchor(iframe);
+                this.detectActiveAnchor(iframe);
             });
         });
     }
@@ -142,9 +142,9 @@ export class EpubReader {
     }
 
     cycleFrames(direction: 'next' | 'prev'): void {
-        const elPrev = this._frameElement('prev');
-        const elCurr = this._frameElement('curr');
-        const elNext = this._frameElement('next');
+        const elPrev = this.frameElement('prev');
+        const elCurr = this.frameElement('curr');
+        const elNext = this.frameElement('next');
 
         if (!elPrev || !elCurr || !elNext) return;
 
@@ -190,17 +190,17 @@ export class EpubReader {
             this.state.anchors.prev = tempAnchors;
         }
 
-        this._applyOriginalBackgroundColor();
+        this.applyOriginalBackgroundColor();
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                this._updatePageState('frame-curr');
-                this._updatePageState('frame-prev');
-                this._updatePageState('frame-next');
-                this._detectActiveAnchor(elPrev);
-                this._detectActiveAnchor(elCurr);
-                this._detectActiveAnchor(elNext);
-                this._buildInteractionMap();
+                this.updatePageState('frame-curr');
+                this.updatePageState('frame-prev');
+                this.updatePageState('frame-next');
+                this.detectActiveAnchor(elPrev);
+                this.detectActiveAnchor(elCurr);
+                this.detectActiveAnchor(elNext);
+                this.buildInteractionMap();
             });
         });
     }
@@ -227,26 +227,26 @@ export class EpubReader {
         this.state.config.theme.surfaceContainerColor = newTheme.surfaceContainerColor;
         this.state.config.theme.surfaceContainerHighColor = newTheme.surfaceContainerHighColor;
 
-        this._updateCSSVariables(document, 'skeleton-variable-style');
+        this.updateCSSVariables(document, 'skeleton-variable-style');
 
         const iframes = document.getElementsByTagName('iframe');
         for (let i = 0; i < iframes.length; i++) {
             const iframe = iframes[i];
             if (iframe && iframe.contentDocument) {
                 const doc = iframe.contentDocument;
-                const pageIndex = this._calculateCurrentPageIndex();
-                const pageCount = this._calculatePageCount(iframe);
+                const pageIndex = this.calculateCurrentPageIndex();
+                const pageCount = this.calculatePageCount(iframe);
                 const pageIndexPercentage = pageCount > 0 ? pageIndex / pageCount : 0;
-                this._updateCSSVariables(doc, 'injected-variable-style', iframe);
+                this.updateCSSVariables(doc, 'injected-variable-style', iframe);
                 requestAnimationFrame(() => {
-                    this._reloadFrame(iframe, pageIndexPercentage, token);
+                    this.reloadFrame(iframe, pageIndexPercentage, token);
                 });
             }
         }
     }
 
     checkLinkAt(x: number, y: number): boolean {
-        const iframe = this._frameElement('curr');
+        const iframe = this.frameElement('curr');
         if (iframe && iframe.contentDocument) {
             const doc = iframe.contentDocument;
             const xx = x - this.state.config.padding.left;
@@ -267,10 +267,10 @@ export class EpubReader {
     }
 
     checkTapElementAt(x: number, y: number): void {
-        const bestCandidate = this._checkElementAt(x, y, (candidate) => candidate.type === 'footnote');
+        const bestCandidate = this.checkElementAtHelper(x, y, (candidate) => candidate.type === 'footnote');
 
         if (bestCandidate) {
-            const iframe = this._frameElement('curr');
+            const iframe = this.frameElement('curr');
             if (!iframe || !iframe.contentDocument) return;
             const body = iframe.contentDocument.body;
             if (!body) return;
@@ -294,7 +294,7 @@ export class EpubReader {
     }
 
     checkImageAt(x: number, y: number): boolean {
-        const iframe = this._frameElement('curr');
+        const iframe = this.frameElement('curr');
         if (iframe && iframe.contentDocument) {
             const doc = iframe.contentDocument;
             const bodyRect = doc.body.getBoundingClientRect();
@@ -339,7 +339,7 @@ export class EpubReader {
 
     // ─── Frame Helpers ─────────────────────────────────────────────────
 
-    private _frameElement(slotOrId: string): HTMLIFrameElement | null {
+    private frameElement(slotOrId: string): HTMLIFrameElement | null {
         const id = slotOrId.startsWith('frame-') ? slotOrId : 'frame-' + slotOrId;
         return document.getElementById(id) as HTMLIFrameElement | null;
     }
@@ -348,13 +348,13 @@ export class EpubReader {
         return (frameId ? frameId.replace('frame-', '') : '') as FrameSlot;
     }
 
-    private _getWidth(): number { return this.state.config.safeWidth; }
-    private _getHeight(): number { return this.state.config.safeHeight; }
-    private _isVertical(): boolean { return this.state.config.direction === 1; }
+    private getWidth(): number { return this.state.config.safeWidth; }
+    private getHeight(): number { return this.state.config.safeHeight; }
+    private isVertical(): boolean { return this.state.config.direction === 1; }
 
-    private _scrollTo(iframe: HTMLIFrameElement, offset: number): void {
+    private scrollTo(iframe: HTMLIFrameElement, offset: number): void {
         if (!iframe || !iframe.contentWindow) return;
-        const scrollOptions: ScrollToOptions = this._isVertical()
+        const scrollOptions: ScrollToOptions = this.isVertical()
             ? { top: offset, left: 0, behavior: 'auto' }
             : { top: 0, left: offset, behavior: 'auto' };
         iframe.contentDocument!.body.scrollTo(scrollOptions);
@@ -362,38 +362,38 @@ export class EpubReader {
 
     // ─── Pagination ────────────────────────────────────────────────────
 
-    private _calculatePageCount(iframe: HTMLIFrameElement): number {
+    private calculatePageCount(iframe: HTMLIFrameElement): number {
         if (!iframe || !iframe.contentDocument) return 0;
-        if (this._isVertical()) {
+        if (this.isVertical()) {
             const scrollHeight = iframe.contentDocument.body.scrollHeight;
-            return Math.round((scrollHeight + 128) / (this._getHeight() + 128));
+            return Math.round((scrollHeight + 128) / (this.getHeight() + 128));
         } else {
             const scrollWidth = iframe.contentDocument.body.scrollWidth;
-            return Math.round((scrollWidth + 128) / (this._getWidth() + 128));
+            return Math.round((scrollWidth + 128) / (this.getWidth() + 128));
         }
     }
 
-    private _calculateScrollOffset(pageIndex: number): number {
-        if (this._isVertical()) {
-            return pageIndex * this._getHeight() + pageIndex * 128;
+    private calculateScrollOffset(pageIndex: number): number {
+        if (this.isVertical()) {
+            return pageIndex * this.getHeight() + pageIndex * 128;
         } else {
-            return pageIndex * this._getWidth() + pageIndex * 128;
+            return pageIndex * this.getWidth() + pageIndex * 128;
         }
     }
 
-    private _calculateCurrentPageIndex(): number {
-        const iframe = this._frameElement('curr');
+    private calculateCurrentPageIndex(): number {
+        const iframe = this.frameElement('curr');
         if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return 0;
-        if (this._isVertical()) {
+        if (this.isVertical()) {
             const scrollTop = iframe.contentDocument.body.scrollTop || 0;
-            return Math.round((scrollTop + 128) / (this._getHeight() + 128));
+            return Math.round((scrollTop + 128) / (this.getHeight() + 128));
         } else {
             const scrollLeft = iframe.contentDocument.body.scrollLeft;
-            return Math.round((scrollLeft + 128) / (this._getWidth() + 128));
+            return Math.round((scrollLeft + 128) / (this.getWidth() + 128));
         }
     }
 
-    private _calculatePageIndexOfAnchor(iframe: HTMLIFrameElement, anchorId: string): number {
+    private calculatePageIndexOfAnchor(iframe: HTMLIFrameElement, anchorId: string): number {
         if (!iframe || !iframe.contentDocument) return 0;
         const doc = iframe.contentDocument;
         const element = doc.getElementById(anchorId);
@@ -403,26 +403,26 @@ export class EpubReader {
         const rects = element.getClientRects();
         const elementRect = rects.length > 0 ? rects[0] : element.getBoundingClientRect();
 
-        if (this._isVertical()) {
+        if (this.isVertical()) {
             const absoluteTop = elementRect.top + doc.body.scrollTop - bodyRect.top + (elementRect.height / 5) + 1;
-            return Math.floor((absoluteTop + 128) / (this._getHeight() + 128));
+            return Math.floor((absoluteTop + 128) / (this.getHeight() + 128));
         } else {
             const absoluteLeft = elementRect.left + doc.body.scrollLeft - bodyRect.left + (elementRect.width / 5) + 1;
-            return Math.floor((absoluteLeft + 128) / (this._getWidth() + 128));
+            return Math.floor((absoluteLeft + 128) / (this.getWidth() + 128));
         }
     }
 
-    private _updatePageState(iframeId: string): void {
-        const iframe = this._frameElement(iframeId);
+    private updatePageState(iframeId: string): void {
+        const iframe = this.frameElement(iframeId);
         if (!iframe || !iframe.contentWindow) return;
 
-        const pageCount = this._calculatePageCount(iframe);
+        const pageCount = this.calculatePageCount(iframe);
         const slot = this._slotFromFrameId(iframeId);
         this.state.frames[slot] = pageCount;
 
         if (iframeId === 'frame-curr') {
             window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-            window.flutter_inappwebview.callHandler('onPageChanged', this._calculateCurrentPageIndex());
+            window.flutter_inappwebview.callHandler('onPageChanged', this.calculateCurrentPageIndex());
         } else if (iframeId === 'frame-prev') {
             this.jumpToLastPageOfFrame('prev');
         } else if (iframeId === 'frame-next') {
@@ -432,7 +432,7 @@ export class EpubReader {
 
     // ─── Anchor Detection ──────────────────────────────────────────────
 
-    private _detectActiveAnchor(iframe: HTMLIFrameElement): void {
+    private detectActiveAnchor(iframe: HTMLIFrameElement): void {
         if (!iframe || !iframe.contentDocument) return;
         if (iframe.id !== 'frame-curr') return;
 
@@ -443,7 +443,7 @@ export class EpubReader {
         const activeAnchors: string[] = [];
         let lastPassedAnchor = 'top';
         const threshold = 50;
-        const isVertical = this._isVertical();
+        const isVertical = this.isVertical();
 
         for (let i = 0; i < anchors.length; i++) {
             const anchorId = anchors[i];
@@ -475,7 +475,7 @@ export class EpubReader {
 
     // ─── Footnote Extraction ───────────────────────────────────────────
 
-    private _extractTargetIdFromHref(href: string | null): string | null {
+    private extractTargetIdFromHref(href: string | null): string | null {
         if (!href || typeof href !== 'string') return null;
         const hashIndex = href.indexOf('#');
         if (hashIndex < 0 || hashIndex >= href.length - 1) return null;
@@ -486,8 +486,8 @@ export class EpubReader {
         }
     }
 
-    private _extractFootnoteHtml(targetId: string | null): string {
-        const iframe = this._frameElement('curr');
+    private extractFootnoteHtml(targetId: string | null): string {
+        const iframe = this.frameElement('curr');
         if (!iframe || !iframe.contentDocument) return '';
 
         const doc = iframe.contentDocument;
@@ -512,8 +512,8 @@ export class EpubReader {
 
     // ─── Interaction Map ───────────────────────────────────────────────
 
-    private _buildInteractionMap(): Promise<void> {
-        const iframe = this._frameElement('curr');
+    private buildInteractionMap(): Promise<void> {
+        const iframe = this.frameElement('curr');
         if (!iframe || !iframe.contentDocument) {
             this.state.quadTree = null;
             return Promise.resolve();
@@ -600,14 +600,14 @@ export class EpubReader {
                     innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
                     isFootnote = true;
                 } else if (epubType === 'noteref') {
-                    innerHtml = this._extractFootnoteHtml(this._extractTargetIdFromHref(href));
+                    innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
                     isFootnote = true;
                 } else if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
                     const fullHref = link.href;
                     let thisUrl = link.ownerDocument.location.href;
                     if (thisUrl.includes('#')) thisUrl = thisUrl.split('#')[0];
                     if (fullHref === thisUrl || thisUrl === fullHref.split('#')[0]) {
-                        innerHtml = this._extractFootnoteHtml(this._extractTargetIdFromHref(href));
+                        innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
                         isFootnote = true;
                     }
                 }
@@ -658,12 +658,12 @@ export class EpubReader {
         });
     }
 
-    private _checkElementAt(
+    private checkElementAtHelper(
         x: number,
         y: number,
         checkIfAllowed?: (candidate: InteractionItem) => boolean
     ): InteractionItem | undefined {
-        const iframe = this._frameElement('curr');
+        const iframe = this.frameElement('curr');
         if (!iframe || !iframe.contentDocument || !this.state.quadTree) return;
 
         const body = iframe.contentDocument.body;
@@ -707,7 +707,7 @@ export class EpubReader {
 
     // ─── Background Color ──────────────────────────────────────────────
 
-    private _getOriginalBackgroundColor(iframe: HTMLIFrameElement): string | null {
+    private getOriginalBackgroundColor(iframe: HTMLIFrameElement): string | null {
         if (!iframe || !iframe.contentDocument) return null;
         const bgColor = iframe.contentWindow!.getComputedStyle(iframe.contentDocument.body).backgroundColor;
         if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
@@ -716,10 +716,10 @@ export class EpubReader {
         return null;
     }
 
-    private _applyOriginalBackgroundColor(): void {
-        const iframe = this._frameElement('curr');
+    private applyOriginalBackgroundColor(): void {
+        const iframe = this.frameElement('curr');
         if (!iframe) return;
-        const originalBgColor = this._getOriginalBackgroundColor(iframe);
+        const originalBgColor = this.getOriginalBackgroundColor(iframe);
         if (originalBgColor) {
             document.documentElement.style.setProperty('--lumina-epub-original-bg-color', originalBgColor);
         } else {
@@ -729,10 +729,10 @@ export class EpubReader {
 
     // ─── CSS Variables ─────────────────────────────────────────────────
 
-    private _generateVariableStyle(): string {
+    private generateVariableStyle(): string {
         const cfg = this.state.config;
         const t = cfg.theme;
-        const isV = this._isVertical();
+        const isV = this.isVertical();
 
         const fontFaceBlock = t.fontFileName
             ? `@font-face { font-family: 'LuminaCustomFont'; src: url('epub://localhost/fonts/${t.fontFileName}'); }`
@@ -761,7 +761,7 @@ export class EpubReader {
             + '}';
     }
 
-    private _updateCSSVariables(
+    private updateCSSVariables(
         doc: Document,
         styleId: string = 'injected-variable-style',
         iframe: HTMLIFrameElement | null = null
@@ -770,7 +770,7 @@ export class EpubReader {
         const body = doc.body;
         const cfg = this.state.config;
         const t = cfg.theme;
-        const isV = this._isVertical();
+        const isV = this.isVertical();
 
         root.style.setProperty('--lumina-zoom', String(t.zoom));
         root.style.setProperty('--lumina-safe-width', cfg.safeWidth + 'px');
@@ -791,34 +791,34 @@ export class EpubReader {
         root.style.setProperty('--lumina-surface-container-high', t.surfaceContainerHighColor);
 
         const overrideColor = iframe != null
-            ? t.shouldOverrideTextColor && this._getOriginalBackgroundColor(iframe) == null
+            ? t.shouldOverrideTextColor && this.getOriginalBackgroundColor(iframe) == null
             : t.shouldOverrideTextColor;
 
         body.classList.toggle('lumina-override-color', overrideColor);
         body.classList.toggle('lumina-override-font', !!(t.overrideFontFamily && t.fontFileName));
 
         const existingStyle = doc.getElementById(styleId);
-        if (existingStyle) existingStyle.innerHTML = this._generateVariableStyle();
+        if (existingStyle) existingStyle.innerHTML = this.generateVariableStyle();
     }
 
     // ─── Frame Loading ─────────────────────────────────────────────────
 
-    private _onFrameLoad(iframe: HTMLIFrameElement): void {
+    private onFrameLoad(iframe: HTMLIFrameElement): void {
         if (!iframe || !iframe.contentDocument) return;
 
         const doc = iframe.contentDocument;
 
         const existingVariableStyle = doc.getElementById('injected-variable-style');
         if (existingVariableStyle) {
-            existingVariableStyle.innerHTML = this._generateVariableStyle();
-            this._updateCSSVariables(doc, 'injected-variable-style', iframe);
+            existingVariableStyle.innerHTML = this.generateVariableStyle();
+            this.updateCSSVariables(doc, 'injected-variable-style', iframe);
         } else {
             const variableStyle = doc.createElement('style');
             variableStyle.id = 'injected-variable-style';
-            variableStyle.innerHTML = this._generateVariableStyle();
+            variableStyle.innerHTML = this.generateVariableStyle();
             doc.head.appendChild(variableStyle);
 
-            const originalBgColor = this._getOriginalBackgroundColor(iframe);
+            const originalBgColor = this.getOriginalBackgroundColor(iframe);
             doc.body.classList.toggle(
                 'lumina-override-color',
                 this.state.config.theme.shouldOverrideTextColor && originalBgColor == null
@@ -827,7 +827,7 @@ export class EpubReader {
                 'lumina-override-font',
                 !!(this.state.config.theme.overrideFontFamily && this.state.config.theme.fontFileName)
             );
-            doc.body.classList.toggle('is-vertical', this._isVertical());
+            doc.body.classList.toggle('is-vertical', this.isVertical());
         }
 
         const existingPaginationStyle = doc.getElementById('injected-pagination-style');
@@ -839,7 +839,7 @@ export class EpubReader {
             style.innerHTML = this.state.config.theme.paginationCss;
             doc.head.appendChild(style);
             polyfillCss(doc);
-            this._applyOriginalBackgroundColor();
+            this.applyOriginalBackgroundColor();
         }
 
         waitForAllResources(doc).then(() => {
@@ -848,7 +848,7 @@ export class EpubReader {
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    const pageCount = this._calculatePageCount(iframe);
+                    const pageCount = this.calculatePageCount(iframe);
                     const slot = this._slotFromFrameId(iframe.id);
                     this.state.frames[slot] = pageCount;
 
@@ -856,11 +856,11 @@ export class EpubReader {
                     const url = iframe.src;
                     if (url && url.includes('#')) {
                         const anchor = url.split('#')[1];
-                        pageIndex = this._calculatePageIndexOfAnchor(iframe, anchor);
-                        this._scrollTo(iframe, this._calculateScrollOffset(pageIndex));
+                        pageIndex = this.calculatePageIndexOfAnchor(iframe, anchor);
+                        this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
                     }
 
-                    this._buildInteractionMap().then(() => {
+                    this.buildInteractionMap().then(() => {
                         if (iframe.id === 'frame-curr') {
                             window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
                             window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
@@ -870,17 +870,17 @@ export class EpubReader {
                         } else if (iframe.id === 'frame-next') {
                             this.jumpToPageFor('next', 0);
                         }
-                        this._detectActiveAnchor(iframe);
+                        this.detectActiveAnchor(iframe);
                     });
                 });
             });
         });
     }
 
-    private _reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: string): void {
+    private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: string): void {
         if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
-        this._applyOriginalBackgroundColor();
+        this.applyOriginalBackgroundColor();
 
         waitForAllResources(iframe.contentDocument).then(() => {
             const doc = iframe.contentDocument!;
@@ -888,14 +888,14 @@ export class EpubReader {
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    const pageCount = this._calculatePageCount(iframe);
+                    const pageCount = this.calculatePageCount(iframe);
                     const slot = this._slotFromFrameId(iframe.id);
                     this.state.frames[slot] = pageCount;
 
                     const pageIndex = Math.round(pageIndexPercentage * pageCount);
-                    this._scrollTo(iframe, this._calculateScrollOffset(pageIndex));
+                    this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
 
-                    this._buildInteractionMap().then(() => {
+                    this.buildInteractionMap().then(() => {
                         if (iframe.id === 'frame-curr') {
                             window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
                             window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
@@ -905,7 +905,7 @@ export class EpubReader {
                         } else if (iframe.id === 'frame-next') {
                             this.jumpToPageFor('next', 0);
                         }
-                        this._detectActiveAnchor(iframe);
+                        this.detectActiveAnchor(iframe);
 
                         requestAnimationFrame(() => {
                             window.flutter_inappwebview.callHandler('onEventFinished', token);
