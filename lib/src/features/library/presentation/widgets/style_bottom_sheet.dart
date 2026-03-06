@@ -23,93 +23,101 @@ class StyleBottomSheet extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, 12, 24, 24 + bottomPadding),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── View Mode ──────────────────────────────────────────────────
-            _SectionTitle(label: l10n.viewMode),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+    return DraggableScrollableSheet(
+      expand: false,
+      builder: (BuildContext context, ScrollController scrollController) {
+        return SingleChildScrollView(
+          controller: scrollController,
+          physics: const ClampingScrollPhysics(),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(24, 12, 24, 24 + bottomPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _OptionChip(
-                  icon: Icons.grid_on_outlined,
-                  label: l10n.viewModeCompact,
-                  isSelected: currentViewMode == ViewMode.compact,
-                  onTap: () => onViewModeSelected(ViewMode.compact),
+                // ── View Mode ──────────────────────────────────────────────────
+                _SectionTitle(label: l10n.viewMode),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _OptionChip(
+                      icon: Icons.grid_on_outlined,
+                      label: l10n.viewModeCompact,
+                      isSelected: currentViewMode == ViewMode.compact,
+                      onTap: () => onViewModeSelected(ViewMode.compact),
+                    ),
+                    _OptionChip(
+                      icon: Icons.grid_view_outlined,
+                      label: l10n.viewModeRelaxed,
+                      isSelected: currentViewMode == ViewMode.relaxed,
+                      onTap: () => onViewModeSelected(ViewMode.relaxed),
+                    ),
+                  ],
                 ),
-                _OptionChip(
-                  icon: Icons.grid_view_outlined,
-                  label: l10n.viewModeRelaxed,
-                  isSelected: currentViewMode == ViewMode.relaxed,
-                  onTap: () => onViewModeSelected(ViewMode.relaxed),
+
+                const SizedBox(height: 24),
+
+                // ── Sort Order ─────────────────────────────────────────────────
+                _SectionTitle(label: l10n.sortBooksBy),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _OptionChip(
+                      icon: Icons.access_time_outlined,
+                      label: l10n.recentlyAdded,
+                      isSelected: currentSort == ShelfBookSortBy.recentlyAdded,
+                      onTap: () =>
+                          onSortSelected(ShelfBookSortBy.recentlyAdded),
+                    ),
+                    _OptionChip(
+                      icon: Icons.auto_stories_outlined,
+                      label: l10n.recentlyRead,
+                      isSelected: currentSort == ShelfBookSortBy.recentlyRead,
+                      onTap: () => onSortSelected(ShelfBookSortBy.recentlyRead),
+                    ),
+                    _OptionChip(
+                      icon: Icons.sort_by_alpha_outlined,
+                      label: l10n.titleAZ,
+                      isSelected: currentSort == ShelfBookSortBy.titleAsc,
+                      onTap: () => onSortSelected(ShelfBookSortBy.titleAsc),
+                    ),
+                    _OptionChip(
+                      icon: Icons.sort_by_alpha_outlined,
+                      label: l10n.titleZA,
+                      isSelected: currentSort == ShelfBookSortBy.titleDesc,
+                      onTap: () => onSortSelected(ShelfBookSortBy.titleDesc),
+                      mirrorIcon: true,
+                    ),
+                    _OptionChip(
+                      icon: Icons.person_outline_outlined,
+                      label: l10n.authorAZ,
+                      isSelected: currentSort == ShelfBookSortBy.authorAsc,
+                      onTap: () => onSortSelected(ShelfBookSortBy.authorAsc),
+                    ),
+                    _OptionChip(
+                      icon: Icons.person_outline_outlined,
+                      label: l10n.authorZA,
+                      isSelected: currentSort == ShelfBookSortBy.authorDesc,
+                      onTap: () => onSortSelected(ShelfBookSortBy.authorDesc),
+                      mirrorIcon: true,
+                    ),
+                    _OptionChip(
+                      icon: Icons.show_chart_outlined,
+                      label: l10n.readingProgress,
+                      isSelected: currentSort == ShelfBookSortBy.progress,
+                      onTap: () => onSortSelected(ShelfBookSortBy.progress),
+                    ),
+                  ],
                 ),
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            // ── Sort Order ─────────────────────────────────────────────────
-            _SectionTitle(label: l10n.sortBooksBy),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _OptionChip(
-                  icon: Icons.access_time_outlined,
-                  label: l10n.recentlyAdded,
-                  isSelected: currentSort == ShelfBookSortBy.recentlyAdded,
-                  onTap: () => onSortSelected(ShelfBookSortBy.recentlyAdded),
-                ),
-                _OptionChip(
-                  icon: Icons.auto_stories_outlined,
-                  label: l10n.recentlyRead,
-                  isSelected: currentSort == ShelfBookSortBy.recentlyRead,
-                  onTap: () => onSortSelected(ShelfBookSortBy.recentlyRead),
-                ),
-                _OptionChip(
-                  icon: Icons.sort_by_alpha_outlined,
-                  label: l10n.titleAZ,
-                  isSelected: currentSort == ShelfBookSortBy.titleAsc,
-                  onTap: () => onSortSelected(ShelfBookSortBy.titleAsc),
-                ),
-                _OptionChip(
-                  icon: Icons.sort_by_alpha_outlined,
-                  label: l10n.titleZA,
-                  isSelected: currentSort == ShelfBookSortBy.titleDesc,
-                  onTap: () => onSortSelected(ShelfBookSortBy.titleDesc),
-                  mirrorIcon: true,
-                ),
-                _OptionChip(
-                  icon: Icons.person_outline_outlined,
-                  label: l10n.authorAZ,
-                  isSelected: currentSort == ShelfBookSortBy.authorAsc,
-                  onTap: () => onSortSelected(ShelfBookSortBy.authorAsc),
-                ),
-                _OptionChip(
-                  icon: Icons.person_outline_outlined,
-                  label: l10n.authorZA,
-                  isSelected: currentSort == ShelfBookSortBy.authorDesc,
-                  onTap: () => onSortSelected(ShelfBookSortBy.authorDesc),
-                  mirrorIcon: true,
-                ),
-                _OptionChip(
-                  icon: Icons.show_chart_outlined,
-                  label: l10n.readingProgress,
-                  isSelected: currentSort == ShelfBookSortBy.progress,
-                  onTap: () => onSortSelected(ShelfBookSortBy.progress),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

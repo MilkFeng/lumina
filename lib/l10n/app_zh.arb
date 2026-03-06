@@ -1218,7 +1218,7 @@
     "description": "是否跟随书内（epub://）链接跳转的开关标签"
   },
 
-  "readerPageAnimationSection": "翻页动画",
+  "readerPageAnimationSection": "翻页",
   "@readerPageAnimationSection": {
     "description": "阅读器样式面板翻页动画区块标题"
   },
@@ -1231,6 +1231,11 @@
   "readerPageAnimationSlide": "滑动翻页",
   "@readerPageAnimationSlide": {
     "description": "翻页动画选项：滑动过渡"
+  },
+
+  "readerVolumeKeyTurnsPage": "用音量键翻页",
+  "@readerVolumeKeyTurnsPage": {
+    "description": "开关标签：使用硬件音量键翻页"
   },
 
   "readerFontSection": "自定义字体",

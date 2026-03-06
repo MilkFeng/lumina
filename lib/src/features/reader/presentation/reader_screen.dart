@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/data/services/volume_control_service.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -114,6 +115,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
+  StreamSubscription<String>? volumeSubscription;
+  bool tocDrawerOpen = false;
+  bool styleDrawerOpen = false;
+  AppLifecycleState? lastLifecycleState = AppLifecycleState.resumed;
+
   @override
   void initState() {
     super.initState();
@@ -136,23 +142,26 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       currentTheme = Theme.of(context);
       if (router != null && router.animation != null) {
         routeAnimation = router.animation!;
-        routeAnimation?.addStatusListener(_handleRouteAnimationStatus);
+        routeAnimation?.addStatusListener(handleRouteAnimationStatus);
       } else {
         shouldShowWebView = true;
       }
     });
     hideBottomNavigationBar();
+    setupVolumeControl();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
     routeAnimation = null;
     themeUpdateDebouncer?.cancel();
     progressDebouncer?.cancel();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
+    volumeSubscription?.cancel();
+    VolumeControlService.disableInterception();
     super.dispose();
   }
 
@@ -162,6 +171,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {
       saveProgress();
+    }
+
+    lastLifecycleState = state;
+    setupVolumeControl();
+  }
+
+  void setupVolumeControl() {
+    final resume =
+        ref.read(readerSettingsNotifierProvider).volumeKeyTurnsPage &&
+        !tocDrawerOpen &&
+        !styleDrawerOpen &&
+        lastLifecycleState == AppLifecycleState.resumed;
+
+    if (resume) {
+      VolumeControlService.enableInterception();
+      volumeSubscription ??= VolumeControlService.volumeKeyEvents.listen((
+        event,
+      ) {
+        final isVolumeTurnEnabled = ref
+            .read(readerSettingsNotifierProvider)
+            .volumeKeyTurnsPage;
+        if (isVolumeTurnEnabled) {
+          if (event == 'up') {
+            rendererController.performPreviousPageTurn();
+          } else if (event == 'down') {
+            rendererController.performNextPageTurn();
+          }
+        }
+      });
+    } else {
+      VolumeControlService.disableInterception();
     }
   }
 
@@ -187,12 +227,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
-  void _handleRouteAnimationStatus(AnimationStatus status) {
+  void handleRouteAnimationStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
       setState(() {
         shouldShowWebView = true;
       });
-      routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+      routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
       routeAnimation = null;
     }
   }
@@ -280,6 +320,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     });
 
+    ref.listen(
+      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
+      (previous, next) {
+        if (previous != next) {
+          setupVolumeControl();
+        }
+      },
+    );
+
     final activeItems = resolveActiveItems();
     final activateTocTitle = activeItems.isNotEmpty
         ? activeItems.last.label
@@ -307,6 +356,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 onCoverTap: navigateToFirstTocItemFirstPage,
                 themeData: themeData,
               ),
+              onDrawerChanged: (isOpened) {
+                tocDrawerOpen = isOpened;
+                setupVolumeControl();
+              },
               body: Container(
                 color: epubTheme.surfaceColor,
                 child: Stack(
@@ -375,6 +428,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onLastPage: () => goToPage(totalPagesInChapter - 1),
                       onPreviousChapter: previousSpineItemFirstPage,
                       onNextChapter: nextSpineItem,
+                      onToggleStyleDrawer: (show) {
+                        tocDrawerOpen = show;
+                        setupVolumeControl();
+                      },
                     ),
                   ],
                 ),

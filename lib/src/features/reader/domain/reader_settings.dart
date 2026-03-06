@@ -29,6 +29,9 @@ class ReaderSettings {
   /// When true the custom font overrides the epub's own font-family rules.
   final bool overrideFontFamily;
 
+  /// When true, volume up/down keys turn pages in the reader.
+  final bool volumeKeyTurnsPage;
+
   const ReaderSettings({
     this.zoom = 1.0,
     this.followAppTheme = true,
@@ -42,6 +45,7 @@ class ReaderSettings {
     this.pageAnimation = ReaderPageAnimation.slide,
     this.fontFileName,
     this.overrideFontFamily = false,
+    this.volumeKeyTurnsPage = false,
   });
 
   // Sentinel: lets copyWith(fontFileName: null) mean "set to null" rather than
@@ -61,6 +65,7 @@ class ReaderSettings {
     ReaderPageAnimation? pageAnimation,
     Object? fontFileName = _kUnset,
     bool? overrideFontFamily,
+    bool? volumeKeyTurnsPage,
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
@@ -77,6 +82,7 @@ class ReaderSettings {
           ? this.fontFileName
           : fontFileName as String?,
       overrideFontFamily: overrideFontFamily ?? this.overrideFontFamily,
+      volumeKeyTurnsPage: volumeKeyTurnsPage ?? this.volumeKeyTurnsPage,
     );
   }
 

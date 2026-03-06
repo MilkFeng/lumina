@@ -699,13 +699,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerHandleIntraLink => '跟随书内链接';
 
   @override
-  String get readerPageAnimationSection => '翻页动画';
+  String get readerPageAnimationSection => '翻页';
 
   @override
   String get readerPageAnimationNone => '无动画';
 
   @override
   String get readerPageAnimationSlide => '滑动翻页';
+
+  @override
+  String get readerVolumeKeyTurnsPage => '用音量键翻页';
 
   @override
   String get readerFontSection => '自定义字体';

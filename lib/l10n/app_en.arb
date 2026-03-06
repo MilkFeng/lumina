@@ -1208,7 +1208,7 @@
     "description": "Switch label to enable/disable following intra-book (epub://) links"
   },
 
-  "readerPageAnimationSection": "Page Animation",
+  "readerPageAnimationSection": "Pagination",
   "@readerPageAnimationSection": {
     "description": "Reader style sheet section title for page-turning animation"
   },
@@ -1221,6 +1221,11 @@
   "readerPageAnimationSlide": "Slide",
   "@readerPageAnimationSlide": {
     "description": "Page animation option: slide/swipe transition"
+  },
+
+  "readerVolumeKeyTurnsPage": "Volume Keys Turn Pages",
+  "@readerVolumeKeyTurnsPage": {
+    "description": "Toggle label to use hardware volume keys for page turning"
   },
 
   "readerFontSection": "Custom Font",
