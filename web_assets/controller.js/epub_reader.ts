@@ -726,10 +726,21 @@ export class EpubReader implements LuminaApi {
     // ─── Background Color ──────────────────────────────────────────────
 
     private getOriginalBackgroundColor(iframe: HTMLIFrameElement): string | null {
-        if (!iframe || !iframe.contentDocument) return null;
-        const bgColor = iframe.contentWindow!.getComputedStyle(iframe.contentDocument.body).backgroundColor;
-        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-            return bgColor;
+        if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return null;
+        try {
+            const window = iframe.contentWindow!;
+            const body = iframe.contentDocument.body;
+            if (!body) {
+                console.warn('Iframe body is null, possibly not fully loaded or not an HTML document.');
+                return null;
+            }
+            const bgColor = window.getComputedStyle(body).backgroundColor;
+            if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                return bgColor;
+            }
+        } catch (e) {
+            console.warn('Failed to get original background color from iframe:', e);
+            return null;
         }
         return null;
     }
@@ -856,39 +867,42 @@ export class EpubReader implements LuminaApi {
             style.id = 'injected-pagination-style';
             style.innerHTML = this.state.config.theme.paginationCss;
             doc.head.appendChild(style);
-            polyfillCss(doc);
-            this.applyOriginalBackgroundColor();
         }
 
         waitForAllResources(doc).then(() => {
             if (!iframe.contentWindow) return;
             const reflow = doc.body.scrollHeight; void reflow;
-
             requestAnimationFrame(() => {
+
+                polyfillCss(doc);
+                this.applyOriginalBackgroundColor();
+
                 requestAnimationFrame(() => {
-                    const pageCount = this.calculatePageCount(iframe);
-                    const slot = this.slotFromFrameId(iframe.id);
+                    requestAnimationFrame(() => {
+                        const pageCount = this.calculatePageCount(iframe);
+                        const slot = this.slotFromFrameId(iframe.id);
 
-                    let pageIndex = 0;
-                    const url = iframe.src;
-                    if (url && url.includes('#')) {
-                        const anchor = url.split('#')[1];
-                        pageIndex = this.calculatePageIndexOfAnchor(iframe, anchor);
-                        this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
-                    }
-
-                    this.buildInteractionMap().then(() => {
-                        if (iframe.id === 'frame-curr') {
-                            FlutterBridge.onPageCountReady(pageCount);
-                            FlutterBridge.onPageChanged(pageIndex);
-                        } else if (iframe.id === 'frame-prev') {
-                            this.jumpToLastPageOfFrame(-1, 'prev');
-                        } else if (iframe.id === 'frame-next') {
-                            this.jumpToPageFor(-1, 'next', 0);
+                        let pageIndex = 0;
+                        const url = iframe.src;
+                        if (url && url.includes('#')) {
+                            const anchor = url.split('#')[1];
+                            pageIndex = this.calculatePageIndexOfAnchor(iframe, anchor);
+                            this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
                         }
-                        this.detectActiveAnchor(iframe);
-                        requestAnimationFrame(() => {
-                            FlutterBridge.onEventFinished(token);
+
+                        this.buildInteractionMap().then(() => {
+                            if (iframe.id === 'frame-curr') {
+                                FlutterBridge.onPageCountReady(pageCount);
+                                FlutterBridge.onPageChanged(pageIndex);
+                            } else if (iframe.id === 'frame-prev') {
+                                this.jumpToLastPageOfFrame(-1, 'prev');
+                            } else if (iframe.id === 'frame-next') {
+                                this.jumpToPageFor(-1, 'next', 0);
+                            }
+                            this.detectActiveAnchor(iframe);
+                            requestAnimationFrame(() => {
+                                FlutterBridge.onEventFinished(token);
+                            });
                         });
                     });
                 });
