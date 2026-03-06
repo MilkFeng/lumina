@@ -27,98 +27,114 @@ const ShelfBookSchema = CollectionSchema(
       name: r'authors',
       type: IsarType.stringList,
     ),
-    r'chapterScrollPosition': PropertySchema(
+    r'bookType': PropertySchema(
       id: 2,
+      name: r'bookType',
+      type: IsarType.byte,
+      enumMap: _ShelfBookbookTypeEnumValueMap,
+    ),
+    r'chapterScrollPosition': PropertySchema(
+      id: 3,
       name: r'chapterScrollPosition',
       type: IsarType.double,
     ),
     r'coverPath': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'coverPath',
       type: IsarType.string,
     ),
     r'currentChapterIndex': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'currentChapterIndex',
       type: IsarType.long,
     ),
     r'description': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'description',
       type: IsarType.string,
     ),
     r'direction': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'direction',
       type: IsarType.long,
     ),
     r'epubVersion': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'epubVersion',
       type: IsarType.string,
     ),
     r'fileHash': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'fileHash',
       type: IsarType.string,
     ),
     r'filePath': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'filePath',
       type: IsarType.string,
     ),
     r'groupName': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'groupName',
       type: IsarType.string,
     ),
     r'importDate': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'importDate',
       type: IsarType.long,
     ),
     r'isDeleted': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'isFinished': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'isFinished',
       type: IsarType.bool,
     ),
+    r'isPasswordProtected': PropertySchema(
+      id: 15,
+      name: r'isPasswordProtected',
+      type: IsarType.bool,
+    ),
     r'lastOpenedDate': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'lastOpenedDate',
       type: IsarType.long,
     ),
     r'lastSyncedDate': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'lastSyncedDate',
       type: IsarType.long,
     ),
+    r'pdfPassword': PropertySchema(
+      id: 18,
+      name: r'pdfPassword',
+      type: IsarType.string,
+    ),
     r'readingProgress': PropertySchema(
-      id: 16,
+      id: 19,
       name: r'readingProgress',
       type: IsarType.double,
     ),
     r'subjects': PropertySchema(
-      id: 17,
+      id: 20,
       name: r'subjects',
       type: IsarType.stringList,
     ),
     r'title': PropertySchema(
-      id: 18,
+      id: 21,
       name: r'title',
       type: IsarType.string,
     ),
     r'totalChapters': PropertySchema(
-      id: 19,
+      id: 22,
       name: r'totalChapters',
       type: IsarType.long,
     ),
     r'updatedAt': PropertySchema(
-      id: 20,
+      id: 23,
       name: r'updatedAt',
       type: IsarType.long,
     )
@@ -139,6 +155,19 @@ const ShelfBookSchema = CollectionSchema(
           name: r'fileHash',
           type: IndexType.hash,
           caseSensitive: true,
+        )
+      ],
+    ),
+    r'bookType': IndexSchema(
+      id: 4496799932074272184,
+      name: r'bookType',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'bookType',
+          type: IndexType.value,
+          caseSensitive: false,
         )
       ],
     ),
@@ -308,6 +337,12 @@ int _shelfBookEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.pdfPassword;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.subjects.length * 3;
   {
     for (var i = 0; i < object.subjects.length; i++) {
@@ -327,25 +362,28 @@ void _shelfBookSerialize(
 ) {
   writer.writeString(offsets[0], object.author);
   writer.writeStringList(offsets[1], object.authors);
-  writer.writeDouble(offsets[2], object.chapterScrollPosition);
-  writer.writeString(offsets[3], object.coverPath);
-  writer.writeLong(offsets[4], object.currentChapterIndex);
-  writer.writeString(offsets[5], object.description);
-  writer.writeLong(offsets[6], object.direction);
-  writer.writeString(offsets[7], object.epubVersion);
-  writer.writeString(offsets[8], object.fileHash);
-  writer.writeString(offsets[9], object.filePath);
-  writer.writeString(offsets[10], object.groupName);
-  writer.writeLong(offsets[11], object.importDate);
-  writer.writeBool(offsets[12], object.isDeleted);
-  writer.writeBool(offsets[13], object.isFinished);
-  writer.writeLong(offsets[14], object.lastOpenedDate);
-  writer.writeLong(offsets[15], object.lastSyncedDate);
-  writer.writeDouble(offsets[16], object.readingProgress);
-  writer.writeStringList(offsets[17], object.subjects);
-  writer.writeString(offsets[18], object.title);
-  writer.writeLong(offsets[19], object.totalChapters);
-  writer.writeLong(offsets[20], object.updatedAt);
+  writer.writeByte(offsets[2], object.bookType.index);
+  writer.writeDouble(offsets[3], object.chapterScrollPosition);
+  writer.writeString(offsets[4], object.coverPath);
+  writer.writeLong(offsets[5], object.currentChapterIndex);
+  writer.writeString(offsets[6], object.description);
+  writer.writeLong(offsets[7], object.direction);
+  writer.writeString(offsets[8], object.epubVersion);
+  writer.writeString(offsets[9], object.fileHash);
+  writer.writeString(offsets[10], object.filePath);
+  writer.writeString(offsets[11], object.groupName);
+  writer.writeLong(offsets[12], object.importDate);
+  writer.writeBool(offsets[13], object.isDeleted);
+  writer.writeBool(offsets[14], object.isFinished);
+  writer.writeBool(offsets[15], object.isPasswordProtected);
+  writer.writeLong(offsets[16], object.lastOpenedDate);
+  writer.writeLong(offsets[17], object.lastSyncedDate);
+  writer.writeString(offsets[18], object.pdfPassword);
+  writer.writeDouble(offsets[19], object.readingProgress);
+  writer.writeStringList(offsets[20], object.subjects);
+  writer.writeString(offsets[21], object.title);
+  writer.writeLong(offsets[22], object.totalChapters);
+  writer.writeLong(offsets[23], object.updatedAt);
 }
 
 ShelfBook _shelfBookDeserialize(
@@ -357,26 +395,31 @@ ShelfBook _shelfBookDeserialize(
   final object = ShelfBook();
   object.author = reader.readString(offsets[0]);
   object.authors = reader.readStringList(offsets[1]) ?? [];
-  object.chapterScrollPosition = reader.readDoubleOrNull(offsets[2]);
-  object.coverPath = reader.readStringOrNull(offsets[3]);
-  object.currentChapterIndex = reader.readLong(offsets[4]);
-  object.description = reader.readStringOrNull(offsets[5]);
-  object.direction = reader.readLong(offsets[6]);
-  object.epubVersion = reader.readString(offsets[7]);
-  object.fileHash = reader.readString(offsets[8]);
-  object.filePath = reader.readStringOrNull(offsets[9]);
-  object.groupName = reader.readStringOrNull(offsets[10]);
+  object.bookType =
+      _ShelfBookbookTypeValueEnumMap[reader.readByteOrNull(offsets[2])] ??
+          BookType.epub;
+  object.chapterScrollPosition = reader.readDoubleOrNull(offsets[3]);
+  object.coverPath = reader.readStringOrNull(offsets[4]);
+  object.currentChapterIndex = reader.readLong(offsets[5]);
+  object.description = reader.readStringOrNull(offsets[6]);
+  object.direction = reader.readLong(offsets[7]);
+  object.epubVersion = reader.readString(offsets[8]);
+  object.fileHash = reader.readString(offsets[9]);
+  object.filePath = reader.readStringOrNull(offsets[10]);
+  object.groupName = reader.readStringOrNull(offsets[11]);
   object.id = id;
-  object.importDate = reader.readLong(offsets[11]);
-  object.isDeleted = reader.readBool(offsets[12]);
-  object.isFinished = reader.readBool(offsets[13]);
-  object.lastOpenedDate = reader.readLongOrNull(offsets[14]);
-  object.lastSyncedDate = reader.readLongOrNull(offsets[15]);
-  object.readingProgress = reader.readDouble(offsets[16]);
-  object.subjects = reader.readStringList(offsets[17]) ?? [];
-  object.title = reader.readString(offsets[18]);
-  object.totalChapters = reader.readLong(offsets[19]);
-  object.updatedAt = reader.readLong(offsets[20]);
+  object.importDate = reader.readLong(offsets[12]);
+  object.isDeleted = reader.readBool(offsets[13]);
+  object.isFinished = reader.readBool(offsets[14]);
+  object.isPasswordProtected = reader.readBool(offsets[15]);
+  object.lastOpenedDate = reader.readLongOrNull(offsets[16]);
+  object.lastSyncedDate = reader.readLongOrNull(offsets[17]);
+  object.pdfPassword = reader.readStringOrNull(offsets[18]);
+  object.readingProgress = reader.readDouble(offsets[19]);
+  object.subjects = reader.readStringList(offsets[20]) ?? [];
+  object.title = reader.readString(offsets[21]);
+  object.totalChapters = reader.readLong(offsets[22]);
+  object.updatedAt = reader.readLong(offsets[23]);
   return object;
 }
 
@@ -392,47 +435,63 @@ P _shelfBookDeserializeProp<P>(
     case 1:
       return (reader.readStringList(offset) ?? []) as P;
     case 2:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (_ShelfBookbookTypeValueEnumMap[reader.readByteOrNull(offset)] ??
+          BookType.epub) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
-    case 5:
       return (reader.readStringOrNull(offset)) as P;
-    case 6:
+    case 5:
       return (reader.readLong(offset)) as P;
+    case 6:
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 13:
       return (reader.readBool(offset)) as P;
     case 14:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 15:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 16:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 17:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 18:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 19:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 20:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 21:
+      return (reader.readString(offset)) as P;
+    case 22:
+      return (reader.readLong(offset)) as P;
+    case 23:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _ShelfBookbookTypeEnumValueMap = {
+  'epub': 0,
+  'pdf': 1,
+};
+const _ShelfBookbookTypeValueEnumMap = {
+  0: BookType.epub,
+  1: BookType.pdf,
+};
 
 Id _shelfBookGetId(ShelfBook object) {
   return object.id;
@@ -506,6 +565,14 @@ extension ShelfBookQueryWhereSort
   QueryBuilder<ShelfBook, ShelfBook, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterWhere> anyBookType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'bookType'),
+      );
     });
   }
 
@@ -667,6 +734,96 @@ extension ShelfBookQueryWhere
               includeUpper: false,
             ));
       }
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterWhereClause> bookTypeEqualTo(
+      BookType bookType) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'bookType',
+        value: [bookType],
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterWhereClause> bookTypeNotEqualTo(
+      BookType bookType) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookType',
+              lower: [],
+              upper: [bookType],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookType',
+              lower: [bookType],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookType',
+              lower: [bookType],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'bookType',
+              lower: [],
+              upper: [bookType],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterWhereClause> bookTypeGreaterThan(
+    BookType bookType, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'bookType',
+        lower: [bookType],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterWhereClause> bookTypeLessThan(
+    BookType bookType, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'bookType',
+        lower: [],
+        upper: [bookType],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterWhereClause> bookTypeBetween(
+    BookType lowerBookType,
+    BookType upperBookType, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'bookType',
+        lower: [lowerBookType],
+        includeLower: includeLower,
+        upper: [upperBookType],
+        includeUpper: includeUpper,
+      ));
     });
   }
 
@@ -1700,6 +1857,59 @@ extension ShelfBookQueryFilter
         upper,
         includeUpper,
       );
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> bookTypeEqualTo(
+      BookType value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bookType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> bookTypeGreaterThan(
+    BookType value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'bookType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> bookTypeLessThan(
+    BookType value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'bookType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> bookTypeBetween(
+    BookType lower,
+    BookType upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'bookType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
     });
   }
 
@@ -2888,6 +3098,16 @@ extension ShelfBookQueryFilter
   }
 
   QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      isPasswordProtectedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isPasswordProtected',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
       lastOpenedDateIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -3031,6 +3251,158 @@ extension ShelfBookQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      pdfPasswordIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'pdfPassword',
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      pdfPasswordIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'pdfPassword',
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> pdfPasswordEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'pdfPassword',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      pdfPasswordGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'pdfPassword',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> pdfPasswordLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'pdfPassword',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> pdfPasswordBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'pdfPassword',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      pdfPasswordStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'pdfPassword',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> pdfPasswordEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'pdfPassword',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> pdfPasswordContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'pdfPassword',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> pdfPasswordMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'pdfPassword',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      pdfPasswordIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'pdfPassword',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
+      pdfPasswordIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'pdfPassword',
+        value: '',
       ));
     });
   }
@@ -3585,6 +3957,18 @@ extension ShelfBookQuerySortBy on QueryBuilder<ShelfBook, ShelfBook, QSortBy> {
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByBookType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bookType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByBookTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bookType', Sort.desc);
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy>
       sortByChapterScrollPosition() {
     return QueryBuilder.apply(this, (query) {
@@ -3732,6 +4116,19 @@ extension ShelfBookQuerySortBy on QueryBuilder<ShelfBook, ShelfBook, QSortBy> {
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByIsPasswordProtected() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPasswordProtected', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy>
+      sortByIsPasswordProtectedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPasswordProtected', Sort.desc);
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByLastOpenedDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastOpenedDate', Sort.asc);
@@ -3753,6 +4150,18 @@ extension ShelfBookQuerySortBy on QueryBuilder<ShelfBook, ShelfBook, QSortBy> {
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByLastSyncedDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastSyncedDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByPdfPassword() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pdfPassword', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByPdfPasswordDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pdfPassword', Sort.desc);
     });
   }
 
@@ -3816,6 +4225,18 @@ extension ShelfBookQuerySortThenBy
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByAuthorDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'author', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByBookType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bookType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByBookTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bookType', Sort.desc);
     });
   }
 
@@ -3978,6 +4399,19 @@ extension ShelfBookQuerySortThenBy
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByIsPasswordProtected() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPasswordProtected', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy>
+      thenByIsPasswordProtectedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isPasswordProtected', Sort.desc);
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByLastOpenedDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastOpenedDate', Sort.asc);
@@ -3999,6 +4433,18 @@ extension ShelfBookQuerySortThenBy
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByLastSyncedDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastSyncedDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByPdfPassword() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pdfPassword', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByPdfPasswordDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pdfPassword', Sort.desc);
     });
   }
 
@@ -4063,6 +4509,12 @@ extension ShelfBookQueryWhereDistinct
   QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByAuthors() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'authors');
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByBookType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'bookType');
     });
   }
 
@@ -4146,6 +4598,13 @@ extension ShelfBookQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ShelfBook, ShelfBook, QDistinct>
+      distinctByIsPasswordProtected() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isPasswordProtected');
+    });
+  }
+
   QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByLastOpenedDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastOpenedDate');
@@ -4155,6 +4614,13 @@ extension ShelfBookQueryWhereDistinct
   QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByLastSyncedDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastSyncedDate');
+    });
+  }
+
+  QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByPdfPassword(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'pdfPassword', caseSensitive: caseSensitive);
     });
   }
 
@@ -4207,6 +4673,12 @@ extension ShelfBookQueryProperty
   QueryBuilder<ShelfBook, List<String>, QQueryOperations> authorsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'authors');
+    });
+  }
+
+  QueryBuilder<ShelfBook, BookType, QQueryOperations> bookTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'bookType');
     });
   }
 
@@ -4283,6 +4755,13 @@ extension ShelfBookQueryProperty
     });
   }
 
+  QueryBuilder<ShelfBook, bool, QQueryOperations>
+      isPasswordProtectedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isPasswordProtected');
+    });
+  }
+
   QueryBuilder<ShelfBook, int?, QQueryOperations> lastOpenedDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastOpenedDate');
@@ -4292,6 +4771,12 @@ extension ShelfBookQueryProperty
   QueryBuilder<ShelfBook, int?, QQueryOperations> lastSyncedDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastSyncedDate');
+    });
+  }
+
+  QueryBuilder<ShelfBook, String?, QQueryOperations> pdfPasswordProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'pdfPassword');
     });
   }
 

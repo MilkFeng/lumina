@@ -1,23 +1,25 @@
 import 'package:isar/isar.dart';
 
+import 'book_type.dart';
+
 part 'shelf_book.g.dart';
 
 /// Lightweight Isar collection for UI display and sync operations.
 /// Contains only essential metadata and reading progress.
-/// Uses "stream-from-zip" strategy: EPUB remains compressed on disk.
+/// Uses "stream-from-zip" strategy: EPUB remains compressed on disk, PDF stored as-is.
 @collection
 class ShelfBook {
   /// Auto-increment primary key
   Id id = Isar.autoIncrement;
 
-  /// SHA-256 hash of the original EPUB file (unique identifier)
+  /// SHA-256 hash of the original book file (unique identifier)
   @Index(unique: true)
   late String fileHash;
 
   // ==================== PATHS ====================
 
-  /// Absolute path to the compressed .epub file
-  /// e.g., "/books/{fileHash}.epub"
+  /// Absolute path to the book file (epub or pdf)
+  /// e.g., "/books/{fileHash}.epub" or "/books/{fileHash}.pdf"
   /// Can be null during sync (waiting for download)
   String? filePath;
 
@@ -27,6 +29,18 @@ class ShelfBook {
   String? coverPath;
 
   // ==================== METADATA ====================
+
+  /// Book format type (epub or pdf)
+  @Index()
+  @enumerated
+  late BookType bookType;
+
+  /// Password for password-protected PDFs (stored securely, this is just a reference)
+  /// Null if book is not password-protected or password not yet provided
+  String? pdfPassword;
+
+  /// Flag indicating if this PDF requires a password to open
+  bool isPasswordProtected = false;
 
   /// Book title
   @Index()
@@ -45,10 +59,10 @@ class ShelfBook {
   /// Subject tags/genres
   late List<String> subjects;
 
-  /// Total number of chapters/navigation points
+  /// Total number of chapters (EPUB) or pages (PDF)
   late int totalChapters;
 
-  /// EPUB version (e.g., "2.0", "3.0")
+  /// EPUB version (e.g., "2.0", "3.0") - or empty string for PDF
   late String epubVersion;
 
   /// Timestamp when book was imported (milliseconds since epoch)
@@ -62,7 +76,7 @@ class ShelfBook {
 
   // ==================== READING PROGRESS ====================
 
-  /// Current chapter index (0-based, flattened spine order)
+  /// Current chapter index (EPUB) or page index (PDF) (0-based)
   @Index()
   int currentChapterIndex = 0;
 
