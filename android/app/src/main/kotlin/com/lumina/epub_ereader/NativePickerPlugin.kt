@@ -170,9 +170,9 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     // -------------------------------------------------------------------------
 
     /**
-     * Launches file picker for selecting multiple EPUB files.
+     * Launches file picker for selecting multiple EPUB and PDF files.
      *
-     * Uses ACTION_OPEN_DOCUMENT with MIME type application/epub+zip.
+     * Uses ACTION_OPEN_DOCUMENT with MIME types for both EPUB and PDF.
      * Allows multiple file selection.
      */
     private fun pickEpubFiles(result: Result) {
@@ -185,12 +185,12 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/epub+zip"
+            type = "*/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            // Fallback to all files if EPUB MIME type is not recognised
+            // Support both EPUB and PDF files
             putExtra(
                 Intent.EXTRA_MIME_TYPES,
-                arrayOf("application/epub+zip", "application/octet-stream")
+                arrayOf("application/epub+zip", "application/pdf", "application/octet-stream")
             )
         }
 
@@ -501,7 +501,8 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     current.listFiles().forEach { queue.add(it) }
                 } else if (current.isFile) {
                     val name = current.name ?: ""
-                    if (name.endsWith(".epub", ignoreCase = true)) {
+                    if (name.endsWith(".epub", ignoreCase = true) || 
+                        name.endsWith(".pdf", ignoreCase = true)) {
                         epubUris.add(current.uri.toString())
                     }
                 }
@@ -557,9 +558,10 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
 
         if (displayName?.endsWith(".epub", ignoreCase = true) == true) return true
+        if (displayName?.endsWith(".pdf", ignoreCase = true) == true) return true
 
         val mimeType = activity.contentResolver.getType(uri)
-        return mimeType == "application/epub+zip"
+        return mimeType == "application/epub+zip" || mimeType == "application/pdf"
     }
 
     private fun isFontFile(uri: Uri): Boolean {

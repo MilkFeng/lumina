@@ -7,6 +7,7 @@
 .atom/
 .build/
 .buildlog/
+.claude/
 .history
 .svn/
 .swiftpm/
@@ -32,6 +33,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+*.g.dart
 
 # Symbolication related
 app.*.symbols

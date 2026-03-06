@@ -6,11 +6,16 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
   ReaderRendererController get rendererController;
 
+  PdfReaderRendererController get pdfRendererController;
+
   bool get isWebViewLoading;
   set isWebViewLoading(bool v);
 
   int get currentSpineItemIndex;
   set currentSpineItemIndex(int v);
+
+  double? get initialProgressToRestore;
+  set initialProgressToRestore(double? v);
 
   int get currentPageInChapter;
   set currentPageInChapter(int v);
@@ -200,6 +205,20 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   }
 
   Future<void> navigateToTocItem(TocItem item) async {
+    // Handle PDF navigation differently from EPUB
+    if (bookSession.book?.bookType == BookType.pdf) {
+      // For PDFs, the page number is stored in spineIndex
+      final pageNumber = item.spineIndex;
+      
+      if (pageNumber >= 0) {
+        await pdfRendererController.goToPage(pageNumber);
+      } else {
+        debugPrint('Warning: Invalid page number for PDF bookmark: $pageNumber');
+      }
+      return;
+    }
+
+    // EPUB navigation logic
     final targetHref = bookSession.findFirstValidHref(item);
 
     if (targetHref == null) {

@@ -20,6 +20,13 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
 
   double calculateProgressRatio() {
     if (totalPagesInChapter == 0) return 0.0;
+    
+    // PDF progress: simple page-based calculation
+    if (bookSession.book?.bookType == BookType.pdf) {
+      return ((currentPageInChapter + 1) / totalPagesInChapter).clamp(0.0, 1.0);
+    }
+    
+    // EPUB progress: chapter + page within chapter
     final pageProgress = (currentPageInChapter + 1) / totalPagesInChapter;
     final chapterProgress = currentSpineItemIndex / bookSession.spine.length;
     return (chapterProgress + pageProgress / bookSession.spine.length).clamp(

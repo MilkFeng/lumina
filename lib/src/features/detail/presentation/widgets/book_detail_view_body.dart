@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/features/detail/presentation/book_detail_screen.dart';
 import '../../../library/domain/shelf_book.dart';
+import '../../../library/domain/book_type.dart';
 import '../../../../core/widgets/book_cover.dart';
 import '../../../../core/widgets/expandable_text.dart';
 import '../../../../../l10n/app_localizations.dart';
@@ -133,11 +134,7 @@ class BookDetailViewBody extends ConsumerWidget {
               spacing: 12,
               runSpacing: 12,
               alignment: WrapAlignment.start,
-              children: [
-                _MetadataChip(label: l10n.chaptersCount(book.totalChapters)),
-                _MetadataChip(label: l10n.epubVersion(book.epubVersion)),
-                _MetadataChip(label: directionToString(book.direction)),
-              ],
+              children: _buildMetadataChips(book, l10n),
             ),
 
             const SizedBox(height: 40),
@@ -176,6 +173,31 @@ class BookDetailViewBody extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Build metadata chips based on book type
+  List<Widget> _buildMetadataChips(ShelfBook book, AppLocalizations l10n) {
+    final chips = <Widget>[];
+
+    // Chapter count (for EPUB) or page count (for PDF)
+    final countLabel = book.bookType == BookType.pdf
+        ? '${book.totalChapters} pages'
+        : l10n.chaptersCount(book.totalChapters);
+    chips.add(_MetadataChip(label: countLabel));
+
+    // Format chip - show EPUB version or PDF label
+    if (book.bookType == BookType.pdf) {
+      chips.add(_MetadataChip(label: 'PDF'));
+    } else if (book.epubVersion.isNotEmpty) {
+      chips.add(_MetadataChip(label: l10n.epubVersion(book.epubVersion)));
+    }
+
+    // Direction chip - only show for EPUB (PDFs are typically LTR)
+    if (book.bookType == BookType.epub) {
+      chips.add(_MetadataChip(label: directionToString(book.direction)));
+    }
+
+    return chips;
   }
 }
 

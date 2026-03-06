@@ -8,6 +8,9 @@ enum ReaderLinkHandling { ask, always, never }
 /// Controls the page-turning animation style.
 enum ReaderPageAnimation { none, slide }
 
+/// Controls page turn direction for PDF
+enum PdfSwipeDirection { horizontal, vertical }
+
 class ReaderSettings {
   final double zoom;
   final bool followAppTheme;
@@ -31,6 +34,13 @@ class ReaderSettings {
 
   /// When true, volume up/down keys turn pages in the reader.
   final bool volumeKeyTurnsPage;
+  
+  // PDF-specific settings
+  final bool pdfPageSpacing;
+  final bool pdfAutoSpacing;
+  final bool pdfPageFling;
+  final bool pdfPageSnap;
+  final PdfSwipeDirection pdfSwipeDirection;
 
   const ReaderSettings({
     this.zoom = 1.0,
@@ -43,9 +53,16 @@ class ReaderSettings {
     this.linkHandling = ReaderLinkHandling.ask,
     this.handleIntraLink = true,
     this.pageAnimation = ReaderPageAnimation.slide,
-    this.fontFileName,
+      this.fontFileName,
     this.overrideFontFamily = false,
     this.volumeKeyTurnsPage = false,
+    
+    // PDF defaults
+    this.pdfPageSpacing = true,
+    this.pdfAutoSpacing = true,
+    this.pdfPageFling = true,
+    this.pdfPageSnap = true,
+    this.pdfSwipeDirection = PdfSwipeDirection.vertical,
   });
 
   // Sentinel: lets copyWith(fontFileName: null) mean "set to null" rather than
@@ -66,6 +83,11 @@ class ReaderSettings {
     Object? fontFileName = _kUnset,
     bool? overrideFontFamily,
     bool? volumeKeyTurnsPage,
+    bool? pdfPageSpacing,
+    bool? pdfAutoSpacing,
+    bool? pdfPageFling,
+    bool? pdfPageSnap,
+    PdfSwipeDirection? pdfSwipeDirection,
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
@@ -83,6 +105,11 @@ class ReaderSettings {
           : fontFileName as String?,
       overrideFontFamily: overrideFontFamily ?? this.overrideFontFamily,
       volumeKeyTurnsPage: volumeKeyTurnsPage ?? this.volumeKeyTurnsPage,
+      pdfPageSpacing: pdfPageSpacing ?? this.pdfPageSpacing,
+      pdfAutoSpacing: pdfAutoSpacing ?? this.pdfAutoSpacing,
+      pdfPageFling: pdfPageFling ?? this.pdfPageFling,
+      pdfPageSnap: pdfPageSnap ?? this.pdfPageSnap,
+      pdfSwipeDirection: pdfSwipeDirection ?? this.pdfSwipeDirection,
     );
   }
 
