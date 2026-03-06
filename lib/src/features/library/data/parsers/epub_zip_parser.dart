@@ -122,7 +122,6 @@ class EpubZipParser {
   }
 
   /// Parse OPF file content
-  /// Parse OPF file content
   static Either<String, EpubZipParseResult> _parseOpf(
     String content,
     String opfPath,
@@ -372,7 +371,9 @@ class EpubZipParser {
     if (coverMeta != null) {
       final coverId = coverMeta.getAttribute('content');
       if (coverId != null) {
-        coverHref = manifestMap[coverId]!.$1.path;
+        if (manifestMap.containsKey(coverId)) {
+          coverHref = manifestMap[coverId]!.$1.path;
+        }
       }
     }
 
