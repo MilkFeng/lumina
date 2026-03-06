@@ -206,7 +206,7 @@ export class EpubReader implements LuminaApi {
         });
     }
 
-    updateTheme(token: string, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {
+    updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {
         this.state.config.safeWidth = Math.floor(viewWidth);
         this.state.config.safeHeight = Math.floor(viewHeight);
         this.state.config.padding = {
@@ -330,7 +330,7 @@ export class EpubReader implements LuminaApi {
         this.checkImageAt(x, y);
     }
 
-    waitForRender(token: string): void {
+    waitForRender(token: number): void {
         requestAnimationFrame(function () {
             requestAnimationFrame(function () {
                 window.flutter_inappwebview.callHandler('onEventFinished', token);
@@ -878,7 +878,7 @@ export class EpubReader implements LuminaApi {
         });
     }
 
-    private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: string): void {
+    private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: number): void {
         if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
         this.applyOriginalBackgroundColor();
