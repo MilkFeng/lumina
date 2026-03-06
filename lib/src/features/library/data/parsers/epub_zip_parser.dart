@@ -39,6 +39,12 @@ class EpubZipParser {
     String? fileName,
   }) {
     try {
+      // Find META-INF/encryption.xml to check if the EPUB is encrypted
+      final encryptionFile = archive.findFile('META-INF/encryption.xml');
+      if (encryptionFile != null) {
+        return left('Encrypted EPUBs are not supported');
+      }
+
       // Step 1: Find OPF file path
       final opfPathResult = _findOpfPath(archive);
       if (opfPathResult.isLeft()) {
