@@ -25,16 +25,16 @@ class ReaderWebViewController {
   }
 
   // JavaScript wrapper methods
-  Future<void> jumpToLastPageOfFrame(String frame) async {
-    await _webViewState?._jumpToLastPageOfFrame(frame);
+  Future<int?> jumpToLastPageOfFrame(String frame) async {
+    return await _webViewState?._jumpToLastPageOfFrame(frame);
   }
 
-  Future<void> cycleFrames(String direction) async {
-    await _webViewState?._cycleFrames(direction);
+  Future<int?> cycleFrames(String direction) async {
+    return await _webViewState?._cycleFrames(direction);
   }
 
-  Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await _webViewState?._jumpToPageFor(frame, pageIndex);
+  Future<int?> jumpToPageFor(String frame, int pageIndex) async {
+    return await _webViewState?._jumpToPageFor(frame, pageIndex);
   }
 
   Future<int?> loadFrame(String frame, String url, String anchors) async {
@@ -224,16 +224,38 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     await _controller?.evaluateJavascript(source: source);
   }
 
-  Future<void> _jumpToLastPageOfFrame(String frame) async {
-    await _evaluateJavascript("window.api.jumpToLastPageOfFrame('$frame')");
+  Future<int> _jumpToLastPageOfFrame(String frame) async {
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+    await _evaluateJavascript(
+      "window.api.jumpToLastPageOfFrame($token, '$frame')",
+    );
+    return token;
   }
 
-  Future<void> _cycleFrames(String direction) async {
-    await _evaluateJavascript("window.api.cycleFrames('$direction')");
+  Future<int?> _cycleFrames(String direction) async {
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+    await _evaluateJavascript("window.api.cycleFrames($token, '$direction')");
+    return token;
   }
 
-  Future<void> _jumpToPageFor(String frame, int pageIndex) async {
-    await _evaluateJavascript("window.api.jumpToPageFor('$frame', $pageIndex)");
+  Future<int> _jumpToPageFor(String frame, int pageIndex) async {
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+    await _evaluateJavascript(
+      "window.api.jumpToPageFor($token, '$frame', $pageIndex)",
+    );
+    return token;
   }
 
   Future<int> _loadFrame(String frame, String url, String anchors) async {
@@ -250,7 +272,13 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   Future<void> _jumpToPage(int pageIndex) async {
-    await _evaluateJavascript('window.api.jumpToPage($pageIndex)');
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+    await _evaluateJavascript('window.api.jumpToPage($token, $pageIndex)');
+    await _waitForEvent(token, 1000);
   }
 
   Future<void> _restoreScrollPosition(double ratio) async {
@@ -500,6 +528,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       callback: (args) {
         if (args.isNotEmpty) {
           final int returnedToken = args[0] as int;
+          if (returnedToken == -1) {
+            // Special case for events that don't need to be tracked with a token
+            return;
+          }
           if (_completers.containsKey(returnedToken)) {
             _completers[returnedToken]?.complete();
             _completers.remove(returnedToken);

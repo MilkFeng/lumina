@@ -4,11 +4,11 @@ import { FrameSlot, InitConfig, ThemeUpdate } from "./types";
 export interface LuminaApi {
     init(config: InitConfig): void;
     loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[]): void;
-    jumpToPage(pageIndex: number): void;
-    jumpToPageFor(slot: FrameSlot, pageIndex: number): void;
-    jumpToLastPageOfFrame(slot: FrameSlot): void;
+    jumpToPage(token: number, pageIndex: number): void;
+    jumpToPageFor(token: number, slot: FrameSlot, pageIndex: number): void;
+    jumpToLastPageOfFrame(token: number, slot: FrameSlot): void;
     restoreScrollPosition(token: number, ratio: number): void;
-    cycleFrames(direction: 'next' | 'prev'): void;
+    cycleFrames(token: number, direction: 'next' | 'prev'): void;
     updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void;
     checkTapElementAt(x: number, y: number): void;
     checkElementAt(x: number, y: number): void;

@@ -100,7 +100,7 @@ export class EpubReader implements LuminaApi {
         }
     }
 
-    jumpToPage(pageIndex: number): void {
+    jumpToPage(token: number, pageIndex: number): void {
         const iframe = this.frameElement('curr');
         if (!iframe || !iframe.contentWindow) return;
 
@@ -111,11 +111,12 @@ export class EpubReader implements LuminaApi {
             requestAnimationFrame(() => {
                 FlutterBridge.onPageChanged(pageIndex);
                 this.detectActiveAnchor(iframe);
+                FlutterBridge.onEventFinished(token);
             });
         });
     }
 
-    jumpToPageFor(slot: FrameSlot, pageIndex: number): void {
+    jumpToPageFor(token: number, slot: FrameSlot, pageIndex: number): void {
         const iframe = this.frameElement(slot);
         if (!iframe || !iframe.contentWindow) return;
 
@@ -128,28 +129,23 @@ export class EpubReader implements LuminaApi {
                     FlutterBridge.onPageChanged(pageIndex);
                 }
                 this.detectActiveAnchor(iframe);
-            });
-        });
-    }
-
-    jumpToLastPageOfFrame(slot: FrameSlot): void {
-        const pageCount = this.state.frames[slot] ?? 0;
-        this.jumpToPageFor(slot, pageCount - 1);
-    }
-
-    restoreScrollPosition(token: number, ratio: number): void {
-        const pageCount = this.state.frames.curr;
-        const pageIndex = Math.round(ratio * pageCount);
-        this.jumpToPage(pageIndex);
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
                 FlutterBridge.onEventFinished(token);
             });
         });
     }
 
-    cycleFrames(direction: 'next' | 'prev'): void {
+    jumpToLastPageOfFrame(token: number, slot: FrameSlot): void {
+        const pageCount = this.state.frames[slot] ?? 0;
+        this.jumpToPageFor(token, slot, pageCount - 1);
+    }
+
+    restoreScrollPosition(token: number, ratio: number): void {
+        const pageCount = this.state.frames.curr;
+        const pageIndex = Math.round(ratio * pageCount);
+        this.jumpToPage(token, pageIndex);
+    }
+
+    cycleFrames(token: number, direction: 'next' | 'prev'): void {
         const elPrev = this.frameElement('prev');
         const elCurr = this.frameElement('curr');
         const elNext = this.frameElement('next');
@@ -208,7 +204,9 @@ export class EpubReader implements LuminaApi {
                 this.detectActiveAnchor(elPrev);
                 this.detectActiveAnchor(elCurr);
                 this.detectActiveAnchor(elNext);
-                this.buildInteractionMap();
+                this.buildInteractionMap().then(() => {
+                    FlutterBridge.onEventFinished(token);
+                });
             });
         });
     }
@@ -432,9 +430,9 @@ export class EpubReader implements LuminaApi {
             FlutterBridge.onPageCountReady(pageCount);
             FlutterBridge.onPageChanged(this.calculateCurrentPageIndex());
         } else if (iframeId === 'frame-prev') {
-            this.jumpToLastPageOfFrame('prev');
+            this.jumpToLastPageOfFrame(-1, 'prev');
         } else if (iframeId === 'frame-next') {
-            this.jumpToPageFor('next', 0);
+            this.jumpToPageFor(-1, 'next', 0);
         }
     }
 
@@ -873,9 +871,9 @@ export class EpubReader implements LuminaApi {
                             FlutterBridge.onPageCountReady(pageCount);
                             FlutterBridge.onPageChanged(pageIndex);
                         } else if (iframe.id === 'frame-prev') {
-                            this.jumpToLastPageOfFrame('prev');
+                            this.jumpToLastPageOfFrame(-1, 'prev');
                         } else if (iframe.id === 'frame-next') {
-                            this.jumpToPageFor('next', 0);
+                            this.jumpToPageFor(-1, 'next', 0);
                         }
                         this.detectActiveAnchor(iframe);
                         requestAnimationFrame(() => {
@@ -910,9 +908,9 @@ export class EpubReader implements LuminaApi {
                             FlutterBridge.onPageCountReady(pageCount);
                             FlutterBridge.onPageChanged(pageIndex);
                         } else if (iframe.id === 'frame-prev') {
-                            this.jumpToLastPageOfFrame('prev');
+                            this.jumpToLastPageOfFrame(-1, 'prev');
                         } else if (iframe.id === 'frame-next') {
-                            this.jumpToPageFor('next', 0);
+                            this.jumpToPageFor(-1, 'next', 0);
                         }
                         this.detectActiveAnchor(iframe);
 

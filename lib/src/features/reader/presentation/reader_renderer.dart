@@ -41,7 +41,6 @@ class ReaderRendererController {
 
   Future<void> jumpToPage(int pageIndex) async {
     await webViewController?.jumpToPage(pageIndex);
-    await webViewController?.waitForRender();
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
@@ -49,21 +48,24 @@ class ReaderRendererController {
   }
 
   Future<void> jumpToPreviousChapterLastPage() async {
-    await webViewController?.jumpToLastPageOfFrame('prev');
-    await webViewController?.cycleFrames('prev');
-    await webViewController?.waitForRender();
+    final token1 = await webViewController?.jumpToLastPageOfFrame('prev');
+    final token2 = await webViewController?.cycleFrames('prev');
+    final tokens = [token1, token2].whereType<int>().toList();
+    await webViewController?.waitForEvents(tokens);
   }
 
   Future<void> jumpToPreviousChapterFirstPage() async {
-    await webViewController?.jumpToPageFor('prev', 0);
-    await webViewController?.cycleFrames('prev');
-    await webViewController?.waitForRender();
+    final token1 = await webViewController?.jumpToPageFor('prev', 0);
+    final token2 = await webViewController?.cycleFrames('prev');
+    final tokens = [token1, token2].whereType<int>().toList();
+    await webViewController?.waitForEvents(tokens);
   }
 
   Future<void> jumpToNextChapter() async {
-    await webViewController?.jumpToPageFor('next', 0);
-    await webViewController?.cycleFrames('next');
-    await webViewController?.waitForRender();
+    final token1 = await webViewController?.jumpToPageFor('next', 0);
+    final token2 = await webViewController?.cycleFrames('next');
+    final tokens = [token1, token2].whereType<int>().toList();
+    await webViewController?.waitForEvents(tokens);
   }
 
   Future<int?> preloadCurrentChapter(String url, List<String> anchors) async {
