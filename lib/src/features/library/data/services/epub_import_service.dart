@@ -5,6 +5,7 @@ import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/services/epub_import_workers.dart';
 import 'package:fpdart/fpdart.dart';
+import '../../domain/book_type.dart';
 import '../../domain/shelf_book.dart';
 import '../../domain/book_manifest.dart';
 import '../shelf_book_repository.dart';
@@ -144,6 +145,7 @@ class EpubImportService {
 
     final shelfBook = ShelfBook()
       ..fileHash = fileHash
+      ..bookType = BookType.epub
       ..filePath = relativePath
       ..coverPath = coverPath
       ..title = parseData.title
