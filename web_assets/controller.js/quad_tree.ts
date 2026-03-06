@@ -69,12 +69,12 @@ export class QuadTree<T extends QuadTreeItem> {
         this.divided = false;
     }
 
-    private _toRect(rawRect?: RectLike | null): Rect | null {
+    private toRect(rawRect?: RectLike | null): Rect | null {
         if (!rawRect) return null;
         return new Rect(rawRect.x, rawRect.y, rawRect.width, rawRect.height);
     }
 
-    private _subdivide(): void {
+    private subdivide(): void {
         const x = this.boundary.x;
         const y = this.boundary.y;
         const w = this.boundary.width / 2;
@@ -90,7 +90,7 @@ export class QuadTree<T extends QuadTreeItem> {
     public insert(item?: T | null): boolean {
         if (!item || !item.rect) return false;
 
-        const rect = this._toRect(item.rect);
+        const rect = this.toRect(item.rect);
         if (!rect || !this.boundary.intersects(rect)) return false;
 
         if (!this.divided && this.items.length < this.capacity) {
@@ -99,18 +99,18 @@ export class QuadTree<T extends QuadTreeItem> {
         }
 
         if (!this.divided) {
-            this._subdivide();
+            this.subdivide();
             const existing = this.items;
             this.items = [];
             for (let i = 0; i < existing.length; i++) {
-                this._insertIntoChildren(existing[i]);
+                this.insertIntoChildren(existing[i]);
             }
         }
 
-        return this._insertIntoChildren(item);
+        return this.insertIntoChildren(item);
     }
 
-    private _insertIntoChildren(item: T): boolean {
+    private insertIntoChildren(item: T): boolean {
         let inserted = false;
         if (this.northwest!.insert(item)) inserted = true;
         if (this.northeast!.insert(item)) inserted = true;
@@ -124,7 +124,7 @@ export class QuadTree<T extends QuadTreeItem> {
 
         for (let i = 0; i < this.items.length; i++) {
             const item = this.items[i];
-            const rect = this._toRect(item.rect);
+            const rect = this.toRect(item.rect);
             if (rect && range.intersects(rect)) {
                 found.push(item);
             }

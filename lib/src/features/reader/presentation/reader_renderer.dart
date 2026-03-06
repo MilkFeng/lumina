@@ -41,53 +41,61 @@ class ReaderRendererController {
 
   Future<void> jumpToPage(int pageIndex) async {
     await webViewController?.jumpToPage(pageIndex);
-    await webViewController?.waitForRender();
   }
 
   Future<void> restoreScrollPosition(double ratio) async {
     await webViewController?.restoreScrollPosition(ratio);
-    await webViewController?.waitForRender();
   }
 
   Future<void> jumpToPreviousChapterLastPage() async {
-    await webViewController?.jumpToLastPageOfFrame('prev');
-    await webViewController?.cycleFrames('prev');
-    await webViewController?.waitForRender();
+    final token1 = await webViewController?.jumpToLastPageOfFrame('prev');
+    final token2 = await webViewController?.cycleFrames('prev');
+    final tokens = [token1, token2].whereType<int>().toList();
+    await webViewController?.waitForEvents(tokens);
   }
 
   Future<void> jumpToPreviousChapterFirstPage() async {
-    await webViewController?.jumpToPageFor('prev', 0);
-    await webViewController?.cycleFrames('prev');
-    await webViewController?.waitForRender();
+    final token1 = await webViewController?.jumpToPageFor('prev', 0);
+    final token2 = await webViewController?.cycleFrames('prev');
+    final tokens = [token1, token2].whereType<int>().toList();
+    await webViewController?.waitForEvents(tokens);
   }
 
   Future<void> jumpToNextChapter() async {
-    await webViewController?.jumpToPageFor('next', 0);
-    await webViewController?.cycleFrames('next');
-    await webViewController?.waitForRender();
+    final token1 = await webViewController?.jumpToPageFor('next', 0);
+    final token2 = await webViewController?.cycleFrames('next');
+    final tokens = [token1, token2].whereType<int>().toList();
+    await webViewController?.waitForEvents(tokens);
   }
 
-  Future<void> preloadCurrentChapter(String url, List<String> anchors) async {
+  Future<int?> preloadCurrentChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await webViewController?.loadFrame('curr', url, anchorsJson);
+    return await webViewController?.loadFrame('curr', url, anchorsJson);
   }
 
-  Future<void> preloadNextChapter(String url, List<String> anchors) async {
+  Future<int?> preloadNextChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await webViewController?.loadFrame('next', url, anchorsJson);
+    return await webViewController?.loadFrame('next', url, anchorsJson);
   }
 
-  Future<void> preloadPreviousChapter(String url, List<String> anchors) async {
+  Future<int?> preloadPreviousChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await webViewController?.loadFrame('prev', url, anchorsJson);
+    return await webViewController?.loadFrame('prev', url, anchorsJson);
   }
 
   Future<void> updateTheme(EpubTheme theme) async {
     await _rendererState?._updateTheme(theme);
-    await webViewController?.waitForRender();
+  }
+
+  Future<void> waitForEvents(List<int> tokens) async {
+    await webViewController?.waitForEvents(tokens);
+  }
+
+  Future<void> waitForEvent(int token) async {
+    await webViewController?.waitForEvent(token);
   }
 }
 
@@ -104,7 +112,6 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final Future<void> Function() onInitialized;
   final Future<void> Function(int totalPages) onPageCountReady;
   final ValueChanged<int> onPageChanged;
-  final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(String innerHtml, Rect rect) onFootnoteTap;
@@ -129,7 +136,6 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
     required this.onFootnoteTap,
@@ -440,7 +446,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
             await widget.onPageCountReady(totalPages);
           },
           onPageChanged: widget.onPageChanged,
-          onRendererInitialized: widget.onRendererInitialized,
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,

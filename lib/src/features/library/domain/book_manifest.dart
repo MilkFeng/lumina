@@ -91,6 +91,11 @@ class Href {
   int get hashCode {
     return Object.hash(path, anchor);
   }
+
+  @override
+  String toString() {
+    return '$path#$anchor';
+  }
 }
 
 /// Embedded object representing a single manifest entry

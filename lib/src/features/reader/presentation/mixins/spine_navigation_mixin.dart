@@ -12,9 +12,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   int get currentSpineItemIndex;
   set currentSpineItemIndex(int v);
 
-  double? get initialProgressToRestore;
-  set initialProgressToRestore(double? v);
-
   int get currentPageInChapter;
   set currentPageInChapter(int v);
 
@@ -39,10 +36,11 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     return bookSession.getSpineItemUrl(index, anchor);
   }
 
-  Future<void> loadCarousel([
+  Future<void> loadCarousel({
     String anchor = 'top',
     int? overrideSpineIndex,
-  ]) async {
+    double? restoreScrollRatio,
+  }) async {
     if (bookSession.spine.isEmpty) return;
     if (mounted) {
       setState(() {
@@ -61,30 +59,46 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
         ? currIndex + 1
         : null;
 
+    final tokensForWait = <int>[];
+
     final currUrl = getSpineItemUrl(currIndex, anchor);
     final currentSpinePath = bookSession.spine[currIndex].href;
-    await rendererController.preloadCurrentChapter(
+    final currToken = await rendererController.preloadCurrentChapter(
       currUrl,
       getAnchorsForSpine(currentSpinePath),
     );
+    if (currToken != null) tokensForWait.add(currToken);
 
     if (prevIndex != null) {
       final prevUrl = getSpineItemUrl(prevIndex);
       final prevSpinePath = bookSession.spine[prevIndex].href;
-      await rendererController.preloadPreviousChapter(
+      final prevToken = await rendererController.preloadPreviousChapter(
         prevUrl,
         getAnchorsForSpine(prevSpinePath),
       );
+      if (prevToken != null) tokensForWait.add(prevToken);
     }
 
     if (nextIndex != null) {
       final nextUrl = getSpineItemUrl(nextIndex);
       final nextSpinePath = bookSession.spine[nextIndex].href;
-      await rendererController.preloadNextChapter(
+      final nextToken = await rendererController.preloadNextChapter(
         nextUrl,
         getAnchorsForSpine(nextSpinePath),
       );
+      if (nextToken != null) tokensForWait.add(nextToken);
     }
+
+    await rendererController.waitForEvents(tokensForWait);
+
+    if (restoreScrollRatio != null) {
+      await rendererController.restoreScrollPosition(restoreScrollRatio);
+    }
+
+    await Future.delayed(const Duration(milliseconds: 30));
+    setState(() {
+      isWebViewLoading = false;
+    });
   }
 
   Future<void> preloadNextOf(int currentIndex) async {
@@ -117,11 +131,10 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       currentSpineItemIndex = index;
       currentPageInChapter = 0;
-      initialProgressToRestore = null;
     });
     updateProgressDebounced();
 
-    await loadCarousel(anchor);
+    await loadCarousel(anchor: anchor);
     saveProgress();
   }
 
@@ -138,7 +151,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
     setState(() {
       currentSpineItemIndex--;
-      initialProgressToRestore = null;
     });
 
     preloadPreviousOf(currentSpineItemIndex);
@@ -159,7 +171,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       currentSpineItemIndex--;
       currentPageInChapter = 0;
-      initialProgressToRestore = null;
     });
     updateProgressDebounced();
 
@@ -181,7 +192,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       currentSpineItemIndex++;
       currentPageInChapter = 0;
-      initialProgressToRestore = null;
     });
     updateProgressDebounced();
 
@@ -205,6 +215,10 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     if (index != null) {
       await navigateToSpineItem(index, targetHref.anchor);
     } else {
+      ToastService.showError(
+        AppLocalizations.of(context)!.chapterNotFoundInSpine,
+        theme: getEpubTheme().themeData,
+      );
       debugPrint(
         'Warning: Chapter with href ${targetHref.path} not found in spine.',
       );

@@ -1338,5 +1338,10 @@
   "open": "Open",
   "@open": {
     "description": "Open button label for opening external links"
+  },
+
+  "chapterNotFoundInSpine": "Chapter not found in book spine",
+  "@chapterNotFoundInSpine": {
+    "description": "Error message shown when trying to navigate to a chapter that doesn't exist in the book spine"
   }
 }

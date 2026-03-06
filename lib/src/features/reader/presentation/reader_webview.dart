@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -13,6 +11,8 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
+import 'package:lumina/src/web/api/webview_bridge.dart';
+import 'package:lumina/src/web/api/lumina_api.dart';
 
 /// Controller for ReaderWebView that provides methods to control the WebView
 class ReaderWebViewController {
@@ -25,20 +25,20 @@ class ReaderWebViewController {
   }
 
   // JavaScript wrapper methods
-  Future<void> jumpToLastPageOfFrame(String frame) async {
-    await _webViewState?._jumpToLastPageOfFrame(frame);
+  Future<int?> jumpToLastPageOfFrame(String frame) async {
+    return await _webViewState?._jumpToLastPageOfFrame(frame);
   }
 
-  Future<void> cycleFrames(String direction) async {
-    await _webViewState?._cycleFrames(direction);
+  Future<int?> cycleFrames(String direction) async {
+    return await _webViewState?._cycleFrames(direction);
   }
 
-  Future<void> jumpToPageFor(String frame, int pageIndex) async {
-    await _webViewState?._jumpToPageFor(frame, pageIndex);
+  Future<int?> jumpToPageFor(String frame, int pageIndex) async {
+    return await _webViewState?._jumpToPageFor(frame, pageIndex);
   }
 
-  Future<void> loadFrame(String frame, String url, String anchors) async {
-    await _webViewState?._loadFrame(frame, url, anchors);
+  Future<int?> loadFrame(String frame, String url, String anchors) async {
+    return await _webViewState?._loadFrame(frame, url, anchors);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
@@ -68,6 +68,14 @@ class ReaderWebViewController {
   Future<void> updateTheme(EpubTheme theme) async {
     await _webViewState?._updateTheme(theme);
   }
+
+  Future<void> waitForEvent(int token, [int timeoutMs = 10000]) async {
+    await _webViewState?._bridge.waitForEvent(token, timeoutMs);
+  }
+
+  Future<void> waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
+    await _webViewState?._bridge.waitForEvents(tokens, timeoutMs);
+  }
 }
 
 final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
@@ -93,7 +101,6 @@ class ReaderWebViewCallbacks {
   final Function() onInitialized;
   final Function(int totalPages) onPageCountReady;
   final Function(int pageIndex) onPageChanged;
-  final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
@@ -105,7 +112,6 @@ class ReaderWebViewCallbacks {
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
     required this.onTap,
@@ -159,8 +165,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   late EpubTheme _currentTheme;
 
-  int _currentToken = 0;
-  final Map<int, Completer<void>> _completers = {};
+  final WebViewBridge _bridge = WebViewBridge();
+  late final LuminaApi _api = LuminaApi(_bridge);
 
   @override
   void initState() {
@@ -198,61 +204,33 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   Future<void> _waitForWebviewRender() async {
     if (_controller == null) return;
-
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-
-    await _evaluateJavascript("window.reader.waitForRender($token)");
-    await _waitForEvent(token, 1000);
+    await _api.waitForRender();
   }
 
   Future<void> _waitForRender() async {
     await _waitForWebviewRender();
   }
 
-  // JavaScript methods
-  Future<void> _evaluateJavascript(String source) async {
-    await _controller?.evaluateJavascript(source: source);
-  }
+  Future<int> _jumpToLastPageOfFrame(String frame) =>
+      _api.jumpToLastPageOfFrame(frame);
 
-  Future<void> _jumpToLastPageOfFrame(String frame) async {
-    await _evaluateJavascript("window.reader.jumpToLastPageOfFrame('$frame')");
-  }
+  Future<int> _cycleFrames(String direction) => _api.cycleFrames(direction);
 
-  Future<void> _cycleFrames(String direction) async {
-    await _evaluateJavascript("window.reader.cycleFrames('$direction')");
-  }
+  Future<int> _jumpToPageFor(String frame, int pageIndex) =>
+      _api.jumpToPageFor(frame, pageIndex);
 
-  Future<void> _jumpToPageFor(String frame, int pageIndex) async {
-    await _evaluateJavascript(
-      "window.reader.jumpToPageFor('$frame', $pageIndex)",
-    );
-  }
+  Future<int> _loadFrame(String frame, String url, String anchors) =>
+      _api.loadFrame(frame, url, anchors);
 
-  Future<void> _loadFrame(String frame, String url, String anchors) async {
-    await _evaluateJavascript(
-      "window.reader.loadFrame('$frame', '$url', $anchors)",
-    );
-  }
+  Future<void> _jumpToPage(int pageIndex) => _api.jumpToPage(pageIndex);
 
-  Future<void> _jumpToPage(int pageIndex) async {
-    await _evaluateJavascript('window.reader.jumpToPage($pageIndex)');
-  }
+  Future<void> _restoreScrollPosition(double ratio) =>
+      _api.restoreScrollPosition(ratio);
 
-  Future<void> _restoreScrollPosition(double ratio) async {
-    await _evaluateJavascript('window.reader.restoreScrollPosition($ratio)');
-  }
+  Future<void> _checkElementAt(double x, double y) => _api.checkElementAt(x, y);
 
-  Future<void> _checkElementAt(double x, double y) async {
-    await _evaluateJavascript("window.reader.checkElementAt($x, $y)");
-  }
-
-  Future<void> _checkTapElementAt(double x, double y) async {
-    await _evaluateJavascript("window.reader.checkTapElementAt($x, $y)");
-  }
+  Future<void> _checkTapElementAt(double x, double y) =>
+      _api.checkTapElementAt(x, y);
 
   InAppWebViewInitialData _generateInitialData(double width, double height) {
     return InAppWebViewInitialData(
@@ -304,6 +282,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   void _onWebViewCreated(InAppWebViewController controller) {
     _controller = controller;
+    _bridge.attach(controller);
     _setupJavaScriptHandlers(controller);
     widget.onWebViewCreated?.call();
   }
@@ -404,15 +383,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onRendererInitialized',
-      callback: (args) async {
-        await Future.delayed(const Duration(milliseconds: 100));
-        widget.callbacks.onRendererInitialized();
-        debugPrint('WebView: Renderer Initialized');
-      },
-    );
-
-    controller.addJavaScriptHandler(
       handlerName: 'onScrollAnchors',
       callback: (args) {
         if (args.isEmpty) return;
@@ -488,11 +458,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       handlerName: 'onEventFinished',
       callback: (args) {
         if (args.isNotEmpty) {
-          final int returnedToken = args[0] as int;
-          if (_completers.containsKey(returnedToken)) {
-            _completers[returnedToken]?.complete();
-            _completers.remove(returnedToken);
-          }
+          _bridge.resolveToken(args[0] as int);
         }
       },
     );
@@ -517,43 +483,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
-  Future<void> _waitForEvent(int token, [int timeoutMs = 10000]) async {
-    final completer = _completers[token];
-    if (completer == null) {
-      debugPrint('No completer found for token: $token');
-      return;
-    }
-    return completer.future.timeout(
-      Duration(milliseconds: timeoutMs),
-      onTimeout: () {
-        if (_completers.containsKey(token)) {
-          _completers.remove(token);
-          debugPrint('waitForRender timeout for token: $token');
-        }
-      },
-    );
-  }
-
   Future<void> _updateTheme(EpubTheme theme) async {
+    if (_controller == null) return;
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
-
-    if (_controller == null) return;
-
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-
     _currentTheme = theme;
-    final themeJson = jsonEncode(theme.toMap());
-    await _evaluateJavascript("""window.reader.updateTheme(
-      $token,
-      $width,
-      $height,
-      $themeJson,
-    )""");
-    await _waitForEvent(token);
+    await _api.updateTheme(width, height, theme.toMap());
   }
 }

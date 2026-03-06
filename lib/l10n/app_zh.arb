@@ -1348,5 +1348,10 @@
   "open": "打开",
   "@open": {
     "description": "打开链接的按钮标签"
+  },
+
+  "chapterNotFoundInSpine": "未找到该章节",
+  "@chapterNotFoundInSpine": {
+    "description": "章节未找到错误提示，可能是因为该章节没有正确包含在 EPUB 的 spine 中"
   }
 }

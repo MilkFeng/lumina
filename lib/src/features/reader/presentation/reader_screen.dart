@@ -74,8 +74,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   // Spine navigation state (used by _SpineNavigationMixin)
   @override
   int currentSpineItemIndex = 0;
-  @override
-  double? initialProgressToRestore;
 
   // Pagination state (used by _PageNavigationMixin)
   @override
@@ -214,7 +212,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
       setState(() {
         currentSpineItemIndex = bookSession.initialChapterIndex;
-        initialProgressToRestore = bookSession.initialScrollPosition;
       });
       updateProgressDebounced();
     } catch (e) {
@@ -325,7 +322,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onPerformPageTurn: handlePageTurn,
                       onToggleControls: toggleControls,
                       onInitialized: () async {
-                        await loadCarousel();
+                        final ratio = bookSession.initialScrollPosition;
+                        await loadCarousel(restoreScrollRatio: ratio);
                       },
                       onPageCountReady: (totalPages) async {
                         setState(() {
@@ -333,26 +331,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           if (currentPageInChapter >= totalPagesInChapter) {
                             currentPageInChapter = totalPagesInChapter - 1;
                           }
-                          updateProgressDebounced();
                         });
-                        if (initialProgressToRestore != null) {
-                          final ratio = initialProgressToRestore ?? 0.0;
-                          initialProgressToRestore = null;
-                          await rendererController.restoreScrollPosition(ratio);
-                        }
+                        updateProgressDebounced();
                       },
                       onPageChanged: (pageIndex) {
                         setState(() {
                           currentPageInChapter = pageIndex;
                         });
                         updateProgressDebounced();
-                        saveProgress();
-                      },
-                      onRendererInitialized: () async {
-                        await Future.delayed(const Duration(milliseconds: 30));
-                        setState(() {
-                          isWebViewLoading = false;
-                        });
                         saveProgress();
                       },
                       onScrollAnchors: handleScrollAnchors,

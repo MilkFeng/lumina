@@ -126,7 +126,7 @@ String generateSkeletonHtml(
   <script id="skeleton-variable-script">
     const initialConfig = $initialConfigJson;
     window.addEventListener('DOMContentLoaded', () => {
-      window.reader.init(initialConfig);
+      window.api.init(initialConfig);
     });
   </script>
 </head>
