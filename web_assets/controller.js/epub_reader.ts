@@ -11,6 +11,7 @@ import type {
     ThemeUpdate
 } from './types';
 import { LuminaApi } from './api';
+import { FlutterBridge } from './flutter_bridge';
 
 export class EpubReader implements LuminaApi {
     state: ReaderState;
@@ -49,7 +50,7 @@ export class EpubReader implements LuminaApi {
                 clearTimeout(this._resizeDebounceTimer);
             }
             this._resizeDebounceTimer = setTimeout(() => {
-                window.flutter_inappwebview.callHandler('onViewportResize');
+                FlutterBridge.onViewportResize();
             }, 120);
         };
     }
@@ -108,7 +109,7 @@ export class EpubReader implements LuminaApi {
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+                FlutterBridge.onPageChanged(pageIndex);
                 this.detectActiveAnchor(iframe);
             });
         });
@@ -124,7 +125,7 @@ export class EpubReader implements LuminaApi {
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 if (iframe.id === 'frame-curr') {
-                    window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+                    FlutterBridge.onPageChanged(pageIndex);
                 }
                 this.detectActiveAnchor(iframe);
             });
@@ -258,7 +259,7 @@ export class EpubReader implements LuminaApi {
                 if (linkEl) {
                     const href = linkEl.getAttribute('href');
                     if (href) {
-                        window.flutter_inappwebview.callHandler('onLinkTap', linkEl.href, x, y);
+                        FlutterBridge.onLinkTap(linkEl.href, x, y);
                         return true;
                     }
                 }
@@ -281,8 +282,8 @@ export class EpubReader implements LuminaApi {
             const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
 
             if (bestCandidate.type === 'footnote') {
-                window.flutter_inappwebview.callHandler(
-                    'onFootnoteTap', bestCandidate.data,
+                FlutterBridge.onFootnoteTap(
+                    bestCandidate.data,
                     absoluteLeft, absoluteTop, rect.width, rect.height
                 );
                 return;
@@ -291,7 +292,7 @@ export class EpubReader implements LuminaApi {
 
         if (this.checkLinkAt(x, y)) return;
 
-        window.flutter_inappwebview.callHandler('onTap', x, y);
+        FlutterBridge.onTap(x, y);
     }
 
     checkImageAt(x: number, y: number): boolean {
@@ -317,7 +318,7 @@ export class EpubReader implements LuminaApi {
                         const docX = rect.left - bodyRect.left + this.state.config.padding.left;
                         const docY = rect.top - bodyRect.top + this.state.config.padding.top;
 
-                        window.flutter_inappwebview.callHandler('onImageLongPress', src, docX, docY, rect.width, rect.height);
+                        FlutterBridge.onImageLongPress(src, docX, docY, rect.width, rect.height);
                         return true;
                     }
                 }
@@ -333,7 +334,7 @@ export class EpubReader implements LuminaApi {
     waitForRender(token: number): void {
         requestAnimationFrame(function () {
             requestAnimationFrame(function () {
-                window.flutter_inappwebview.callHandler('onEventFinished', token);
+                FlutterBridge.onEventFinished(token);
             });
         });
     }
@@ -422,8 +423,8 @@ export class EpubReader implements LuminaApi {
         this.state.frames[slot] = pageCount;
 
         if (iframeId === 'frame-curr') {
-            window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-            window.flutter_inappwebview.callHandler('onPageChanged', this.calculateCurrentPageIndex());
+            FlutterBridge.onPageCountReady(pageCount);
+            FlutterBridge.onPageChanged(this.calculateCurrentPageIndex());
         } else if (iframeId === 'frame-prev') {
             this.jumpToLastPageOfFrame('prev');
         } else if (iframeId === 'frame-next') {
@@ -471,7 +472,7 @@ export class EpubReader implements LuminaApi {
         if (activeAnchors.length === 0 && lastPassedAnchor) {
             activeAnchors.push(lastPassedAnchor);
         }
-        window.flutter_inappwebview.callHandler('onScrollAnchors', activeAnchors);
+        FlutterBridge.onScrollAnchors(activeAnchors);
     }
 
     // ─── Footnote Extraction ───────────────────────────────────────────
@@ -863,8 +864,8 @@ export class EpubReader implements LuminaApi {
 
                     this.buildInteractionMap().then(() => {
                         if (iframe.id === 'frame-curr') {
-                            window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-                            window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+                            FlutterBridge.onPageCountReady(pageCount);
+                            FlutterBridge.onPageChanged(pageIndex);
                         } else if (iframe.id === 'frame-prev') {
                             this.jumpToLastPageOfFrame('prev');
                         } else if (iframe.id === 'frame-next') {
@@ -872,7 +873,7 @@ export class EpubReader implements LuminaApi {
                         }
                         this.detectActiveAnchor(iframe);
                         requestAnimationFrame(() => {
-                            window.flutter_inappwebview.callHandler('onEventFinished', token);
+                            FlutterBridge.onEventFinished(token);
                         });
                     });
                 });
@@ -900,8 +901,8 @@ export class EpubReader implements LuminaApi {
 
                     this.buildInteractionMap().then(() => {
                         if (iframe.id === 'frame-curr') {
-                            window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
-                            window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
+                            FlutterBridge.onPageCountReady(pageCount);
+                            FlutterBridge.onPageChanged(pageIndex);
                         } else if (iframe.id === 'frame-prev') {
                             this.jumpToLastPageOfFrame('prev');
                         } else if (iframe.id === 'frame-next') {
@@ -910,7 +911,7 @@ export class EpubReader implements LuminaApi {
                         this.detectActiveAnchor(iframe);
 
                         requestAnimationFrame(() => {
-                            window.flutter_inappwebview.callHandler('onEventFinished', token);
+                            FlutterBridge.onEventFinished(token);
                         });
                     });
                 });
