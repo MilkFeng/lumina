@@ -78,6 +78,7 @@ class _ReaderStyleBottomSheetState
 
     return DraggableScrollableSheet(
       initialChildSize: 1.0,
+      minChildSize: 0.5,
       expand: false,
       builder: (BuildContext context, ScrollController scrollController) {
         return SingleChildScrollView(
