@@ -7,7 +7,7 @@ export interface LuminaApi {
     jumpToPage(pageIndex: number): void;
     jumpToPageFor(slot: FrameSlot, pageIndex: number): void;
     jumpToLastPageOfFrame(slot: FrameSlot): void;
-    restoreScrollPosition(ratio: number): void;
+    restoreScrollPosition(token: number, ratio: number): void;
     cycleFrames(direction: 'next' | 'prev'): void;
     updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void;
     checkTapElementAt(x: number, y: number): void;

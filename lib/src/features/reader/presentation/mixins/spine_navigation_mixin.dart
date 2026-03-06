@@ -36,10 +36,11 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     return bookSession.getSpineItemUrl(index, anchor);
   }
 
-  Future<void> loadCarousel([
+  Future<void> loadCarousel({
     String anchor = 'top',
     int? overrideSpineIndex,
-  ]) async {
+    double? restoreScrollRatio,
+  }) async {
     if (bookSession.spine.isEmpty) return;
     if (mounted) {
       setState(() {
@@ -89,6 +90,15 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     }
 
     await rendererController.waitForEvents(tokensForWait);
+
+    if (restoreScrollRatio != null) {
+      await rendererController.restoreScrollPosition(restoreScrollRatio);
+    }
+
+    await Future.delayed(const Duration(milliseconds: 30));
+    setState(() {
+      isWebViewLoading = false;
+    });
   }
 
   Future<void> preloadNextOf(int currentIndex) async {
@@ -124,7 +134,7 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     });
     updateProgressDebounced();
 
-    await loadCarousel(anchor);
+    await loadCarousel(anchor: anchor);
     saveProgress();
   }
 

@@ -46,7 +46,6 @@ class ReaderRendererController {
 
   Future<void> restoreScrollPosition(double ratio) async {
     await webViewController?.restoreScrollPosition(ratio);
-    await webViewController?.waitForRender();
   }
 
   Future<void> jumpToPreviousChapterLastPage() async {

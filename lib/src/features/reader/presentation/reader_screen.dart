@@ -322,15 +322,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onPerformPageTurn: handlePageTurn,
                       onToggleControls: toggleControls,
                       onInitialized: () async {
-                        await loadCarousel();
                         final ratio = bookSession.initialScrollPosition;
-                        if (ratio != null) {
-                          await rendererController.restoreScrollPosition(ratio);
-                        }
-                        await Future.delayed(const Duration(milliseconds: 30));
-                        setState(() {
-                          isWebViewLoading = false;
-                        });
+                        await loadCarousel(restoreScrollRatio: ratio);
                       },
                       onPageCountReady: (totalPages) async {
                         setState(() {

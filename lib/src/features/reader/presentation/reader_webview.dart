@@ -254,7 +254,16 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   Future<void> _restoreScrollPosition(double ratio) async {
-    await _evaluateJavascript('window.api.restoreScrollPosition($ratio)');
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+
+    await _evaluateJavascript(
+      'window.api.restoreScrollPosition($token, $ratio)',
+    );
+    await _waitForEvent(token, 1000);
   }
 
   Future<void> _checkElementAt(double x, double y) async {

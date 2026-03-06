@@ -137,10 +137,16 @@ export class EpubReader implements LuminaApi {
         this.jumpToPageFor(slot, pageCount - 1);
     }
 
-    restoreScrollPosition(ratio: number): void {
+    restoreScrollPosition(token: number, ratio: number): void {
         const pageCount = this.state.frames.curr;
         const pageIndex = Math.round(ratio * pageCount);
         this.jumpToPage(pageIndex);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                FlutterBridge.onEventFinished(token);
+            });
+        });
     }
 
     cycleFrames(direction: 'next' | 'prev'): void {

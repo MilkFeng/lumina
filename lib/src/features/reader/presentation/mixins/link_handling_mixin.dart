@@ -5,7 +5,11 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
   BookSession get bookSession;
 
   // === Cross-mixin: _SpineNavigationMixin ===
-  Future<void> loadCarousel([String anchor = 'top', int? overrideSpineIndex]);
+  Future<void> loadCarousel({
+    String anchor = 'top',
+    int? overrideSpineIndex,
+    double? restoreScrollRatio,
+  });
 
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();
@@ -29,7 +33,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
         if (url.contains('#')) {
           anchor = url.split('#').last;
         }
-        await loadCarousel(anchor, index);
+        await loadCarousel(anchor: anchor, overrideSpineIndex: index);
       }
     } else {
       final linkHandling = ref
