@@ -1,5 +1,10 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../library/domain/shelf_book.dart';
 import '../../library/domain/book_manifest.dart';
+import '../../library/domain/book_type.dart';
+import '../../library/data/repositories/shelf_book_repository_provider.dart';
+import '../../library/data/repositories/book_manifest_repository_provider.dart';
 import '../../library/data/shelf_book_repository.dart';
 import '../../library/data/book_manifest_repository.dart';
 import 'epub_webview_handler.dart';
@@ -134,7 +139,15 @@ class BookSession {
     }
 
     var progress = 0.0;
-    if (_spine.isNotEmpty) {
+    
+    // Calculate progress differently for PDFs vs EPUBs
+    if (_book!.bookType == BookType.pdf) {
+      // PDF: simple page-based progress
+      if (totalPagesInChapter > 0) {
+        progress = (currentPageInChapter + 1) / totalPagesInChapter;
+      }
+    } else if (_spine.isNotEmpty) {
+      // EPUB: chapter + page within chapter
       final delta = 1.0 / _spine.length;
       progress = (currentChapterIndex + 1) / _spine.length;
       if (totalPagesInChapter > 0) {
@@ -143,9 +156,15 @@ class BookSession {
       }
     }
 
+    // For PDFs: save actual page number in currentChapterIndex
+    // For EPUBs: save spine/chapter index as before
+    final chapterIndexToSave = _book!.bookType == BookType.pdf
+        ? currentPageInChapter   // Actual page number
+        : currentChapterIndex;   // Spine/chapter index
+
     await _shelfBookRepo.updateProgress(
       bookId: _book!.id,
-      currentChapterIndex: currentChapterIndex,
+      currentChapterIndex: chapterIndexToSave,
       progress: progress,
       scrollPosition: scrollPosition,
     );

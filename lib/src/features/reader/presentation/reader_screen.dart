@@ -13,6 +13,7 @@ import '../application/reader_settings_notifier.dart';
 import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
 import '../../library/domain/book_manifest.dart';
+import '../../library/domain/book_type.dart';
 import './image_viewer.dart';
 import '../data/book_session.dart';
 import './reader_renderer.dart';
@@ -22,6 +23,7 @@ import '../../library/data/repositories/shelf_book_repository_provider.dart';
 import '../../library/data/repositories/book_manifest_repository_provider.dart';
 import '../data/epub_webview_handler.dart';
 import './toc_drawer.dart';
+import 'reader_renderer_pdf.dart';
 import '../../../../l10n/app_localizations.dart';
 
 part 'mixins/spine_navigation_mixin.dart';
@@ -52,7 +54,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         _LinkHandlingMixin,
         _ImageViewerMixin,
         _FootnoteMixin {
-  late final EpubWebViewHandler webViewHandler;
+  EpubWebViewHandler? webViewHandler;
 
   @override
   late final BookSession bookSession;
@@ -60,6 +62,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   final ReaderRendererController rendererController =
       ReaderRendererController();
+
+  final PdfReaderRendererController pdfRendererController =
+      PdfReaderRendererController();
 
   // Core UI state
   @override
@@ -75,6 +80,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   // Spine navigation state (used by _SpineNavigationMixin)
   @override
   int currentSpineItemIndex = 0;
+  @override
+  double? initialProgressToRestore;
 
   // Pagination state (used by _PageNavigationMixin)
   @override
@@ -250,6 +257,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         return;
       }
 
+      // Initialize EPUB handler only for EPUB books
+      if (bookSession.book?.bookType == BookType.epub) {
+        webViewHandler = EpubWebViewHandler(
+          streamService: ref.read(epubStreamServiceProvider),
+        );
+      }
+
       setState(() {
         currentSpineItemIndex = bookSession.initialChapterIndex;
       });
@@ -360,82 +374,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 tocDrawerOpen = isOpened;
                 setupVolumeControl();
               },
-              body: Container(
-                color: epubTheme.surfaceColor,
-                child: Stack(
-                  children: [
-                    ReaderRenderer(
-                      controller: rendererController,
-                      bookSession: bookSession,
-                      webViewHandler: webViewHandler,
-                      fileHash: widget.fileHash,
-                      showControls: showControls,
-                      isLoading: isWebViewLoading || updatingTheme,
-                      canPerformPageTurn: canPerformPageTurn,
-                      onPerformPageTurn: handlePageTurn,
-                      onToggleControls: toggleControls,
-                      onInitialized: () async {
-                        final ratio = bookSession.initialScrollPosition;
-                        await loadCarousel(restoreScrollRatio: ratio);
-                      },
-                      onPageCountReady: (totalPages) async {
-                        setState(() {
-                          totalPagesInChapter = totalPages;
-                          if (currentPageInChapter >= totalPagesInChapter) {
-                            currentPageInChapter = totalPagesInChapter - 1;
-                          }
-                        });
-                        updateProgressDebounced();
-                      },
-                      onPageChanged: (pageIndex) {
-                        setState(() {
-                          currentPageInChapter = pageIndex;
-                        });
-                        updateProgressDebounced();
-                        saveProgress();
-                      },
-                      onScrollAnchors: handleScrollAnchors,
-                      onImageLongPress: handleImageLongPress,
-                      onFootnoteTap: handleFootnoteTap,
-                      onLinkTap: handleLinkTap,
-                      shouldHandleLinkTap: shouldHandleLinkTap,
-                      shouldShowWebView: shouldShowWebView,
-                      initializeTheme: settings.toEpubTheme(context),
-                      statusBarLeftContent: activateTocTitle,
-                      statusBarRightContent: displayProgress,
-                    ),
-
-                    ControlPanel(
-                      showControls: showControls,
-                      title: bookSession.spine.isEmpty
-                          ? bookSession.book!.title
-                          : activateTocTitle,
-                      currentSpineItemIndex: currentSpineItemIndex,
-                      totalSpineItems: bookSession.spine.length,
-                      currentPageInChapter: currentPageInChapter,
-                      totalPagesInChapter: totalPagesInChapter,
-                      direction: bookSession.book!.direction,
-                      onBack: () {
-                        saveProgress();
-                        context.pop();
-                      },
-                      onOpenDrawer: openDrawer,
-                      onPreviousPage: () =>
-                          rendererController.performPreviousPageTurn(),
-                      onFirstPage: () => goToPage(0),
-                      onNextPage: () =>
-                          rendererController.performNextPageTurn(),
-                      onLastPage: () => goToPage(totalPagesInChapter - 1),
-                      onPreviousChapter: previousSpineItemFirstPage,
-                      onNextChapter: nextSpineItem,
-                      onToggleStyleDrawer: (show) {
-                        tocDrawerOpen = show;
-                        setupVolumeControl();
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              body: bookSession.book?.bookType == BookType.pdf
+                  ? _buildPdfReader()
+                  : _buildEpubReader(),
             ),
 
             Positioned.fill(
@@ -450,7 +391,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                   child: (currentImageUrl != null && currentImageRect != null)
                       ? ImageViewer(
                           imageUrl: currentImageUrl!,
-                          webViewHandler: webViewHandler,
+                          webViewHandler: webViewHandler!,
                           epubPath: bookSession.book!.filePath!,
                           fileHash: widget.fileHash,
                           onClose: closeImageViewer,
@@ -463,6 +404,154 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Build EPUB reader widget
+  Widget _buildEpubReader() {
+    final settings = ref.watch(readerSettingsNotifierProvider);
+    final epubTheme = getEpubTheme();
+    final activeItems = resolveActiveItems();
+    final activateTocTitle = activeItems.isNotEmpty
+        ? activeItems.last.label
+        : bookSession.book!.title;
+    return Container(
+      color: epubTheme.surfaceColor,
+      child: Stack(
+        children: [
+          ReaderRenderer(
+            controller: rendererController,
+            bookSession: bookSession,
+            webViewHandler: webViewHandler!,
+            fileHash: widget.fileHash,
+            showControls: showControls,
+            isLoading: isWebViewLoading || updatingTheme,
+            canPerformPageTurn: canPerformPageTurn,
+            onPerformPageTurn: handlePageTurn,
+            onToggleControls: toggleControls,
+            onInitialized: () async {
+              final ratio = bookSession.initialScrollPosition;
+              await loadCarousel(restoreScrollRatio: ratio);
+            },
+            onPageCountReady: (totalPages) async {
+              setState(() {
+                totalPagesInChapter = totalPages;
+                if (currentPageInChapter >= totalPagesInChapter) {
+                  currentPageInChapter = totalPagesInChapter - 1;
+                }
+              });
+              updateProgressDebounced();
+            },
+            onPageChanged: (pageIndex) {
+              setState(() {
+                currentPageInChapter = pageIndex;
+              });
+              updateProgressDebounced();
+              saveProgress();
+            },
+            onScrollAnchors: handleScrollAnchors,
+            onImageLongPress: handleImageLongPress,
+            onFootnoteTap: handleFootnoteTap,
+            onLinkTap: handleLinkTap,
+            shouldHandleLinkTap: shouldHandleLinkTap,
+            shouldShowWebView: shouldShowWebView,
+            initializeTheme: settings.toEpubTheme(context),
+            statusBarLeftContent: activateTocTitle,
+            statusBarRightContent: displayProgress,
+          ),
+
+          ControlPanel(
+            showControls: showControls,
+            title: bookSession.spine.isEmpty
+                ? bookSession.book!.title
+                : activateTocTitle,
+            currentSpineItemIndex: currentSpineItemIndex,
+            totalSpineItems: bookSession.spine.length,
+            currentPageInChapter: currentPageInChapter,
+            totalPagesInChapter: totalPagesInChapter,
+            direction: bookSession.book!.direction,
+            onBack: () {
+              saveProgress();
+              context.pop();
+            },
+            onOpenDrawer: openDrawer,
+            onPreviousPage: () => rendererController.performPreviousPageTurn(),
+            onFirstPage: () => goToPage(0),
+            onNextPage: () => rendererController.performNextPageTurn(),
+            onLastPage: () => goToPage(totalPagesInChapter - 1),
+            onPreviousChapter: previousSpineItemFirstPage,
+            onNextChapter: nextSpineItem,
+            onToggleStyleDrawer: (show) {
+              tocDrawerOpen = show;
+              setupVolumeControl();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build PDF reader widget
+  Widget _buildPdfReader() {
+    final epubTheme = getEpubTheme();
+
+    pdfRendererController.onPageChanged = (page, total) {
+      setState(() {
+        // For PDF, one page is one chapter
+        currentPageInChapter = page;
+        totalPagesInChapter = total;
+        currentSpineItemIndex = 0;
+      });
+      updateProgressDebounced();
+      saveProgress();
+    };
+
+    return Container(
+      color: epubTheme.surfaceColor,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          PdfReaderRenderer(
+            book: bookSession.book!,
+            controller: pdfRendererController,
+            initialPage: bookSession.initialChapterIndex,
+            backgroundColor: epubTheme.surfaceColor,
+            showControls: showControls,
+            onToggleControls: toggleControls,
+          ),
+
+          // Layer 2: Control panel (top - interactive buttons)
+          ControlPanel(
+            showControls: showControls,
+            title: bookSession.book!.title,
+            currentSpineItemIndex: currentSpineItemIndex,
+            totalSpineItems: 1, // PDFs treated as single "chapter"
+            currentPageInChapter: currentPageInChapter,
+            totalPagesInChapter: totalPagesInChapter,
+            direction: bookSession.book!.direction,
+            onBack: () {
+              saveProgress();
+              context.pop();
+            },
+            onOpenDrawer: openDrawer,
+            onPreviousPage: () => pdfRendererController.previousPage(),
+            onFirstPage: () => pdfRendererController.goToPage(0),
+            onNextPage: () => pdfRendererController.nextPage(),
+            onLastPage: () =>
+                pdfRendererController.goToPage(totalPagesInChapter - 1),
+            onPreviousChapter: () {
+              // No chapters in PDF
+            },
+            onNextChapter: () {
+              // No chapters in PDF
+            },
+            onToggleStyleDrawer: (show) {
+              tocDrawerOpen = show;
+              setupVolumeControl();
+            },
+          ),
+        ],
       ),
     );
   }

@@ -22,12 +22,20 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   static const _kOverrideFontFamily = 'reader_override_font_family';
   static const _kVolumeKeyTurnsPage = 'reader_volume_key_turns_page';
 
+  // PDF-specific settings
+  static const _kPdfPageSpacing = 'pdf_page_spacing';
+  static const _kPdfAutoSpacing = 'pdf_auto_spacing';
+  static const _kPdfPageFling = 'pdf_page_fling';
+  static const _kPdfPageSnap = 'pdf_page_snap';
+  static const _kPdfSwipeDirection = 'pdf_swipe_direction';
+
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
   ReaderSettings build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final linkHandlingIndex = prefs.getInt(_kLinkHandling);
     final pageAnimationIndex = prefs.getInt(_kPageAnimation);
+    final swipeDirectionIndex = prefs.getInt(_kPdfSwipeDirection);
 
     return ReaderSettings().copyWith(
       zoom: prefs.getDouble(_kZoom),
@@ -47,6 +55,15 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
       fontFileName: prefs.getString(_kFontFileName),
       overrideFontFamily: prefs.getBool(_kOverrideFontFamily),
       volumeKeyTurnsPage: prefs.getBool(_kVolumeKeyTurnsPage),
+
+      // PDF settings
+      pdfPageSpacing: prefs.getBool(_kPdfPageSpacing),
+      pdfAutoSpacing: prefs.getBool(_kPdfAutoSpacing),
+      pdfPageFling: prefs.getBool(_kPdfPageFling),
+      pdfPageSnap: prefs.getBool(_kPdfPageSnap),
+      pdfSwipeDirection: swipeDirectionIndex != null
+          ? PdfSwipeDirection.values.elementAt(swipeDirectionIndex)
+          : null,
     );
   }
 
@@ -126,5 +143,31 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setVolumeKeyTurnsPage(bool value) async {
     await _prefs.setBool(_kVolumeKeyTurnsPage, value);
     state = state.copyWith(volumeKeyTurnsPage: value);
+  }
+
+  // PDF-specific setters
+  Future<void> setPdfPageSpacing(bool value) async {
+    await _prefs.setBool(_kPdfPageSpacing, value);
+    state = state.copyWith(pdfPageSpacing: value);
+  }
+
+  Future<void> setPdfAutoSpacing(bool value) async {
+    await _prefs.setBool(_kPdfAutoSpacing, value);
+    state = state.copyWith(pdfAutoSpacing: value);
+  }
+
+  Future<void> setPdfPageFling(bool value) async {
+    await _prefs.setBool(_kPdfPageFling, value);
+    state = state.copyWith(pdfPageFling: value);
+  }
+
+  Future<void> setPdfPageSnap(bool value) async {
+    await _prefs.setBool(_kPdfPageSnap, value);
+    state = state.copyWith(pdfPageSnap: value);
+  }
+
+  Future<void> setPdfSwipeDirection(PdfSwipeDirection value) async {
+    await _prefs.setInt(_kPdfSwipeDirection, value.index);
+    state = state.copyWith(pdfSwipeDirection: value);
   }
 }
