@@ -116,6 +116,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   StreamSubscription<String>? volumeSubscription;
+  bool tocDrawerOpen = false;
+  bool styleDrawerOpen = false;
+  AppLifecycleState? lastLifecycleState = AppLifecycleState.resumed;
 
   @override
   void initState() {
@@ -145,7 +148,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     });
     hideBottomNavigationBar();
-    setupVolumeControl(resume: true);
+    setupVolumeControl();
   }
 
   @override
@@ -170,15 +173,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       saveProgress();
     }
 
-    if (state == AppLifecycleState.resumed) {
-      setupVolumeControl(resume: true);
-    } else if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      setupVolumeControl(resume: false);
-    }
+    lastLifecycleState = state;
+    setupVolumeControl();
   }
 
-  void setupVolumeControl({required bool resume}) {
+  void setupVolumeControl() {
+    final resume =
+        ref.read(readerSettingsNotifierProvider).volumeKeyTurnsPage &&
+        !tocDrawerOpen &&
+        !styleDrawerOpen &&
+        lastLifecycleState == AppLifecycleState.resumed;
+
     if (resume) {
       VolumeControlService.enableInterception();
       volumeSubscription ??= VolumeControlService.volumeKeyEvents.listen((
@@ -315,6 +320,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     });
 
+    ref.listen(
+      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
+      (previous, next) {
+        if (previous != next) {
+          setupVolumeControl();
+        }
+      },
+    );
+
     final activeItems = resolveActiveItems();
     final activateTocTitle = activeItems.isNotEmpty
         ? activeItems.last.label
@@ -343,7 +357,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 themeData: themeData,
               ),
               onDrawerChanged: (isOpened) {
-                setupVolumeControl(resume: !isOpened);
+                tocDrawerOpen = isOpened;
+                setupVolumeControl();
               },
               body: Container(
                 color: epubTheme.surfaceColor,
@@ -414,7 +429,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onPreviousChapter: previousSpineItemFirstPage,
                       onNextChapter: nextSpineItem,
                       onToggleStyleDrawer: (show) {
-                        setupVolumeControl(resume: !show);
+                        tocDrawerOpen = show;
+                        setupVolumeControl();
                       },
                     ),
                   ],
