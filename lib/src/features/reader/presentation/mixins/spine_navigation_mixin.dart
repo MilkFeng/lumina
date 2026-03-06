@@ -205,6 +205,10 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     if (index != null) {
       await navigateToSpineItem(index, targetHref.anchor);
     } else {
+      ToastService.showError(
+        AppLocalizations.of(context)!.chapterNotFoundInSpine,
+        theme: getEpubTheme().themeData,
+      );
       debugPrint(
         'Warning: Chapter with href ${targetHref.path} not found in spine.',
       );

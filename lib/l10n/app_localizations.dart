@@ -1483,6 +1483,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get open;
+
+  /// Error message shown when trying to navigate to a chapter that doesn't exist in the book spine
+  ///
+  /// In en, this message translates to:
+  /// **'Chapter not found in book spine'**
+  String get chapterNotFoundInSpine;
 }
 
 class _AppLocalizationsDelegate

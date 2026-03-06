@@ -794,4 +794,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get open => 'Open';
+
+  @override
+  String get chapterNotFoundInSpine => 'Chapter not found in book spine';
 }

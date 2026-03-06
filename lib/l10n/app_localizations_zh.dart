@@ -775,4 +775,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get open => '打开';
+
+  @override
+  String get chapterNotFoundInSpine => '未找到该章节';
 }
