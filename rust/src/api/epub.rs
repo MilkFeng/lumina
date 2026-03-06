@@ -38,7 +38,7 @@ use rc_zip::parse::{Archive, Entry};
 // ---------------------------------------------------------------------------
 
 /// Maximum accepted uncompressed size for a single entry (zip-bomb guard).
-const MAX_UNCOMPRESSED_BYTES: u64 = 50 * 1024 * 1024; // 50 MiB
+const MAX_UNCOMPRESSED_BYTES: u64 = 100 * 1024 * 1024; // 100 MiB
 
 // ---------------------------------------------------------------------------
 // Global cache
@@ -201,7 +201,7 @@ pub fn read_epub_file(
     if entry.uncompressed_size > MAX_UNCOMPRESSED_BYTES {
         return Err(format!(
             "read_epub_file: entry '{normalised}' uncompressed size {} \
-             exceeds the 50 MiB safety limit",
+             exceeds the 100 MiB safety limit",
             entry.uncompressed_size
         ));
     }
