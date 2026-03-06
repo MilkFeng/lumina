@@ -1355,7 +1355,7 @@ abstract class AppLocalizations {
   /// Reader style sheet section title for page-turning animation
   ///
   /// In en, this message translates to:
-  /// **'Page Animation'**
+  /// **'Pagination'**
   String get readerPageAnimationSection;
 
   /// Page animation option: no animation

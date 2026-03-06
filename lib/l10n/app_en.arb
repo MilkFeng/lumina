@@ -1208,7 +1208,7 @@
     "description": "Switch label to enable/disable following intra-book (epub://) links"
   },
 
-  "readerPageAnimationSection": "Page Animation",
+  "readerPageAnimationSection": "Pagination",
   "@readerPageAnimationSection": {
     "description": "Reader style sheet section title for page-turning animation"
   },

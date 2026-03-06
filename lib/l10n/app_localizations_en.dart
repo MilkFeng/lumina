@@ -718,7 +718,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerHandleIntraLink => 'Follow in-book links';
 
   @override
-  String get readerPageAnimationSection => 'Page Animation';
+  String get readerPageAnimationSection => 'Pagination';
 
   @override
   String get readerPageAnimationNone => 'None';

@@ -699,7 +699,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerHandleIntraLink => '跟随书内链接';
 
   @override
-  String get readerPageAnimationSection => '翻页动画';
+  String get readerPageAnimationSection => '翻页';
 
   @override
   String get readerPageAnimationNone => '无动画';
