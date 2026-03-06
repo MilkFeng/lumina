@@ -12,9 +12,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
   int get currentSpineItemIndex;
   set currentSpineItemIndex(int v);
 
-  double? get initialProgressToRestore;
-  set initialProgressToRestore(double? v);
-
   int get currentPageInChapter;
   set currentPageInChapter(int v);
 
@@ -124,7 +121,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       currentSpineItemIndex = index;
       currentPageInChapter = 0;
-      initialProgressToRestore = null;
     });
     updateProgressDebounced();
 
@@ -145,7 +141,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
     setState(() {
       currentSpineItemIndex--;
-      initialProgressToRestore = null;
     });
 
     preloadPreviousOf(currentSpineItemIndex);
@@ -166,7 +161,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       currentSpineItemIndex--;
       currentPageInChapter = 0;
-      initialProgressToRestore = null;
     });
     updateProgressDebounced();
 
@@ -188,7 +182,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       currentSpineItemIndex++;
       currentPageInChapter = 0;
-      initialProgressToRestore = null;
     });
     updateProgressDebounced();
 

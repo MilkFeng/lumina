@@ -74,8 +74,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   // Spine navigation state (used by _SpineNavigationMixin)
   @override
   int currentSpineItemIndex = 0;
-  @override
-  double? initialProgressToRestore;
 
   // Pagination state (used by _PageNavigationMixin)
   @override
@@ -214,7 +212,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
       setState(() {
         currentSpineItemIndex = bookSession.initialChapterIndex;
-        initialProgressToRestore = bookSession.initialScrollPosition;
       });
       updateProgressDebounced();
     } catch (e) {
@@ -326,6 +323,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onToggleControls: toggleControls,
                       onInitialized: () async {
                         await loadCarousel();
+                        final ratio = bookSession.initialScrollPosition;
+                        if (ratio != null) {
+                          await rendererController.restoreScrollPosition(ratio);
+                        }
                       },
                       onPageCountReady: (totalPages) async {
                         setState(() {
@@ -335,11 +336,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           }
                           updateProgressDebounced();
                         });
-                        if (initialProgressToRestore != null) {
-                          final ratio = initialProgressToRestore ?? 0.0;
-                          initialProgressToRestore = null;
-                          await rendererController.restoreScrollPosition(ratio);
-                        }
                       },
                       onPageChanged: (pageIndex) {
                         setState(() {
