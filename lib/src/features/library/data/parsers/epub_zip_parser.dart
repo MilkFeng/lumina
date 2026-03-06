@@ -39,6 +39,12 @@ class EpubZipParser {
     String? fileName,
   }) {
     try {
+      // Find META-INF/encryption.xml to check if the EPUB is encrypted
+      final encryptionFile = archive.findFile('META-INF/encryption.xml');
+      if (encryptionFile != null) {
+        return left('Encrypted EPUBs are not supported');
+      }
+
       // Step 1: Find OPF file path
       final opfPathResult = _findOpfPath(archive);
       if (opfPathResult.isLeft()) {
@@ -121,7 +127,6 @@ class EpubZipParser {
     }
   }
 
-  /// Parse OPF file content
   /// Parse OPF file content
   static Either<String, EpubZipParseResult> _parseOpf(
     String content,
@@ -372,7 +377,9 @@ class EpubZipParser {
     if (coverMeta != null) {
       final coverId = coverMeta.getAttribute('content');
       if (coverId != null) {
-        coverHref = manifestMap[coverId]!.$1.path;
+        if (manifestMap.containsKey(coverId)) {
+          coverHref = manifestMap[coverId]!.$1.path;
+        }
       }
     }
 
