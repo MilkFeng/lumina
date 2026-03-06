@@ -61,30 +61,37 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
         ? currIndex + 1
         : null;
 
+    final tokensForWait = <int>[];
+
     final currUrl = getSpineItemUrl(currIndex, anchor);
     final currentSpinePath = bookSession.spine[currIndex].href;
-    await rendererController.preloadCurrentChapter(
+    final currToken = await rendererController.preloadCurrentChapter(
       currUrl,
       getAnchorsForSpine(currentSpinePath),
     );
+    if (currToken != null) tokensForWait.add(currToken);
 
     if (prevIndex != null) {
       final prevUrl = getSpineItemUrl(prevIndex);
       final prevSpinePath = bookSession.spine[prevIndex].href;
-      await rendererController.preloadPreviousChapter(
+      final prevToken = await rendererController.preloadPreviousChapter(
         prevUrl,
         getAnchorsForSpine(prevSpinePath),
       );
+      if (prevToken != null) tokensForWait.add(prevToken);
     }
 
     if (nextIndex != null) {
       final nextUrl = getSpineItemUrl(nextIndex);
       final nextSpinePath = bookSession.spine[nextIndex].href;
-      await rendererController.preloadNextChapter(
+      final nextToken = await rendererController.preloadNextChapter(
         nextUrl,
         getAnchorsForSpine(nextSpinePath),
       );
+      if (nextToken != null) tokensForWait.add(nextToken);
     }
+
+    await rendererController.waitForEvents(tokensForWait);
   }
 
   Future<void> preloadNextOf(int currentIndex) async {

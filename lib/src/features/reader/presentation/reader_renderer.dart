@@ -67,27 +67,35 @@ class ReaderRendererController {
     await webViewController?.waitForRender();
   }
 
-  Future<void> preloadCurrentChapter(String url, List<String> anchors) async {
+  Future<int?> preloadCurrentChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await webViewController?.loadFrame('curr', url, anchorsJson);
+    return await webViewController?.loadFrame('curr', url, anchorsJson);
   }
 
-  Future<void> preloadNextChapter(String url, List<String> anchors) async {
+  Future<int?> preloadNextChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await webViewController?.loadFrame('next', url, anchorsJson);
+    return await webViewController?.loadFrame('next', url, anchorsJson);
   }
 
-  Future<void> preloadPreviousChapter(String url, List<String> anchors) async {
+  Future<int?> preloadPreviousChapter(String url, List<String> anchors) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    await webViewController?.loadFrame('prev', url, anchorsJson);
+    return await webViewController?.loadFrame('prev', url, anchorsJson);
   }
 
   Future<void> updateTheme(EpubTheme theme) async {
     await _rendererState?._updateTheme(theme);
     await webViewController?.waitForRender();
+  }
+
+  Future<void> waitForEvents(List<int> tokens) async {
+    await webViewController?.waitForEvents(tokens);
+  }
+
+  Future<void> waitForEvent(int token) async {
+    await webViewController?.waitForEvent(token);
   }
 }
 

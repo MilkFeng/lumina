@@ -75,7 +75,7 @@ export class EpubReader implements LuminaApi {
         window.addEventListener('resize', this._onResize, { passive: true });
     }
 
-    loadFrame(slot: FrameSlot, url: string, anchors?: string[]): void {
+    loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[]): void {
         const iframe = this.frameElement(slot);
         if (!iframe) return;
 
@@ -83,17 +83,17 @@ export class EpubReader implements LuminaApi {
         iframe.onload = null;
 
         if (iframe.src == null || iframe.src === '' || iframe.src === 'about:blank') {
-            iframe.onload = () => { this.onFrameLoad(iframe); };
+            iframe.onload = () => { this.onFrameLoad(iframe, token); };
             iframe.src = url;
         } else {
             const currentUrl = new URL(iframe.src);
             const newUrl = new URL(url);
             if (currentUrl.origin === newUrl.origin && currentUrl.pathname === newUrl.pathname) {
-                iframe.onload = () => { this.onFrameLoad(iframe); };
+                iframe.onload = () => { this.onFrameLoad(iframe, token); };
                 iframe.src = url;
-                this.onFrameLoad(iframe);
+                this.onFrameLoad(iframe, token);
             } else {
-                iframe.onload = () => { this.onFrameLoad(iframe); };
+                iframe.onload = () => { this.onFrameLoad(iframe, token); };
                 iframe.src = url;
             }
         }
@@ -804,7 +804,7 @@ export class EpubReader implements LuminaApi {
 
     // ─── Frame Loading ─────────────────────────────────────────────────
 
-    private onFrameLoad(iframe: HTMLIFrameElement): void {
+    private onFrameLoad(iframe: HTMLIFrameElement, token: number): void {
         if (!iframe || !iframe.contentDocument) return;
 
         const doc = iframe.contentDocument;
@@ -872,6 +872,9 @@ export class EpubReader implements LuminaApi {
                             this.jumpToPageFor('next', 0);
                         }
                         this.detectActiveAnchor(iframe);
+                        requestAnimationFrame(() => {
+                            window.flutter_inappwebview.callHandler('onEventFinished', token);
+                        });
                     });
                 });
             });

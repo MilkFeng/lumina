@@ -37,8 +37,8 @@ class ReaderWebViewController {
     await _webViewState?._jumpToPageFor(frame, pageIndex);
   }
 
-  Future<void> loadFrame(String frame, String url, String anchors) async {
-    await _webViewState?._loadFrame(frame, url, anchors);
+  Future<int?> loadFrame(String frame, String url, String anchors) async {
+    return await _webViewState?._loadFrame(frame, url, anchors);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
@@ -67,6 +67,14 @@ class ReaderWebViewController {
 
   Future<void> updateTheme(EpubTheme theme) async {
     await _webViewState?._updateTheme(theme);
+  }
+
+  Future<void> waitForEvent(int token, [int timeoutMs = 10000]) async {
+    await _webViewState?._waitForEvent(token, timeoutMs);
+  }
+
+  Future<void> waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
+    await _webViewState?._waitForEvents(tokens, timeoutMs);
   }
 }
 
@@ -230,10 +238,17 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     await _evaluateJavascript("window.api.jumpToPageFor('$frame', $pageIndex)");
   }
 
-  Future<void> _loadFrame(String frame, String url, String anchors) async {
+  Future<int> _loadFrame(String frame, String url, String anchors) async {
+    _currentToken++;
+    final int token = _currentToken;
+
+    final completer = Completer<void>();
+    _completers[token] = completer;
+
     await _evaluateJavascript(
-      "window.api.loadFrame('$frame', '$url', $anchors)",
+      "window.api.loadFrame($token, '$frame', '$url', $anchors)",
     );
+    return token;
   }
 
   Future<void> _jumpToPage(int pageIndex) async {
@@ -530,6 +545,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         }
       },
     );
+  }
+
+  Future<void> _waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
+    final futures = tokens.map((token) => _waitForEvent(token, timeoutMs));
+    await Future.wait(futures);
   }
 
   Future<void> _updateTheme(EpubTheme theme) async {
