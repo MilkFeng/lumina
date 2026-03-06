@@ -27,11 +27,13 @@ class EpubStreamService {
   Future<void> openBook(String epubPath) async {
     if (_currentBookPath == epubPath) return;
 
+    _currentBookPath = epubPath;
     try {
       await rust_epub.loadEpub(epubPath: epubPath);
-      _currentBookPath = epubPath;
     } catch (e) {
-      _currentBookPath = null;
+      if (_currentBookPath == epubPath) {
+        _currentBookPath = null;
+      }
       rethrow;
     }
   }
