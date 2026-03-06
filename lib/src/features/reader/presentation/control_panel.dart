@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -176,12 +175,8 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     }
     current = current.clamp(1, total);
     final totalStr = total.toString();
-    final currentStr = current.toString().padLeft(totalStr.length, '0');
-    final minLength = 2 * 4 + 1;
-    final paddingLength =
-        max(0, minLength - currentStr.length - totalStr.length - 1) ~/ 2;
-    final paddingStr = ' ' * paddingLength;
-    return '$paddingStr$currentStr/$totalStr$paddingStr';
+    final currentStr = current.toString();
+    return '$currentStr/$totalStr';
   }
 
   @override
@@ -310,17 +305,39 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                         Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              _formatPageIndicator(
-                                widget.currentSpineItemIndex + 1,
-                                widget.totalSpineItems,
-                              ),
-                              style: themeData.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w500,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                              ),
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Visibility(
+                                  visible: false,
+                                  maintainSize: true,
+                                  maintainAnimation: true,
+                                  maintainState: true,
+                                  child: Text(
+                                    '0' * (2 * 4 + 1),
+                                    style: themeData.textTheme.bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                          fontFeatures: const [
+                                            FontFeature.tabularFigures(),
+                                          ],
+                                        ),
+                                  ),
+                                ),
+                                Text(
+                                  _formatPageIndicator(
+                                    widget.currentSpineItemIndex + 1,
+                                    widget.totalSpineItems,
+                                  ),
+                                  style: themeData.textTheme.bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        fontFeatures: const [
+                                          FontFeature.tabularFigures(),
+                                        ],
+                                      ),
+                                ),
+                              ],
                             ),
                             if (widget.totalPagesInChapter > 1)
                               Text(
