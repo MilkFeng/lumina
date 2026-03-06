@@ -4,6 +4,8 @@ import type { QuadTree, RectLike, QuadTreeItem } from './quad_tree';
 
 export type FrameSlot = 'prev' | 'curr' | 'next';
 
+export type Direction = 'next' | 'prev';
+
 // ─── Config / Theme ──────────────────────────────────────────────────
 
 export interface ReaderPadding {

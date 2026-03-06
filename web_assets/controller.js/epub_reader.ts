@@ -8,7 +8,8 @@ import type {
     ReaderState,
     InteractionItem,
     InitConfig,
-    ThemeUpdate
+    ThemeUpdate,
+    Direction
 } from './types';
 import { LuminaApi } from './api';
 import { FlutterBridge } from './flutter_bridge';
@@ -145,7 +146,7 @@ export class EpubReader implements LuminaApi {
         this.jumpToPage(token, pageIndex);
     }
 
-    cycleFrames(token: number, direction: 'next' | 'prev'): void {
+    cycleFrames(token: number, direction: Direction): void {
         const elPrev = this.frameElement('prev');
         const elCurr = this.frameElement('curr');
         const elNext = this.frameElement('next');
