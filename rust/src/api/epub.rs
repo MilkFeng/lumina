@@ -24,9 +24,11 @@
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::sync::Arc;
 
+use image::imageops::FilterType;
+use image::ImageFormat;
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use positioned_io::ReadAt;
@@ -39,6 +41,8 @@ use rc_zip::parse::{Archive, Entry};
 
 /// Maximum accepted uncompressed size for a single entry (zip-bomb guard).
 const MAX_UNCOMPRESSED_BYTES: u64 = 100 * 1024 * 1024; // 100 MiB
+const SHRINK_THRESHOLD_BYTES: usize = 10 * 1024 * 1024; // 10 MiB
+const MAX_DIMENSION: u32 = 2560;
 
 // ---------------------------------------------------------------------------
 // Global cache
@@ -75,6 +79,21 @@ fn normalize_path(name: &str) -> String {
     s.to_owned()
 }
 
+/// Check if the path looks like a media file
+fn is_media_file(path: &str) -> bool {
+    let ext = path.rsplit('.').next().unwrap_or("").to_lowercase();
+    matches!(
+        ext.as_str(),
+        "mp4" | "mp3" | "ogg" | "webm" | "wav" | "m4a" | "avi" | "mov"
+    )
+}
+
+/// Check if the path looks like an image file
+fn is_image_file(path: &str) -> bool {
+    let ext = path.rsplit('.').next().unwrap_or("").to_lowercase();
+    matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "bmp")
+}
+
 // ---------------------------------------------------------------------------
 // One-shot ZIP central-directory parsing via ArchiveFsm + positioned I/O
 // ---------------------------------------------------------------------------
@@ -91,9 +110,7 @@ fn parse_central_directory(file: &File, file_size: u64) -> Result<Archive, Strin
                 .read_at(offset, space)
                 .map_err(|e| format!("read_at {offset}: {e}"))?;
             if n == 0 {
-                return Err(
-                    "unexpected EOF while reading ZIP central directory".to_string(),
-                );
+                return Err("unexpected EOF while reading ZIP central directory".to_string());
             }
             fsm.fill(n);
         }
@@ -126,8 +143,8 @@ pub fn load_epub(epub_path: String) -> Result<(), String> {
     }
 
     // Open file (used only for parsing; closed when this scope ends).
-    let file = File::open(&epub_path)
-        .map_err(|e| format!("load_epub: cannot open '{epub_path}': {e}"))?;
+    let file =
+        File::open(&epub_path).map_err(|e| format!("load_epub: cannot open '{epub_path}': {e}"))?;
     let file_size = file
         .metadata()
         .map_err(|e| format!("load_epub: cannot stat '{epub_path}': {e}"))?
@@ -164,20 +181,20 @@ pub fn load_epub(epub_path: String) -> Result<(), String> {
 /// The global read-lock is held **only** for `Arc::clone` (< 1 µs).
 /// All I/O and decompression happen on a private file handle with no lock
 /// held, so N threads can decompress different entries simultaneously.
-pub fn read_epub_file(
-    epub_path: String,
-    file_path: String,
-) -> Result<Option<Vec<u8>>, String> {
+pub fn read_epub_file(epub_path: String, file_path: String) -> Result<Option<Vec<u8>>, String> {
     let normalised = normalize_path(&file_path);
+
+    if is_media_file(&normalised) {
+        // Ignore media files to save memory.
+        return Ok(Some(vec![]));
+    }
 
     // 1. Clone Arc from cache — read-lock held for a single lookup + clone.
     let cached: Arc<CachedArchive> = {
         let guard = EPUB_CACHE.read();
         guard
             .get(&epub_path)
-            .ok_or_else(|| {
-                "read_epub_file: EPUB not loaded; call load_epub first".to_string()
-            })?
+            .ok_or_else(|| "read_epub_file: EPUB not loaded; call load_epub first".to_string())?
             .clone()
     };
     // READ LOCK RELEASED HERE ------------------------------------------------
@@ -262,6 +279,25 @@ pub fn read_epub_file(
 
     // Truncate to the actual byte count in case uncompressed_size was padded.
     out.truncate(out_pos);
+
+    // 6. Shrink large images to save memory.
+    if is_image_file(&normalised) {
+        if out.len() > SHRINK_THRESHOLD_BYTES {
+            if let Ok(img) = image::load_from_memory(&out) {
+                let width = img.width();
+                let height = img.height();
+
+                if width > MAX_DIMENSION || height > MAX_DIMENSION {
+                    let resized = img.resize(MAX_DIMENSION, MAX_DIMENSION, FilterType::Triangle);
+
+                    let mut buffer = Cursor::new(Vec::with_capacity(SHRINK_THRESHOLD_BYTES));
+                    if resized.write_to(&mut buffer, ImageFormat::Jpeg).is_ok() {
+                        out = buffer.into_inner();
+                    }
+                }
+            }
+        }
+    }
     Ok(Some(out))
 }
 
