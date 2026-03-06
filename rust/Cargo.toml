@@ -10,4 +10,5 @@ crate-type = ["cdylib", "staticlib"]
 flutter_rust_bridge = "=2.11.1"
 once_cell = "1"
 parking_lot = "0.12"
-zip = { version = "2", default-features = false, features = ["deflate"] }
+rc-zip = { version = "5", features = ["deflate"] }
+positioned-io = "0.3"
