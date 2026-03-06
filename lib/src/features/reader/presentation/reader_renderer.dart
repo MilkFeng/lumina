@@ -87,7 +87,6 @@ class ReaderRendererController {
 
   Future<void> updateTheme(EpubTheme theme) async {
     await _rendererState?._updateTheme(theme);
-    await webViewController?.waitForRender();
   }
 
   Future<void> waitForEvents(List<int> tokens) async {
