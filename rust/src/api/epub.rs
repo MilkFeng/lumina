@@ -24,13 +24,9 @@
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Cursor, Read, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 use std::sync::Arc;
 
-use fast_image_resize::images::Image as FirImage;
-use fast_image_resize::{IntoImageView, Resizer as FirResizer};
-use image::codecs::jpeg::JpegEncoder;
-use image::ImageEncoder;
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use positioned_io::ReadAt;
@@ -42,9 +38,7 @@ use rc_zip::parse::{Archive, Entry};
 // ---------------------------------------------------------------------------
 
 /// Maximum accepted uncompressed size for a single entry (zip-bomb guard).
-const MAX_UNCOMPRESSED_BYTES: u64 = 100 * 1024 * 1024; // 100 MiB
-const SHRINK_THRESHOLD_BYTES: usize = 10 * 1024 * 1024; // 10 MiB
-const MAX_DIMENSION: u32 = 2560;
+const MAX_UNCOMPRESSED_BYTES: u64 = 50 * 1024 * 1024; // 50 MiB
 
 // ---------------------------------------------------------------------------
 // Global cache
@@ -88,25 +82,6 @@ fn is_media_file(path: &str) -> bool {
         ext.as_str(),
         "mp4" | "mp3" | "ogg" | "webm" | "wav" | "m4a" | "avi" | "mov"
     )
-}
-
-/// Check if the path looks like an image file
-fn is_image_file(path: &str) -> bool {
-    let ext = path.rsplit('.').next().unwrap_or("").to_lowercase();
-    matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "bmp")
-}
-
-/// Scale `(width, height)` down so neither side exceeds `max_dim`, preserving
-/// aspect ratio.  Returns the original dimensions unchanged when both sides
-/// are already within the limit.
-fn compute_thumbnail_size(width: u32, height: u32, max_dim: u32) -> (u32, u32) {
-    if width <= max_dim && height <= max_dim {
-        return (width, height);
-    }
-    let ratio = (max_dim as f64 / width as f64).min(max_dim as f64 / height as f64);
-    let new_w = ((width as f64 * ratio).round() as u32).max(1);
-    let new_h = ((height as f64 * ratio).round() as u32).max(1);
-    (new_w, new_h)
 }
 
 // ---------------------------------------------------------------------------
@@ -233,7 +208,7 @@ pub fn read_epub_file(epub_path: String, file_path: String) -> Result<Option<Vec
     if entry.uncompressed_size > MAX_UNCOMPRESSED_BYTES {
         return Err(format!(
             "read_epub_file: entry '{normalised}' uncompressed size {} \
-             exceeds the 100 MiB safety limit",
+             exceeds the 50 MiB safety limit",
             entry.uncompressed_size
         ));
     }
@@ -294,32 +269,6 @@ pub fn read_epub_file(epub_path: String, file_path: String) -> Result<Option<Vec
 
     // Truncate to the actual byte count in case uncompressed_size was padded.
     out.truncate(out_pos);
-
-    // 6. Shrink large images to save memory.
-    if is_image_file(&normalised) {
-        if out.len() > SHRINK_THRESHOLD_BYTES {
-            if let Ok(img) = image::load_from_memory(&out) {
-                let (new_w, new_h) =
-                    compute_thumbnail_size(img.width(), img.height(), MAX_DIMENSION);
-
-                if new_w < img.width() || new_h < img.height() {
-                    if let Some(pixel_type) = img.pixel_type() {
-                        let mut dst = FirImage::new(new_w, new_h, pixel_type);
-                        if FirResizer::new().resize(&img, &mut dst, None).is_ok() {
-                            let color = img.color();
-                            let mut buf = Cursor::new(Vec::with_capacity(SHRINK_THRESHOLD_BYTES));
-                            if JpegEncoder::new(&mut buf)
-                                .write_image(dst.buffer(), new_w, new_h, color.into())
-                                .is_ok()
-                            {
-                                out = buf.into_inner();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
     Ok(Some(out))
 }
 
