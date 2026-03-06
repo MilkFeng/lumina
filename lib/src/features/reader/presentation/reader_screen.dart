@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/reader/data/services/volume_control_service.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -114,6 +115,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
+  StreamSubscription<String>? volumeSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -142,7 +145,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       }
     });
     hideBottomNavigationBar();
-    HardwareKeyboard.instance.addHandler(handleVolumeKeyEvent);
+    setupVolumeControl(resume: true);
   }
 
   @override
@@ -154,7 +157,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     progressDebouncer?.cancel();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
-    HardwareKeyboard.instance.removeHandler(handleVolumeKeyEvent);
+    volumeSubscription?.cancel();
+    VolumeControlService.disableInterception();
     super.dispose();
   }
 
@@ -164,6 +168,35 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {
       saveProgress();
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      setupVolumeControl(resume: true);
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      setupVolumeControl(resume: false);
+    }
+  }
+
+  void setupVolumeControl({required bool resume}) {
+    if (resume) {
+      VolumeControlService.enableInterception();
+      volumeSubscription ??= VolumeControlService.volumeKeyEvents.listen((
+        event,
+      ) {
+        final isVolumeTurnEnabled = ref
+            .read(readerSettingsNotifierProvider)
+            .volumeKeyTurnsPage;
+        if (isVolumeTurnEnabled) {
+          if (event == 'up') {
+            rendererController.performPreviousPageTurn();
+          } else if (event == 'down') {
+            rendererController.performNextPageTurn();
+          }
+        }
+      });
+    } else {
+      VolumeControlService.disableInterception();
     }
   }
 
@@ -224,23 +257,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         context.pop();
       }
     }
-  }
-
-  bool handleVolumeKeyEvent(KeyEvent event) {
-    if (!mounted) return false;
-    final settings = ref.read(readerSettingsNotifierProvider);
-    print('Volume key event: ${event.logicalKey.debugName}');
-    if (!settings.volumeKeyTurnsPage) return false;
-    if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.audioVolumeDown) {
-        nextPage();
-        return true;
-      } else if (event.logicalKey == LogicalKeyboardKey.audioVolumeUp) {
-        previousPage();
-        return true;
-      }
-    }
-    return false;
   }
 
   void toggleControls() {
@@ -326,6 +342,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                 onCoverTap: navigateToFirstTocItemFirstPage,
                 themeData: themeData,
               ),
+              onDrawerChanged: (isOpened) {
+                setupVolumeControl(resume: !isOpened);
+              },
               body: Container(
                 color: epubTheme.surfaceColor,
                 child: Stack(
@@ -394,6 +413,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onLastPage: () => goToPage(totalPagesInChapter - 1),
                       onPreviousChapter: previousSpineItemFirstPage,
                       onNextChapter: nextSpineItem,
+                      onToggleStyleDrawer: (show) {
+                        setupVolumeControl(resume: !show);
+                      },
                     ),
                   ],
                 ),

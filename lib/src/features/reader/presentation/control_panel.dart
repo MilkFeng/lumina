@@ -24,6 +24,7 @@ class ControlPanel extends ConsumerStatefulWidget {
   final VoidCallback onLastPage;
   final VoidCallback onPreviousChapter;
   final VoidCallback onNextChapter;
+  final Function(bool show) onToggleStyleDrawer;
 
   const ControlPanel({
     super.key,
@@ -42,6 +43,7 @@ class ControlPanel extends ConsumerStatefulWidget {
     required this.onLastPage,
     required this.onPreviousChapter,
     required this.onNextChapter,
+    required this.onToggleStyleDrawer,
   });
 
   bool get isVertical => direction == 1;
@@ -367,8 +369,9 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.brush_outlined),
-                      onPressed: () {
-                        showModalBottomSheet(
+                      onPressed: () async {
+                        widget.onToggleStyleDrawer(true);
+                        await showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
                           builder: (ctx) {
@@ -441,6 +444,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                             maxWidth: double.infinity,
                           ),
                         );
+                        widget.onToggleStyleDrawer(false);
                       },
                       color: themeData.colorScheme.onSurface,
                     ),

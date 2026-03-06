@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
@@ -326,15 +328,16 @@ class _ReaderStyleBottomSheetState
                   slideLabel: l10n.readerPageAnimationSlide,
                 ),
                 const SizedBox(height: 12),
-                LabeledSwitchTile(
-                  label: l10n.readerVolumeKeyTurnsPage,
-                  value: _volumeKeyTurnsPage,
-                  icon: Icons.volume_up_outlined,
-                  onChanged: (v) {
-                    setState(() => _volumeKeyTurnsPage = v);
-                    _notifier.setVolumeKeyTurnsPage(v);
-                  },
-                ),
+                if (Platform.isAndroid)
+                  LabeledSwitchTile(
+                    label: l10n.readerVolumeKeyTurnsPage,
+                    value: _volumeKeyTurnsPage,
+                    icon: Icons.volume_up_outlined,
+                    onChanged: (v) {
+                      setState(() => _volumeKeyTurnsPage = v);
+                      _notifier.setVolumeKeyTurnsPage(v);
+                    },
+                  ),
               ],
             ),
           ),
