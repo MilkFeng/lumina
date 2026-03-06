@@ -27,8 +27,10 @@ use std::fs::File;
 use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::sync::Arc;
 
-use image::imageops::FilterType;
-use image::ImageFormat;
+use fast_image_resize::images::Image as FirImage;
+use fast_image_resize::{IntoImageView, Resizer as FirResizer};
+use image::codecs::jpeg::JpegEncoder;
+use image::ImageEncoder;
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use positioned_io::ReadAt;
@@ -92,6 +94,19 @@ fn is_media_file(path: &str) -> bool {
 fn is_image_file(path: &str) -> bool {
     let ext = path.rsplit('.').next().unwrap_or("").to_lowercase();
     matches!(ext.as_str(), "jpg" | "jpeg" | "png" | "webp" | "bmp")
+}
+
+/// Scale `(width, height)` down so neither side exceeds `max_dim`, preserving
+/// aspect ratio.  Returns the original dimensions unchanged when both sides
+/// are already within the limit.
+fn compute_thumbnail_size(width: u32, height: u32, max_dim: u32) -> (u32, u32) {
+    if width <= max_dim && height <= max_dim {
+        return (width, height);
+    }
+    let ratio = (max_dim as f64 / width as f64).min(max_dim as f64 / height as f64);
+    let new_w = ((width as f64 * ratio).round() as u32).max(1);
+    let new_h = ((height as f64 * ratio).round() as u32).max(1);
+    (new_w, new_h)
 }
 
 // ---------------------------------------------------------------------------
@@ -284,15 +299,22 @@ pub fn read_epub_file(epub_path: String, file_path: String) -> Result<Option<Vec
     if is_image_file(&normalised) {
         if out.len() > SHRINK_THRESHOLD_BYTES {
             if let Ok(img) = image::load_from_memory(&out) {
-                let width = img.width();
-                let height = img.height();
+                let (new_w, new_h) =
+                    compute_thumbnail_size(img.width(), img.height(), MAX_DIMENSION);
 
-                if width > MAX_DIMENSION || height > MAX_DIMENSION {
-                    let resized = img.resize(MAX_DIMENSION, MAX_DIMENSION, FilterType::Triangle);
-
-                    let mut buffer = Cursor::new(Vec::with_capacity(SHRINK_THRESHOLD_BYTES));
-                    if resized.write_to(&mut buffer, ImageFormat::Jpeg).is_ok() {
-                        out = buffer.into_inner();
+                if new_w < img.width() || new_h < img.height() {
+                    if let Some(pixel_type) = img.pixel_type() {
+                        let mut dst = FirImage::new(new_w, new_h, pixel_type);
+                        if FirResizer::new().resize(&img, &mut dst, None).is_ok() {
+                            let color = img.color();
+                            let mut buf = Cursor::new(Vec::with_capacity(SHRINK_THRESHOLD_BYTES));
+                            if JpegEncoder::new(&mut buf)
+                                .write_image(dst.buffer(), new_w, new_h, color.into())
+                                .is_ok()
+                            {
+                                out = buf.into_inner();
+                            }
+                        }
                     }
                 }
             }

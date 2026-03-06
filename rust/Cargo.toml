@@ -13,6 +13,7 @@ parking_lot = "0.12"
 rc-zip = { version = "5", features = ["deflate"] }
 positioned-io = "0.3"
 image = { version = "0.25.9", default-features = false, features = ["jpeg", "png", "webp"] }
+fast_image_resize = { version = "6", default-features = false, features = ["std", "image"] }
 
 [profile.release]
 opt-level = 'z'
