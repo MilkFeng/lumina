@@ -38,6 +38,7 @@ class _ReaderStyleBottomSheetState
   late ReaderPageAnimation _pageAnimation;
   late String? _fontFileName;
   late bool _overrideFontFamily;
+  late bool _volumeKeyTurnsPage;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -59,6 +60,7 @@ class _ReaderStyleBottomSheetState
     _pageAnimation = s.pageAnimation;
     _fontFileName = s.fontFileName;
     _overrideFontFamily = s.overrideFontFamily;
+    _volumeKeyTurnsPage = s.volumeKeyTurnsPage;
   }
 
   @override
@@ -313,6 +315,16 @@ class _ReaderStyleBottomSheetState
               },
               noneLabel: l10n.readerPageAnimationNone,
               slideLabel: l10n.readerPageAnimationSlide,
+            ),
+            const SizedBox(height: 12),
+            LabeledSwitchTile(
+              label: l10n.readerVolumeKeyTurnsPage,
+              value: _volumeKeyTurnsPage,
+              icon: Icons.volume_up_outlined,
+              onChanged: (v) {
+                setState(() => _volumeKeyTurnsPage = v);
+                _notifier.setVolumeKeyTurnsPage(v);
+              },
             ),
           ],
         ),

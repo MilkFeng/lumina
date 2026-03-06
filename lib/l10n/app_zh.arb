@@ -1233,6 +1233,11 @@
     "description": "翻页动画选项：滑动过渡"
   },
 
+  "readerVolumeKeyTurnsPage": "用音量键翻页",
+  "@readerVolumeKeyTurnsPage": {
+    "description": "开关标签：使用硬件音量键翻页"
+  },
+
   "readerFontSection": "自定义字体",
   "@readerFontSection": {
     "description": "阅读器样式面板自定义字体子区块标签"

@@ -1223,6 +1223,11 @@
     "description": "Page animation option: slide/swipe transition"
   },
 
+  "readerVolumeKeyTurnsPage": "Volume Keys Turn Pages",
+  "@readerVolumeKeyTurnsPage": {
+    "description": "Toggle label to use hardware volume keys for page turning"
+  },
+
   "readerFontSection": "Custom Font",
   "@readerFontSection": {
     "description": "Reader style sheet subsection label for custom font settings"

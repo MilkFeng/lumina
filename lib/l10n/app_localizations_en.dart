@@ -727,6 +727,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerPageAnimationSlide => 'Slide';
 
   @override
+  String get readerVolumeKeyTurnsPage => 'Volume Keys Turn Pages';
+
+  @override
   String get readerFontSection => 'Custom Font';
 
   @override

@@ -20,6 +20,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   static const _kPageAnimation = 'reader_page_animation';
   static const _kFontFileName = 'reader_font_file_name';
   static const _kOverrideFontFamily = 'reader_override_font_family';
+  static const _kVolumeKeyTurnsPage = 'reader_volume_key_turns_page';
 
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
@@ -45,6 +46,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
           : null,
       fontFileName: prefs.getString(_kFontFileName),
       overrideFontFamily: prefs.getBool(_kOverrideFontFamily),
+      volumeKeyTurnsPage: prefs.getBool(_kVolumeKeyTurnsPage),
     );
   }
 
@@ -119,5 +121,10 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setOverrideFontFamily(bool value) async {
     await _prefs.setBool(_kOverrideFontFamily, value);
     state = state.copyWith(overrideFontFamily: value);
+  }
+
+  Future<void> setVolumeKeyTurnsPage(bool value) async {
+    await _prefs.setBool(_kVolumeKeyTurnsPage, value);
+    state = state.copyWith(volumeKeyTurnsPage: value);
   }
 }

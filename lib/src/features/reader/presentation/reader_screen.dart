@@ -136,23 +136,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       currentTheme = Theme.of(context);
       if (router != null && router.animation != null) {
         routeAnimation = router.animation!;
-        routeAnimation?.addStatusListener(_handleRouteAnimationStatus);
+        routeAnimation?.addStatusListener(handleRouteAnimationStatus);
       } else {
         shouldShowWebView = true;
       }
     });
     hideBottomNavigationBar();
+    HardwareKeyboard.instance.addHandler(handleVolumeKeyEvent);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+    routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
     routeAnimation = null;
     themeUpdateDebouncer?.cancel();
     progressDebouncer?.cancel();
     removeFootnoteOverlay(animate: false);
     restoreSystemUI();
+    HardwareKeyboard.instance.removeHandler(handleVolumeKeyEvent);
     super.dispose();
   }
 
@@ -187,12 +189,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     }
   }
 
-  void _handleRouteAnimationStatus(AnimationStatus status) {
+  void handleRouteAnimationStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) {
       setState(() {
         shouldShowWebView = true;
       });
-      routeAnimation?.removeStatusListener(_handleRouteAnimationStatus);
+      routeAnimation?.removeStatusListener(handleRouteAnimationStatus);
       routeAnimation = null;
     }
   }
@@ -222,6 +224,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         context.pop();
       }
     }
+  }
+
+  bool handleVolumeKeyEvent(KeyEvent event) {
+    if (!mounted) return false;
+    final settings = ref.read(readerSettingsNotifierProvider);
+    print('Volume key event: ${event.logicalKey.debugName}');
+    if (!settings.volumeKeyTurnsPage) return false;
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.audioVolumeDown) {
+        nextPage();
+        return true;
+      } else if (event.logicalKey == LogicalKeyboardKey.audioVolumeUp) {
+        previousPage();
+        return true;
+      }
+    }
+    return false;
   }
 
   void toggleControls() {

@@ -1370,6 +1370,12 @@ abstract class AppLocalizations {
   /// **'Slide'**
   String get readerPageAnimationSlide;
 
+  /// Toggle label to use hardware volume keys for page turning
+  ///
+  /// In en, this message translates to:
+  /// **'Volume Keys Turn Pages'**
+  String get readerVolumeKeyTurnsPage;
+
   /// Reader style sheet subsection label for custom font settings
   ///
   /// In en, this message translates to:
