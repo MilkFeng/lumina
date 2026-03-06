@@ -7,8 +7,10 @@ import 'package:lumina/src/features/library/data/services/unified_import_service
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
+import '../domain/book_type.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/epub_import_service_provider.dart';
+import '../data/services/pdf_import_service_provider.dart';
 
 part 'library_notifier.g.dart';
 
@@ -148,6 +150,7 @@ class LibraryNotifier extends _$LibraryNotifier {
 
     final unifiedImportService = ref.read(unifiedImportServiceProvider);
     final epubImportService = ref.read(epubImportServiceProvider);
+    final pdfImportService = ref.read(pdfImportServiceProvider);
 
     int currentCount = 0;
 
@@ -166,16 +169,25 @@ class LibraryNotifier extends _$LibraryNotifier {
           status: ImportStatus.processing,
         );
 
-        // 2. Cache the file from URI to local temp directory
-        importable = await unifiedImportService.processEpub(path);
-
         yield ProgressLog(
           'Processing file $currentFileName ($currentCount of $totalCount)',
           ProgressLogType.info,
         );
 
-        // 3. Import the book and wait for the Either result
-        final result = await epubImportService.importBook(importable.cacheFile);
+        // 2. Detect file type and route to appropriate import service
+        final fileType = FileTypeDetector.detectTypeFromPath(path.name);
+        final Either<String, ShelfBook> result;
+
+        if (fileType == BookType.pdf) {
+          // PDF import: Use PDF-specific import service
+          result = await pdfImportService.importPdfFromPath(path);
+        } else {
+          // EPUB import: Cache the file from URI to local temp directory
+          importable = await unifiedImportService.processEpub(path);
+
+          // 3. Import the EPUB book and wait for the Either result
+          result = await epubImportService.importBook(importable.cacheFile);
+        }
 
         // 4. Notify UI of success or failure for this file
         yield result.fold(
@@ -205,6 +217,7 @@ class LibraryNotifier extends _$LibraryNotifier {
         );
       } finally {
         // 5. CRITICAL: Always clean up the temporary cache file IMMEDIATELY
+        // (Only for EPUBs - PDFs are handled by their own import service)
         if (importable != null) {
           try {
             await unifiedImportService.cleanCache(importable.cacheFile);
@@ -229,37 +242,60 @@ class LibraryNotifier extends _$LibraryNotifier {
     state = await AsyncValue.guard(() => _loadBooks());
   }
 
-  /// Delete a book (removes .epub file, cover, and database records)
+  /// Delete a book (removes .epub/.pdf file, cover, database records, and passwords)
   Future<Either<String, bool>> deleteBook(int bookId) async {
     try {
+      debugPrint('LibraryNotifier.deleteBook called for bookId: $bookId');
       final repository = ref.read(shelfBookRepositoryProvider);
-      final importService = ref.read(epubImportServiceProvider);
+
+      // Get book BEFORE soft-deleting (so it's still accessible)
+      final book = await repository.getBookById(bookId);
+      if (book == null) {
+        debugPrint('LibraryNotifier.deleteBook: Book not found');
+        return left('Book not found');
+      }
+
+      debugPrint('LibraryNotifier.deleteBook: Found book "${book.title}", type=${book.bookType}, isPasswordProtected=${book.isPasswordProtected}');
 
       // Soft-delete first; only proceed with file cleanup when confirmed.
       final result = await repository.softDeleteBook(bookId);
       if (result.isLeft()) {
+        debugPrint('LibraryNotifier.deleteBook: Soft delete failed');
         return left(result.getLeft().toNullable()!);
       }
       if (result.getRight().toNullable() == false) {
+        debugPrint('LibraryNotifier.deleteBook: Soft delete returned false');
         return left('Delete failed');
       }
 
-      final book = await repository.getBookById(bookId);
-      if (book == null) {
-        return left('Book not found');
+      debugPrint('LibraryNotifier.deleteBook: Soft delete succeeded');
+
+      // Remove physical files + manifest record (use appropriate service for book type)
+      final Either<String, bool> deleteResult;
+      if (book.bookType == BookType.pdf) {
+        debugPrint('LibraryNotifier.deleteBook: Calling PDF import service deleteBook');
+        final pdfImportService = ref.read(pdfImportServiceProvider);
+        deleteResult = await pdfImportService.deleteBook(book);
+      } else {
+        debugPrint('LibraryNotifier.deleteBook: Calling EPUB import service deleteBook');
+        final epubImportService = ref.read(epubImportServiceProvider);
+        deleteResult = await epubImportService.deleteBook(book);
       }
 
-      // Remove physical files + manifest record.
-      final deleteResult = await importService.deleteBook(book);
       if (deleteResult.isLeft()) {
+        debugPrint('LibraryNotifier.deleteBook: Import service deleteBook failed: ${deleteResult.getLeft().toNullable()}');
         return left(deleteResult.getLeft().toNullable()!);
       }
+
+      debugPrint('LibraryNotifier.deleteBook: Import service deleteBook succeeded');
 
       // Refresh list only after everything has succeeded.
       await refresh();
 
+      debugPrint('LibraryNotifier.deleteBook: Completed successfully');
       return right(true);
     } catch (e) {
+      debugPrint('LibraryNotifier.deleteBook: Exception caught: $e');
       return left('Delete failed: $e');
     }
   }

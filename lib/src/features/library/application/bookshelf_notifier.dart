@@ -7,6 +7,8 @@ import '../data/shelf_book_repository.dart';
 import '../data/repositories/shelf_book_repository_provider.dart';
 import '../data/services/epub_import_service_provider.dart';
 import '../data/services/epub_import_service.dart';
+import '../data/services/pdf_import_service_provider.dart';
+import '../domain/book_type.dart';
 
 part 'bookshelf_notifier.g.dart';
 
@@ -349,8 +351,11 @@ class BookshelfNotifier extends _$BookshelfNotifier {
           return false;
         }
 
-        // Delete using import service (handles files + database)
-        final deleteResult = await _importService.deleteBook(book);
+        // Delete using appropriate service based on book type (handles files + database + passwords)
+        final deleteResult = book.bookType == BookType.pdf
+            ? await ref.read(pdfImportServiceProvider).deleteBook(book)
+            : await _importService.deleteBook(book);
+        
         if (deleteResult.isLeft()) {
           return false;
         }
