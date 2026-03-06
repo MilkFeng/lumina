@@ -21,7 +21,6 @@ export class EpubReader implements LuminaApi {
 
     constructor() {
         this.state = {
-            frames: { prev: 0, curr: 0, next: 0 },
             anchors: { prev: [], curr: [], next: [] },
             quadTree: null,
             config: {
@@ -136,12 +135,16 @@ export class EpubReader implements LuminaApi {
     }
 
     jumpToLastPageOfFrame(token: number, slot: FrameSlot): void {
-        const pageCount = this.state.frames[slot] ?? 0;
+        const iframe = this.frameElement(slot);
+        if (!iframe || !iframe.contentWindow) return;
+        const pageCount = this.calculatePageCount(iframe);
         this.jumpToPageFor(token, slot, pageCount - 1);
     }
 
     restoreScrollPosition(token: number, ratio: number): void {
-        const pageCount = this.state.frames.curr;
+        const iframe = this.frameElement('curr');
+        if (!iframe || !iframe.contentWindow) return;
+        const pageCount = this.calculatePageCount(iframe);
         const pageIndex = Math.round(ratio * pageCount);
         this.jumpToPage(token, pageIndex);
     }
@@ -425,7 +428,6 @@ export class EpubReader implements LuminaApi {
 
         const pageCount = this.calculatePageCount(iframe);
         const slot = this._slotFromFrameId(iframeId);
-        this.state.frames[slot] = pageCount;
 
         if (iframeId === 'frame-curr') {
             FlutterBridge.onPageCountReady(pageCount);
@@ -866,7 +868,6 @@ export class EpubReader implements LuminaApi {
                 requestAnimationFrame(() => {
                     const pageCount = this.calculatePageCount(iframe);
                     const slot = this._slotFromFrameId(iframe.id);
-                    this.state.frames[slot] = pageCount;
 
                     let pageIndex = 0;
                     const url = iframe.src;
@@ -908,7 +909,6 @@ export class EpubReader implements LuminaApi {
                 requestAnimationFrame(() => {
                     const pageCount = this.calculatePageCount(iframe);
                     const slot = this._slotFromFrameId(iframe.id);
-                    this.state.frames[slot] = pageCount;
 
                     const pageIndex = Math.round(pageIndexPercentage * pageCount);
                     this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));

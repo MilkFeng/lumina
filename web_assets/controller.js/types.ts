@@ -49,7 +49,6 @@ export interface InteractionItem extends QuadTreeItem {
 }
 
 export interface ReaderState {
-    frames: Record<FrameSlot, number>;
     anchors: Record<FrameSlot, string[]>;
     quadTree: QuadTree<InteractionItem> | null;
     config: ReaderConfig;

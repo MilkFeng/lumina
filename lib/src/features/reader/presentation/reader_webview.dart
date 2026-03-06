@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -13,6 +12,7 @@ import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
 import 'package:lumina/src/web/api/webview_bridge.dart';
+import 'package:lumina/src/web/api/lumina_api.dart';
 
 /// Controller for ReaderWebView that provides methods to control the WebView
 class ReaderWebViewController {
@@ -166,6 +166,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   late EpubTheme _currentTheme;
 
   final WebViewBridge _bridge = WebViewBridge();
+  late final LuminaApi _api = LuminaApi(_bridge);
 
   @override
   void initState() {
@@ -203,61 +204,33 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   Future<void> _waitForWebviewRender() async {
     if (_controller == null) return;
-    await _bridge.callAndWait((t) => 'window.api.waitForRender($t)', 1000);
+    await _api.waitForRender();
   }
 
   Future<void> _waitForRender() async {
     await _waitForWebviewRender();
   }
 
-  // JavaScript methods
-  Future<void> _evaluateJavascript(String source) async {
-    await _bridge.evaluate(source);
-  }
+  Future<int> _jumpToLastPageOfFrame(String frame) =>
+      _api.jumpToLastPageOfFrame(frame);
 
-  Future<int> _jumpToLastPageOfFrame(String frame) {
-    return _bridge.call(
-      (t) => "window.api.jumpToLastPageOfFrame($t, '$frame')",
-    );
-  }
+  Future<int> _cycleFrames(String direction) => _api.cycleFrames(direction);
 
-  Future<int> _cycleFrames(String direction) {
-    return _bridge.call((t) => "window.api.cycleFrames($t, '$direction')");
-  }
+  Future<int> _jumpToPageFor(String frame, int pageIndex) =>
+      _api.jumpToPageFor(frame, pageIndex);
 
-  Future<int> _jumpToPageFor(String frame, int pageIndex) {
-    return _bridge.call(
-      (t) => "window.api.jumpToPageFor($t, '$frame', $pageIndex)",
-    );
-  }
+  Future<int> _loadFrame(String frame, String url, String anchors) =>
+      _api.loadFrame(frame, url, anchors);
 
-  Future<int> _loadFrame(String frame, String url, String anchors) {
-    return _bridge.call(
-      (t) => "window.api.loadFrame($t, '$frame', '$url', $anchors)",
-    );
-  }
+  Future<void> _jumpToPage(int pageIndex) => _api.jumpToPage(pageIndex);
 
-  Future<void> _jumpToPage(int pageIndex) {
-    return _bridge.callAndWait(
-      (t) => 'window.api.jumpToPage($t, $pageIndex)',
-      1000,
-    );
-  }
+  Future<void> _restoreScrollPosition(double ratio) =>
+      _api.restoreScrollPosition(ratio);
 
-  Future<void> _restoreScrollPosition(double ratio) {
-    return _bridge.callAndWait(
-      (t) => 'window.api.restoreScrollPosition($t, $ratio)',
-      1000,
-    );
-  }
+  Future<void> _checkElementAt(double x, double y) => _api.checkElementAt(x, y);
 
-  Future<void> _checkElementAt(double x, double y) async {
-    await _evaluateJavascript("window.api.checkElementAt($x, $y)");
-  }
-
-  Future<void> _checkTapElementAt(double x, double y) async {
-    await _evaluateJavascript("window.api.checkTapElementAt($x, $y)");
-  }
+  Future<void> _checkTapElementAt(double x, double y) =>
+      _api.checkTapElementAt(x, y);
 
   InAppWebViewInitialData _generateInitialData(double width, double height) {
     return InAppWebViewInitialData(
@@ -515,9 +488,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
     _currentTheme = theme;
-    final themeJson = jsonEncode(theme.toMap());
-    await _bridge.callAndWait(
-      (t) => 'window.api.updateTheme($t, $width, $height, $themeJson)',
-    );
+    await _api.updateTheme(width, height, theme.toMap());
   }
 }
