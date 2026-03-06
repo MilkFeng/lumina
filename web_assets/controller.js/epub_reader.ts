@@ -8,10 +8,11 @@ import type {
     ReaderState,
     InteractionItem,
     InitConfig,
-    ThemeUpdate,
+    ThemeUpdate
 } from './types';
+import { LuminaApi } from './api';
 
-export class EpubReader {
+export class EpubReader implements LuminaApi {
     state: ReaderState;
     private _resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
     private _onResize: () => void;

@@ -205,7 +205,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final completer = Completer<void>();
     _completers[token] = completer;
 
-    await _evaluateJavascript("window.reader.waitForRender($token)");
+    await _evaluateJavascript("window.api.waitForRender($token)");
     await _waitForEvent(token, 1000);
   }
 
@@ -219,39 +219,37 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   }
 
   Future<void> _jumpToLastPageOfFrame(String frame) async {
-    await _evaluateJavascript("window.reader.jumpToLastPageOfFrame('$frame')");
+    await _evaluateJavascript("window.api.jumpToLastPageOfFrame('$frame')");
   }
 
   Future<void> _cycleFrames(String direction) async {
-    await _evaluateJavascript("window.reader.cycleFrames('$direction')");
+    await _evaluateJavascript("window.api.cycleFrames('$direction')");
   }
 
   Future<void> _jumpToPageFor(String frame, int pageIndex) async {
-    await _evaluateJavascript(
-      "window.reader.jumpToPageFor('$frame', $pageIndex)",
-    );
+    await _evaluateJavascript("window.api.jumpToPageFor('$frame', $pageIndex)");
   }
 
   Future<void> _loadFrame(String frame, String url, String anchors) async {
     await _evaluateJavascript(
-      "window.reader.loadFrame('$frame', '$url', $anchors)",
+      "window.api.loadFrame('$frame', '$url', $anchors)",
     );
   }
 
   Future<void> _jumpToPage(int pageIndex) async {
-    await _evaluateJavascript('window.reader.jumpToPage($pageIndex)');
+    await _evaluateJavascript('window.api.jumpToPage($pageIndex)');
   }
 
   Future<void> _restoreScrollPosition(double ratio) async {
-    await _evaluateJavascript('window.reader.restoreScrollPosition($ratio)');
+    await _evaluateJavascript('window.api.restoreScrollPosition($ratio)');
   }
 
   Future<void> _checkElementAt(double x, double y) async {
-    await _evaluateJavascript("window.reader.checkElementAt($x, $y)");
+    await _evaluateJavascript("window.api.checkElementAt($x, $y)");
   }
 
   Future<void> _checkTapElementAt(double x, double y) async {
-    await _evaluateJavascript("window.reader.checkTapElementAt($x, $y)");
+    await _evaluateJavascript("window.api.checkTapElementAt($x, $y)");
   }
 
   InAppWebViewInitialData _generateInitialData(double width, double height) {
@@ -548,7 +546,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
     _currentTheme = theme;
     final themeJson = jsonEncode(theme.toMap());
-    await _evaluateJavascript("""window.reader.updateTheme(
+    await _evaluateJavascript("""window.api.updateTheme(
       $token,
       $width,
       $height,
