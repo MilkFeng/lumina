@@ -16,8 +16,8 @@ import { FlutterBridge } from './flutter_bridge';
 
 export class EpubReader implements LuminaApi {
     state: ReaderState;
-    private _resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
-    private _onResize: () => void;
+    private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
+    private onResize: () => void;
 
     constructor() {
         this.state = {
@@ -44,12 +44,12 @@ export class EpubReader implements LuminaApi {
             },
         };
 
-        this._resizeDebounceTimer = null;
-        this._onResize = () => {
-            if (this._resizeDebounceTimer) {
-                clearTimeout(this._resizeDebounceTimer);
+        this.resizeDebounceTimer = null;
+        this.onResize = () => {
+            if (this.resizeDebounceTimer) {
+                clearTimeout(this.resizeDebounceTimer);
             }
-            this._resizeDebounceTimer = setTimeout(() => {
+            this.resizeDebounceTimer = setTimeout(() => {
                 FlutterBridge.onViewportResize();
             }, 120);
         };
@@ -72,8 +72,8 @@ export class EpubReader implements LuminaApi {
         this.state.config.theme = config.theme;
 
         this.updateCSSVariables(document, 'skeleton-variable-style');
-        window.removeEventListener('resize', this._onResize);
-        window.addEventListener('resize', this._onResize, { passive: true });
+        window.removeEventListener('resize', this.onResize);
+        window.addEventListener('resize', this.onResize, { passive: true });
     }
 
     loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[]): void {
@@ -354,7 +354,7 @@ export class EpubReader implements LuminaApi {
         return document.getElementById(id) as HTMLIFrameElement | null;
     }
 
-    private _slotFromFrameId(frameId: string): FrameSlot {
+    private slotFromFrameId(frameId: string): FrameSlot {
         return (frameId ? frameId.replace('frame-', '') : '') as FrameSlot;
     }
 
@@ -427,7 +427,7 @@ export class EpubReader implements LuminaApi {
         if (!iframe || !iframe.contentWindow) return;
 
         const pageCount = this.calculatePageCount(iframe);
-        const slot = this._slotFromFrameId(iframeId);
+        const slot = this.slotFromFrameId(iframeId);
 
         if (iframeId === 'frame-curr') {
             FlutterBridge.onPageCountReady(pageCount);
@@ -862,12 +862,12 @@ export class EpubReader implements LuminaApi {
 
         waitForAllResources(doc).then(() => {
             if (!iframe.contentWindow) return;
-            const _reflow = doc.body.scrollHeight; void _reflow;
+            const reflow = doc.body.scrollHeight; void reflow;
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     const pageCount = this.calculatePageCount(iframe);
-                    const slot = this._slotFromFrameId(iframe.id);
+                    const slot = this.slotFromFrameId(iframe.id);
 
                     let pageIndex = 0;
                     const url = iframe.src;
@@ -903,12 +903,12 @@ export class EpubReader implements LuminaApi {
 
         waitForAllResources(iframe.contentDocument).then(() => {
             const doc = iframe.contentDocument!;
-            const _reflow = doc.body.scrollHeight; void _reflow;
+            const reflow = doc.body.scrollHeight; void reflow;
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     const pageCount = this.calculatePageCount(iframe);
-                    const slot = this._slotFromFrameId(iframe.id);
+                    const slot = this.slotFromFrameId(iframe.id);
 
                     const pageIndex = Math.round(pageIndexPercentage * pageCount);
                     this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
