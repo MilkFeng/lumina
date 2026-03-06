@@ -111,7 +111,6 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final Future<void> Function() onInitialized;
   final Future<void> Function(int totalPages) onPageCountReady;
   final ValueChanged<int> onPageChanged;
-  final VoidCallback onRendererInitialized;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(String innerHtml, Rect rect) onFootnoteTap;
@@ -136,7 +135,6 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
     required this.onFootnoteTap,
@@ -447,7 +445,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
             await widget.onPageCountReady(totalPages);
           },
           onPageChanged: widget.onPageChanged,
-          onRendererInitialized: widget.onRendererInitialized,
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,

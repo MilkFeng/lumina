@@ -865,7 +865,6 @@ export class EpubReader implements LuminaApi {
                         if (iframe.id === 'frame-curr') {
                             window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
                             window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-                            window.flutter_inappwebview.callHandler('onRendererInitialized');
                         } else if (iframe.id === 'frame-prev') {
                             this.jumpToLastPageOfFrame('prev');
                         } else if (iframe.id === 'frame-next') {
@@ -903,7 +902,6 @@ export class EpubReader implements LuminaApi {
                         if (iframe.id === 'frame-curr') {
                             window.flutter_inappwebview.callHandler('onPageCountReady', pageCount);
                             window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
-                            window.flutter_inappwebview.callHandler('onRendererInitialized');
                         } else if (iframe.id === 'frame-prev') {
                             this.jumpToLastPageOfFrame('prev');
                         } else if (iframe.id === 'frame-next') {

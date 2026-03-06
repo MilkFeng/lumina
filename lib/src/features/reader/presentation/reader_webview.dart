@@ -101,7 +101,6 @@ class ReaderWebViewCallbacks {
   final Function() onInitialized;
   final Function(int totalPages) onPageCountReady;
   final Function(int pageIndex) onPageChanged;
-  final VoidCallback onRendererInitialized;
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
@@ -113,7 +112,6 @@ class ReaderWebViewCallbacks {
     required this.onInitialized,
     required this.onPageCountReady,
     required this.onPageChanged,
-    required this.onRendererInitialized,
     required this.onScrollAnchors,
     required this.onImageLongPress,
     required this.onTap,
@@ -413,15 +411,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         if (args.isNotEmpty && args[0] is int) {
           widget.callbacks.onPageChanged(args[0] as int);
         }
-      },
-    );
-
-    controller.addJavaScriptHandler(
-      handlerName: 'onRendererInitialized',
-      callback: (args) async {
-        await Future.delayed(const Duration(milliseconds: 100));
-        widget.callbacks.onRendererInitialized();
-        debugPrint('WebView: Renderer Initialized');
       },
     );
 

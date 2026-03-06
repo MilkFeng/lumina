@@ -327,6 +327,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                         if (ratio != null) {
                           await rendererController.restoreScrollPosition(ratio);
                         }
+                        await Future.delayed(const Duration(milliseconds: 30));
+                        setState(() {
+                          isWebViewLoading = false;
+                        });
                       },
                       onPageCountReady: (totalPages) async {
                         setState(() {
@@ -334,21 +338,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           if (currentPageInChapter >= totalPagesInChapter) {
                             currentPageInChapter = totalPagesInChapter - 1;
                           }
-                          updateProgressDebounced();
                         });
+                        updateProgressDebounced();
                       },
                       onPageChanged: (pageIndex) {
                         setState(() {
                           currentPageInChapter = pageIndex;
                         });
                         updateProgressDebounced();
-                        saveProgress();
-                      },
-                      onRendererInitialized: () async {
-                        await Future.delayed(const Duration(milliseconds: 30));
-                        setState(() {
-                          isWebViewLoading = false;
-                        });
                         saveProgress();
                       },
                       onScrollAnchors: handleScrollAnchors,
