@@ -514,6 +514,15 @@ export class EpubReader implements LuminaApi {
         }
 
         const container = footnoteEl.closest('li, aside, section, div, p') || footnoteEl;
+
+        // if the container is li, wrap it in a ol to preserve numbering
+        if (container.tagName.toLowerCase() === 'li') {
+            const ol = document.createElement('ol');
+            const clonedLi = container.cloneNode(true) as HTMLElement;
+            ol.appendChild(clonedLi);
+            return ol.outerHTML;
+        }
+
         return container?.outerHTML ?? '';
     }
 

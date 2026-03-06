@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -13,6 +12,7 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
+import 'package:lumina/src/web/api/webview_bridge.dart';
 
 /// Controller for ReaderWebView that provides methods to control the WebView
 class ReaderWebViewController {
@@ -70,11 +70,11 @@ class ReaderWebViewController {
   }
 
   Future<void> waitForEvent(int token, [int timeoutMs = 10000]) async {
-    await _webViewState?._waitForEvent(token, timeoutMs);
+    await _webViewState?._bridge.waitForEvent(token, timeoutMs);
   }
 
   Future<void> waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
-    await _webViewState?._waitForEvents(tokens, timeoutMs);
+    await _webViewState?._bridge.waitForEvents(tokens, timeoutMs);
   }
 }
 
@@ -165,8 +165,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   late EpubTheme _currentTheme;
 
-  int _currentToken = 0;
-  final Map<int, Completer<void>> _completers = {};
+  final WebViewBridge _bridge = WebViewBridge();
 
   @override
   void initState() {
@@ -204,15 +203,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   Future<void> _waitForWebviewRender() async {
     if (_controller == null) return;
-
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-
-    await _evaluateJavascript("window.api.waitForRender($token)");
-    await _waitForEvent(token, 1000);
+    await _bridge.callAndWait((t) => 'window.api.waitForRender($t)', 1000);
   }
 
   Future<void> _waitForRender() async {
@@ -221,77 +212,43 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   // JavaScript methods
   Future<void> _evaluateJavascript(String source) async {
-    await _controller?.evaluateJavascript(source: source);
+    await _bridge.evaluate(source);
   }
 
-  Future<int> _jumpToLastPageOfFrame(String frame) async {
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-    await _evaluateJavascript(
-      "window.api.jumpToLastPageOfFrame($token, '$frame')",
+  Future<int> _jumpToLastPageOfFrame(String frame) {
+    return _bridge.call(
+      (t) => "window.api.jumpToLastPageOfFrame($t, '$frame')",
     );
-    return token;
   }
 
-  Future<int?> _cycleFrames(String direction) async {
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-    await _evaluateJavascript("window.api.cycleFrames($token, '$direction')");
-    return token;
+  Future<int> _cycleFrames(String direction) {
+    return _bridge.call((t) => "window.api.cycleFrames($t, '$direction')");
   }
 
-  Future<int> _jumpToPageFor(String frame, int pageIndex) async {
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-    await _evaluateJavascript(
-      "window.api.jumpToPageFor($token, '$frame', $pageIndex)",
+  Future<int> _jumpToPageFor(String frame, int pageIndex) {
+    return _bridge.call(
+      (t) => "window.api.jumpToPageFor($t, '$frame', $pageIndex)",
     );
-    return token;
   }
 
-  Future<int> _loadFrame(String frame, String url, String anchors) async {
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-
-    await _evaluateJavascript(
-      "window.api.loadFrame($token, '$frame', '$url', $anchors)",
+  Future<int> _loadFrame(String frame, String url, String anchors) {
+    return _bridge.call(
+      (t) => "window.api.loadFrame($t, '$frame', '$url', $anchors)",
     );
-    return token;
   }
 
-  Future<void> _jumpToPage(int pageIndex) async {
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-    await _evaluateJavascript('window.api.jumpToPage($token, $pageIndex)');
-    await _waitForEvent(token, 1000);
-  }
-
-  Future<void> _restoreScrollPosition(double ratio) async {
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-
-    await _evaluateJavascript(
-      'window.api.restoreScrollPosition($token, $ratio)',
+  Future<void> _jumpToPage(int pageIndex) {
+    return _bridge.callAndWait(
+      (t) => 'window.api.jumpToPage($t, $pageIndex)',
+      1000,
     );
-    await _waitForEvent(token, 1000);
+  }
+
+  Future<void> _restoreScrollPosition(double ratio) {
+    return _bridge.callAndWait(
+      (t) => 'window.api.restoreScrollPosition($t, $ratio)',
+      1000,
+    );
   }
 
   Future<void> _checkElementAt(double x, double y) async {
@@ -352,6 +309,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
 
   void _onWebViewCreated(InAppWebViewController controller) {
     _controller = controller;
+    _bridge.attach(controller);
     _setupJavaScriptHandlers(controller);
     widget.onWebViewCreated?.call();
   }
@@ -527,15 +485,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       handlerName: 'onEventFinished',
       callback: (args) {
         if (args.isNotEmpty) {
-          final int returnedToken = args[0] as int;
-          if (returnedToken == -1) {
-            // Special case for events that don't need to be tracked with a token
-            return;
-          }
-          if (_completers.containsKey(returnedToken)) {
-            _completers[returnedToken]?.complete();
-            _completers.remove(returnedToken);
-          }
+          _bridge.resolveToken(args[0] as int);
         }
       },
     );
@@ -560,48 +510,14 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
-  Future<void> _waitForEvent(int token, [int timeoutMs = 10000]) async {
-    final completer = _completers[token];
-    if (completer == null) {
-      debugPrint('No completer found for token: $token');
-      return;
-    }
-    return completer.future.timeout(
-      Duration(milliseconds: timeoutMs),
-      onTimeout: () {
-        if (_completers.containsKey(token)) {
-          _completers.remove(token);
-          debugPrint('waitForRender timeout for token: $token');
-        }
-      },
-    );
-  }
-
-  Future<void> _waitForEvents(List<int> tokens, [int timeoutMs = 10000]) async {
-    final futures = tokens.map((token) => _waitForEvent(token, timeoutMs));
-    await Future.wait(futures);
-  }
-
   Future<void> _updateTheme(EpubTheme theme) async {
+    if (_controller == null) return;
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
-
-    if (_controller == null) return;
-
-    _currentToken++;
-    final int token = _currentToken;
-
-    final completer = Completer<void>();
-    _completers[token] = completer;
-
     _currentTheme = theme;
     final themeJson = jsonEncode(theme.toMap());
-    await _evaluateJavascript("""window.api.updateTheme(
-      $token,
-      $width,
-      $height,
-      $themeJson,
-    )""");
-    await _waitForEvent(token);
+    await _bridge.callAndWait(
+      (t) => 'window.api.updateTheme($t, $width, $height, $themeJson)',
+    );
   }
 }
