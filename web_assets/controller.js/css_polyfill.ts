@@ -82,13 +82,48 @@ export function applyRuleWithFixedValue(
     }
 }
 
+export function applyBackgroundColorPolyfill(style: CSSStyleDeclaration): void {
+    if (style.backgroundColor &&
+        style.backgroundColor !== 'transparent' &&
+        !style.backgroundColor.includes('var(--lumina-')) {
+        const oldValue = style.getPropertyValue('background-color');
+        style.setProperty(
+            'background-color',
+            'var(--lumina-surface-container-color, ' + oldValue + ')',
+            style.getPropertyPriority('background-color')
+        );
+    }
+}
+
+export function removeBackgroundColorPolyfill(style: CSSStyleDeclaration): void {
+    const value = style.getPropertyValue('background-color');
+    if (value.includes('var(--lumina-surface-container-color')) {
+        // Attempt to restore the original background-color if it was overridden by the polyfill
+        const originalValue = value.replace(/var\(--lumina-surface-container-color,\s*(.+?)\)/, '$1').trim();
+        if (originalValue !== 'transparent' &&
+            !originalValue.startsWith('var(--lumina-surface-container-color')) {
+            style.setProperty(
+                'background-color',
+                originalValue,
+                style.getPropertyPriority('background-color')
+            );
+        }
+    }
+}
+
 /**
  * Applies zoom scaling and WebKit column-break polyfills to a single
  * `CSSStyleDeclaration` (typically one `CSSStyleRule`).
  */
-export function applyRules(style: CSSStyleDeclaration): void {
+export function applyRules(style: CSSStyleDeclaration, shouldOverrideColor: boolean): void {
     applyRuleWithFixedValue(style, 'font-size');
     applyRuleWithFixedValue(style, 'line-height');
+
+    if (shouldOverrideColor) {
+        applyBackgroundColorPolyfill(style);
+    } else {
+        removeBackgroundColorPolyfill(style);
+    }
 
     const wk = style as WebKitCSSStyle;
     if (style.breakBefore)
@@ -105,7 +140,7 @@ export function applyRules(style: CSSStyleDeclaration): void {
  * Iterates every rule in every stylesheet inside `doc` and applies the
  * WebKit break-property polyfill. Cross-origin sheets are silently skipped.
  */
-export function polyfillCss(doc: Document): void {
+export function polyfillCss(doc: Document, shouldOverrideColor: boolean): void {
     for (let i = 0; i < doc.styleSheets.length; i++) {
         const sheet = doc.styleSheets[i];
         try {
@@ -113,7 +148,7 @@ export function polyfillCss(doc: Document): void {
             if (!rules) continue;
             for (let j = 0; j < rules.length; j++) {
                 const rule = rules[j];
-                if (rule.type === 1) applyRules((rule as CSSStyleRule).style);
+                if (rule.type === 1) applyRules((rule as CSSStyleRule).style, shouldOverrideColor);
             }
         } catch (e) {
             console.error('Access to stylesheet blocked: ' + e);
