@@ -847,7 +847,8 @@ export class EpubReader implements LuminaApi {
             : t.shouldOverrideTextColor;
 
         body.classList.toggle('lumina-override-color', overrideColor);
-        body.classList.toggle('lumina-override-font', !!(t.overrideFontFamily && t.fontFileName));
+        body.classList.toggle('lumina-override-font', !!(t.fontFileName));
+        body.classList.toggle('lumina-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
 
         const existingStyle = doc.getElementById(styleId);
         if (existingStyle) existingStyle.innerHTML = this.generateVariableStyle();
@@ -887,8 +888,9 @@ export class EpubReader implements LuminaApi {
                 const originalBgColor = this.getOriginalBackgroundColor(iframe);
                 const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor && originalBgColor == null;
                 doc.body.classList.toggle('lumina-override-color', shouldOverrideColor);
+                doc.body.classList.toggle('lumina-override-font', !!(this.state.config.theme.fontFileName));
                 doc.body.classList.toggle(
-                    'lumina-override-font',
+                    'lumina-force-override-font',
                     !!(this.state.config.theme.overrideFontFamily && this.state.config.theme.fontFileName)
                 );
                 doc.body.classList.toggle('is-vertical', this.isVertical());

@@ -202,13 +202,12 @@ span.notes,
   cursor: pointer;
 }
 
-/* Custom font override – applied when the user enables "Override Book Font" */
-body.lumina-override-font,
-body.lumina-override-font * {
+body.lumina-force-override-font,
+body.lumina-force-override-font * {
   font-family: var(--lumina-font-family, inherit) !important;
 }
 
-/* Ensure that the default font is used when "Override Book Font" is not enabled */
-body {
+body.lumina-override-font,
+body.lumina-override-font * {
   font-family: var(--lumina-font-family, inherit);
 }
