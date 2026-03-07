@@ -383,7 +383,7 @@ class EpubZipParser {
       }
     }
 
-    if (coverHref == null) {
+    if (coverHref == null || !_isWellImageFile(coverHref)) {
       // For EPUB 3, also check for manifest item with properties containing whole word "cover-image"
       for (final entry in manifestMap.entries) {
         final properties = entry.value.$2;
@@ -424,7 +424,7 @@ class EpubZipParser {
       return resultHref;
     }
 
-    if (coverHref == null) {
+    if (coverHref == null || !_isWellImageFile(coverHref)) {
       // For EPUB 3, also check guide for reference with type="cover"
       final coverReference = guideItems
           .where((item) => item.type.toLowerCase() == 'cover')
@@ -434,7 +434,7 @@ class EpubZipParser {
       }
     }
 
-    if (coverHref == null) {
+    if (coverHref == null || !_isWellImageFile(coverHref)) {
       // For EPUB 2, also check guide for reference with title containing "cover"
       final coverReference = guideItems
           .where((item) => item.title.toLowerCase().contains('cover'))
@@ -444,7 +444,7 @@ class EpubZipParser {
       }
     }
 
-    if (coverHref == null) {
+    if (coverHref == null || !_isWellImageFile(coverHref)) {
       // Fallback: look for common cover file names in manifest
       for (final key in manifestMap.keys) {
         final lowerCaseKey = key.toLowerCase();
@@ -806,6 +806,14 @@ class EpubZipParser {
     } else {
       return targetPath;
     }
+  }
+
+  static bool _isWellImageFile(String path) {
+    final lowerPath = path.toLowerCase();
+    return lowerPath.endsWith('.jpg') ||
+        lowerPath.endsWith('.jpeg') ||
+        lowerPath.endsWith('.png') ||
+        lowerPath.endsWith('.webp');
   }
 }
 
