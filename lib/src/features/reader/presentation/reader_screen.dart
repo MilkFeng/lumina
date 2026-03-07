@@ -9,6 +9,7 @@ import 'package:lumina/src/features/reader/data/services/volume_control_service.
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import 'package:lumina/src/features/reader/presentation/widgets/footnot_popup_overlay.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../application/reader_settings_notifier.dart';
 import '../domain/reader_settings.dart';
 import '../../../core/services/toast_service.dart';
@@ -149,6 +150,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     });
     hideBottomNavigationBar();
     setupVolumeControl();
+    WakelockPlus.enable();
   }
 
   @override
@@ -162,6 +164,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     restoreSystemUI();
     volumeSubscription?.cancel();
     VolumeControlService.disableInterception();
+    WakelockPlus.disable();
     super.dispose();
   }
 
