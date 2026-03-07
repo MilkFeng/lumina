@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
+import 'package:lumina/src/features/settings/application/imported_font_file_names_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/reader_settings.dart';
 
@@ -29,6 +30,21 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
     final linkHandlingIndex = prefs.getInt(_kLinkHandling);
     final pageAnimationIndex = prefs.getInt(_kPageAnimation);
 
+    // Validate stored font is still in the imported fonts list; clean up if not.
+    String? fontFileName = prefs.getString(_kFontFileName);
+    bool? overrideFontFamily = prefs.getBool(_kOverrideFontFamily);
+    if (fontFileName != null) {
+      final importedNames = ref.watch(importedFontFileNamesProvider);
+      if (!importedNames.contains(fontFileName)) {
+        fontFileName = null;
+        overrideFontFamily = false;
+
+        // fire-and-forget cleanup
+        prefs.remove(_kFontFileName);
+        prefs.remove(_kOverrideFontFamily);
+      }
+    }
+
     return ReaderSettings().copyWith(
       zoom: prefs.getDouble(_kZoom),
       followAppTheme: prefs.getBool(_kFollowApp),
@@ -44,8 +60,8 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
       pageAnimation: pageAnimationIndex != null
           ? ReaderPageAnimation.values.elementAt(pageAnimationIndex)
           : null,
-      fontFileName: prefs.getString(_kFontFileName),
-      overrideFontFamily: prefs.getBool(_kOverrideFontFamily),
+      fontFileName: fontFileName,
+      overrideFontFamily: overrideFontFamily,
       volumeKeyTurnsPage: prefs.getBool(_kVolumeKeyTurnsPage),
     );
   }

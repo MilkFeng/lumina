@@ -862,10 +862,8 @@ export class EpubReader implements LuminaApi {
             if (!iframe.contentWindow) return;
             requestAnimationFrame(() => {
                 const originalBgColor = this.getOriginalBackgroundColor(iframe);
-                doc.body.classList.toggle(
-                    'lumina-override-color',
-                    this.state.config.theme.shouldOverrideTextColor && originalBgColor == null
-                );
+                const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor && originalBgColor == null;
+                doc.body.classList.toggle('lumina-override-color', shouldOverrideColor);
                 doc.body.classList.toggle(
                     'lumina-override-font',
                     !!(this.state.config.theme.overrideFontFamily && this.state.config.theme.fontFileName)
@@ -874,8 +872,7 @@ export class EpubReader implements LuminaApi {
 
                 const reflow = doc.body.scrollHeight; void reflow;
                 requestAnimationFrame(() => {
-
-                    polyfillCss(doc);
+                    polyfillCss(doc, shouldOverrideColor);
                     this.applyOriginalBackgroundColor();
 
                     requestAnimationFrame(() => {
@@ -918,12 +915,15 @@ export class EpubReader implements LuminaApi {
 
         waitForAllResources(iframe.contentDocument).then(() => {
             const doc = iframe.contentDocument!;
+            const overrideColor = this.state.config.theme.shouldOverrideTextColor
+                && this.getOriginalBackgroundColor(iframe) == null;
+            polyfillCss(doc, overrideColor);
+
             const reflow = doc.body.scrollHeight; void reflow;
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     const pageCount = this.calculatePageCount(iframe);
-                    const slot = this.slotFromFrameId(iframe.id);
 
                     const pageIndex = Math.round(pageIndexPercentage * pageCount);
                     this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
