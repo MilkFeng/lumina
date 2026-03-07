@@ -44,6 +44,7 @@ export interface ReaderConfig {
 
 export interface InteractionItem extends QuadTreeItem {
     type: string;
+    priority: number;
     rect: RectLike;
     data: string;
 }

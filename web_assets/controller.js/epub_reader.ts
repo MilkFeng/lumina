@@ -564,32 +564,21 @@ export class EpubReader implements LuminaApi {
                 const docX = rect.left + body.scrollLeft - bodyRect.left;
                 const docY = rect.top + body.scrollTop - bodyRect.top;
 
-                let haveRegularFootnote = false;
-                {
-                    const closetNoteNode = img.closest('note');
-                    if (closetNoteNode) {
-                        haveRegularFootnote = true;
-                    }
-                    const closestLink = img.closest('a');
-                    if (
-                        closestLink &&
-                        (closestLink.classList.contains('duokan-footnote') || closestLink.hasAttribute('epub:type')) &&
-                        closestLink.hasAttribute('href')
-                    ) {
-                        haveRegularFootnote = true;
-                    }
-                }
-
-                if (haveRegularFootnote) {
-                    continue;
-                }
-
                 let isZyFootnote = img.hasAttribute('zy-footnote');
                 let isDuokanFootnote = false;
 
                 if (!isZyFootnote) {
                     if (img.classList.contains('duokan-footnote')) {
                         isDuokanFootnote = true;
+                    } else {
+                        const closestLink = img.closest('a');
+                        if (
+                            closestLink &&
+                            !(closestLink.classList.contains('duokan-footnote') || closestLink.hasAttribute('epub:type')) &&
+                            !closestLink.hasAttribute('href')
+                        ) {
+                            isDuokanFootnote = true;
+                        }
                     }
                 }
 
@@ -600,6 +589,9 @@ export class EpubReader implements LuminaApi {
 
                     quadTree.insert({
                         type: 'footnote',
+                        // footnotes based on img tag have lower priority than regular footnotes
+                        // because they often show less content (e.g. image) than regular footnotes
+                        priority: 2,
                         rect: new Rect(docX, docY, rect.width, rect.height),
                         data: '<div>' + altText + '</div>',
                     });
@@ -652,6 +644,8 @@ export class EpubReader implements LuminaApi {
                     if (!rect || rect.width < 5 || rect.height < 5) continue;
                     quadTree.insert({
                         type: 'footnote',
+                        // Regular footnotes have the highest priority
+                        priority: 3,
                         rect: new Rect(
                             rect.left + body.scrollLeft - bodyRect.left,
                             rect.top + body.scrollTop - bodyRect.top,
@@ -674,6 +668,7 @@ export class EpubReader implements LuminaApi {
                     if (!rect || rect.width < 5 || rect.height < 5) continue;
                     quadTree.insert({
                         type: 'footnote',
+                        priority: 1,
                         rect: new Rect(
                             rect.left + body.scrollLeft - bodyRect.left,
                             rect.top + body.scrollTop - bodyRect.top,
@@ -705,10 +700,24 @@ export class EpubReader implements LuminaApi {
         const docY = y - this.state.config.padding.top + body.scrollTop;
 
         const radius = 20;
-        const candidates = this.state.quadTree.query(
+        let candidates = this.state.quadTree.query(
             new Rect(docX - radius, docY - radius, radius * 2, radius * 2),
             []
         );
+
+        // Sort candidates by priority (higher first) and then by distance to the point
+        candidates.sort((a, b) => {
+            if (b.priority !== a.priority) {
+                return b.priority - a.priority;
+            }
+            return 0;
+        });
+
+        // Remove candidates whose priority is lower than the highest priority in the list
+        if (candidates.length > 0) {
+            const highestPriority = candidates[0].priority;
+            candidates = candidates.filter(candidate => candidate.priority === highestPriority);
+        }
 
         let bestCandidate: InteractionItem | undefined;
         let minDistance = Infinity;
