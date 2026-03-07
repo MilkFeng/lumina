@@ -107,7 +107,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
       if (mounted) {
         await precacheImage(MemoryImage(bytes), context);
       }
-
       return bytes;
     }
     return Uint8List(0);
@@ -253,16 +252,23 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                                       return const SizedBox(
                                         width: 50,
                                         height: 50,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         ),
                                       );
                                     }
                                     if (snapshot.hasData &&
                                         snapshot.data!.isNotEmpty) {
-                                      return Image.memory(
-                                        snapshot.data!,
-                                        fit: BoxFit.contain,
+                                      return GestureDetector(
+                                        onTap: () {
+                                          // TODO: Implement image tap to view full size
+                                        },
+                                        child: Image.memory(
+                                          snapshot.data!,
+                                          fit: BoxFit.contain,
+                                        ),
                                       );
                                     }
                                     return const Icon(
