@@ -104,7 +104,7 @@ class ReaderWebViewCallbacks {
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
-  final Function(String innerHtml, Rect rect) onFootnoteTap;
+  final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
   final Function(String url) onLinkTap;
   final bool Function(String url) shouldHandleLinkTap;
 
@@ -412,7 +412,10 @@ class _ReaderWebViewState extends State<ReaderWebView> {
           (args[3] as num).toDouble(),
           (args[4] as num).toDouble(),
         );
-        widget.callbacks.onFootnoteTap(innerHtml, rect);
+        final baseUrl = args.length > 5 && args[5] is String
+            ? args[5] as String
+            : '';
+        widget.callbacks.onFootnoteTap(innerHtml, rect, baseUrl);
       },
     );
 

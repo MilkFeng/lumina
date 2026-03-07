@@ -299,8 +299,15 @@ class EpubImportService {
       return '.gif';
     } else if (lower.endsWith('.webp')) {
       return '.webp';
+    } else if (lower.endsWith('.bmp')) {
+      return '.bmp';
+    } else if (lower.endsWith('.svg')) {
+      return '.svg';
     }
-    return '.jpg'; // Default
+    final specifiedExtension = filename.contains('.')
+        ? filename.substring(filename.lastIndexOf('.'))
+        : null;
+    return specifiedExtension ?? '.jpg'; // Default
   }
 
   /// Delete a file (helper for cleanup)

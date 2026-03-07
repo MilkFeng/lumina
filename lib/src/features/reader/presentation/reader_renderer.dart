@@ -114,7 +114,7 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final ValueChanged<int> onPageChanged;
   final ValueChanged<List<String>> onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
-  final Function(String innerHtml, Rect rect) onFootnoteTap;
+  final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
   final Function(String url) onLinkTap;
   final bool Function(String url) shouldHandleLinkTap;
   final bool shouldShowWebView;

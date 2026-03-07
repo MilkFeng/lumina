@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复设置界面滑动到屏幕外状态丢失的问题
 - Android 端的音量键翻页功能
 - 修复字体导入相关 BUG
-- 阅读界面常量屏幕
+- 阅读界面常亮屏幕
 - 添加检查更新功能
+- 添加对脚注中图片的支持
 
 ## [v0.2.2] - 2026-03-04
 

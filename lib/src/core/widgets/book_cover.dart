@@ -22,14 +22,28 @@ class BookCover extends ConsumerWidget {
     this.cacheHeight = globalCacheHeight,
   });
 
+  bool _isWellImageFile(String path) {
+    final lowerPath = path.toLowerCase();
+    return lowerPath.endsWith('.jpg') ||
+        lowerPath.endsWith('.jpeg') ||
+        lowerPath.endsWith('.png') ||
+        lowerPath.endsWith('.webp');
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the cover file provider (cached by Riverpod)
     final coverFileAsync = ref.watch(coverFileProvider(relativePath));
 
+    bool isWellImage = _isWellImageFile(relativePath ?? '');
+    if (!isWellImage) {
+      // If the file is not a well-known image type, show a placeholder with an icon
+      return _buildPlaceholder(context);
+    }
+
     return coverFileAsync.when(
-      loading: () => _buildPlaceholder(context),
-      error: (error, stack) => _buildPlaceholder(context),
+      loading: () => _buildPlaceholder(context, showIcon: false),
+      error: (error, stack) => _buildPlaceholder(context, showIcon: false),
       data: (file) {
         if (file == null) {
           return _buildPlaceholder(context);
@@ -50,7 +64,6 @@ class BookCover extends ConsumerWidget {
             cacheHeight: cacheHeight,
             // Prevent white flash during Hero transitions and rebuilds
             gaplessPlayback: true,
-            // Smooth fade-in effect (300ms)
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               if (wasSynchronouslyLoaded) {
                 return child;
@@ -66,7 +79,7 @@ class BookCover extends ConsumerWidget {
               );
             },
             errorBuilder: (context, error, stackTrace) {
-              return _buildPlaceholder(context);
+              return _buildPlaceholder(context, showIcon: false);
             },
           ),
         );
@@ -74,7 +87,7 @@ class BookCover extends ConsumerWidget {
     );
   }
 
-  Widget _buildPlaceholder(BuildContext context) {
+  Widget _buildPlaceholder(BuildContext context, {bool showIcon = true}) {
     return AspectRatio(
       aspectRatio: 210 / 297,
       child: Container(
@@ -95,6 +108,9 @@ class BookCover extends ConsumerWidget {
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
+            if (!showIcon) {
+              return const SizedBox.shrink();
+            }
             final maxSize = math.min(
               constraints.maxWidth,
               constraints.maxHeight,

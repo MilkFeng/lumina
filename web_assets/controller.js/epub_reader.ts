@@ -289,10 +289,13 @@ export class EpubReader implements LuminaApi {
             const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
             const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
 
+            const baseUrl = iframe.contentDocument.baseURI || '';
+
             if (bestCandidate.type === 'footnote') {
                 FlutterBridge.onFootnoteTap(
                     bestCandidate.data,
-                    absoluteLeft, absoluteTop, rect.width, rect.height
+                    absoluteLeft, absoluteTop, rect.width, rect.height,
+                    baseUrl
                 );
                 return;
             }
@@ -524,7 +527,6 @@ export class EpubReader implements LuminaApi {
             ol.appendChild(clonedLi);
             return ol.outerHTML;
         }
-
         return container?.outerHTML ?? '';
     }
 
@@ -562,22 +564,32 @@ export class EpubReader implements LuminaApi {
                 const docX = rect.left + body.scrollLeft - bodyRect.left;
                 const docY = rect.top + body.scrollTop - bodyRect.top;
 
+                let haveRegularFootnote = false;
+                {
+                    const closetNoteNode = img.closest('note');
+                    if (closetNoteNode) {
+                        haveRegularFootnote = true;
+                    }
+                    const closestLink = img.closest('a');
+                    if (
+                        closestLink &&
+                        (closestLink.classList.contains('duokan-footnote') || closestLink.hasAttribute('epub:type')) &&
+                        closestLink.hasAttribute('href')
+                    ) {
+                        haveRegularFootnote = true;
+                    }
+                }
+
+                if (haveRegularFootnote) {
+                    continue;
+                }
+
                 let isZyFootnote = img.hasAttribute('zy-footnote');
                 let isDuokanFootnote = false;
 
                 if (!isZyFootnote) {
                     if (img.classList.contains('duokan-footnote')) {
                         isDuokanFootnote = true;
-                    } else {
-                        const closestLink = img.closest('a');
-                        if (
-                            closestLink &&
-                            closestLink.classList.contains('duokan-footnote') &&
-                            !closestLink.hasAttribute('href') &&
-                            !closestLink.hasAttribute('epub:type')
-                        ) {
-                            isDuokanFootnote = true;
-                        }
                     }
                 }
 
@@ -603,7 +615,7 @@ export class EpubReader implements LuminaApi {
                 let innerHtml = '';
                 let isFootnote = false;
 
-                if (!href && !link.classList.contains('duokan-footnote')) {
+                if (!href && link.classList.contains('duokan-footnote')) {
                     const noteAncestor = link.closest('note');
                     if (noteAncestor) {
                         const asideElements = noteAncestor.querySelectorAll('aside');
@@ -614,19 +626,21 @@ export class EpubReader implements LuminaApi {
                     }
                 }
 
-                if (link.hasAttribute('title') && (!href || href === '#')) {
-                    innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
-                    isFootnote = true;
-                } else if (epubType === 'noteref') {
-                    innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
-                    isFootnote = true;
-                } else if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
-                    const fullHref = link.href;
-                    let thisUrl = link.ownerDocument.location.href;
-                    if (thisUrl.includes('#')) thisUrl = thisUrl.split('#')[0];
-                    if (fullHref === thisUrl || thisUrl === fullHref.split('#')[0]) {
+                if (!isFootnote) {
+                    if (link.hasAttribute('title') && (!href || href === '#')) {
+                        innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
+                        isFootnote = true;
+                    } else if (epubType === 'noteref') {
                         innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
                         isFootnote = true;
+                    } else if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
+                        const fullHref = link.href;
+                        let thisUrl = link.ownerDocument.location.href;
+                        if (thisUrl.includes('#')) thisUrl = thisUrl.split('#')[0];
+                        if (fullHref === thisUrl || thisUrl === fullHref.split('#')[0]) {
+                            innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
+                            isFootnote = true;
+                        }
                     }
                 }
 

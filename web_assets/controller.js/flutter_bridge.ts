@@ -29,9 +29,10 @@ export class FlutterBridge {
         left: number,
         top: number,
         width: number,
-        height: number
+        height: number,
+        baseUrl: string
     ): void {
-        window.flutter_inappwebview.callHandler('onFootnoteTap', innerHtml, left, top, width, height);
+        window.flutter_inappwebview.callHandler('onFootnoteTap', innerHtml, left, top, width, height, baseUrl);
     }
 
     static onImageLongPress(
