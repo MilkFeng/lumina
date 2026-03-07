@@ -53,6 +53,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         _LinkHandlingMixin,
         _ImageViewerMixin,
         _FootnoteMixin {
+  @override
   late final EpubWebViewHandler webViewHandler;
 
   @override
