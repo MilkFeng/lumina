@@ -564,21 +564,14 @@ export class EpubReader implements LuminaApi {
                 const docX = rect.left + body.scrollLeft - bodyRect.left;
                 const docY = rect.top + body.scrollTop - bodyRect.top;
 
+                // <img class="zhangyue-footnote" zy-footnote="..." />
                 let isZyFootnote = img.hasAttribute('zy-footnote');
                 let isDuokanFootnote = false;
 
                 if (!isZyFootnote) {
+                    // <img class="duokan-footnote" alt="..." />
                     if (img.classList.contains('duokan-footnote')) {
                         isDuokanFootnote = true;
-                    } else {
-                        const closestLink = img.closest('a');
-                        if (
-                            closestLink &&
-                            !(closestLink.classList.contains('duokan-footnote') || closestLink.hasAttribute('epub:type')) &&
-                            !closestLink.hasAttribute('href')
-                        ) {
-                            isDuokanFootnote = true;
-                        }
                     }
                 }
 
@@ -608,24 +601,69 @@ export class EpubReader implements LuminaApi {
                 let isFootnote = false;
 
                 if (!href && link.classList.contains('duokan-footnote')) {
-                    const noteAncestor = link.closest('note');
-                    if (noteAncestor) {
-                        const asideElements = noteAncestor.querySelectorAll('aside');
-                        for (let j = 0; j < asideElements.length; j++) {
-                            innerHtml += asideElements[j].outerHTML;
+                    if (!isFootnote) {
+                        // <note>
+                        //   <p>
+                        //     paragraph
+                        //     <sup> <a class="duokan-footnote" epub:type="noteref" id="note_ref001"> <img /> </a> </sup>
+                        //     paragraph
+                        //     <sup> <a class="duokan-footnote" epub:type="noteref" id="note_ref002"> <img /> </a> </sup>
+                        //     paragraph
+                        //   </p>
+                        //   <aside epub:type="footnote" id="note001">
+                        //     <a href="#note_ref001"> 
+                        //       ...
+                        //     </a>
+                        //   </aside>
+                        //   <aside epub:type="footnote" id="note002">
+                        //     <a href="#note_ref001"> 
+                        //       ...
+                        //     </a>
+                        //   </aside>
+                        // </note>
+                        const noteAncestor = link.closest('note');
+                        if (noteAncestor) {
+                            const asideElements = noteAncestor.querySelectorAll('aside');
+                            const linkInNoteIndex = Array.from(noteAncestor.querySelectorAll('a')).indexOf(link);
+                            if (asideElements.length > 0 && linkInNoteIndex >= 0 && linkInNoteIndex < asideElements.length) {
+                                const aside = asideElements[linkInNoteIndex];
+                                innerHtml = aside.outerHTML;
+                                isFootnote = true;
+                            } else {
+                                for (let j = 0; j < asideElements.length; j++) {
+                                    innerHtml += asideElements[j].outerHTML;
+                                }
+                                isFootnote = true;
+                            }
                         }
-                        isFootnote = true;
+                    }
+
+                    if (!isFootnote) {
+                        // <a class="duokan-footnote"> <img alt="..." /> </a>
+                        if (link.childElementCount === 1) {
+                            const child = link.children[0];
+                            if (child.tagName.toLowerCase() === 'img' || child.tagName.toLowerCase() === 'image') {
+                                const img = child as Element;
+                                const altText = img.getAttribute('alt') || img.getAttribute('title') || '';
+                                innerHtml = '<div>' + altText + '</div>';
+                                isFootnote = true;
+                            }
+                        }
                     }
                 }
 
                 if (!isFootnote) {
                     if (link.hasAttribute('title') && (!href || href === '#')) {
+                        // <a href="#" title="...">...</a>
+                        // <a title="...">...</a>
                         innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
                         isFootnote = true;
                     } else if (epubType === 'noteref') {
+                        // <a epub:type="noteref" href="#note1">...</a>
                         innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
                         isFootnote = true;
                     } else if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
+                        // <a class="duokan-footnote" href="#note1"> <img /> </a>
                         const fullHref = link.href;
                         let thisUrl = link.ownerDocument.location.href;
                         if (thisUrl.includes('#')) thisUrl = thisUrl.split('#')[0];
