@@ -275,9 +275,12 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                                         ),
                                       );
                                     }
-                                    return const Icon(
+                                    return Icon(
                                       Icons.broken_image,
-                                      color: Colors.grey,
+                                      color: widget
+                                          .epubTheme
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                     );
                                   },
                                 );
@@ -288,13 +291,9 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                           customStylesBuilder: (element) {
                             Map<String, String> styles = {};
                             final fontSize =
-                                (widget
-                                        .epubTheme
-                                        .themeData
-                                        .textTheme
-                                        .labelMedium
-                                        ?.fontSize ??
-                                    14.0) *
+                                _getDefaultFontSizeWithoutScale(
+                                  element.localName ?? '',
+                                ) *
                                 widget.epubTheme.zoom;
                             styles['font-size'] = '${fontSize}px';
                             if (widget.epubTheme.shouldOverrideTextColor) {
@@ -329,5 +328,51 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
         ),
       ],
     );
+  }
+
+  double _getDefaultFontSizeWithoutScale(String elementName) {
+    final fontSize =
+        widget.epubTheme.themeData.textTheme.labelMedium?.fontSize ?? 14.0;
+    switch (elementName.toLowerCase()) {
+      case 'h1':
+        return fontSize + 6.0;
+      case 'h2':
+        return fontSize + 5.0;
+      case 'h3':
+        return fontSize + 4.0;
+      case 'h4':
+        return fontSize + 3.0;
+      case 'h5':
+        return fontSize + 2.0;
+      case 'h6':
+        return fontSize + 1.0;
+
+      case 'big':
+        return fontSize + 2.0;
+
+      case 'p':
+      case 'div':
+      case 'span':
+      case 'a':
+      case 'li':
+      case 'blockquote':
+      case 'pre':
+      case 'code':
+      case 'kbd':
+        return fontSize;
+
+      case 'small':
+      case 'sub':
+      case 'sup':
+      case 'figcaption':
+      case 'reference':
+        return fontSize > 3.0 ? fontSize - 2.0 : fontSize * 0.75;
+
+      case 'rt':
+        return fontSize * 0.5;
+
+      default:
+        return fontSize;
+    }
   }
 }
