@@ -249,12 +249,16 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState ==
                                         ConnectionState.waiting) {
-                                      return const SizedBox(
+                                      return SizedBox(
                                         width: 50,
                                         height: 50,
                                         child: Center(
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
+                                            color: widget
+                                                .epubTheme
+                                                .colorScheme
+                                                .primary,
                                           ),
                                         ),
                                       );
