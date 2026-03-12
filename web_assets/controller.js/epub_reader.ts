@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { LuminaApi } from './api';
 import { FlutterBridge } from './flutter_bridge';
-import { applyDuokanTyp } from './duokan_typ';
+import { applyDuokanTyp, getDuokanTypConfig } from './duokan_typ';
 
 export class EpubReader implements LuminaApi {
   state: ReaderState;
@@ -337,8 +337,15 @@ export class EpubReader implements LuminaApi {
             const rect = imgEl.getBoundingClientRect();
             if (!rect || rect.width < 5 || rect.height < 5) return false;
 
-            const docX = rect.left - bodyRect.left;
-            const docY = rect.top - bodyRect.top;
+            const config = getDuokanTypConfig(iframe);
+
+            let docX = rect.left - bodyRect.left;
+            let docY = rect.top - bodyRect.top;
+
+            if (config.havePadding()) {
+              docX += this.state.config.padding.left;
+              docY += this.state.config.padding.top;
+            }
 
             FlutterBridge.onImageLongPress(src, docX, docY, rect.width, rect.height);
             return true;
@@ -749,8 +756,15 @@ export class EpubReader implements LuminaApi {
     const body = iframe.contentDocument.body;
     if (!body) return;
 
-    const docX = x - body.scrollLeft;
-    const docY = y - body.scrollTop;
+    const config = getDuokanTypConfig(iframe);
+
+    let docX = x - body.scrollLeft;
+    let docY = y - body.scrollTop;
+
+    if (config.havePadding()) {
+      docX -= this.state.config.padding.left;
+      docY -= this.state.config.padding.top;
+    }
 
     const radius = 20;
     let candidates = this.state.quadTree.query(
