@@ -444,6 +444,7 @@ class ImportBackupService {
       href: m['href'] as String,
       idref: m['idref'] as String,
       linear: m['linear'] as bool? ?? true,
+      properties: m['properties'] as String?,
     );
   }
 
