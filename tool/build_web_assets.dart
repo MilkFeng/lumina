@@ -10,9 +10,11 @@ void main() async {
   String minifiedSkeletonCss = '';
 
   Future<String> runEsbuild(List<String> args) async {
+    const targetArgs = ['--target=es2015,chrome80,safari12,ios12'];
+
     final result = await Process.run(
       'npx',
-      ['esbuild', ...args],
+      ['esbuild', ...args, ...targetArgs],
       workingDirectory: jsProjectDir,
       runInShell: true,
     );
@@ -24,6 +26,8 @@ void main() async {
     return (result.stdout as String).trim();
   }
 
+  const cssDisableNestedArgs = ['--supported:nesting=false'];
+
   try {
     print('📦 com: controller.js...');
     minifiedJs = await runEsbuild([
@@ -34,10 +38,18 @@ void main() async {
     ]);
 
     print('📦 com: pagination.css...');
-    minifiedPaginationCss = await runEsbuild(['../pagination.css', '--minify']);
+    minifiedPaginationCss = await runEsbuild([
+      '../pagination.css',
+      '--minify',
+      ...cssDisableNestedArgs,
+    ]);
 
     print('📦 com: skeleton.css...');
-    minifiedSkeletonCss = await runEsbuild(['../skeleton.css', '--minify']);
+    minifiedSkeletonCss = await runEsbuild([
+      '../skeleton.css',
+      '--minify',
+      ...cssDisableNestedArgs,
+    ]);
   } catch (e) {
     print('❌ error: $e');
     exit(1);

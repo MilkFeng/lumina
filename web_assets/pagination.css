@@ -1,6 +1,10 @@
 html {
   box-sizing: border-box !important;
   margin: 0 !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
 
@@ -31,7 +35,15 @@ html {
 body {
   box-sizing: border-box !important;
   margin: 0 !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
   padding: 0 !important;
+  padding-left: 0 !important;
+  padding-top: 0 !important;
+  padding-right: 0 !important;
+  padding-bottom: 0 !important;
   width: 100% !important;
   height: 100% !important;
   background-color: transparent;
