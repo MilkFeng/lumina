@@ -115,6 +115,7 @@ class _ImageViewerState extends State<ImageViewer>
             String.fromCharCodes(
               bytes.take(100),
             ).toLowerCase().contains('<svg');
+
         if (isSvgFormat) {
           if (mounted) {
             setState(() {
@@ -123,41 +124,57 @@ class _ImageViewerState extends State<ImageViewer>
               _imageAspectRatio = null;
               _isLoading = false;
             });
+            _triggerAnimation();
           }
         } else {
-          final image = await decodeImageFromList(bytes);
-          final aspectRatio = image.width / image.height;
-          image.dispose();
+          final imageProvider = MemoryImage(bytes);
+          final imageStream = imageProvider.resolve(const ImageConfiguration());
 
-          if (mounted) {
-            await precacheImage(MemoryImage(bytes), context);
-          }
+          late ImageStreamListener listener;
+          listener = ImageStreamListener(
+            (ImageInfo info, bool synchronousCall) {
+              if (mounted) {
+                setState(() {
+                  _imageData = bytes;
+                  _imageAspectRatio = info.image.width / info.image.height;
+                  _isLoading = false;
+                });
+                _triggerAnimation();
+              }
+              imageStream.removeListener(listener);
+            },
+            onError: (dynamic error, StackTrace? stackTrace) {
+              debugPrint('Error resolving image info: $error');
+              imageStream.removeListener(listener);
+              _handleLoadError(themeData);
+            },
+          );
 
-          if (mounted) {
-            setState(() {
-              _imageData = bytes;
-              _imageAspectRatio = aspectRatio;
-              _isLoading = false;
-            });
-          }
+          imageStream.addListener(listener);
         }
-        HapticFeedback.lightImpact();
-        await Future.delayed(const Duration(milliseconds: 10));
-        _controller.forward();
       } else {
-        HapticFeedback.lightImpact();
-        if (mounted) {
-          ToastService.showError('Failed to load image', theme: themeData);
-          await _handleClose();
-        }
+        _handleLoadError(themeData);
       }
     } catch (e) {
       debugPrint('Error loading zoomed image: $e');
-      HapticFeedback.lightImpact();
+      _handleLoadError(themeData);
+    }
+  }
+
+  void _triggerAnimation() {
+    HapticFeedback.lightImpact();
+    Future.delayed(const Duration(milliseconds: 10), () {
       if (mounted) {
-        ToastService.showError('Error loading image', theme: themeData);
-        await _handleClose();
+        _controller.forward();
       }
+    });
+  }
+
+  Future<void> _handleLoadError(ThemeData themeData) async {
+    HapticFeedback.lightImpact();
+    if (mounted) {
+      ToastService.showError('Failed to load image', theme: themeData);
+      await _handleClose();
     }
   }
 
