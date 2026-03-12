@@ -1,6 +1,14 @@
+/* Font support */
 @import "./_font.css";
+
+/* Footnote styles */
 @import "./_footnote.css";
+
+/* Override color styles */
 @import "./_color.css";
+
+/* Duokan typography support */
+@import "./_duokan_typ.css";
 
 html {
   box-sizing: border-box !important;
