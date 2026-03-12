@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 阅读界面常亮屏幕
 - 添加检查更新功能
 - 添加对脚注中图片的支持
+- 主页的书籍标题过长时改为在中间省略
 
 ## [v0.2.2] - 2026-03-04
 
