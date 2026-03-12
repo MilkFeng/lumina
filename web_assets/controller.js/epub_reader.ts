@@ -17,7 +17,8 @@ import { FlutterBridge } from './flutter_bridge';
 export class EpubReader implements LuminaApi {
     state: ReaderState;
     private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
-    private onResize: () => void;
+    private onResize: (ev: UIEvent) => void;
+    private currentSize: { width: number; height: number } = { width: 0, height: 0 };
 
     constructor() {
         this.state = {
@@ -45,13 +46,20 @@ export class EpubReader implements LuminaApi {
         };
 
         this.resizeDebounceTimer = null;
-        this.onResize = () => {
-            if (this.resizeDebounceTimer) {
-                clearTimeout(this.resizeDebounceTimer);
+        this.onResize = (ev: UIEvent) => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            if (this.currentSize.width === 0 && this.currentSize.height === 0) {
+                this.currentSize = { width: newWidth, height: newHeight };
+            } else if (this.currentSize.width !== newWidth || this.currentSize.height !== newHeight) {
+                this.currentSize = { width: newWidth, height: newHeight };
+                if (this.resizeDebounceTimer) {
+                    clearTimeout(this.resizeDebounceTimer);
+                }
+                this.resizeDebounceTimer = setTimeout(() => {
+                    FlutterBridge.onViewportResize();
+                }, 120);
             }
-            this.resizeDebounceTimer = setTimeout(() => {
-                FlutterBridge.onViewportResize();
-            }, 120);
         };
     }
 
