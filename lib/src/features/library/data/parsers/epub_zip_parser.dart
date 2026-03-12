@@ -203,6 +203,7 @@ class EpubZipParser {
         final idref = itemref.getAttribute('idref');
         final linearAttr = itemref.getAttribute('linear');
         final isLinear = linearAttr == null || linearAttr.toLowerCase() != 'no';
+        final properties = itemref.getAttribute('properties');
 
         if (idref != null && manifestMap.containsKey(idref)) {
           final href = manifestMap[idref]!.$1;
@@ -216,6 +217,7 @@ class EpubZipParser {
               href: resolvedPath,
               idref: idref,
               linear: isLinear,
+              properties: properties,
             ),
           );
 

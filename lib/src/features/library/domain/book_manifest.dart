@@ -65,11 +65,15 @@ class SpineItem {
   /// during sequential navigation. Defaults to true.
   late bool linear;
 
+  /// Optional properties (e.g., "duokan-page-fitwindow")
+  late String? properties;
+
   SpineItem({
     this.index = 0,
     this.href = '',
     this.idref = '',
     this.linear = true,
+    this.properties,
   });
 }
 
