@@ -51,7 +51,10 @@ class BookCover extends ConsumerWidget {
 
         return Container(
           clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(borderRadius: radius),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
           foregroundDecoration: BoxDecoration(
             borderRadius: radius,
             border: enableBorder
