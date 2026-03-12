@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { LuminaApi } from './api';
 import { FlutterBridge } from './flutter_bridge';
-import { applyTyp, getTypConfig } from './typ';
+import { applyTyp, getTypConfig } from './typ/typ';
 
 export class EpubReader implements LuminaApi {
   state: ReaderState;
