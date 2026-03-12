@@ -170,6 +170,7 @@ class _LibraryAppBarState extends State<LibraryAppBar>
                 tabs: _buildTabs(context),
                 indicatorSize: TabBarIndicatorSize.label,
                 dividerColor: Theme.of(context).colorScheme.primaryFixed,
+                labelPadding: EdgeInsets.zero,
               ),
             ),
           ),
@@ -181,20 +182,31 @@ class _LibraryAppBarState extends State<LibraryAppBar>
   List<Widget> _buildTabs(BuildContext context) {
     final tabs = <Widget>[];
 
-    tabs.add(Tab(child: Text(AppLocalizations.of(context)!.all)));
-    tabs.add(Tab(child: Text(AppLocalizations.of(context)!.uncategorized)));
+    tabs.add(
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 13),
+        child: Tab(child: Text(AppLocalizations.of(context)!.all)),
+      ),
+    );
+    tabs.add(
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 13),
+        child: Tab(child: Text(AppLocalizations.of(context)!.uncategorized)),
+      ),
+    );
 
     for (final group in widget.state.availableGroups) {
       tabs.add(
-        Tab(
-          child: GestureDetector(
-            onLongPress: () {
-              HapticFeedback.selectionClick();
-              final l10n = AppLocalizations.of(context)!;
-              widget.onEditGroup(group, l10n);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: Text(group.name),
+        GestureDetector(
+          onLongPress: () {
+            HapticFeedback.selectionClick();
+            final l10n = AppLocalizations.of(context)!;
+            widget.onEditGroup(group, l10n);
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 13),
+            child: Tab(child: Text(group.name)),
           ),
         ),
       );
