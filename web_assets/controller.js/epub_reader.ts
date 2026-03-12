@@ -198,8 +198,6 @@ export class EpubReader implements LuminaApi {
             this.state.anchors.prev = tempAnchors;
         }
 
-        this.applyOriginalBackgroundColor();
-
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 this.updatePageState('frame-curr');
@@ -806,17 +804,6 @@ export class EpubReader implements LuminaApi {
         return null;
     }
 
-    private applyOriginalBackgroundColor(): void {
-        const iframe = this.frameElement('curr');
-        if (!iframe) return;
-        const originalBgColor = this.getOriginalBackgroundColor(iframe);
-        if (originalBgColor) {
-            document.documentElement.style.setProperty('--lumina-epub-original-bg-color', originalBgColor);
-        } else {
-            document.documentElement.style.removeProperty('--lumina-epub-original-bg-color');
-        }
-    }
-
     // ─── CSS Variables ─────────────────────────────────────────────────
 
     private generateVariableStyle(): string {
@@ -936,7 +923,6 @@ export class EpubReader implements LuminaApi {
                 const reflow = doc.body.scrollHeight; void reflow;
                 requestAnimationFrame(() => {
                     polyfillCss(doc, shouldOverrideColor);
-                    this.applyOriginalBackgroundColor();
 
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
@@ -973,8 +959,6 @@ export class EpubReader implements LuminaApi {
 
     private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: number): void {
         if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
-
-        this.applyOriginalBackgroundColor();
 
         waitForAllResources(iframe.contentDocument).then(() => {
             const doc = iframe.contentDocument!;

@@ -1,9 +1,14 @@
-html,
-body {
+html {
+  box-sizing: border-box !important;
   margin: 0 !important;
-  padding: 0 !important;
-  width: var(--lumina-safe-width) !important;
-  height: var(--lumina-safe-height) !important;
+  width: 100vw !important;
+  height: 100vh !important;
+
+  padding-top: var(--lumina-padding-top) !important;
+  padding-bottom: var(--lumina-padding-bottom) !important;
+  padding-left: var(--lumina-padding-left) !important;
+  padding-right: var(--lumina-padding-right) !important;
+
   background-color: transparent;
   touch-action: none !important;
 
@@ -20,6 +25,15 @@ body {
 
   -webkit-text-size-adjust: none !important;
   text-size-adjust: none !important;
+}
+
+body {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: transparent;
 }
 
 html,

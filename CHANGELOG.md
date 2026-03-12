@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 添加对脚注中图片的支持
 - 主页的书籍标题过长时改为在中间省略
 - 图片查看器增加对 SVG 的支持
+- 优化书籍的渲染样式
 
 ## [v0.2.2] - 2026-03-04
 
