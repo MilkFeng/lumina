@@ -217,6 +217,10 @@ span.notes,
   cursor: pointer;
 }
 
+/* =============================== */
+/* fonts support                   */
+/* =============================== */
+
 /* Custom font override – applied when the user enables "Override Book Font" */
 body.lumina-force-override-font,
 body.lumina-force-override-font * {
@@ -230,45 +234,63 @@ body.lumina-override-font {
 /* Duokan font support */
 @font-face {
   font-family: "DK-SONGTI";
-  src: local("Songti SC"), local("STSong"), local("Noto Serif CJK SC"), local("serif");
+  src: local("Songti SC"), local("Songti TC"), local("STSong"),
+    local("Noto Serif CJK SC"), local("Noto Serif CJK TC"), local("Noto Serif CJK JP"), local("Noto Serif CJK KR"),
+    local("Noto Serif SC"), local("Noto Serif TC"), local("Noto Serif JP"), local("Noto Serif KR"),
+    local("Source Han Serif SC"), local("Source Han Serif TC"), local("Source Han Serif JP"), local("Source Han Serif KR");
 }
 
 @font-face {
   font-family: "DK-FANGSONG";
-  src: local("STFangsong"), local("FangSong"), local("Songti SC"), local("STSong"), local("serif");
+  src: local("STFangsong"), local("FangSong"),
+    local("Songti SC"), local("Songti TC"),
+    local("Noto Serif CJK SC"), local("Noto Serif CJK TC"), local("Noto Serif CJK JP"), local("Noto Serif CJK KR"),
+    local("Noto Serif SC"), local("Noto Serif TC"), local("Noto Serif JP"), local("Noto Serif KR");
 }
 
 @font-face {
   font-family: "DK-KAITI";
-  src: local("Kaiti SC"), local("STKaiti"), local("KaiTi"), local("serif");
+  src: local("Kaiti SC"), local("Kaiti TC"), local("STKaiti"), local("KaiTi"),
+    local("Songti SC"), local("Songti TC"),
+    local("Noto Serif CJK SC"), local("Noto Serif CJK TC"), local("Noto Serif CJK JP"), local("Noto Serif CJK KR"),
+    local("Noto Serif SC"), local("Noto Serif TC"), local("Noto Serif JP"), local("Noto Serif KR");
 }
 
 @font-face {
   font-family: "DK-HEITI";
-  src: local("PingFang SC"), local("Heiti SC"), local("Noto Sans CJK SC"), local("sans-serif");
+  src: local("PingFang SC"), local("PingFang TC"), local("PingFang HK"), local("Heiti SC"), local("Heiti TC"),
+    local("MiSans"), local("HarmonyOS Sans SC"), local("HarmonyOS Sans TC"), local("OPPO Sans"), local("HONOR Sans"),
+    local("Noto Sans CJK SC"), local("Noto Sans CJK TC"), local("Noto Sans CJK JP"), local("Noto Sans CJK KR"),
+    local("Noto Sans SC"), local("Noto Sans TC"), local("Noto Sans JP"), local("Noto Sans KR"),
+    local("Source Han Sans SC"), local("Source Han Sans TC"), local("Source Han Sans JP"), local("Source Han Sans KR");
 }
 
 @font-face {
   font-family: "DK-XIAOBIAOSONG";
-  src: local("Songti SC"), local("STSong"), local("serif");
+  src: local("Songti SC"), local("Songti TC"), local("STSong"),
+    local("Noto Serif CJK SC"), local("Noto Serif CJK TC"), local("Noto Serif CJK JP"), local("Noto Serif CJK KR"),
+    local("Noto Serif SC"), local("Noto Serif TC"), local("Noto Serif JP"), local("Noto Serif KR");
 }
 
 @font-face {
   font-family: "DK-XIHEITI";
-  src: local("PingFang SC"), local("Heiti SC"), local("sans-serif");
+  src: local("PingFang SC"), local("PingFang TC"), local("PingFang HK"), local("Heiti SC"), local("Heiti TC"),
+    local("MiSans"), local("HarmonyOS Sans SC"), local("HarmonyOS Sans TC"), local("OPPO Sans"), local("HONOR Sans"),
+    local("Noto Sans CJK SC"), local("Noto Sans CJK TC"), local("Noto Sans CJK JP"), local("Noto Sans CJK KR"),
+    local("Noto Sans SC"), local("Noto Sans TC"), local("Noto Sans JP"), local("Noto Sans KR");
 }
 
 @font-face {
   font-family: "DK-SERIF";
-  src: local("Times New Roman"), local("Times"), local("Georgia"), local("serif");
+  src: local("Times New Roman"), local("Times"), local("Georgia");
 }
 
 @font-face {
   font-family: "DK-CODE";
-  src: local("Menlo"), local("Monaco"), local("Consolas"), local("Courier New"), local("monospace");
+  src: local("Menlo"), local("Monaco"), local("Consolas"), local("Courier New");
 }
 
 @font-face {
   font-family: "DK-SYMBOL";
-  src: local("Apple Color Emoji"), local("Android Emoji"), local("sans-serif");
+  src: local("Apple Color Emoji"), local("Noto Color Emoji"), local("Android Emoji");
 }
