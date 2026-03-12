@@ -18,28 +18,18 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
   Timer? get progressDebouncer;
   set progressDebouncer(Timer? v);
 
-  double calculateProgressRatio() {
-    if (totalPagesInChapter == 0) return 0.0;
-    final pageProgress = (currentPageInChapter + 1) / totalPagesInChapter;
-    final chapterProgress = currentSpineItemIndex / bookSession.spine.length;
-    return (chapterProgress + pageProgress / bookSession.spine.length).clamp(
-      0.0,
-      1.0,
-    );
-  }
-
   void updateProgressDebounced() {
     progressDebouncer?.cancel();
     progressDebouncer = Timer(const Duration(milliseconds: 150), () {
       if (!mounted) return;
       if (isWebViewLoading) return;
 
-      final ratio = calculateProgressRatio();
-      final newProgress = '${(ratio * 100.0).toStringAsFixed(2)}%';
+      final pageInChapterStr =
+          '${currentPageInChapter + 1}/$totalPagesInChapter';
 
-      if (displayProgress != newProgress) {
+      if (displayProgress != pageInChapterStr) {
         setState(() {
-          displayProgress = newProgress;
+          displayProgress = pageInChapterStr;
         });
       }
     });

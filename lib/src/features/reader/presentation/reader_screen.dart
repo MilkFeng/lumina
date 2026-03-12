@@ -86,7 +86,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   // Progress state (used by _ProgressMixin)
   @override
-  String displayProgress = '0.00%';
+  String displayProgress = '';
   @override
   Timer? progressDebouncer;
 
