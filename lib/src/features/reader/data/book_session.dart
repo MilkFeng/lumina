@@ -171,6 +171,11 @@ class BookSession {
     return _spineToAnchorsMap[spinePath] ?? [];
   }
 
+  String? getSpineProperties(int index) {
+    if (index < 0 || index >= _spine.length) return null;
+    return _spine[index].properties;
+  }
+
   /// Update active anchors based on scroll position
   void updateActiveAnchors(List<String> anchorIds) {
     _activeAnchors = anchorIds.toSet();

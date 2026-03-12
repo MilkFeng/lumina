@@ -1,0 +1,66 @@
+body.lumina-override-color {
+  color: var(--lumina-on-surface-color) !important;
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  li,
+  span,
+  div,
+  section {
+    color: var(--lumina-on-surface-color);
+  }
+
+  ::selection {
+    background-color: var(--lumina-primary-container-color) !important;
+    color: inherit !important;
+  }
+
+  a,
+  a:link,
+  a:visited,
+  a:active {
+    color: var(--lumina-primary-color);
+    text-decoration: none;
+  }
+
+  a:visited {
+    color: var(--lumina-primary-color) !important;
+  }
+
+  a * {
+    color: inherit !important;
+  }
+
+  blockquote {
+    background-color: var(--lumina-surface-container-color) !important;
+    border-color: var(--lumina-primary-color) !important;
+    color: var(--lumina-on-surface-variant-color) !important;
+  }
+
+  hr {
+    background-color: var(--lumina-outline-variant-color) !important;
+  }
+
+  code {
+    background-color: var(--lumina-surface-container-high-color) !important;
+    color: var(--lumina-primary-color) !important;
+  }
+
+  pre {
+    background-color: var(--lumina-surface-container-color) !important;
+    border: 1px solid var(--lumina-outline-variant-color) !important;
+  }
+
+  pre code {
+    color: var(--lumina-on-surface-variant-color) !important;
+  }
+
+  figcaption {
+    color: var(--lumina-on-surface-variant-color) !important;
+  }
+}

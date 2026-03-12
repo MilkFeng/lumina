@@ -3,19 +3,17 @@ import 'dart:io';
 void main() async {
   print('🚀 start build lumina web assets...');
 
-  const jsProjectDir = 'web_assets/controller.js';
-
   String minifiedJs = '';
   String minifiedPaginationCss = '';
   String minifiedSkeletonCss = '';
 
-  Future<String> runEsbuild(List<String> args) async {
+  Future<String> runEsbuild(workingDirectory, List<String> args) async {
     const targetArgs = ['--target=es2015,chrome80,safari12,ios12'];
 
     final result = await Process.run(
       'npx',
       ['esbuild', ...args, ...targetArgs],
-      workingDirectory: jsProjectDir,
+      workingDirectory: workingDirectory,
       runInShell: true,
     );
 
@@ -30,7 +28,7 @@ void main() async {
 
   try {
     print('📦 com: controller.js...');
-    minifiedJs = await runEsbuild([
+    minifiedJs = await runEsbuild('web_assets/controller.js', [
       'index.ts',
       '--bundle',
       '--minify',
@@ -38,15 +36,16 @@ void main() async {
     ]);
 
     print('📦 com: pagination.css...');
-    minifiedPaginationCss = await runEsbuild([
-      '../pagination.css',
+    minifiedPaginationCss = await runEsbuild('web_assets/pagination.css', [
+      'main.css',
+      '--bundle',
       '--minify',
       ...cssDisableNestedArgs,
     ]);
 
     print('📦 com: skeleton.css...');
-    minifiedSkeletonCss = await runEsbuild([
-      '../skeleton.css',
+    minifiedSkeletonCss = await runEsbuild('web_assets', [
+      'skeleton.css',
       '--minify',
       ...cssDisableNestedArgs,
     ]);

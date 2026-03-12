@@ -312,6 +312,7 @@ class ExportBackupService {
     'href': s.href,
     'idref': s.idref,
     'linear': s.linear,
+    'properties': s.properties,
   };
 
   Map<String, dynamic> _hrefToMap(Href h) => {

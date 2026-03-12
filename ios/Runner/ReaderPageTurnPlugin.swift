@@ -21,7 +21,7 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
   private var animationToken: Int = 0
 
   private let animationDuration: TimeInterval = 0.25
-  private let shadowRadius: CGFloat = 10
+  private let shadowRadius: CGFloat = 25
   private let shadowOpacityDarkMode: Float = 0.3
   private let shadowOpacityLightMode: Float = 0.15
 
@@ -147,7 +147,7 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
         snapshot.transform = .identity
         webView.transform = .identity
 
-        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .linear) {
+        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .easeOut) {
           snapshot.transform = CGAffineTransform(
             translationX: isVertical ? width : -width, y: 0)
         }
@@ -168,7 +168,7 @@ class ReaderPageTurnPlugin: NSObject, FlutterPlugin {
           translationX: isVertical ? width : -width, y: 0)
         snapshot.transform = .identity
 
-        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .linear) {
+        let anim = UIViewPropertyAnimator(duration: self.animationDuration, curve: .easeOut) {
           webView.transform = .identity
         }
         self.animator = anim

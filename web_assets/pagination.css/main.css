@@ -1,0 +1,150 @@
+/* Font support */
+@import "./_font.css";
+
+/* Footnote styles */
+@import "./_footnote.css";
+
+/* Override color styles */
+@import "./_color.css";
+
+html {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+
+  padding-top: var(--lumina-padding-top) !important;
+  padding-left: var(--lumina-padding-left) !important;
+
+  padding-right: calc(100vw - var(--lumina-safe-width) - var(--lumina-padding-left)) !important;
+  padding-bottom: calc(100vh - var(--lumina-safe-height) - var(--lumina-padding-top)) !important;
+
+  background-color: transparent;
+  touch-action: none !important;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+
+  text-align: justify;
+  font-size: calc(100% * var(--lumina-zoom)) !important;
+
+  -webkit-text-size-adjust: none !important;
+  text-size-adjust: none !important;
+}
+
+body {
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+  padding-left: 0 !important;
+  padding-top: 0 !important;
+  padding-right: 0 !important;
+  padding-bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: transparent;
+}
+
+html,
+body {
+  overflow-x: var(--lumina-reader-overflow-x) !important;
+  overflow-y: var(--lumina-reader-overflow-y) !important;
+}
+
+body {
+  column-width: var(--lumina-safe-width) !important;
+  column-gap: 128px !important;
+  column-fill: auto !important;
+  height: var(--lumina-safe-height) !important;
+}
+
+body * {
+  orphans: 1;
+  widows: 1;
+
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+body.lumina-is-vertical * {
+  max-height: var(--lumina-safe-height) !important;
+}
+
+body:not(.lumina-is-vertical) * {
+  max-width: var(--lumina-safe-width) !important;
+}
+
+::-webkit-scrollbar,
+::-webkit-scrollbar:horizontal,
+::-webkit-scrollbar:vertical {
+  -webkit-appearance: none !important;
+  background-color: transparent !important;
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+body::-webkit-scrollbar,
+body::-webkit-scrollbar:horizontal,
+body::-webkit-scrollbar:vertical {
+  -webkit-appearance: none !important;
+  background-color: transparent !important;
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+body.lumina-is-vertical {
+
+  img,
+  svg,
+  video {
+    max-width: var(--lumina-safe-width) !important;
+  }
+}
+
+body:not(.lumina-is-vertical) {
+
+  img,
+  svg,
+  video {
+    max-height: var(--lumina-safe-height) !important;
+  }
+}
+
+img,
+svg,
+video {
+  object-fit: contain;
+  height: auto !important;
+
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+figure {
+  margin: 0;
+  padding: 0;
+  break-inside: avoid;
+}
+
+a {
+  cursor: default !important;
+}
+
+/* Duokan typography support */
+@import "./_duokan_typ.css";

@@ -1473,6 +1473,11 @@ const SpineItemSchema = Schema(
       id: 3,
       name: r'linear',
       type: IsarType.bool,
+    ),
+    r'properties': PropertySchema(
+      id: 4,
+      name: r'properties',
+      type: IsarType.string,
     )
   },
   estimateSize: _spineItemEstimateSize,
@@ -1489,6 +1494,12 @@ int _spineItemEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.href.length * 3;
   bytesCount += 3 + object.idref.length * 3;
+  {
+    final value = object.properties;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -1502,6 +1513,7 @@ void _spineItemSerialize(
   writer.writeString(offsets[1], object.idref);
   writer.writeLong(offsets[2], object.index);
   writer.writeBool(offsets[3], object.linear);
+  writer.writeString(offsets[4], object.properties);
 }
 
 SpineItem _spineItemDeserialize(
@@ -1515,6 +1527,7 @@ SpineItem _spineItemDeserialize(
     idref: reader.readStringOrNull(offsets[1]) ?? '',
     index: reader.readLongOrNull(offsets[2]) ?? 0,
     linear: reader.readBoolOrNull(offsets[3]) ?? true,
+    properties: reader.readStringOrNull(offsets[4]),
   );
   return object;
 }
@@ -1534,6 +1547,8 @@ P _spineItemDeserializeProp<P>(
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 3:
       return (reader.readBoolOrNull(offset) ?? true) as P;
+    case 4:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1860,6 +1875,157 @@ extension SpineItemQueryFilter
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'linear',
         value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> propertiesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'properties',
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition>
+      propertiesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'properties',
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> propertiesEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'properties',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition>
+      propertiesGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'properties',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> propertiesLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'properties',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> propertiesBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'properties',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition>
+      propertiesStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'properties',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> propertiesEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'properties',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> propertiesContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'properties',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition> propertiesMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'properties',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition>
+      propertiesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'properties',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SpineItem, SpineItem, QAfterFilterCondition>
+      propertiesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'properties',
+        value: '',
       ));
     });
   }

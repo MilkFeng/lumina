@@ -42,7 +42,10 @@ class AndroidPageTurnSession {
         end: Offset.zero,
       );
     }
-    _slideAnimation = tween.animate(_animController);
+    _slideAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    ).drive(tween);
   }
 
   Future<ui.Image?> _takeScreenshot(

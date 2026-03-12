@@ -68,22 +68,58 @@ class ReaderRendererController {
     await webViewController?.waitForEvents(tokens);
   }
 
-  Future<int?> preloadCurrentChapter(String url, List<String> anchors) async {
+  Future<int?> preloadCurrentChapter(
+    String url,
+    List<String> anchors,
+    String? properties,
+  ) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    return await webViewController?.loadFrame('curr', url, anchorsJson);
+    final propertiesList = List<String>.from(properties?.split(' ') ?? []);
+    final propertiesParam = propertiesList.map((p) => '"$p"').join(',');
+    final propertiesJson = '[$propertiesParam]';
+    return await webViewController?.loadFrame(
+      'curr',
+      url,
+      anchorsJson,
+      propertiesJson,
+    );
   }
 
-  Future<int?> preloadNextChapter(String url, List<String> anchors) async {
+  Future<int?> preloadNextChapter(
+    String url,
+    List<String> anchors,
+    String? properties,
+  ) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    return await webViewController?.loadFrame('next', url, anchorsJson);
+    final propertiesList = List<String>.from(properties?.split(' ') ?? []);
+    final propertiesParam = propertiesList.map((p) => '"$p"').join(',');
+    final propertiesJson = '[$propertiesParam]';
+    return await webViewController?.loadFrame(
+      'next',
+      url,
+      anchorsJson,
+      propertiesJson,
+    );
   }
 
-  Future<int?> preloadPreviousChapter(String url, List<String> anchors) async {
+  Future<int?> preloadPreviousChapter(
+    String url,
+    List<String> anchors,
+    String? properties,
+  ) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
-    return await webViewController?.loadFrame('prev', url, anchorsJson);
+    final propertiesList = List<String>.from(properties?.split(' ') ?? []);
+    final propertiesParam = propertiesList.map((p) => '"$p"').join(',');
+    final propertiesJson = '[$propertiesParam]';
+    return await webViewController?.loadFrame(
+      'prev',
+      url,
+      anchorsJson,
+      propertiesJson,
+    );
   }
 
   Future<void> updateTheme(EpubTheme theme) async {
@@ -418,7 +454,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
             color: Theme.of(context).colorScheme.shadow.withValues(
               alpha: _currentTheme.isDark ? 0.3 : 0.15,
             ),
-            blurRadius: 10,
+            blurRadius: 25,
             offset: Offset.zero,
           ),
         ],
