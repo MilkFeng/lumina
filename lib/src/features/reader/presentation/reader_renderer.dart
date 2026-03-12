@@ -418,7 +418,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
             color: Theme.of(context).colorScheme.shadow.withValues(
               alpha: _currentTheme.isDark ? 0.3 : 0.15,
             ),
-            blurRadius: 10,
+            blurRadius: 25,
             offset: Offset.zero,
           ),
         ],
