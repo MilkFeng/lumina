@@ -45,8 +45,8 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
     });
   }
 
-  Future<void> saveProgress() async {
-    await bookSession.saveProgress(
+  void saveProgress() {
+    bookSession.saveProgress(
       currentChapterIndex: currentSpineItemIndex,
       currentPageInChapter: currentPageInChapter,
       totalPagesInChapter: totalPagesInChapter,

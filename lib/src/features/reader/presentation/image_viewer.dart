@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 
@@ -40,6 +41,8 @@ class _ImageViewerState extends State<ImageViewer>
   double? _imageAspectRatio;
   bool _isLoading = true;
   bool _isClosing = false;
+
+  bool _isSvg = false;
 
   final TransformationController _transformController =
       TransformationController();
@@ -107,22 +110,37 @@ class _ImageViewerState extends State<ImageViewer>
       if (response != null && response.data != null) {
         final bytes = response.data!;
 
-        final image = await decodeImageFromList(bytes);
-        final aspectRatio = image.width / image.height;
-        image.dispose();
+        final bool isSvgFormat =
+            widget.imageUrl.toLowerCase().endsWith('.svg') ||
+            String.fromCharCodes(
+              bytes.take(100),
+            ).toLowerCase().contains('<svg');
+        if (isSvgFormat) {
+          if (mounted) {
+            setState(() {
+              _isSvg = true;
+              _imageData = bytes;
+              _imageAspectRatio = null;
+              _isLoading = false;
+            });
+          }
+        } else {
+          final image = await decodeImageFromList(bytes);
+          final aspectRatio = image.width / image.height;
+          image.dispose();
 
-        if (mounted) {
-          await precacheImage(MemoryImage(bytes), context);
+          if (mounted) {
+            await precacheImage(MemoryImage(bytes), context);
+          }
+
+          if (mounted) {
+            setState(() {
+              _imageData = bytes;
+              _imageAspectRatio = aspectRatio;
+              _isLoading = false;
+            });
+          }
         }
-
-        if (mounted) {
-          setState(() {
-            _imageData = bytes;
-            _imageAspectRatio = aspectRatio;
-            _isLoading = false;
-          });
-        }
-
         HapticFeedback.lightImpact();
         await Future.delayed(const Duration(milliseconds: 10));
         _controller.forward();
@@ -218,25 +236,40 @@ class _ImageViewerState extends State<ImageViewer>
 
   /// Builds the common image widget.
   Widget _buildImageView(Uint8List imageData, double t) {
-    if (_imageAspectRatio == null) {
+    if (!_isSvg && _imageAspectRatio == null) {
       return const SizedBox();
     }
     final curve = Curves.easeOutQuart.transform(t);
+    final backgroundColor = _isSvg
+        ? Colors.transparent
+        : Colors.white.withValues(alpha: curve);
 
-    return Center(
-      child: AspectRatio(
-        aspectRatio: _imageAspectRatio!,
-        child: Container(
-          // Ensure the background is always visible during the transition for better contrast and visibility
-          color: Colors.white.withValues(alpha: curve),
-          child: Image.memory(
+    final Widget imageWidget = _isSvg
+        ? SvgPicture.memory(
             imageData,
             fit: BoxFit.contain,
             width: double.infinity,
             height: double.infinity,
-          ),
+            colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          )
+        : Image.memory(
+            imageData,
+            fit: BoxFit.contain,
+            width: double.infinity,
+            height: double.infinity,
+          );
+
+    if (_imageAspectRatio != null) {
+      return Center(
+        child: AspectRatio(
+          aspectRatio: _imageAspectRatio!,
+          child: Container(color: backgroundColor, child: imageWidget),
         ),
-      ),
+      );
+    }
+
+    return Center(
+      child: Container(color: backgroundColor, child: imageWidget),
     );
   }
 

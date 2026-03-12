@@ -17,7 +17,8 @@ import { FlutterBridge } from './flutter_bridge';
 export class EpubReader implements LuminaApi {
     state: ReaderState;
     private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
-    private onResize: () => void;
+    private onResize: (ev: UIEvent) => void;
+    private currentSize: { width: number; height: number } = { width: 0, height: 0 };
 
     constructor() {
         this.state = {
@@ -27,7 +28,7 @@ export class EpubReader implements LuminaApi {
                 safeWidth: 0,
                 safeHeight: 0,
                 direction: 0,
-                padding: { top: 0, left: 0, right: 0, bottom: 0 },
+                padding: { top: 0, left: 0 },
                 theme: {
                     zoom: 1.0,
                     paginationCss: '',
@@ -45,13 +46,20 @@ export class EpubReader implements LuminaApi {
         };
 
         this.resizeDebounceTimer = null;
-        this.onResize = () => {
-            if (this.resizeDebounceTimer) {
-                clearTimeout(this.resizeDebounceTimer);
+        this.onResize = (ev: UIEvent) => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            if (this.currentSize.width === 0 && this.currentSize.height === 0) {
+                this.currentSize = { width: newWidth, height: newHeight };
+            } else if (this.currentSize.width !== newWidth || this.currentSize.height !== newHeight) {
+                this.currentSize = { width: newWidth, height: newHeight };
+                if (this.resizeDebounceTimer) {
+                    clearTimeout(this.resizeDebounceTimer);
+                }
+                this.resizeDebounceTimer = setTimeout(() => {
+                    FlutterBridge.onViewportResize();
+                }, 120);
             }
-            this.resizeDebounceTimer = setTimeout(() => {
-                FlutterBridge.onViewportResize();
-            }, 120);
         };
     }
 
@@ -66,8 +74,6 @@ export class EpubReader implements LuminaApi {
         this.state.config.padding = {
             top: Number(padding.top ?? 0),
             left: Number(padding.left ?? 0),
-            right: Number(padding.right ?? 0),
-            bottom: Number(padding.bottom ?? 0),
         };
         this.state.config.theme = config.theme;
 
@@ -198,8 +204,6 @@ export class EpubReader implements LuminaApi {
             this.state.anchors.prev = tempAnchors;
         }
 
-        this.applyOriginalBackgroundColor();
-
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 this.updatePageState('frame-curr');
@@ -221,8 +225,6 @@ export class EpubReader implements LuminaApi {
         this.state.config.padding = {
             top: newTheme.padding.top,
             left: newTheme.padding.left,
-            right: newTheme.padding.right,
-            bottom: newTheme.padding.bottom,
         };
         this.state.config.theme.zoom = newTheme.zoom;
         this.state.config.theme.shouldOverrideTextColor = newTheme.shouldOverrideTextColor;
@@ -259,9 +261,7 @@ export class EpubReader implements LuminaApi {
         const iframe = this.frameElement('curr');
         if (iframe && iframe.contentDocument) {
             const doc = iframe.contentDocument;
-            const xx = x - this.state.config.padding.left;
-            const yy = y - this.state.config.padding.top;
-            const elementAtPoint = doc.elementFromPoint(xx, yy);
+            const elementAtPoint = doc.elementFromPoint(x, y);
             if (elementAtPoint) {
                 const linkEl = elementAtPoint.closest('a');
                 if (linkEl) {
@@ -734,8 +734,8 @@ export class EpubReader implements LuminaApi {
         const body = iframe.contentDocument.body;
         if (!body) return;
 
-        const docX = x - this.state.config.padding.left + body.scrollLeft;
-        const docY = y - this.state.config.padding.top + body.scrollTop;
+        const docX = x - body.scrollLeft;
+        const docY = y - body.scrollTop;
 
         const radius = 20;
         let candidates = this.state.quadTree.query(
@@ -806,17 +806,6 @@ export class EpubReader implements LuminaApi {
         return null;
     }
 
-    private applyOriginalBackgroundColor(): void {
-        const iframe = this.frameElement('curr');
-        if (!iframe) return;
-        const originalBgColor = this.getOriginalBackgroundColor(iframe);
-        if (originalBgColor) {
-            document.documentElement.style.setProperty('--lumina-epub-original-bg-color', originalBgColor);
-        } else {
-            document.documentElement.style.removeProperty('--lumina-epub-original-bg-color');
-        }
-    }
-
     // ─── CSS Variables ─────────────────────────────────────────────────
 
     private generateVariableStyle(): string {
@@ -835,8 +824,6 @@ export class EpubReader implements LuminaApi {
             + `--lumina-safe-height: ${cfg.safeHeight}px;`
             + `--lumina-padding-top: ${cfg.padding.top}px;`
             + `--lumina-padding-left: ${cfg.padding.left}px;`
-            + `--lumina-padding-right: ${cfg.padding.right}px;`
-            + `--lumina-padding-bottom: ${cfg.padding.bottom}px;`
             + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
             + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
             + `--lumina-surface-color: ${t.surfaceColor};`
@@ -867,8 +854,6 @@ export class EpubReader implements LuminaApi {
         root.style.setProperty('--lumina-safe-height', cfg.safeHeight + 'px');
         root.style.setProperty('--lumina-padding-top', cfg.padding.top + 'px');
         root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
-        root.style.setProperty('--lumina-padding-right', cfg.padding.right + 'px');
-        root.style.setProperty('--lumina-padding-bottom', cfg.padding.bottom + 'px');
         root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
         root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
         root.style.setProperty('--lumina-surface-color', t.surfaceColor);
@@ -885,7 +870,8 @@ export class EpubReader implements LuminaApi {
             : t.shouldOverrideTextColor;
 
         body.classList.toggle('lumina-override-color', overrideColor);
-        body.classList.toggle('lumina-override-font', !!(t.overrideFontFamily && t.fontFileName));
+        body.classList.toggle('lumina-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
+        body.classList.toggle('lumina-override-font', !!(t.fontFileName));
 
         const existingStyle = doc.getElementById(styleId);
         if (existingStyle) existingStyle.innerHTML = this.generateVariableStyle();
@@ -926,18 +912,20 @@ export class EpubReader implements LuminaApi {
                 const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor && originalBgColor == null;
                 doc.body.classList.toggle('lumina-override-color', shouldOverrideColor);
                 doc.body.classList.toggle(
-                    'lumina-override-font',
+                    'lumina-force-override-font',
                     !!(this.state.config.theme.overrideFontFamily && this.state.config.theme.fontFileName)
                 );
+                doc.body.classList.toggle('lumina-override-font', !!(this.state.config.theme.fontFileName));
                 doc.body.classList.toggle('is-vertical', this.isVertical());
 
                 const reflow = doc.body.scrollHeight; void reflow;
                 requestAnimationFrame(() => {
                     polyfillCss(doc, shouldOverrideColor);
-                    this.applyOriginalBackgroundColor();
 
                     requestAnimationFrame(() => {
+                        const reflow = doc.body.scrollHeight; void reflow;
                         requestAnimationFrame(() => {
+                            const reflow = doc.body.scrollHeight; void reflow;
                             const pageCount = this.calculatePageCount(iframe);
 
                             let pageIndex = 0;
@@ -948,18 +936,22 @@ export class EpubReader implements LuminaApi {
                                 this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
                             }
 
-                            this.buildInteractionMap().then(() => {
-                                if (iframe.id === 'frame-curr') {
-                                    FlutterBridge.onPageCountReady(pageCount);
-                                    FlutterBridge.onPageChanged(pageIndex);
-                                } else if (iframe.id === 'frame-prev') {
-                                    this.jumpToLastPageOfFrame(-1, 'prev');
-                                } else if (iframe.id === 'frame-next') {
-                                    this.jumpToPageFor(-1, 'next', 0);
-                                }
-                                this.detectActiveAnchor(iframe);
+                            requestAnimationFrame(() => {
                                 requestAnimationFrame(() => {
-                                    FlutterBridge.onEventFinished(token);
+                                    this.buildInteractionMap().then(() => {
+                                        if (iframe.id === 'frame-curr') {
+                                            FlutterBridge.onPageCountReady(pageCount);
+                                            FlutterBridge.onPageChanged(pageIndex);
+                                        } else if (iframe.id === 'frame-prev') {
+                                            this.jumpToLastPageOfFrame(-1, 'prev');
+                                        } else if (iframe.id === 'frame-next') {
+                                            this.jumpToPageFor(-1, 'next', 0);
+                                        }
+                                        this.detectActiveAnchor(iframe);
+                                        requestAnimationFrame(() => {
+                                            FlutterBridge.onEventFinished(token);
+                                        });
+                                    });
                                 });
                             });
                         });
@@ -971,8 +963,6 @@ export class EpubReader implements LuminaApi {
 
     private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: number): void {
         if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
-
-        this.applyOriginalBackgroundColor();
 
         waitForAllResources(iframe.contentDocument).then(() => {
             const doc = iframe.contentDocument!;
@@ -989,19 +979,23 @@ export class EpubReader implements LuminaApi {
                     const pageIndex = Math.round(pageIndexPercentage * pageCount);
                     this.scrollTo(iframe, this.calculateScrollOffset(pageIndex));
 
-                    this.buildInteractionMap().then(() => {
-                        if (iframe.id === 'frame-curr') {
-                            FlutterBridge.onPageCountReady(pageCount);
-                            FlutterBridge.onPageChanged(pageIndex);
-                        } else if (iframe.id === 'frame-prev') {
-                            this.jumpToLastPageOfFrame(-1, 'prev');
-                        } else if (iframe.id === 'frame-next') {
-                            this.jumpToPageFor(-1, 'next', 0);
-                        }
-                        this.detectActiveAnchor(iframe);
-
+                    requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
-                            FlutterBridge.onEventFinished(token);
+                            this.buildInteractionMap().then(() => {
+                                if (iframe.id === 'frame-curr') {
+                                    FlutterBridge.onPageCountReady(pageCount);
+                                    FlutterBridge.onPageChanged(pageIndex);
+                                } else if (iframe.id === 'frame-prev') {
+                                    this.jumpToLastPageOfFrame(-1, 'prev');
+                                } else if (iframe.id === 'frame-next') {
+                                    this.jumpToPageFor(-1, 'next', 0);
+                                }
+                                this.detectActiveAnchor(iframe);
+
+                                requestAnimationFrame(() => {
+                                    FlutterBridge.onEventFinished(token);
+                                });
+                            });
                         });
                     });
                 });

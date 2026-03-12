@@ -11,8 +11,6 @@ export type Direction = 'next' | 'prev';
 export interface ReaderPadding {
     top: number;
     left: number;
-    right: number;
-    bottom: number;
 }
 
 export interface ReaderTheme {

@@ -85,7 +85,7 @@ class BookDetailViewBody extends ConsumerWidget {
             if (book.description != null && book.description!.isNotEmpty) ...[
               const SizedBox(height: 24),
               ExpandableText(
-                text: book.description!,
+                text: _extract(book.description),
                 maxLines: 4,
                 style: Theme.of(
                   context,
@@ -176,6 +176,41 @@ class BookDetailViewBody extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static String _extract(String? htmlContent) {
+    if (htmlContent == null || htmlContent.isEmpty) {
+      return '';
+    }
+
+    String text = htmlContent;
+
+    text = text.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
+    text = text.replaceAll(
+      RegExp(r'</(p|div|h[1-6]|tr|blockquote)>', caseSensitive: false),
+      '\n\n',
+    );
+
+    text = text.replaceAll(RegExp(r'<li[^>]*>', caseSensitive: false), '• ');
+    text = text.replaceAll(RegExp(r'</li>', caseSensitive: false), '\n');
+
+    text = text.replaceAll(RegExp(r'<[^>]*>'), '');
+
+    text = text
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'")
+        .replaceAll('&mdash;', '—')
+        .replaceAll('&ndash;', '–');
+
+    text = text.replaceAll(RegExp(r'[ \t]+'), ' ');
+    text = text.replaceAll(RegExp(r'\n\s*\n+'), '\n\n');
+
+    return text.trim();
   }
 }
 

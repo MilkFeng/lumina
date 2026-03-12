@@ -44,8 +44,6 @@ String _generateVariableStyle(
       --lumina-safe-height: ${safeHeight}px;
       --lumina-padding-top: ${padding.top}px;
       --lumina-padding-left: ${padding.left}px;
-      --lumina-padding-right: ${padding.right}px;
-      --lumina-padding-bottom: ${padding.bottom}px;
       --lumina-reader-overflow-x: ${direction == 1 ? 'hidden' : 'auto'};
       --lumina-reader-overflow-y: ${direction == 1 ? 'auto' : 'hidden'};
       --lumina-primary-color: ${colorToHex(primaryColor)};
@@ -84,12 +82,7 @@ String generateSkeletonHtml(
   final initialConfigJson = jsonEncode({
     'safeWidth': safeWidth,
     'safeHeight': safeHeight,
-    'padding': {
-      'top': theme.padding.top,
-      'left': theme.padding.left,
-      'right': theme.padding.right,
-      'bottom': theme.padding.bottom,
-    },
+    'padding': {'top': theme.padding.top, 'left': theme.padding.left},
     'direction': direction,
     'theme': {
       'zoom': theme.zoom,

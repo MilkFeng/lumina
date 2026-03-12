@@ -141,7 +141,6 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final router = ModalRoute.of(context);
-      currentTheme = Theme.of(context);
       if (router != null && router.animation != null) {
         routeAnimation = router.animation!;
         routeAnimation?.addStatusListener(handleRouteAnimationStatus);
@@ -166,6 +165,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     volumeSubscription?.cancel();
     VolumeControlService.disableInterception();
     WakelockPlus.disable();
+    bookSession.dispose();
     super.dispose();
   }
 
@@ -225,7 +225,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     super.didChangeDependencies();
 
     // Update WebView theme when system theme changes
-    if (currentTheme != null && currentTheme != Theme.of(context)) {
+    if (currentTheme == null) {
+      currentTheme = Theme.of(context);
+    } else if (currentTheme?.colorScheme != Theme.of(context).colorScheme) {
       currentTheme = Theme.of(context);
       updateWebViewThemeWithDebounce();
     }

@@ -20,7 +20,7 @@ mixin _PageNavigationMixin on ConsumerState<ReaderScreen> {
 
   // === Cross-mixin: _ProgressMixin ===
   void updateProgressDebounced();
-  Future<void> saveProgress();
+  void saveProgress();
 
   // === Cross-mixin: _ThemeMixin ===
   EpubTheme getEpubTheme();

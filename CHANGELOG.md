@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 优化性能和用户体验
 - 修复设置界面滑动到屏幕外状态丢失的问题
 - Android 端的音量键翻页功能
-- 修复字体导入相关 BUG
+- 修复自定义字体相关 BUG
 - 阅读界面常亮屏幕
 - 添加检查更新功能
 - 添加对脚注中图片的支持
+- 主页的书籍标题过长时改为在中间省略
+- 图片查看器增加对 SVG 的支持
+- 优化书籍的渲染样式
+- 优化书籍详情页面的 description 显示
 
 ## [v0.2.2] - 2026-03-04
 
