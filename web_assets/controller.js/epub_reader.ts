@@ -28,7 +28,7 @@ export class EpubReader implements LuminaApi {
                 safeWidth: 0,
                 safeHeight: 0,
                 direction: 0,
-                padding: { top: 0, left: 0, right: 0, bottom: 0 },
+                padding: { top: 0, left: 0 },
                 theme: {
                     zoom: 1.0,
                     paginationCss: '',
@@ -74,8 +74,6 @@ export class EpubReader implements LuminaApi {
         this.state.config.padding = {
             top: Number(padding.top ?? 0),
             left: Number(padding.left ?? 0),
-            right: Number(padding.right ?? 0),
-            bottom: Number(padding.bottom ?? 0),
         };
         this.state.config.theme = config.theme;
 
@@ -227,8 +225,6 @@ export class EpubReader implements LuminaApi {
         this.state.config.padding = {
             top: newTheme.padding.top,
             left: newTheme.padding.left,
-            right: newTheme.padding.right,
-            bottom: newTheme.padding.bottom,
         };
         this.state.config.theme.zoom = newTheme.zoom;
         this.state.config.theme.shouldOverrideTextColor = newTheme.shouldOverrideTextColor;
@@ -265,9 +261,7 @@ export class EpubReader implements LuminaApi {
         const iframe = this.frameElement('curr');
         if (iframe && iframe.contentDocument) {
             const doc = iframe.contentDocument;
-            const xx = x - this.state.config.padding.left;
-            const yy = y - this.state.config.padding.top;
-            const elementAtPoint = doc.elementFromPoint(xx, yy);
+            const elementAtPoint = doc.elementFromPoint(x, y);
             if (elementAtPoint) {
                 const linkEl = elementAtPoint.closest('a');
                 if (linkEl) {
@@ -740,8 +734,8 @@ export class EpubReader implements LuminaApi {
         const body = iframe.contentDocument.body;
         if (!body) return;
 
-        const docX = x - this.state.config.padding.left + body.scrollLeft;
-        const docY = y - this.state.config.padding.top + body.scrollTop;
+        const docX = x - body.scrollLeft;
+        const docY = y - body.scrollTop;
 
         const radius = 20;
         let candidates = this.state.quadTree.query(
@@ -830,8 +824,6 @@ export class EpubReader implements LuminaApi {
             + `--lumina-safe-height: ${cfg.safeHeight}px;`
             + `--lumina-padding-top: ${cfg.padding.top}px;`
             + `--lumina-padding-left: ${cfg.padding.left}px;`
-            + `--lumina-padding-right: ${cfg.padding.right}px;`
-            + `--lumina-padding-bottom: ${cfg.padding.bottom}px;`
             + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
             + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
             + `--lumina-surface-color: ${t.surfaceColor};`
@@ -862,8 +854,6 @@ export class EpubReader implements LuminaApi {
         root.style.setProperty('--lumina-safe-height', cfg.safeHeight + 'px');
         root.style.setProperty('--lumina-padding-top', cfg.padding.top + 'px');
         root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
-        root.style.setProperty('--lumina-padding-right', cfg.padding.right + 'px');
-        root.style.setProperty('--lumina-padding-bottom', cfg.padding.bottom + 'px');
         root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
         root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
         root.style.setProperty('--lumina-surface-color', t.surfaceColor);

@@ -78,12 +78,7 @@ class EpubTheme {
       'overridePrimaryColor': overridePrimaryColor != null
           ? colorToHex(overridePrimaryColor!)
           : null,
-      'padding': {
-        'top': padding.top,
-        'left': padding.left,
-        'right': padding.right,
-        'bottom': padding.bottom,
-      },
+      'padding': {'top': padding.top, 'left': padding.left},
       'fontFileName': fontFileName,
       'overrideFontFamily': overrideFontFamily,
     };

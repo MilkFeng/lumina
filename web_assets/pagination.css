@@ -5,9 +5,10 @@ html {
   height: 100vh !important;
 
   padding-top: var(--lumina-padding-top) !important;
-  padding-bottom: var(--lumina-padding-bottom) !important;
   padding-left: var(--lumina-padding-left) !important;
-  padding-right: var(--lumina-padding-right) !important;
+
+  padding-right: calc(100vw - var(--lumina-safe-width) - var(--lumina-padding-left)) !important;
+  padding-bottom: calc(100vh - var(--lumina-safe-height) - var(--lumina-padding-top)) !important;
 
   background-color: transparent;
   touch-action: none !important;
