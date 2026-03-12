@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { LuminaApi } from './api';
 import { FlutterBridge } from './flutter_bridge';
-import { applyDuokanTyp, getDuokanTypConfig } from './duokan_typ';
+import { applyTyp, getTypConfig } from './typ';
 
 export class EpubReader implements LuminaApi {
   state: ReaderState;
@@ -303,7 +303,7 @@ export class EpubReader implements LuminaApi {
       let absoluteLeft = rect.x - body.scrollLeft;
       let absoluteTop = rect.y - body.scrollTop;
 
-      const config = getDuokanTypConfig(iframe);
+      const config = getTypConfig(iframe);
       if (config.havePadding()) {
         absoluteLeft += this.state.config.padding.left;
         absoluteTop += this.state.config.padding.top;
@@ -344,7 +344,7 @@ export class EpubReader implements LuminaApi {
             const rect = imgEl.getBoundingClientRect();
             if (!rect || rect.width < 5 || rect.height < 5) return false;
 
-            const config = getDuokanTypConfig(iframe);
+            const config = getTypConfig(iframe);
 
             let docX = rect.left - bodyRect.left;
             let docY = rect.top - bodyRect.top;
@@ -773,7 +773,7 @@ export class EpubReader implements LuminaApi {
     const body = iframe.contentDocument.body;
     if (!body) return;
 
-    const config = getDuokanTypConfig(iframe);
+    const config = getTypConfig(iframe);
 
     let docX = x + body.scrollLeft;
     let docY = y + body.scrollTop;
@@ -968,7 +968,7 @@ export class EpubReader implements LuminaApi {
         for (const prop of properties) {
           doc.body.classList.toggle('lumina-spine-property-' + prop, true);
         }
-        applyDuokanTyp(iframe);
+        applyTyp(iframe);
 
         const reflow = doc.body.scrollHeight; void reflow;
         requestAnimationFrame(() => {

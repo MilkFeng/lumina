@@ -76,7 +76,10 @@ class ReaderRendererController {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
     final propertiesList = List<String>.from(properties?.split(' ') ?? []);
-    final propertiesParam = propertiesList.map((p) => '"$p"').join(',');
+    final encodedPropertiesList = propertiesList
+        .map((p) => p.replaceAll(':', '-COLON-'))
+        .toList();
+    final propertiesParam = encodedPropertiesList.map((p) => '"$p"').join(',');
     final propertiesJson = '[$propertiesParam]';
     return await webViewController?.loadFrame(
       'curr',
@@ -94,7 +97,10 @@ class ReaderRendererController {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
     final propertiesList = List<String>.from(properties?.split(' ') ?? []);
-    final propertiesParam = propertiesList.map((p) => '"$p"').join(',');
+    final encodedPropertiesList = propertiesList
+        .map((p) => p.replaceAll(':', '-COLON-'))
+        .toList();
+    final propertiesParam = encodedPropertiesList.map((p) => '"$p"').join(',');
     final propertiesJson = '[$propertiesParam]';
     return await webViewController?.loadFrame(
       'next',
@@ -112,7 +118,10 @@ class ReaderRendererController {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
     final propertiesList = List<String>.from(properties?.split(' ') ?? []);
-    final propertiesParam = propertiesList.map((p) => '"$p"').join(',');
+    final encodedPropertiesList = propertiesList
+        .map((p) => p.replaceAll(':', '-COLON-'))
+        .toList();
+    final propertiesParam = encodedPropertiesList.map((p) => '"$p"').join(',');
     final propertiesJson = '[$propertiesParam]';
     return await webViewController?.loadFrame(
       'prev',
