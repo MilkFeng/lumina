@@ -165,6 +165,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     volumeSubscription?.cancel();
     VolumeControlService.disableInterception();
     WakelockPlus.disable();
+    bookSession.dispose();
     super.dispose();
   }
 

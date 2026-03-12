@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../library/domain/shelf_book.dart';
 import '../../library/domain/book_manifest.dart';
 import '../../library/data/shelf_book_repository.dart';
@@ -22,12 +23,19 @@ class BookSession {
   final List<SpineItem> _spine = [];
   final List<SpineItem> _noLinearSpine = [];
 
+  Timer? _debounceTimer;
+
   BookSession({
     required this.fileHash,
     required ShelfBookRepository shelfBookRepository,
     required BookManifestRepository manifestRepository,
   }) : _shelfBookRepo = shelfBookRepository,
        _manifestRepo = manifestRepository;
+
+  void dispose() {
+    _debounceTimer?.cancel();
+    _debounceTimer = null;
+  }
 
   // Getters
   ShelfBook? get book => _book;
@@ -121,34 +129,41 @@ class BookSession {
   }
 
   /// Save reading progress to database
-  Future<void> saveProgress({
+  void saveProgress({
     required int currentChapterIndex,
     required int currentPageInChapter,
     required int totalPagesInChapter,
-  }) async {
+  }) {
     if (_book == null || _manifest == null) return;
 
-    double? scrollPosition;
-    if (totalPagesInChapter > 0) {
-      scrollPosition = currentPageInChapter / totalPagesInChapter;
+    if (_debounceTimer?.isActive ?? false) {
+      _debounceTimer!.cancel();
     }
 
-    var progress = 0.0;
-    if (_spine.isNotEmpty) {
-      final delta = 1.0 / _spine.length;
-      progress = (currentChapterIndex + 1) / _spine.length;
+    _debounceTimer = Timer(const Duration(milliseconds: 10), () async {
+      double? scrollPosition;
       if (totalPagesInChapter > 0) {
-        progress -= delta;
-        progress += delta * ((currentPageInChapter + 1) / totalPagesInChapter);
+        scrollPosition = currentPageInChapter / totalPagesInChapter;
       }
-    }
 
-    await _shelfBookRepo.updateProgress(
-      bookId: _book!.id,
-      currentChapterIndex: currentChapterIndex,
-      progress: progress,
-      scrollPosition: scrollPosition,
-    );
+      var progress = 0.0;
+      if (_spine.isNotEmpty) {
+        final delta = 1.0 / _spine.length;
+        progress = (currentChapterIndex + 1) / _spine.length;
+        if (totalPagesInChapter > 0) {
+          progress -= delta;
+          progress +=
+              delta * ((currentPageInChapter + 1) / totalPagesInChapter);
+        }
+      }
+
+      await _shelfBookRepo.updateProgress(
+        bookId: _book!.id,
+        currentChapterIndex: currentChapterIndex,
+        progress: progress,
+        scrollPosition: scrollPosition,
+      );
+    });
   }
 
   /// Get anchors for a spine path as JSON array string
