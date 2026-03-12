@@ -299,8 +299,15 @@ export class EpubReader implements LuminaApi {
       if (!body) return;
 
       const rect = bestCandidate.rect;
-      const absoluteLeft = rect.x - body.scrollLeft + this.state.config.padding.left;
-      const absoluteTop = rect.y - body.scrollTop + this.state.config.padding.top;
+
+      let absoluteLeft = rect.x - body.scrollLeft;
+      let absoluteTop = rect.y - body.scrollTop;
+
+      const config = getDuokanTypConfig(iframe);
+      if (config.havePadding()) {
+        absoluteLeft += this.state.config.padding.left;
+        absoluteTop += this.state.config.padding.top;
+      }
 
       const baseUrl = iframe.contentDocument.baseURI || '';
 
@@ -680,15 +687,25 @@ export class EpubReader implements LuminaApi {
             // <a title="...">...</a>
             innerHtml = '<div class="footnote-content">' + link.getAttribute('title') + '</div>';
             isFootnote = true;
-          } else if (epubType === 'noteref') {
+          }
+        }
+
+        if (!isFootnote) {
+          if (epubType === 'noteref') {
             // <a epub:type="noteref" href="#note1">...</a>
             innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
             isFootnote = true;
-          } else if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
-            // <a class="duokan-footnote" href="#note1"> <img /> </a>
+          }
+        }
+
+        if (!isFootnote) {
+          if (link.classList.contains('duokan-footnote') && href && href.includes('#')) {
+            // <a class="duokan-footnote" href="#note1"> ... </a>
             const fullHref = link.href;
             let thisUrl = link.ownerDocument.location.href;
-            if (thisUrl.includes('#')) thisUrl = thisUrl.split('#')[0];
+            if (thisUrl.includes('#')) {
+              thisUrl = thisUrl.split('#')[0];
+            }
             if (fullHref === thisUrl || thisUrl === fullHref.split('#')[0]) {
               innerHtml = this.extractFootnoteHtml(this.extractTargetIdFromHref(href));
               isFootnote = true;
@@ -758,8 +775,8 @@ export class EpubReader implements LuminaApi {
 
     const config = getDuokanTypConfig(iframe);
 
-    let docX = x - body.scrollLeft;
-    let docY = y - body.scrollTop;
+    let docX = x + body.scrollLeft;
+    let docY = y + body.scrollTop;
 
     if (config.havePadding()) {
       docX -= this.state.config.padding.left;
