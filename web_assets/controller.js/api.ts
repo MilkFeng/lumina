@@ -3,7 +3,7 @@ import { Direction, FrameSlot, InitConfig, ThemeUpdate } from "./types";
 /** The interface exposed on `window.api` */
 export interface LuminaApi {
     init(config: InitConfig): void;
-    loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[]): void;
+    loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[], properties?: string[]): void;
     jumpToPage(token: number, pageIndex: number): void;
     jumpToPageFor(token: number, slot: FrameSlot, pageIndex: number): void;
     jumpToLastPageOfFrame(token: number, slot: FrameSlot): void;

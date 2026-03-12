@@ -37,8 +37,13 @@ class ReaderWebViewController {
     return await _webViewState?._jumpToPageFor(frame, pageIndex);
   }
 
-  Future<int?> loadFrame(String frame, String url, String anchors) async {
-    return await _webViewState?._loadFrame(frame, url, anchors);
+  Future<int?> loadFrame(
+    String frame,
+    String url,
+    String anchors,
+    String properties,
+  ) async {
+    return await _webViewState?._loadFrame(frame, url, anchors, properties);
   }
 
   Future<void> jumpToPage(int pageIndex) async {
@@ -219,8 +224,12 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Future<int> _jumpToPageFor(String frame, int pageIndex) =>
       _api.jumpToPageFor(frame, pageIndex);
 
-  Future<int> _loadFrame(String frame, String url, String anchors) =>
-      _api.loadFrame(frame, url, anchors);
+  Future<int> _loadFrame(
+    String frame,
+    String url,
+    String anchors,
+    String properties,
+  ) => _api.loadFrame(frame, url, anchors, properties);
 
   Future<void> _jumpToPage(int pageIndex) => _api.jumpToPage(pageIndex);
 

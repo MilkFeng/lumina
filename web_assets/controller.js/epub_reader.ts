@@ -23,6 +23,7 @@ export class EpubReader implements LuminaApi {
     constructor() {
         this.state = {
             anchors: { prev: [], curr: [], next: [] },
+            properties: { prev: [], curr: [], next: [] },
             quadTree: null,
             config: {
                 safeWidth: 0,
@@ -82,11 +83,12 @@ export class EpubReader implements LuminaApi {
         window.addEventListener('resize', this.onResize, { passive: true });
     }
 
-    loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[]): void {
+    loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[], properties?: string[]): void {
         const iframe = this.frameElement(slot);
         if (!iframe) return;
 
         this.state.anchors[slot] = anchors || [];
+        this.state.properties[slot] = properties || [];
         iframe.onload = null;
 
         if (iframe.src == null || iframe.src === '' || iframe.src === 'about:blank') {
@@ -359,6 +361,10 @@ export class EpubReader implements LuminaApi {
 
     private slotFromFrameId(frameId: string): FrameSlot {
         return (frameId ? frameId.replace('frame-', '') : '') as FrameSlot;
+    }
+
+    private slotFromFrameElement(iframe: HTMLIFrameElement): FrameSlot {
+        return this.slotFromFrameId(iframe.id);
     }
 
     private getWidth(): number { return this.state.config.safeWidth; }
@@ -872,6 +878,12 @@ export class EpubReader implements LuminaApi {
         body.classList.toggle('lumina-override-color', overrideColor);
         body.classList.toggle('lumina-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
         body.classList.toggle('lumina-override-font', !!(t.fontFileName));
+        if (iframe) {
+            const properties = this.state.properties[this.slotFromFrameElement(iframe!)] || [];
+            for (const prop of properties) {
+                doc.body.classList.toggle('lumina-spine-property-' + prop, true);
+            }
+        }
 
         const existingStyle = doc.getElementById(styleId);
         if (existingStyle) existingStyle.innerHTML = this.generateVariableStyle();
@@ -917,6 +929,11 @@ export class EpubReader implements LuminaApi {
                 );
                 doc.body.classList.toggle('lumina-override-font', !!(this.state.config.theme.fontFileName));
                 doc.body.classList.toggle('is-vertical', this.isVertical());
+
+                const properties = this.state.properties[this.slotFromFrameElement(iframe)] || [];
+                for (const prop of properties) {
+                    doc.body.classList.toggle('lumina-spine-property-' + prop, true);
+                }
 
                 const reflow = doc.body.scrollHeight; void reflow;
                 requestAnimationFrame(() => {
