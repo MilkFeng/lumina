@@ -99,6 +99,9 @@ final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
   supportZoom: false,
   useHybridComposition: false,
   resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
+  verticalScrollBarEnabled: false,
+  horizontalScrollBarEnabled: false,
+  overScrollMode: OverScrollMode.NEVER,
 );
 
 /// Callbacks for WebView events

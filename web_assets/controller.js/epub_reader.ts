@@ -13,6 +13,7 @@ import type {
 } from './types';
 import { LuminaApi } from './api';
 import { FlutterBridge } from './flutter_bridge';
+import { applyDuokanTyp } from './duokan_typ';
 
 export class EpubReader implements LuminaApi {
   state: ReaderState;
@@ -938,6 +939,7 @@ export class EpubReader implements LuminaApi {
         for (const prop of properties) {
           doc.body.classList.toggle('lumina-spine-property-' + prop, true);
         }
+        applyDuokanTyp(iframe);
 
         const reflow = doc.body.scrollHeight; void reflow;
         requestAnimationFrame(() => {

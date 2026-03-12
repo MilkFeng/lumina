@@ -7,9 +7,6 @@
 /* Override color styles */
 @import "./_color.css";
 
-/* Duokan typography support */
-@import "./_duokan_typ.css";
-
 html {
   box-sizing: border-box !important;
   margin: 0 !important;
@@ -148,3 +145,6 @@ figure {
 a {
   cursor: default !important;
 }
+
+/* Duokan typography support */
+@import "./_duokan_typ.css";
