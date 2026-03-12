@@ -324,9 +324,7 @@ export class EpubReader implements LuminaApi {
     if (iframe && iframe.contentDocument) {
       const doc = iframe.contentDocument;
       const bodyRect = doc.body.getBoundingClientRect();
-      const xx = x - this.state.config.padding.left;
-      const yy = y - this.state.config.padding.top;
-      const elementAtPoint = doc.elementFromPoint(xx, yy);
+      const elementAtPoint = doc.elementFromPoint(x, y);
       if (elementAtPoint) {
         const imgEl = elementAtPoint.closest('img, image') as HTMLImageElement | SVGImageElement | null;
         if (imgEl) {
@@ -339,8 +337,8 @@ export class EpubReader implements LuminaApi {
             const rect = imgEl.getBoundingClientRect();
             if (!rect || rect.width < 5 || rect.height < 5) return false;
 
-            const docX = rect.left - bodyRect.left + this.state.config.padding.left;
-            const docY = rect.top - bodyRect.top + this.state.config.padding.top;
+            const docX = rect.left - bodyRect.left;
+            const docY = rect.top - bodyRect.top;
 
             FlutterBridge.onImageLongPress(src, docX, docY, rect.width, rect.height);
             return true;
