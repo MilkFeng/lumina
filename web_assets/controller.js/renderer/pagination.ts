@@ -8,7 +8,6 @@ export class PaginationManager {
     private frameMgr: FrameManager
   ) { }
 
-
   calculatePageCount(iframe: HTMLIFrameElement | null): number {
     if (!iframe || !iframe.contentDocument) return 0;
     if (this.frameMgr.isVertical()) {
