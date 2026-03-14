@@ -69,7 +69,7 @@ class SettingsFontSection extends ConsumerWidget {
             vertical: 0,
           ),
           leading: Icon(
-            Icons.add,
+            Icons.add_outlined,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           title: Text(l10n.importFont),

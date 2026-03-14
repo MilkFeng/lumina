@@ -276,7 +276,7 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                                       );
                                     }
                                     return Icon(
-                                      Icons.broken_image,
+                                      Icons.broken_image_outlined,
                                       color: widget
                                           .epubTheme
                                           .colorScheme
