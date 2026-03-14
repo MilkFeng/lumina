@@ -4,6 +4,10 @@ div[epub\:type~="footnote"] {
   display: none !important;
 }
 
+note aside {
+  display: none !important;
+}
+
 [role~="doc-footnote"],
 [role~="doc-endnote"] {
   display: none !important;

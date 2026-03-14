@@ -42,9 +42,9 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
 
       final uri = Uri.tryParse(url);
 
-      if (uri != null && await canLaunchUrl(uri)) {
+      if (uri != null && await UrlLauncher.canLaunch(uri)) {
         if (linkHandling == ReaderLinkHandling.always) {
-          await launchUrl(uri);
+          await UrlLauncher.launch(uri);
         } else if (linkHandling == ReaderLinkHandling.ask) {
           if (mounted && context.mounted) {
             final themeData = getEpubTheme().themeData;
@@ -78,7 +78,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
                 false;
 
             if (shouldOpen) {
-              await launchUrl(uri);
+              await UrlLauncher.launch(uri);
             }
           }
         }

@@ -1,4 +1,4 @@
-/** Typed wrapper around every `window.flutter_inappwebview.callHandler` call. */
+/// Typed wrapper around every `window.flutter_inappwebview.callHandler` call
 export class FlutterBridge {
   static onViewportResize(): void {
     window.flutter_inappwebview.callHandler('onViewportResize');

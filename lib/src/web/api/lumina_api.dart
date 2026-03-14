@@ -78,8 +78,8 @@ class LuminaApi {
   // ─── Fire-and-forget ───────────────────────────────────────────────
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y).
-  Future<void> checkElementAt(double x, double y) =>
-      _bridge.evaluate('window.api.checkElementAt($x, $y)');
+  Future<void> checkLongPressElementAt(double x, double y) =>
+      _bridge.evaluate('window.api.checkLongPressElementAt($x, $y)');
 
   /// Checks whether the tap at (x, y) hits a link, footnote, or other element.
   Future<void> checkTapElementAt(double x, double y) =>

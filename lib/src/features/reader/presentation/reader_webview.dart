@@ -54,8 +54,8 @@ class ReaderWebViewController {
     await _webViewState?._restoreScrollPosition(ratio);
   }
 
-  Future<void> checkElementAt(double x, double y) async {
-    await _webViewState?._checkElementAt(x, y);
+  Future<void> checkLongPressElementAt(double x, double y) async {
+    await _webViewState?._checkLongPressElementAt(x, y);
   }
 
   Future<void> checkTapElementAt(double x, double y) async {
@@ -239,7 +239,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Future<void> _restoreScrollPosition(double ratio) =>
       _api.restoreScrollPosition(ratio);
 
-  Future<void> _checkElementAt(double x, double y) => _api.checkElementAt(x, y);
+  Future<void> _checkLongPressElementAt(double x, double y) =>
+      _api.checkLongPressElementAt(x, y);
 
   Future<void> _checkTapElementAt(double x, double y) =>
       _api.checkTapElementAt(x, y);

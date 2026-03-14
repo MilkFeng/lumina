@@ -11,6 +11,7 @@
   },
   "include": [
     "*.ts",
-    "**/*.d.ts"
-, "typ/duokan_typ.ts", "typ/typ_common.ts", "typ/typ.ts", "typ/rendition_typ.ts"  ]
+    "**/*.d.ts",
+    "**/*.ts"
+  ]
 }

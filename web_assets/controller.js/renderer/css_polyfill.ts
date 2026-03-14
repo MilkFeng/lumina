@@ -1,4 +1,4 @@
-import type { WebKitCSSStyle } from './types';
+import type { WebKitCSSStyle } from '../common/types';
 
 // ─── Resource Loading ─────────────────────────────────────────────────
 
