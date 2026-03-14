@@ -1,4 +1,3 @@
-import { QuadTree, Rect } from '../quad_tree';
 import {
   waitForAllResources,
   polyfillCss,
@@ -6,24 +5,25 @@ import {
 import type {
   FrameSlot,
   ReaderState,
-  InteractionItem,
   InitConfig,
   ThemeUpdate,
   Direction
 } from '../types';
 import { LuminaApi } from '../api';
 import { FlutterBridge } from '../flutter_bridge';
-import { applyTyp, getTypConfig } from '../typ/typ';
+import { applyTyp } from '../typ/typ';
 import { FrameManager } from './frame_manager';
 import { PaginationManager } from './pagination';
 import { InteractionManager } from './interaction';
+import { ThemeManager } from './theme_manager';
 
-export class EpubRenderer implements LuminaApi {
-  state: ReaderState;
+export class Renderer implements LuminaApi {
+  private state: ReaderState;
 
   private frameMgr: FrameManager;
   private paginationMgr: PaginationManager;
   private interactionMgr: InteractionManager;
+  private themeMgr: ThemeManager;
 
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
   private onResize: (ev: UIEvent) => void;
@@ -58,6 +58,7 @@ export class EpubRenderer implements LuminaApi {
     this.frameMgr = new FrameManager(this.state);
     this.paginationMgr = new PaginationManager(this.state, this.frameMgr);
     this.interactionMgr = new InteractionManager(this.state, this.frameMgr);
+    this.themeMgr = new ThemeManager(this.state, this.frameMgr);
 
     this.resizeDebounceTimer = null;
     this.onResize = (ev: UIEvent) => {
@@ -89,7 +90,7 @@ export class EpubRenderer implements LuminaApi {
     };
     this.state.config.theme = config.theme;
 
-    this.updateCSSVariables(document, 'skeleton-variable-style');
+    this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
     window.removeEventListener('resize', this.onResize);
     window.addEventListener('resize', this.onResize, { passive: true });
   }
@@ -197,26 +198,8 @@ export class EpubRenderer implements LuminaApi {
   }
 
   updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {
-    this.state.config.safeWidth = Math.floor(viewWidth);
-    this.state.config.safeHeight = Math.floor(viewHeight);
-    this.state.config.padding = {
-      top: newTheme.padding.top,
-      left: newTheme.padding.left,
-    };
-    this.state.config.theme.zoom = newTheme.zoom;
-    this.state.config.theme.shouldOverrideTextColor = newTheme.shouldOverrideTextColor;
-    this.state.config.theme.fontFileName = newTheme.fontFileName || null;
-    this.state.config.theme.overrideFontFamily = newTheme.overrideFontFamily || false;
-    this.state.config.theme.primaryColor = newTheme.overridePrimaryColor || newTheme.primaryColor;
-    this.state.config.theme.primaryContainerColor = newTheme.primaryContainerColor;
-    this.state.config.theme.surfaceColor = newTheme.surfaceColor;
-    this.state.config.theme.onSurfaceColor = newTheme.onSurfaceColor;
-    this.state.config.theme.onSurfaceVariantColor = newTheme.onSurfaceVariantColor;
-    this.state.config.theme.outlineVariantColor = newTheme.outlineVariantColor;
-    this.state.config.theme.surfaceContainerColor = newTheme.surfaceContainerColor;
-    this.state.config.theme.surfaceContainerHighColor = newTheme.surfaceContainerHighColor;
-
-    this.updateCSSVariables(document, 'skeleton-variable-style');
+    this.themeMgr.updateThemeState(viewWidth, viewHeight, newTheme);
+    this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
 
     const iframes = document.getElementsByTagName('iframe');
     for (let i = 0; i < iframes.length; i++) {
@@ -226,7 +209,7 @@ export class EpubRenderer implements LuminaApi {
         const pageIndex = this.paginationMgr.calculateCurrentPageIndex();
         const pageCount = this.paginationMgr.calculatePageCount(iframe);
         const pageIndexPercentage = pageCount > 0 ? pageIndex / pageCount : 0;
-        this.updateCSSVariables(doc, 'injected-variable-style', iframe);
+        this.themeMgr.updateCSSVariables(doc, 'injected-variable-style', iframe);
         requestAnimationFrame(() => {
           this.reloadFrame(iframe, pageIndexPercentage, token);
         });
@@ -242,129 +225,16 @@ export class EpubRenderer implements LuminaApi {
     });
   }
 
-  private getOriginalBackgroundColor(iframe: HTMLIFrameElement): string | null {
-    if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return null;
-    try {
-      const window = iframe.contentWindow!;
-      const body = iframe.contentDocument.body;
-      if (!body) {
-        console.warn('Iframe body is null, possibly not fully loaded or not an HTML document.');
-        return null;
-      }
-      const bgColor = window.getComputedStyle(body).backgroundColor;
-      if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-        return bgColor;
-      }
-    } catch (e) {
-      console.warn('Failed to get original background color from iframe:', e);
-      return null;
-    }
-    return null;
-  }
-
-  // ─── CSS Variables ─────────────────────────────────────────────────
-
-  private generateVariableStyle(): string {
-    const cfg = this.state.config;
-    const t = cfg.theme;
-    const isV = this.frameMgr.isVertical();
-
-    const fontFaceBlock = t.fontFileName
-      ? `@font-face { font-family: 'LuminaCustomFont'; src: url('epub://localhost/fonts/${t.fontFileName}'); }`
-      : '';
-    const fontFamilyItem = t.fontFileName ? `--lumina-font-family: 'LuminaCustomFont';` : '';
-
-    return fontFaceBlock + ' :root {'
-      + `--lumina-zoom: ${t.zoom};`
-      + `--lumina-safe-width: ${cfg.safeWidth}px;`
-      + `--lumina-safe-height: ${cfg.safeHeight}px;`
-      + `--lumina-padding-top: ${cfg.padding.top}px;`
-      + `--lumina-padding-left: ${cfg.padding.left}px;`
-      + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
-      + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
-      + `--lumina-surface-color: ${t.surfaceColor};`
-      + `--lumina-on-surface-color: ${t.onSurfaceColor};`
-      + `--lumina-primary-color: ${t.primaryColor};`
-      + `--lumina-primary-container-color: ${t.primaryContainerColor};`
-      + `--lumina-on-surface-variant-color: ${t.onSurfaceVariantColor};`
-      + `--lumina-outline-variant-color: ${t.outlineVariantColor};`
-      + `--lumina-surface-container-color: ${t.surfaceContainerColor};`
-      + `--lumina-surface-container-high-color: ${t.surfaceContainerHighColor};`
-      + fontFamilyItem
-      + '}';
-  }
-
-  private updateCSSVariables(
-    doc: Document,
-    styleId: string = 'injected-variable-style',
-    iframe: HTMLIFrameElement | null = null
-  ): void {
-    const root = doc.documentElement;
-    const body = doc.body;
-    const cfg = this.state.config;
-    const t = cfg.theme;
-    const isV = this.frameMgr.isVertical();
-
-    root.style.setProperty('--lumina-zoom', String(t.zoom));
-    root.style.setProperty('--lumina-safe-width', cfg.safeWidth + 'px');
-    root.style.setProperty('--lumina-safe-height', cfg.safeHeight + 'px');
-    root.style.setProperty('--lumina-padding-top', cfg.padding.top + 'px');
-    root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
-    root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
-    root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
-    root.style.setProperty('--lumina-surface-color', t.surfaceColor);
-    root.style.setProperty('--lumina-on-surface-color', t.onSurfaceColor);
-    root.style.setProperty('--lumina-primary-color', t.primaryColor);
-    root.style.setProperty('--lumina-primary-container', t.primaryContainerColor);
-    root.style.setProperty('--lumina-on-surface-variant', t.onSurfaceVariantColor);
-    root.style.setProperty('--lumina-outline-variant', t.outlineVariantColor);
-    root.style.setProperty('--lumina-surface-container', t.surfaceContainerColor);
-    root.style.setProperty('--lumina-surface-container-high', t.surfaceContainerHighColor);
-
-    const overrideColor = iframe != null
-      ? t.shouldOverrideTextColor && this.getOriginalBackgroundColor(iframe) == null
-      : t.shouldOverrideTextColor;
-
-    body.classList.toggle('lumina-override-color', overrideColor);
-    body.classList.toggle('lumina-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
-    body.classList.toggle('lumina-override-font', !!(t.fontFileName));
-
-    const existingStyle = doc.getElementById(styleId);
-    if (existingStyle) existingStyle.innerHTML = this.generateVariableStyle();
-  }
-
-  // ─── Frame Loading ─────────────────────────────────────────────────
-
   private onFrameLoad(iframe: HTMLIFrameElement, token: number): void {
     if (!iframe || !iframe.contentDocument) return;
 
     const doc = iframe.contentDocument;
-
-    const existingVariableStyle = doc.getElementById('injected-variable-style');
-    if (existingVariableStyle) {
-      existingVariableStyle.innerHTML = this.generateVariableStyle();
-      this.updateCSSVariables(doc, 'injected-variable-style', iframe);
-    } else {
-      const variableStyle = doc.createElement('style');
-      variableStyle.id = 'injected-variable-style';
-      variableStyle.innerHTML = this.generateVariableStyle();
-      doc.head.appendChild(variableStyle);
-    }
-
-    const existingPaginationStyle = doc.getElementById('injected-pagination-style');
-    if (existingPaginationStyle) {
-      existingPaginationStyle.innerHTML = this.state.config.theme.paginationCss;
-    } else {
-      const style = doc.createElement('style');
-      style.id = 'injected-pagination-style';
-      style.innerHTML = this.state.config.theme.paginationCss;
-      doc.head.appendChild(style);
-    }
+    this.themeMgr.injectInitialStyles(doc, iframe);
 
     waitForAllResources(doc).then(() => {
       if (!iframe.contentWindow) return;
       requestAnimationFrame(() => {
-        const originalBgColor = this.getOriginalBackgroundColor(iframe);
+        const originalBgColor = this.themeMgr.getOriginalBackgroundColor(iframe);
         const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor && originalBgColor == null;
         doc.body.classList.toggle('lumina-override-color', shouldOverrideColor);
         doc.body.classList.toggle(
@@ -429,7 +299,7 @@ export class EpubRenderer implements LuminaApi {
     waitForAllResources(iframe.contentDocument).then(() => {
       const doc = iframe.contentDocument!;
       const overrideColor = this.state.config.theme.shouldOverrideTextColor
-        && this.getOriginalBackgroundColor(iframe) == null;
+        && this.themeMgr.getOriginalBackgroundColor(iframe) == null;
       polyfillCss(doc, overrideColor);
 
       const reflow = doc.body.scrollHeight; void reflow;
