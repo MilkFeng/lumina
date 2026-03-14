@@ -1,6 +1,6 @@
 ﻿import { LuminaApi } from './api';
-import { EpubReader } from './epub_reader';
+import { EpubRenderer } from './renderer/epub_renderer';
 
-const api: LuminaApi = new EpubReader();
+const api: LuminaApi = new EpubRenderer();
 window.api = api;
 

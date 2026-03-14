@@ -1,8 +1,8 @@
-import { QuadTree, Rect } from './quad_tree';
+import { QuadTree, Rect } from '../quad_tree';
 import {
   waitForAllResources,
   polyfillCss,
-} from './css_polyfill';
+} from '../css_polyfill';
 import type {
   FrameSlot,
   ReaderState,
@@ -10,12 +10,12 @@ import type {
   InitConfig,
   ThemeUpdate,
   Direction
-} from './types';
-import { LuminaApi } from './api';
-import { FlutterBridge } from './flutter_bridge';
-import { applyTyp, getTypConfig } from './typ/typ';
+} from '../types';
+import { LuminaApi } from '../api';
+import { FlutterBridge } from '../flutter_bridge';
+import { applyTyp, getTypConfig } from '../typ/typ';
 
-export class EpubReader implements LuminaApi {
+export class EpubRenderer implements LuminaApi {
   state: ReaderState;
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
   private onResize: (ev: UIEvent) => void;
