@@ -1,16 +1,16 @@
 import {
   waitForAllResources,
   polyfillCss,
-} from '../css_polyfill';
+} from './css_polyfill';
 import type {
   FrameSlot,
   ReaderState,
   InitConfig,
   ThemeUpdate,
   Direction
-} from '../types';
-import { LuminaApi } from '../api';
-import { FlutterBridge } from '../flutter_bridge';
+} from '../common/types';
+import { LuminaApi } from '../api/lumina_api';
+import { FlutterBridge } from '../api/flutter_bridge';
 import { applyTyp } from '../typ/typ';
 import { FrameManager } from './frame_manager';
 import { PaginationManager } from './pagination';

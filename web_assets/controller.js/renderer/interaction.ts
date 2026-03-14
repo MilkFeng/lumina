@@ -1,6 +1,6 @@
-import { QuadTree, Rect } from '../quad_tree';
-import type { ReaderState, InteractionItem } from '../types';
-import { FlutterBridge } from '../flutter_bridge';
+import { QuadTree, Rect } from '../common/quad_tree';
+import type { ReaderState, InteractionItem } from '../common/types';
+import { FlutterBridge } from '../api/flutter_bridge';
 import { getTypConfig } from '../typ/typ';
 import { FrameManager } from './frame_manager';
 

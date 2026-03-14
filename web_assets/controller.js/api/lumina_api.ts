@@ -1,4 +1,4 @@
-import { Direction, FrameSlot, InitConfig, ThemeUpdate } from "./types";
+import { Direction, FrameSlot, InitConfig, ThemeUpdate } from "../common/types";
 
 /// The interface exposed on `window.api`
 export interface LuminaApi {

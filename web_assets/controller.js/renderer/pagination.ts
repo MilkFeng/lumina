@@ -1,6 +1,6 @@
-import type { ReaderState } from '../types';
+import type { ReaderState } from '../common/types';
 import { FrameManager } from './frame_manager';
-import { FlutterBridge } from '../flutter_bridge';
+import { FlutterBridge } from '../api/flutter_bridge';
 
 export class PaginationManager {
   constructor(

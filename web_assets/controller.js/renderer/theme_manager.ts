@@ -1,4 +1,4 @@
-import type { ReaderState, ThemeUpdate } from '../types';
+import type { ReaderState, ThemeUpdate } from '../common/types';
 import { FrameManager } from './frame_manager';
 
 export class ThemeManager {

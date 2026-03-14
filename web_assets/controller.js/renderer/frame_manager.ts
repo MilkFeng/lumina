@@ -1,4 +1,4 @@
-import type { ReaderState, FrameSlot, Direction } from '../types';
+import type { ReaderState, FrameSlot, Direction } from '../common/types';
 
 export class FrameManager {
   constructor(private state: ReaderState) { }
