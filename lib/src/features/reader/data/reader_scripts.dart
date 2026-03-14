@@ -30,6 +30,7 @@ String generateSkeletonHtml(
     'theme': {
       'zoom': theme.zoom,
       'paginationCss': kPaginationCss,
+
       'shouldOverrideTextColor': theme.shouldOverrideTextColor,
       'primaryColor': colorToHex(primaryColor),
       'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
@@ -39,6 +40,7 @@ String generateSkeletonHtml(
       'outlineVariantColor': colorToHex(colorScheme.outlineVariant),
       'surfaceContainerColor': colorToHex(colorScheme.surfaceContainer),
       'surfaceContainerHighColor': colorToHex(colorScheme.surfaceContainerHigh),
+
       'fontFileName': theme.fontFileName,
       'overrideFontFamily': theme.overrideFontFamily,
     },

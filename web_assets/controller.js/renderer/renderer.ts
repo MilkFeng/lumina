@@ -193,8 +193,8 @@ export class Renderer implements LuminaApi {
   checkTapElementAt(x: number, y: number): void {
     this.interactionMgr.checkTapElementAt(x, y);
   }
-  checkElementAt(x: number, y: number): void {
-    this.interactionMgr.checkElementAt(x, y);
+  checkLongPressElementAt(x: number, y: number): void {
+    this.interactionMgr.checkLongPressElementAt(x, y);
   }
 
   updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {

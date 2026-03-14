@@ -304,7 +304,7 @@ export class InteractionManager {
     return false;
   }
 
-  checkElementAt(x: number, y: number): void {
+  checkLongPressElementAt(x: number, y: number): void {
     this.checkImageAt(x, y);
   }
 

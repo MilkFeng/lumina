@@ -347,7 +347,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   }
 
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
-    await _webViewController.checkElementAt(
+    await _webViewController.checkLongPressElementAt(
       details.localPosition.dx,
       details.localPosition.dy,
     );
