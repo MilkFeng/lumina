@@ -136,7 +136,7 @@ jobs:
           zip -q -r build/outputs/$NAME_STORE Payload
           echo "Generated $NAME_STORE"
 
-          rm -rf Payload build/ios
+          rm -rf Payload
 
       - name: Build IPA (Unsigned)
         run: |
