@@ -57,9 +57,9 @@ jobs:
       - name: Create Output Dir
         run: mkdir -p build/outputs
 
-      - name: Build App Bundle
+      - name: Build App Bundle (Store)
         run: |
-          flutter build appbundle --release
+          flutter build appbundle --release --dart-define=IS_STORE_VERSION=true
           
           NEW_NAME="lumina-${{ github.ref_name }}-bundle-release.aab"
           
@@ -68,7 +68,7 @@ jobs:
 
       - name: Build Universal APK
         run: |
-          flutter build apk --release
+          flutter build apk --release --dart-define=IS_STORE_VERSION=false
           
           NEW_NAME="lumina-${{ github.ref_name }}-universal-release.apk"
           
@@ -77,7 +77,7 @@ jobs:
 
       - name: Build Split APKs
         run: |
-          flutter build apk --release --split-per-abi
+          flutter build apk --release --split-per-abi --dart-define=IS_STORE_VERSION=false
           
           cd build/app/outputs/flutter-apk/
           for file in app-*-release.apk; do
@@ -122,23 +122,38 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
-      - name: Build IPA (Unsigned)
-        run: flutter build ios --release --no-codesign
+      - name: Create Output Dir
+        run: mkdir -p build/outputs
 
-      - name: Package into IPA
+      - name: Build IPA (Unsigned, Store)
         run: |
-          mkdir Payload
-          mv build/ios/iphoneos/Runner.app Payload/
+          flutter build ios --release --no-codesign --dart-define=IS_STORE_VERSION=true
 
-          NAME="lumina-${{ github.ref_name }}-ios-unsigned.ipa"
-          zip -r $NAME Payload
-          echo "Generated $NAME"
+          mkdir -p Payload
+          mv build/ios/iphoneos/Runner.app Payload/
+          NAME_STORE="lumina-${{ github.ref_name }}-ios-store-unsigned.ipa"
+
+          zip -q -r build/outputs/$NAME_STORE Payload
+          echo "Generated $NAME_STORE"
+
+          rm -rf Payload build/ios
+
+      - name: Build IPA (Unsigned)
+        run: |
+          flutter build ios --release --no-codesign --dart-define=IS_STORE_VERSION=false
+
+          mkdir -p Payload
+          mv build/ios/iphoneos/Runner.app Payload/
+          NAME_SIDELOAD="lumina-${{ github.ref_name }}-ios-sideload-unsigned.ipa"
+
+          zip -q -r build/outputs/$NAME_SIDELOAD Payload
+          echo "Generated $NAME_SIDELOAD"
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-artifacts
-          path: lumina-${{ github.ref_name }}-ios-unsigned.ipa
+          path: build/outputs/*.ipa
 
   create-release:
     name: Create GitHub Release

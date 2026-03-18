@@ -16,6 +16,11 @@ import 'package:lumina/src/features/settings/presentation/widgets/clean_cache_ti
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../l10n/app_localizations.dart';
 
+const bool _isStoreVersion = bool.fromEnvironment(
+  'IS_STORE_VERSION',
+  defaultValue: false,
+);
+
 /// Settings Screen - Shows app information, tips and credits
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -128,7 +133,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       subtitle: l10n.openSourceLicensesSubtitle,
                     ),
-                    const CheckUpdateTile(),
+                    if (!_isStoreVersion) const CheckUpdateTile(),
                   ],
                 ),
 
