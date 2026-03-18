@@ -146,5 +146,10 @@ a {
   cursor: default !important;
 }
 
+* {
+  max-height: 1000000px;
+  max-width: 1000000px;
+}
+
 /* Duokan typography support */
 @import "./_duokan_typ.css";
