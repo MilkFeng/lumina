@@ -101,3 +101,4 @@ flutter:
   assets:
     - assets/icons/icon.svg
     - assets/logos/logo.svg
+    - assets/licenses/rust_licenses.json

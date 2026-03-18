@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -54,6 +57,21 @@ void main() async {
   // Initialize Isar database
   await container.read(isarProvider.future);
   container.read(epubStreamServiceProvider);
+
+  // Register Rust licenses
+  LicenseRegistry.addLicense(() async* {
+    final jsonString = await rootBundle.loadString(
+      'assets/licenses/rust_licenses.json',
+    );
+    final List<dynamic> licenses = jsonDecode(jsonString);
+
+    for (var license in licenses) {
+      final List<String> crates = List<String>.from(license['crates']);
+      final String text = license['text'];
+
+      yield LicenseEntryWithLineBreaks(crates, text);
+    }
+  });
 
   runApp(
     UncontrolledProviderScope(
