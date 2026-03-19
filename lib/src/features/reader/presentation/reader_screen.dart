@@ -197,6 +197,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             .read(readerSettingsNotifierProvider)
             .volumeKeyTurnsPage;
         if (isVolumeTurnEnabled) {
+          // If footnote overlay is open, volume keys should close it instead of turning page
+          if (footnoteOverlayEntry != null) {
+            removeFootnoteOverlay();
+            return;
+          }
           if (event == 'up') {
             rendererController.performPreviousPageTurn();
           } else if (event == 'down') {
