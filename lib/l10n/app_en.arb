@@ -1223,6 +1223,11 @@
     "description": "Page animation option: slide/swipe transition"
   },
 
+  "readerPageAnimationScroll": "Scroll",
+  "@readerPageAnimationScroll": {
+    "description": "Page animation option: continuous vertical scroll"
+  },
+
   "readerVolumeKeyTurnsPage": "Volume Keys Turn Pages",
   "@readerVolumeKeyTurnsPage": {
     "description": "Toggle label to use hardware volume keys for page turning"

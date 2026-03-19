@@ -1233,6 +1233,11 @@
     "description": "翻页动画选项：滑动过渡"
   },
 
+  "readerPageAnimationScroll": "滚动翻页",
+  "@readerPageAnimationScroll": {
+    "description": "翻页动画选项：连续滚动"
+  },
+
   "readerVolumeKeyTurnsPage": "用音量键翻页",
   "@readerVolumeKeyTurnsPage": {
     "description": "开关标签：使用硬件音量键翻页"

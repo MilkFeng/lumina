@@ -6,7 +6,7 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 enum ReaderLinkHandling { ask, always, never }
 
 /// Controls the page-turning animation style.
-enum ReaderPageAnimation { none, slide }
+enum ReaderPageAnimation { none, slide, scroll }
 
 class ReaderSettings {
   final double zoom;

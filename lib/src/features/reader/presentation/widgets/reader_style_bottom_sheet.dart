@@ -326,6 +326,7 @@ class _ReaderStyleBottomSheetState
                   },
                   noneLabel: l10n.readerPageAnimationNone,
                   slideLabel: l10n.readerPageAnimationSlide,
+                  scrollLabel: l10n.readerPageAnimationScroll,
                 ),
                 const SizedBox(height: 12),
                 if (Platform.isAndroid)

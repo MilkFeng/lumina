@@ -1370,6 +1370,12 @@ abstract class AppLocalizations {
   /// **'Slide'**
   String get readerPageAnimationSlide;
 
+  /// Page animation option: continuous vertical scroll
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll'**
+  String get readerPageAnimationScroll;
+
   /// Toggle label to use hardware volume keys for page turning
   ///
   /// In en, this message translates to:

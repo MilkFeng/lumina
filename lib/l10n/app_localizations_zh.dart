@@ -708,6 +708,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerPageAnimationSlide => '滑动翻页';
 
   @override
+  String get readerPageAnimationScroll => '滚动翻页';
+
+  @override
   String get readerVolumeKeyTurnsPage => '用音量键翻页';
 
   @override

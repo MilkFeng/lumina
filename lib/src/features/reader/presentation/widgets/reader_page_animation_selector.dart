@@ -13,12 +13,14 @@ class ReaderPageAnimationSelector extends StatelessWidget {
     required this.onChanged,
     required this.noneLabel,
     required this.slideLabel,
+    required this.scrollLabel,
   });
 
   final ReaderPageAnimation value;
   final ValueChanged<ReaderPageAnimation> onChanged;
   final String noneLabel;
   final String slideLabel;
+  final String scrollLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +38,13 @@ class ReaderPageAnimationSelector extends StatelessWidget {
           label: slideLabel,
           isSelected: value == ReaderPageAnimation.slide,
           onTap: () => onChanged(ReaderPageAnimation.slide),
+        ),
+        const SizedBox(width: 8),
+        SegmentedOptionChip(
+          icon: Icons.swipe_vertical_outlined,
+          label: scrollLabel,
+          isSelected: value == ReaderPageAnimation.scroll,
+          onTap: () => onChanged(ReaderPageAnimation.scroll),
         ),
       ],
     );
