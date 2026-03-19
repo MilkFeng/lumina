@@ -59,13 +59,21 @@ export class ThemeManager {
       + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
       + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
       + `--lumina-surface-color: ${colorToHex(t.surfaceColor)};`
+      + `--lumina-surface-color-rgb: ${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b};`
       + `--lumina-on-surface-color: ${colorToHex(t.onSurfaceColor)};`
+      + `--lumina-on-surface-color-rgb: ${t.onSurfaceColor.r}, ${t.onSurfaceColor.g}, ${t.onSurfaceColor.b};`
       + `--lumina-primary-color: ${colorToHex(t.primaryColor)};`
+      + `--lumina-primary-color-rgb: ${t.primaryColor.r}, ${t.primaryColor.g}, ${t.primaryColor.b};`
       + `--lumina-primary-container-color: ${colorToHex(t.primaryContainerColor)};`
+      + `--lumina-primary-container-color-rgb: ${t.primaryContainerColor.r}, ${t.primaryContainerColor.g}, ${t.primaryContainerColor.b};`
       + `--lumina-on-surface-variant-color: ${colorToHex(t.onSurfaceVariantColor)};`
+      + `--lumina-on-surface-variant-color-rgb: ${t.onSurfaceVariantColor.r}, ${t.onSurfaceVariantColor.g}, ${t.onSurfaceVariantColor.b};`
       + `--lumina-outline-variant-color: ${colorToHex(t.outlineVariantColor)};`
+      + `--lumina-outline-variant-color-rgb: ${t.outlineVariantColor.r}, ${t.outlineVariantColor.g}, ${t.outlineVariantColor.b};`
       + `--lumina-surface-container-color: ${colorToHex(t.surfaceContainerColor)};`
+      + `--lumina-surface-container-color-rgb: ${t.surfaceContainerColor.r}, ${t.surfaceContainerColor.g}, ${t.surfaceContainerColor.b};`
       + `--lumina-surface-container-high-color: ${colorToHex(t.surfaceContainerHighColor)};`
+      + `--lumina-surface-container-high-color-rgb: ${t.surfaceContainerHighColor.r}, ${t.surfaceContainerHighColor.g}, ${t.surfaceContainerHighColor.b};`
       + fontFamilyItem
       + '}';
   }
@@ -89,13 +97,21 @@ export class ThemeManager {
     root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
     root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
     root.style.setProperty('--lumina-surface-color', colorToHex(t.surfaceColor));
+    root.style.setProperty('--lumina-surface-color-rgb', `${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b}`);
     root.style.setProperty('--lumina-on-surface-color', colorToHex(t.onSurfaceColor));
+    root.style.setProperty('--lumina-on-surface-color-rgb', `${t.onSurfaceColor.r}, ${t.onSurfaceColor.g}, ${t.onSurfaceColor.b}`);
     root.style.setProperty('--lumina-primary-color', colorToHex(t.primaryColor));
-    root.style.setProperty('--lumina-primary-container', colorToHex(t.primaryContainerColor));
-    root.style.setProperty('--lumina-on-surface-variant', colorToHex(t.onSurfaceVariantColor));
-    root.style.setProperty('--lumina-outline-variant', colorToHex(t.outlineVariantColor));
-    root.style.setProperty('--lumina-surface-container', colorToHex(t.surfaceContainerColor));
-    root.style.setProperty('--lumina-surface-container-high', colorToHex(t.surfaceContainerHighColor));
+    root.style.setProperty('--lumina-primary-color-rgb', `${t.primaryColor.r}, ${t.primaryColor.g}, ${t.primaryColor.b}`);
+    root.style.setProperty('--lumina-primary-container-color', colorToHex(t.primaryContainerColor));
+    root.style.setProperty('--lumina-primary-container-color-rgb', `${t.primaryContainerColor.r}, ${t.primaryContainerColor.g}, ${t.primaryContainerColor.b}`);
+    root.style.setProperty('--lumina-on-surface-variant-color', colorToHex(t.onSurfaceVariantColor));
+    root.style.setProperty('--lumina-on-surface-variant-color-rgb', `${t.onSurfaceVariantColor.r}, ${t.onSurfaceVariantColor.g}, ${t.onSurfaceVariantColor.b}`);
+    root.style.setProperty('--lumina-outline-variant-color', colorToHex(t.outlineVariantColor));
+    root.style.setProperty('--lumina-outline-variant-color-rgb', `${t.outlineVariantColor.r}, ${t.outlineVariantColor.g}, ${t.outlineVariantColor.b}`);
+    root.style.setProperty('--lumina-surface-container-color', colorToHex(t.surfaceContainerColor));
+    root.style.setProperty('--lumina-surface-container-color-rgb', `${t.surfaceContainerColor.r}, ${t.surfaceContainerColor.g}, ${t.surfaceContainerColor.b}`);
+    root.style.setProperty('--lumina-surface-container-high-color', colorToHex(t.surfaceContainerHighColor));
+    root.style.setProperty('--lumina-surface-container-high-color-rgb', `${t.surfaceContainerHighColor.r}, ${t.surfaceContainerHighColor.g}, ${t.surfaceContainerHighColor.b}`);
 
     const overrideColor = iframe != null
       ? t.shouldOverrideTextColor && !this.haveBackground(iframe)

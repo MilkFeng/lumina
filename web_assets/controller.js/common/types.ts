@@ -38,6 +38,57 @@ export function colorToHex(color: Color): string {
 export const WhiteColor: Color = { r: 255, g: 255, b: 255, a: 1 };
 export const BlackColor: Color = { r: 0, g: 0, b: 0, a: 1 };
 
+/// Parses a CSS color string (hex or rgb/rgba) into a Color object. Returns null if parsing fails.
+export function parseColorString(colorStr: string): Color | null {
+  const str = colorStr.trim().toLowerCase();
+
+  if (str === 'transparent') {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
+
+  const hexMatch = str.match(/^#?([a-f\d]{3,8})$/);
+  if (hexMatch) {
+    let hex = hexMatch[1];
+    if (hex.length === 3 || hex.length === 4) {
+      hex = hex.split('').map(char => char + char).join('');
+    }
+
+    if (hex.length === 6 || hex.length === 8) {
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      if (hex.length === 8) {
+        const a = Math.round((parseInt(hex.substring(6, 8), 16) / 255) * 100) / 100;
+        return { r, g, b, a };
+      }
+      return { r, g, b };
+    }
+  }
+
+  const rgbMatch = str.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*([\d.]+))?\s*\)$/);
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1], 10);
+    const g = parseInt(rgbMatch[2], 10);
+    const b = parseInt(rgbMatch[3], 10);
+
+    if (r > 255 || g > 255 || b > 255) {
+      return null;
+    }
+
+    if (rgbMatch[4] !== undefined) {
+      const a = parseFloat(rgbMatch[4]);
+      if (a >= 0 && a <= 1) {
+        return { r, g, b, a };
+      }
+      return null;
+    }
+
+    return { r, g, b };
+  }
+
+  return null;
+}
+
 export interface ReaderTheme {
   zoom: number;
   surfaceColor: Color;

@@ -14,7 +14,7 @@ import { FrameManager } from './frame_manager';
 import { PaginationManager } from './pagination';
 import { InteractionManager } from './interaction';
 import { ThemeManager } from './theme_manager';
-import { PolyfillManager } from './css_polyfill';
+import { CssPolyfillManager } from './css_polyfill';
 import { ResourceManager } from './resource_manager';
 
 export class Renderer implements LuminaApi {
@@ -24,7 +24,7 @@ export class Renderer implements LuminaApi {
   private paginationMgr: PaginationManager;
   private interactionMgr: InteractionManager;
   private themeMgr: ThemeManager;
-  private polyfillMgr: PolyfillManager;
+  private polyfillMgr: CssPolyfillManager;
   private resourceMgr: ResourceManager;
 
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
@@ -63,7 +63,7 @@ export class Renderer implements LuminaApi {
     this.paginationMgr = new PaginationManager(this.state, this.frameMgr);
     this.interactionMgr = new InteractionManager(this.state, this.frameMgr);
     this.themeMgr = new ThemeManager(this.state, this.frameMgr);
-    this.polyfillMgr = new PolyfillManager(this.state, this.themeMgr, this.frameMgr);
+    this.polyfillMgr = new CssPolyfillManager(this.state, this.themeMgr, this.frameMgr);
     this.resourceMgr = new ResourceManager(this.state);
 
     this.resizeDebounceTimer = null;
@@ -251,7 +251,7 @@ export class Renderer implements LuminaApi {
 
         const reflow = doc.body.scrollHeight; void reflow;
         requestAnimationFrame(() => {
-          this.polyfillMgr.polyfillCss(doc);
+          this.polyfillMgr.polyfillCss(iframe);
 
           requestAnimationFrame(() => {
             const reflow = doc.body.scrollHeight; void reflow;
@@ -297,7 +297,7 @@ export class Renderer implements LuminaApi {
 
     this.resourceMgr.waitForAllResources(iframe.contentDocument).then(() => {
       const doc = iframe.contentDocument!;
-      this.polyfillMgr.polyfillCss(doc);
+      this.polyfillMgr.polyfillCss(iframe);
 
       const reflow = doc.body.scrollHeight; void reflow;
 
