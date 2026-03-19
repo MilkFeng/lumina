@@ -112,6 +112,7 @@ class ReaderWebViewCallbacks {
   final Function(List<String> anchors) onScrollAnchors;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
+  final Function(double x, double y) onTrivalTap;
   final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
   final Function(String url) onLinkTap;
   final bool Function(String url) shouldHandleLinkTap;
@@ -123,6 +124,7 @@ class ReaderWebViewCallbacks {
     required this.onScrollAnchors,
     required this.onImageLongPress,
     required this.onTap,
+    required this.onTrivalTap,
     required this.onFootnoteTap,
     required this.onLinkTap,
     required this.shouldHandleLinkTap,
@@ -316,21 +318,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
           children: [
             RepaintBoundary(
               key: _repaintKey,
-              child: AbsorbPointer(
-                child: widget.shouldShowWebView
-                    ? InAppWebView(
-                        headlessWebView: _headlessWebView,
-                        initialData: _generateInitialData(width, height),
-                        initialSettings: defaultSettings,
-                        shouldInterceptRequest: _shouldInterceptRequest,
-                        onLoadResourceWithCustomScheme:
-                            _onLoadResourceWithCustomScheme,
-                        shouldOverrideUrlLoading: _shouldOverrideUrlLoading,
-                        onWebViewCreated: _onWebViewCreated,
-                        onLoadStop: _onLoadStop,
-                      )
-                    : Container(color: _currentTheme.surfaceColor),
-              ),
+              child: widget.shouldShowWebView
+                  ? InAppWebView(
+                      headlessWebView: _headlessWebView,
+                      initialData: _generateInitialData(width, height),
+                      initialSettings: defaultSettings,
+                      shouldInterceptRequest: _shouldInterceptRequest,
+                      onLoadResourceWithCustomScheme:
+                          _onLoadResourceWithCustomScheme,
+                      shouldOverrideUrlLoading: _shouldOverrideUrlLoading,
+                      onWebViewCreated: _onWebViewCreated,
+                      onLoadStop: _onLoadStop,
+                    )
+                  : Container(color: _currentTheme.surfaceColor),
             ),
             Positioned.fill(
               child: IgnorePointer(
@@ -475,6 +475,17 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       callback: (args) {
         if (args.isNotEmpty) {
           _bridge.resolveToken(args[0] as int);
+        }
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onTrivalTap',
+      callback: (args) {
+        if (args.length >= 2) {
+          final x = (args[0] as num).toDouble();
+          final y = (args[1] as num).toDouble();
+          widget.callbacks.onTrivalTap(x, y);
         }
       },
     );

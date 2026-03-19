@@ -281,17 +281,14 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     }
   }
 
-  void _handleTap(TapUpDetails details) {
+  void _handleTrivalTap(double x, double y) {
     if (widget.showControls) {
       widget.onToggleControls();
     } else if (_androidPageTurnSession.isAnimating ||
         _iosPageTurnSession.isAnimating) {
-      _handleTapZone(details.globalPosition.dx, details.globalPosition.dy);
+      _handleTapZone(x, y);
     } else {
-      _webViewController.checkTapElementAt(
-        details.globalPosition.dx,
-        details.globalPosition.dy,
-      );
+      _webViewController.checkTapElementAt(x, y);
     }
   }
 
@@ -367,7 +364,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onTapUp: widget.shouldShowWebView ? _handleTap : null,
         onHorizontalDragEnd: widget.shouldShowWebView
             ? _handleHorizontalDragEnd
             : null,
@@ -494,6 +490,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
           onScrollAnchors: widget.onScrollAnchors,
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,
+          onTrivalTap: _handleTrivalTap,
           onFootnoteTap: widget.onFootnoteTap,
           onLinkTap: widget.onLinkTap,
           shouldHandleLinkTap: widget.shouldHandleLinkTap,

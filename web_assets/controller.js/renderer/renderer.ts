@@ -28,8 +28,10 @@ export class Renderer implements LuminaApi {
   private resourceMgr: ResourceManager;
 
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
-  private onResize: (ev: UIEvent) => void;
   private currentSize: { width: number; height: number } = { width: 0, height: 0 };
+  private onResize: (ev: UIEvent) => void;
+
+  private onClick: (ev: PointerEvent) => void;
 
   constructor() {
     this.state = {
@@ -83,6 +85,12 @@ export class Renderer implements LuminaApi {
         }, 120);
       }
     };
+
+    this.onClick = (ev: PointerEvent) => {
+      const x = ev.clientX;
+      const y = ev.clientY;
+      FlutterBridge.onTrivalTap(x, y);
+    };
   }
 
   init(config: ReaderConfig): void {
@@ -91,8 +99,12 @@ export class Renderer implements LuminaApi {
     this.state.config.safeWidth = Math.floor(this.state.config.safeWidth);
 
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
+
     window.removeEventListener('resize', this.onResize);
     window.addEventListener('resize', this.onResize, { passive: true });
+
+    window.removeEventListener('click', this.onClick);
+    window.addEventListener('click', this.onClick);
   }
 
   loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[], properties?: string[]): void {
