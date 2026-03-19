@@ -9,6 +9,15 @@ String colorToHex(Color color) {
   return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
 }
 
+Map<String, dynamic> colorToMap(Color color) {
+  return {
+    'r': (color.r * 255.0).round().clamp(0, 255),
+    'g': (color.g * 255.0).round().clamp(0, 255),
+    'b': (color.b * 255.0).round().clamp(0, 255),
+    'a': color.a,
+  };
+}
+
 /// Skeleton HTML containing 3 iframes for prev/curr/next chapters
 String generateSkeletonHtml(
   double viewWidth,
@@ -29,21 +38,21 @@ String generateSkeletonHtml(
     'direction': direction,
     'theme': {
       'zoom': theme.zoom,
-      'paginationCss': kPaginationCss,
 
       'shouldOverrideTextColor': theme.shouldOverrideTextColor,
-      'primaryColor': colorToHex(primaryColor),
-      'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
-      'surfaceColor': colorToHex(colorScheme.surface),
-      'onSurfaceColor': colorToHex(colorScheme.onSurface),
-      'onSurfaceVariantColor': colorToHex(colorScheme.onSurfaceVariant),
-      'outlineVariantColor': colorToHex(colorScheme.outlineVariant),
-      'surfaceContainerColor': colorToHex(colorScheme.surfaceContainer),
-      'surfaceContainerHighColor': colorToHex(colorScheme.surfaceContainerHigh),
+      'primaryColor': colorToMap(primaryColor),
+      'primaryContainerColor': colorToMap(colorScheme.primaryContainer),
+      'surfaceColor': colorToMap(colorScheme.surface),
+      'onSurfaceColor': colorToMap(colorScheme.onSurface),
+      'onSurfaceVariantColor': colorToMap(colorScheme.onSurfaceVariant),
+      'outlineVariantColor': colorToMap(colorScheme.outlineVariant),
+      'surfaceContainerColor': colorToMap(colorScheme.surfaceContainer),
+      'surfaceContainerHighColor': colorToMap(colorScheme.surfaceContainerHigh),
 
       'fontFileName': theme.fontFileName,
       'overrideFontFamily': theme.overrideFontFamily,
     },
+    'paginationCss': kPaginationCss,
   });
 
   return '''

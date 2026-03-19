@@ -31,6 +31,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _version = '';
+  String _buildNumber = '';
 
   bool isSelectingFiles = false;
 
@@ -42,8 +43,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _loadVersion() async {
     final packageInfo = await PackageInfo.fromPlatform();
+    final buildNumber = (int.tryParse(packageInfo.buildNumber) ?? 0) % 1000;
+    String version = packageInfo.version;
+    if (buildNumber > 0) {
+      if (buildNumber != 999) {
+        version += '-pre.$buildNumber';
+      }
+    }
+
     setState(() {
-      _version = '${packageInfo.version}+${packageInfo.buildNumber}';
+      _version = version;
+      _buildNumber = packageInfo.buildNumber;
     });
   }
 
@@ -128,7 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       title: l10n.openSourceLicenses,
                       onTap: () => showLicensePage(
                         context: context,
-                        applicationVersion: _version,
+                        applicationVersion: _buildNumber,
                         useRootNavigator: true,
                       ),
                       subtitle: l10n.openSourceLicensesSubtitle,

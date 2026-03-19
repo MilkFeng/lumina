@@ -1,4 +1,4 @@
-import type { ReaderState, ThemeUpdate } from '../common/types';
+import { colorToHex, type ReaderState, type ThemeUpdate } from '../common/types';
 import { FrameManager } from './frame_manager';
 
 export class ThemeManager {
@@ -10,42 +10,34 @@ export class ThemeManager {
   updateThemeState(viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {
     this.state.config.safeWidth = Math.floor(viewWidth);
     this.state.config.safeHeight = Math.floor(viewHeight);
-    this.state.config.padding = {
-      top: newTheme.padding.top,
-      left: newTheme.padding.left,
-    };
-    this.state.config.theme.zoom = newTheme.zoom;
-    this.state.config.theme.shouldOverrideTextColor = newTheme.shouldOverrideTextColor;
-    this.state.config.theme.fontFileName = newTheme.fontFileName || null;
-    this.state.config.theme.overrideFontFamily = newTheme.overrideFontFamily || false;
-    this.state.config.theme.primaryColor = newTheme.overridePrimaryColor || newTheme.primaryColor;
-    this.state.config.theme.primaryContainerColor = newTheme.primaryContainerColor;
-    this.state.config.theme.surfaceColor = newTheme.surfaceColor;
-    this.state.config.theme.onSurfaceColor = newTheme.onSurfaceColor;
-    this.state.config.theme.onSurfaceVariantColor = newTheme.onSurfaceVariantColor;
-    this.state.config.theme.outlineVariantColor = newTheme.outlineVariantColor;
-    this.state.config.theme.surfaceContainerColor = newTheme.surfaceContainerColor;
-    this.state.config.theme.surfaceContainerHighColor = newTheme.surfaceContainerHighColor;
+    this.state.config.padding = newTheme.padding;
+    this.state.config.theme = newTheme.theme;
   }
 
-  getOriginalBackgroundColor(iframe: HTMLIFrameElement): string | null {
-    if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return null;
+  haveBackground(iframe: HTMLIFrameElement): boolean {
+    if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return false;
     try {
       const window = iframe.contentWindow!;
       const body = iframe.contentDocument.body;
       if (!body) {
         console.warn('Iframe body is null, possibly not fully loaded or not an HTML document.');
-        return null;
+        return false;
       }
       const bgColor = window.getComputedStyle(body).backgroundColor;
       if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-        return bgColor;
+        return true;
+      }
+      const bgImage = window.getComputedStyle(body).backgroundImage;
+      if (bgImage && bgImage !== 'none') {
+        // Add a white background to body to ensure text is visible
+        body.style.backgroundColor = '#ffffff';
+        return true;
       }
     } catch (e) {
       console.warn('Failed to get original background color from iframe:', e);
-      return null;
+      return false;
     }
-    return null;
+    return false;
   }
 
   generateVariableStyle(): string {
@@ -66,14 +58,22 @@ export class ThemeManager {
       + `--lumina-padding-left: ${cfg.padding.left}px;`
       + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
       + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
-      + `--lumina-surface-color: ${t.surfaceColor};`
-      + `--lumina-on-surface-color: ${t.onSurfaceColor};`
-      + `--lumina-primary-color: ${t.primaryColor};`
-      + `--lumina-primary-container-color: ${t.primaryContainerColor};`
-      + `--lumina-on-surface-variant-color: ${t.onSurfaceVariantColor};`
-      + `--lumina-outline-variant-color: ${t.outlineVariantColor};`
-      + `--lumina-surface-container-color: ${t.surfaceContainerColor};`
-      + `--lumina-surface-container-high-color: ${t.surfaceContainerHighColor};`
+      + `--lumina-surface-color: ${colorToHex(t.surfaceColor)};`
+      + `--lumina-surface-color-rgb: ${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b};`
+      + `--lumina-on-surface-color: ${colorToHex(t.onSurfaceColor)};`
+      + `--lumina-on-surface-color-rgb: ${t.onSurfaceColor.r}, ${t.onSurfaceColor.g}, ${t.onSurfaceColor.b};`
+      + `--lumina-primary-color: ${colorToHex(t.primaryColor)};`
+      + `--lumina-primary-color-rgb: ${t.primaryColor.r}, ${t.primaryColor.g}, ${t.primaryColor.b};`
+      + `--lumina-primary-container-color: ${colorToHex(t.primaryContainerColor)};`
+      + `--lumina-primary-container-color-rgb: ${t.primaryContainerColor.r}, ${t.primaryContainerColor.g}, ${t.primaryContainerColor.b};`
+      + `--lumina-on-surface-variant-color: ${colorToHex(t.onSurfaceVariantColor)};`
+      + `--lumina-on-surface-variant-color-rgb: ${t.onSurfaceVariantColor.r}, ${t.onSurfaceVariantColor.g}, ${t.onSurfaceVariantColor.b};`
+      + `--lumina-outline-variant-color: ${colorToHex(t.outlineVariantColor)};`
+      + `--lumina-outline-variant-color-rgb: ${t.outlineVariantColor.r}, ${t.outlineVariantColor.g}, ${t.outlineVariantColor.b};`
+      + `--lumina-surface-container-color: ${colorToHex(t.surfaceContainerColor)};`
+      + `--lumina-surface-container-color-rgb: ${t.surfaceContainerColor.r}, ${t.surfaceContainerColor.g}, ${t.surfaceContainerColor.b};`
+      + `--lumina-surface-container-high-color: ${colorToHex(t.surfaceContainerHighColor)};`
+      + `--lumina-surface-container-high-color-rgb: ${t.surfaceContainerHighColor.r}, ${t.surfaceContainerHighColor.g}, ${t.surfaceContainerHighColor.b};`
       + fontFamilyItem
       + '}';
   }
@@ -96,17 +96,25 @@ export class ThemeManager {
     root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
     root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
     root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
-    root.style.setProperty('--lumina-surface-color', t.surfaceColor);
-    root.style.setProperty('--lumina-on-surface-color', t.onSurfaceColor);
-    root.style.setProperty('--lumina-primary-color', t.primaryColor);
-    root.style.setProperty('--lumina-primary-container', t.primaryContainerColor);
-    root.style.setProperty('--lumina-on-surface-variant', t.onSurfaceVariantColor);
-    root.style.setProperty('--lumina-outline-variant', t.outlineVariantColor);
-    root.style.setProperty('--lumina-surface-container', t.surfaceContainerColor);
-    root.style.setProperty('--lumina-surface-container-high', t.surfaceContainerHighColor);
+    root.style.setProperty('--lumina-surface-color', colorToHex(t.surfaceColor));
+    root.style.setProperty('--lumina-surface-color-rgb', `${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b}`);
+    root.style.setProperty('--lumina-on-surface-color', colorToHex(t.onSurfaceColor));
+    root.style.setProperty('--lumina-on-surface-color-rgb', `${t.onSurfaceColor.r}, ${t.onSurfaceColor.g}, ${t.onSurfaceColor.b}`);
+    root.style.setProperty('--lumina-primary-color', colorToHex(t.primaryColor));
+    root.style.setProperty('--lumina-primary-color-rgb', `${t.primaryColor.r}, ${t.primaryColor.g}, ${t.primaryColor.b}`);
+    root.style.setProperty('--lumina-primary-container-color', colorToHex(t.primaryContainerColor));
+    root.style.setProperty('--lumina-primary-container-color-rgb', `${t.primaryContainerColor.r}, ${t.primaryContainerColor.g}, ${t.primaryContainerColor.b}`);
+    root.style.setProperty('--lumina-on-surface-variant-color', colorToHex(t.onSurfaceVariantColor));
+    root.style.setProperty('--lumina-on-surface-variant-color-rgb', `${t.onSurfaceVariantColor.r}, ${t.onSurfaceVariantColor.g}, ${t.onSurfaceVariantColor.b}`);
+    root.style.setProperty('--lumina-outline-variant-color', colorToHex(t.outlineVariantColor));
+    root.style.setProperty('--lumina-outline-variant-color-rgb', `${t.outlineVariantColor.r}, ${t.outlineVariantColor.g}, ${t.outlineVariantColor.b}`);
+    root.style.setProperty('--lumina-surface-container-color', colorToHex(t.surfaceContainerColor));
+    root.style.setProperty('--lumina-surface-container-color-rgb', `${t.surfaceContainerColor.r}, ${t.surfaceContainerColor.g}, ${t.surfaceContainerColor.b}`);
+    root.style.setProperty('--lumina-surface-container-high-color', colorToHex(t.surfaceContainerHighColor));
+    root.style.setProperty('--lumina-surface-container-high-color-rgb', `${t.surfaceContainerHighColor.r}, ${t.surfaceContainerHighColor.g}, ${t.surfaceContainerHighColor.b}`);
 
     const overrideColor = iframe != null
-      ? t.shouldOverrideTextColor && this.getOriginalBackgroundColor(iframe) == null
+      ? t.shouldOverrideTextColor && !this.haveBackground(iframe)
       : t.shouldOverrideTextColor;
 
     body.classList.toggle('lumina-override-color', overrideColor);
@@ -133,11 +141,11 @@ export class ThemeManager {
 
     const existingPaginationStyle = doc.getElementById('injected-pagination-style');
     if (existingPaginationStyle) {
-      existingPaginationStyle.innerHTML = this.state.config.theme.paginationCss;
+      existingPaginationStyle.innerHTML = this.state.config.paginationCss;
     } else {
       const style = doc.createElement('style');
       style.id = 'injected-pagination-style';
-      style.innerHTML = this.state.config.theme.paginationCss;
+      style.innerHTML = this.state.config.paginationCss;
       doc.head.appendChild(style);
     }
   }

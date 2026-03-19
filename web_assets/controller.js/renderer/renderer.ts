@@ -1,13 +1,11 @@
 import {
-  waitForAllResources,
-  polyfillCss,
-} from './css_polyfill';
-import type {
-  FrameSlot,
-  ReaderState,
-  InitConfig,
-  ThemeUpdate,
-  Direction
+  type FrameSlot,
+  type ReaderState,
+  type ThemeUpdate,
+  type Direction,
+  WhiteColor,
+  BlackColor,
+  ReaderConfig
 } from '../common/types';
 import { LuminaApi } from '../api/lumina_api';
 import { FlutterBridge } from '../api/flutter_bridge';
@@ -16,6 +14,8 @@ import { FrameManager } from './frame_manager';
 import { PaginationManager } from './pagination';
 import { InteractionManager } from './interaction';
 import { ThemeManager } from './theme_manager';
+import { CssPolyfillManager } from './css_polyfill';
+import { ResourceManager } from './resource_manager';
 
 export class Renderer implements LuminaApi {
   private state: ReaderState;
@@ -24,6 +24,8 @@ export class Renderer implements LuminaApi {
   private paginationMgr: PaginationManager;
   private interactionMgr: InteractionManager;
   private themeMgr: ThemeManager;
+  private polyfillMgr: CssPolyfillManager;
+  private resourceMgr: ResourceManager;
 
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
   private onResize: (ev: UIEvent) => void;
@@ -41,17 +43,19 @@ export class Renderer implements LuminaApi {
         padding: { top: 0, left: 0 },
         theme: {
           zoom: 1.0,
-          paginationCss: '',
-          surfaceColor: '#FFFFFF',
-          onSurfaceColor: '#000000',
+          surfaceColor: WhiteColor,
+          onSurfaceColor: BlackColor,
           shouldOverrideTextColor: true,
-          primaryColor: '#000000',
-          primaryContainerColor: '#000000',
-          onSurfaceVariantColor: '#000000',
-          outlineVariantColor: '#000000',
-          surfaceContainerColor: '#000000',
-          surfaceContainerHighColor: '#000000',
+          primaryColor: BlackColor,
+          primaryContainerColor: BlackColor,
+          onSurfaceVariantColor: BlackColor,
+          outlineVariantColor: BlackColor,
+          surfaceContainerColor: BlackColor,
+          surfaceContainerHighColor: BlackColor,
+          fontFileName: null,
+          overrideFontFamily: false,
         },
+        paginationCss: '',
       },
     };
 
@@ -59,6 +63,8 @@ export class Renderer implements LuminaApi {
     this.paginationMgr = new PaginationManager(this.state, this.frameMgr);
     this.interactionMgr = new InteractionManager(this.state, this.frameMgr);
     this.themeMgr = new ThemeManager(this.state, this.frameMgr);
+    this.polyfillMgr = new CssPolyfillManager(this.state, this.themeMgr, this.frameMgr);
+    this.resourceMgr = new ResourceManager(this.state);
 
     this.resizeDebounceTimer = null;
     this.onResize = (ev: UIEvent) => {
@@ -78,17 +84,10 @@ export class Renderer implements LuminaApi {
     };
   }
 
-  init(config: InitConfig): void {
-    const padding = config.padding || {};
-
-    this.state.config.safeWidth = Math.floor(config.safeWidth ?? 0);
-    this.state.config.safeHeight = Math.floor(config.safeHeight ?? 0);
-    this.state.config.direction = Number(config.direction) || 0;
-    this.state.config.padding = {
-      top: Number(padding.top ?? 0),
-      left: Number(padding.left ?? 0),
-    };
-    this.state.config.theme = config.theme;
+  init(config: ReaderConfig): void {
+    this.state.config = config;
+    this.state.config.safeHeight = Math.floor(this.state.config.safeHeight);
+    this.state.config.safeWidth = Math.floor(this.state.config.safeWidth);
 
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
     window.removeEventListener('resize', this.onResize);
@@ -231,11 +230,11 @@ export class Renderer implements LuminaApi {
     const doc = iframe.contentDocument;
     this.themeMgr.injectInitialStyles(doc, iframe);
 
-    waitForAllResources(doc).then(() => {
+    this.resourceMgr.waitForAllResources(doc).then(() => {
       if (!iframe.contentWindow) return;
       requestAnimationFrame(() => {
-        const originalBgColor = this.themeMgr.getOriginalBackgroundColor(iframe);
-        const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor && originalBgColor == null;
+        const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor
+          && !this.themeMgr.haveBackground(iframe);
         doc.body.classList.toggle('lumina-override-color', shouldOverrideColor);
         doc.body.classList.toggle(
           'lumina-force-override-font',
@@ -252,7 +251,7 @@ export class Renderer implements LuminaApi {
 
         const reflow = doc.body.scrollHeight; void reflow;
         requestAnimationFrame(() => {
-          polyfillCss(doc, shouldOverrideColor);
+          this.polyfillMgr.polyfillCss(iframe);
 
           requestAnimationFrame(() => {
             const reflow = doc.body.scrollHeight; void reflow;
@@ -296,11 +295,9 @@ export class Renderer implements LuminaApi {
   private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: number): void {
     if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
-    waitForAllResources(iframe.contentDocument).then(() => {
+    this.resourceMgr.waitForAllResources(iframe.contentDocument).then(() => {
       const doc = iframe.contentDocument!;
-      const overrideColor = this.state.config.theme.shouldOverrideTextColor
-        && this.themeMgr.getOriginalBackgroundColor(iframe) == null;
-      polyfillCss(doc, overrideColor);
+      this.polyfillMgr.polyfillCss(iframe);
 
       const reflow = doc.body.scrollHeight; void reflow;
 

@@ -504,6 +504,6 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
     _currentTheme = theme;
-    await _api.updateTheme(width, height, theme.toMap());
+    await _api.updateTheme(width, height, theme.toThemeMap());
   }
 }

@@ -56,31 +56,34 @@ class EpubTheme {
 
   static const Object _kUnset = Object();
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toThemeMap() {
     return {
-      'zoom': zoom,
-      'shouldOverrideTextColor': shouldOverrideTextColor,
-
-      'primaryColor': colorToHex(colorScheme.primary),
-      'onPrimaryColor': colorToHex(colorScheme.onPrimary),
-      'secondaryColor': colorToHex(colorScheme.secondary),
-      'onSecondaryColor': colorToHex(colorScheme.onSecondary),
-      'errorColor': colorToHex(colorScheme.error),
-      'onErrorColor': colorToHex(colorScheme.onError),
-      'surfaceColor': colorToHex(colorScheme.surface),
-      'onSurfaceColor': colorToHex(colorScheme.onSurface),
-      'primaryContainerColor': colorToHex(colorScheme.primaryContainer),
-      'onSurfaceVariantColor': colorToHex(colorScheme.onSurfaceVariant),
-      'outlineVariantColor': colorToHex(colorScheme.outlineVariant),
-      'surfaceContainerColor': colorToHex(colorScheme.surfaceContainer),
-      'surfaceContainerHighColor': colorToHex(colorScheme.surfaceContainerHigh),
-
-      'overridePrimaryColor': overridePrimaryColor != null
-          ? colorToHex(overridePrimaryColor!)
-          : null,
       'padding': {'top': padding.top, 'left': padding.left},
-      'fontFileName': fontFileName,
-      'overrideFontFamily': overrideFontFamily,
+      'theme': {
+        'zoom': zoom,
+        'shouldOverrideTextColor': shouldOverrideTextColor,
+
+        'primaryColor': overridePrimaryColor != null
+            ? colorToMap(overridePrimaryColor!)
+            : colorToMap(colorScheme.primary),
+        'onPrimaryColor': colorToMap(colorScheme.onPrimary),
+        'secondaryColor': colorToMap(colorScheme.secondary),
+        'onSecondaryColor': colorToMap(colorScheme.onSecondary),
+        'errorColor': colorToMap(colorScheme.error),
+        'onErrorColor': colorToMap(colorScheme.onError),
+        'surfaceColor': colorToMap(colorScheme.surface),
+        'onSurfaceColor': colorToMap(colorScheme.onSurface),
+        'primaryContainerColor': colorToMap(colorScheme.primaryContainer),
+        'onSurfaceVariantColor': colorToMap(colorScheme.onSurfaceVariant),
+        'outlineVariantColor': colorToMap(colorScheme.outlineVariant),
+        'surfaceContainerColor': colorToMap(colorScheme.surfaceContainer),
+        'surfaceContainerHighColor': colorToMap(
+          colorScheme.surfaceContainerHigh,
+        ),
+
+        'fontFileName': fontFileName,
+        'overrideFontFamily': overrideFontFamily,
+      },
     };
   }
 
