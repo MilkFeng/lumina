@@ -2,12 +2,14 @@ import {
   waitForAllResources,
   polyfillCss,
 } from './css_polyfill';
-import type {
-  FrameSlot,
-  ReaderState,
-  InitConfig,
-  ThemeUpdate,
-  Direction
+import {
+  type FrameSlot,
+  type ReaderState,
+  type ThemeUpdate,
+  type Direction,
+  WhiteColor,
+  BlackColor,
+  ReaderConfig
 } from '../common/types';
 import { LuminaApi } from '../api/lumina_api';
 import { FlutterBridge } from '../api/flutter_bridge';
@@ -41,17 +43,19 @@ export class Renderer implements LuminaApi {
         padding: { top: 0, left: 0 },
         theme: {
           zoom: 1.0,
-          paginationCss: '',
-          surfaceColor: '#FFFFFF',
-          onSurfaceColor: '#000000',
+          surfaceColor: WhiteColor,
+          onSurfaceColor: BlackColor,
           shouldOverrideTextColor: true,
-          primaryColor: '#000000',
-          primaryContainerColor: '#000000',
-          onSurfaceVariantColor: '#000000',
-          outlineVariantColor: '#000000',
-          surfaceContainerColor: '#000000',
-          surfaceContainerHighColor: '#000000',
+          primaryColor: BlackColor,
+          primaryContainerColor: BlackColor,
+          onSurfaceVariantColor: BlackColor,
+          outlineVariantColor: BlackColor,
+          surfaceContainerColor: BlackColor,
+          surfaceContainerHighColor: BlackColor,
+          fontFileName: null,
+          overrideFontFamily: false,
         },
+        paginationCss: '',
       },
     };
 
@@ -78,17 +82,10 @@ export class Renderer implements LuminaApi {
     };
   }
 
-  init(config: InitConfig): void {
-    const padding = config.padding || {};
-
-    this.state.config.safeWidth = Math.floor(config.safeWidth ?? 0);
-    this.state.config.safeHeight = Math.floor(config.safeHeight ?? 0);
-    this.state.config.direction = Number(config.direction) || 0;
-    this.state.config.padding = {
-      top: Number(padding.top ?? 0),
-      left: Number(padding.left ?? 0),
-    };
-    this.state.config.theme = config.theme;
+  init(config: ReaderConfig): void {
+    this.state.config = config;
+    this.state.config.safeHeight = Math.floor(this.state.config.safeHeight);
+    this.state.config.safeWidth = Math.floor(this.state.config.safeWidth);
 
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
     window.removeEventListener('resize', this.onResize);

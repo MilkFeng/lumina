@@ -1,4 +1,4 @@
-import type { ReaderState, ThemeUpdate } from '../common/types';
+import { colorToHex, type ReaderState, type ThemeUpdate } from '../common/types';
 import { FrameManager } from './frame_manager';
 
 export class ThemeManager {
@@ -10,22 +10,8 @@ export class ThemeManager {
   updateThemeState(viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {
     this.state.config.safeWidth = Math.floor(viewWidth);
     this.state.config.safeHeight = Math.floor(viewHeight);
-    this.state.config.padding = {
-      top: newTheme.padding.top,
-      left: newTheme.padding.left,
-    };
-    this.state.config.theme.zoom = newTheme.zoom;
-    this.state.config.theme.shouldOverrideTextColor = newTheme.shouldOverrideTextColor;
-    this.state.config.theme.fontFileName = newTheme.fontFileName || null;
-    this.state.config.theme.overrideFontFamily = newTheme.overrideFontFamily || false;
-    this.state.config.theme.primaryColor = newTheme.overridePrimaryColor || newTheme.primaryColor;
-    this.state.config.theme.primaryContainerColor = newTheme.primaryContainerColor;
-    this.state.config.theme.surfaceColor = newTheme.surfaceColor;
-    this.state.config.theme.onSurfaceColor = newTheme.onSurfaceColor;
-    this.state.config.theme.onSurfaceVariantColor = newTheme.onSurfaceVariantColor;
-    this.state.config.theme.outlineVariantColor = newTheme.outlineVariantColor;
-    this.state.config.theme.surfaceContainerColor = newTheme.surfaceContainerColor;
-    this.state.config.theme.surfaceContainerHighColor = newTheme.surfaceContainerHighColor;
+    this.state.config.padding = newTheme.padding;
+    this.state.config.theme = newTheme.theme;
   }
 
   haveBackground(iframe: HTMLIFrameElement): boolean {
@@ -72,14 +58,14 @@ export class ThemeManager {
       + `--lumina-padding-left: ${cfg.padding.left}px;`
       + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
       + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
-      + `--lumina-surface-color: ${t.surfaceColor};`
-      + `--lumina-on-surface-color: ${t.onSurfaceColor};`
-      + `--lumina-primary-color: ${t.primaryColor};`
-      + `--lumina-primary-container-color: ${t.primaryContainerColor};`
-      + `--lumina-on-surface-variant-color: ${t.onSurfaceVariantColor};`
-      + `--lumina-outline-variant-color: ${t.outlineVariantColor};`
-      + `--lumina-surface-container-color: ${t.surfaceContainerColor};`
-      + `--lumina-surface-container-high-color: ${t.surfaceContainerHighColor};`
+      + `--lumina-surface-color: ${colorToHex(t.surfaceColor)};`
+      + `--lumina-on-surface-color: ${colorToHex(t.onSurfaceColor)};`
+      + `--lumina-primary-color: ${colorToHex(t.primaryColor)};`
+      + `--lumina-primary-container-color: ${colorToHex(t.primaryContainerColor)};`
+      + `--lumina-on-surface-variant-color: ${colorToHex(t.onSurfaceVariantColor)};`
+      + `--lumina-outline-variant-color: ${colorToHex(t.outlineVariantColor)};`
+      + `--lumina-surface-container-color: ${colorToHex(t.surfaceContainerColor)};`
+      + `--lumina-surface-container-high-color: ${colorToHex(t.surfaceContainerHighColor)};`
       + fontFamilyItem
       + '}';
   }
@@ -102,14 +88,14 @@ export class ThemeManager {
     root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
     root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
     root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
-    root.style.setProperty('--lumina-surface-color', t.surfaceColor);
-    root.style.setProperty('--lumina-on-surface-color', t.onSurfaceColor);
-    root.style.setProperty('--lumina-primary-color', t.primaryColor);
-    root.style.setProperty('--lumina-primary-container', t.primaryContainerColor);
-    root.style.setProperty('--lumina-on-surface-variant', t.onSurfaceVariantColor);
-    root.style.setProperty('--lumina-outline-variant', t.outlineVariantColor);
-    root.style.setProperty('--lumina-surface-container', t.surfaceContainerColor);
-    root.style.setProperty('--lumina-surface-container-high', t.surfaceContainerHighColor);
+    root.style.setProperty('--lumina-surface-color', colorToHex(t.surfaceColor));
+    root.style.setProperty('--lumina-on-surface-color', colorToHex(t.onSurfaceColor));
+    root.style.setProperty('--lumina-primary-color', colorToHex(t.primaryColor));
+    root.style.setProperty('--lumina-primary-container', colorToHex(t.primaryContainerColor));
+    root.style.setProperty('--lumina-on-surface-variant', colorToHex(t.onSurfaceVariantColor));
+    root.style.setProperty('--lumina-outline-variant', colorToHex(t.outlineVariantColor));
+    root.style.setProperty('--lumina-surface-container', colorToHex(t.surfaceContainerColor));
+    root.style.setProperty('--lumina-surface-container-high', colorToHex(t.surfaceContainerHighColor));
 
     const overrideColor = iframe != null
       ? t.shouldOverrideTextColor && !this.haveBackground(iframe)
@@ -139,11 +125,11 @@ export class ThemeManager {
 
     const existingPaginationStyle = doc.getElementById('injected-pagination-style');
     if (existingPaginationStyle) {
-      existingPaginationStyle.innerHTML = this.state.config.theme.paginationCss;
+      existingPaginationStyle.innerHTML = this.state.config.paginationCss;
     } else {
       const style = doc.createElement('style');
       style.id = 'injected-pagination-style';
-      style.innerHTML = this.state.config.theme.paginationCss;
+      style.innerHTML = this.state.config.paginationCss;
       doc.head.appendChild(style);
     }
   }
