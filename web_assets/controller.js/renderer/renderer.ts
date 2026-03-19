@@ -1,8 +1,4 @@
 import {
-  waitForAllResources,
-  polyfillCss,
-} from './css_polyfill';
-import {
   type FrameSlot,
   type ReaderState,
   type ThemeUpdate,
@@ -18,6 +14,8 @@ import { FrameManager } from './frame_manager';
 import { PaginationManager } from './pagination';
 import { InteractionManager } from './interaction';
 import { ThemeManager } from './theme_manager';
+import { PolyfillManager } from './css_polyfill';
+import { ResourceManager } from './resource_manager';
 
 export class Renderer implements LuminaApi {
   private state: ReaderState;
@@ -26,6 +24,8 @@ export class Renderer implements LuminaApi {
   private paginationMgr: PaginationManager;
   private interactionMgr: InteractionManager;
   private themeMgr: ThemeManager;
+  private polyfillMgr: PolyfillManager;
+  private resourceMgr: ResourceManager;
 
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
   private onResize: (ev: UIEvent) => void;
@@ -63,6 +63,8 @@ export class Renderer implements LuminaApi {
     this.paginationMgr = new PaginationManager(this.state, this.frameMgr);
     this.interactionMgr = new InteractionManager(this.state, this.frameMgr);
     this.themeMgr = new ThemeManager(this.state, this.frameMgr);
+    this.polyfillMgr = new PolyfillManager(this.state, this.themeMgr, this.frameMgr);
+    this.resourceMgr = new ResourceManager(this.state);
 
     this.resizeDebounceTimer = null;
     this.onResize = (ev: UIEvent) => {
@@ -228,7 +230,7 @@ export class Renderer implements LuminaApi {
     const doc = iframe.contentDocument;
     this.themeMgr.injectInitialStyles(doc, iframe);
 
-    waitForAllResources(doc).then(() => {
+    this.resourceMgr.waitForAllResources(doc).then(() => {
       if (!iframe.contentWindow) return;
       requestAnimationFrame(() => {
         const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor
@@ -249,7 +251,7 @@ export class Renderer implements LuminaApi {
 
         const reflow = doc.body.scrollHeight; void reflow;
         requestAnimationFrame(() => {
-          polyfillCss(doc, shouldOverrideColor);
+          this.polyfillMgr.polyfillCss(doc);
 
           requestAnimationFrame(() => {
             const reflow = doc.body.scrollHeight; void reflow;
@@ -293,11 +295,9 @@ export class Renderer implements LuminaApi {
   private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: number): void {
     if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
-    waitForAllResources(iframe.contentDocument).then(() => {
+    this.resourceMgr.waitForAllResources(iframe.contentDocument).then(() => {
       const doc = iframe.contentDocument!;
-      const overrideColor = this.state.config.theme.shouldOverrideTextColor
-        && !this.themeMgr.haveBackground(iframe);
-      polyfillCss(doc, overrideColor);
+      this.polyfillMgr.polyfillCss(doc);
 
       const reflow = doc.body.scrollHeight; void reflow;
 

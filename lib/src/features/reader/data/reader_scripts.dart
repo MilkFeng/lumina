@@ -55,8 +55,6 @@ String generateSkeletonHtml(
     'paginationCss': kPaginationCss,
   });
 
-  print('Generated skeleton HTML with config: $initialConfigJson');
-
   return '''
 <!DOCTYPE html>
 <html>
