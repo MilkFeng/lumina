@@ -28,24 +28,30 @@ export class ThemeManager {
     this.state.config.theme.surfaceContainerHighColor = newTheme.surfaceContainerHighColor;
   }
 
-  getOriginalBackgroundColor(iframe: HTMLIFrameElement): string | null {
-    if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return null;
+  haveBackground(iframe: HTMLIFrameElement): boolean {
+    if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return false;
     try {
       const window = iframe.contentWindow!;
       const body = iframe.contentDocument.body;
       if (!body) {
         console.warn('Iframe body is null, possibly not fully loaded or not an HTML document.');
-        return null;
+        return false;
       }
       const bgColor = window.getComputedStyle(body).backgroundColor;
       if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-        return bgColor;
+        return true;
+      }
+      const bgImage = window.getComputedStyle(body).backgroundImage;
+      if (bgImage && bgImage !== 'none') {
+        // Add a white background to body to ensure text is visible
+        body.style.backgroundColor = '#ffffff';
+        return true;
       }
     } catch (e) {
       console.warn('Failed to get original background color from iframe:', e);
-      return null;
+      return false;
     }
-    return null;
+    return false;
   }
 
   generateVariableStyle(): string {
@@ -106,7 +112,7 @@ export class ThemeManager {
     root.style.setProperty('--lumina-surface-container-high', t.surfaceContainerHighColor);
 
     const overrideColor = iframe != null
-      ? t.shouldOverrideTextColor && this.getOriginalBackgroundColor(iframe) == null
+      ? t.shouldOverrideTextColor && !this.haveBackground(iframe)
       : t.shouldOverrideTextColor;
 
     body.classList.toggle('lumina-override-color', overrideColor);

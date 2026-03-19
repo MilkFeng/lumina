@@ -234,8 +234,8 @@ export class Renderer implements LuminaApi {
     waitForAllResources(doc).then(() => {
       if (!iframe.contentWindow) return;
       requestAnimationFrame(() => {
-        const originalBgColor = this.themeMgr.getOriginalBackgroundColor(iframe);
-        const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor && originalBgColor == null;
+        const shouldOverrideColor = this.state.config.theme.shouldOverrideTextColor
+          && !this.themeMgr.haveBackground(iframe);
         doc.body.classList.toggle('lumina-override-color', shouldOverrideColor);
         doc.body.classList.toggle(
           'lumina-force-override-font',
@@ -299,7 +299,7 @@ export class Renderer implements LuminaApi {
     waitForAllResources(iframe.contentDocument).then(() => {
       const doc = iframe.contentDocument!;
       const overrideColor = this.state.config.theme.shouldOverrideTextColor
-        && this.themeMgr.getOriginalBackgroundColor(iframe) == null;
+        && !this.themeMgr.haveBackground(iframe);
       polyfillCss(doc, overrideColor);
 
       const reflow = doc.body.scrollHeight; void reflow;
