@@ -11,6 +11,7 @@ import 'package:lumina/src/core/widgets/settings_section_title.dart';
 import 'package:lumina/src/core/widgets/settings_sub_label.dart';
 import 'package:lumina/src/core/widgets/theme_variant_chip.dart';
 import 'package:lumina/src/features/reader/domain/reader_settings.dart';
+import 'package:lumina/src/features/reader/presentation/widgets/reader_line_height_slider.dart';
 import '../../application/reader_settings_notifier.dart';
 import 'reader_font_selector.dart';
 import 'reader_link_handling_selector.dart';
@@ -29,6 +30,7 @@ class ReaderStyleBottomSheet extends ConsumerStatefulWidget {
 class _ReaderStyleBottomSheetState
     extends ConsumerState<ReaderStyleBottomSheet> {
   late double _scale;
+  late double _lineHeight;
   late int _topMargin;
   late int _bottomMargin;
   late int _leftMargin;
@@ -51,6 +53,7 @@ class _ReaderStyleBottomSheetState
     super.initState();
     final s = ref.read(readerSettingsNotifierProvider);
     _scale = s.zoom;
+    _lineHeight = s.lineHeight;
     _topMargin = s.marginTop.toInt();
     _bottomMargin = s.marginBottom.toInt();
     _leftMargin = s.marginLeft.toInt();
@@ -201,6 +204,35 @@ class _ReaderStyleBottomSheetState
                     _notifier.setZoom(v);
                   },
                 ),
+
+                const SizedBox(height: 20),
+
+                // LineHeight
+                Row(
+                  children: [
+                    SettingsSubLabel(label: l10n.readerLineHeight),
+                    const Spacer(),
+                    Text(
+                      '${_lineHeight.toStringAsFixed(1)}x',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ReaderLineHeightSlider(
+                  value: _lineHeight,
+                  onChanged: (v) {
+                    setState(() => _lineHeight = v);
+                    _notifier.setLineHeight(v);
+                  },
+                ),
+
 
                 const SizedBox(height: 20),
 

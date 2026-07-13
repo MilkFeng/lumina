@@ -52,6 +52,7 @@ export class ThemeManager {
 
     return fontFaceBlock + ' :root {'
       + `--lumina-zoom: ${t.zoom};`
+      + `--lumina-line-height: ${t.lineHeight};`
       + `--lumina-safe-width: ${cfg.safeWidth}px;`
       + `--lumina-safe-height: ${cfg.safeHeight}px;`
       + `--lumina-padding-top: ${cfg.padding.top}px;`
@@ -90,6 +91,7 @@ export class ThemeManager {
     const isV = this.frameMgr.isVertical();
 
     root.style.setProperty('--lumina-zoom', String(t.zoom));
+    root.style.setProperty('--lumina-line-height', String(t.lineHeight));
     root.style.setProperty('--lumina-safe-width', cfg.safeWidth + 'px');
     root.style.setProperty('--lumina-safe-height', cfg.safeHeight + 'px');
     root.style.setProperty('--lumina-padding-top', cfg.padding.top + 'px');
