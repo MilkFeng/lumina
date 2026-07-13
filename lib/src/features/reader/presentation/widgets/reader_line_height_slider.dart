@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// A horizontal scale slider with small/large "A" tap targets on either side.
-///
-/// The slider range is fixed to [0.5, 2.5] with 0.1 increments.
-/// Tapping the letter glyphs nudges the value by 0.1 in the respective
-/// direction; the glyph is greyed-out when the limit is reached.
-///
 /// Changed by hawah on 26/Jul/13:
-///   Holding the letter glyphs nudges the value to max/min value
-class ReaderScaleSlider extends StatelessWidget {
-  const ReaderScaleSlider({
+/// A horizontal lineHeight slider with small/large "≡↕" tap targets on either side.
+///
+/// The slider range is fixed to [1.2, 2.5] with 0.1 increments.
+/// Tapping the letter glyphs nudges the value by 0.1 in the respective
+/// Holding the letter glyphs nudges the value to max/min value
+/// direction; the glyph is greyed-out when the limit is reached.
+class ReaderLineHeightSlider extends StatelessWidget {
+  const ReaderLineHeightSlider({
     super.key,
     required this.value,
     required this.onChanged,
@@ -18,7 +17,7 @@ class ReaderScaleSlider extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;
 
-  static const double _min = 0.5;
+  static const double _min = 1.2;
   static const double _max = 2.5;
   static const double _nudge = 0.1;
 
@@ -37,9 +36,9 @@ class ReaderScaleSlider extends StatelessWidget {
               ? () => onChanged(_min)
               : null,
           child: Text(
-            'A',
+            '≡↕',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 18,
               color: value > _min ? color : disabledColor,
             ),
           ),
@@ -62,7 +61,7 @@ class ReaderScaleSlider extends StatelessWidget {
               ? () => onChanged(_max)
               : null,
           child: Text(
-            'A',
+            '≡↕',
             style: TextStyle(
               fontSize: 22,
               color: value < _max ? color : disabledColor,

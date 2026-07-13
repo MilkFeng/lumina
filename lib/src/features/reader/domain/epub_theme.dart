@@ -4,6 +4,7 @@ import 'package:lumina/src/features/reader/data/reader_scripts.dart';
 
 class EpubTheme {
   final double zoom;
+  final double lineHeight;
   final bool shouldOverrideTextColor;
   final ColorScheme colorScheme;
   final Color? overridePrimaryColor;
@@ -17,6 +18,7 @@ class EpubTheme {
 
   EpubTheme({
     required this.zoom,
+    required this.lineHeight,
     required this.shouldOverrideTextColor,
     required this.colorScheme,
     this.overridePrimaryColor,
@@ -33,6 +35,7 @@ class EpubTheme {
 
   EpubTheme copyWith({
     double? zoom,
+    double? lineHeight,
     bool? shouldOverrideTextColor,
     ColorScheme? colorScheme,
     Color? overridePrimaryColor,
@@ -42,6 +45,7 @@ class EpubTheme {
   }) {
     return EpubTheme(
       zoom: zoom ?? this.zoom,
+      lineHeight: lineHeight ?? this.lineHeight,
       shouldOverrideTextColor:
           shouldOverrideTextColor ?? this.shouldOverrideTextColor,
       colorScheme: colorScheme ?? this.colorScheme,
@@ -61,6 +65,7 @@ class EpubTheme {
       'padding': {'top': padding.top, 'left': padding.left},
       'theme': {
         'zoom': zoom,
+        'lineHeight': lineHeight,
         'shouldOverrideTextColor': shouldOverrideTextColor,
 
         'primaryColor': overridePrimaryColor != null
@@ -93,6 +98,7 @@ class EpubTheme {
 
     return other is EpubTheme &&
         other.zoom == zoom &&
+        other.lineHeight == lineHeight &&
         other.shouldOverrideTextColor == shouldOverrideTextColor &&
         other.colorScheme == colorScheme &&
         other.overridePrimaryColor == overridePrimaryColor &&
@@ -104,6 +110,7 @@ class EpubTheme {
   @override
   int get hashCode => Object.hash(
     zoom,
+    lineHeight,
     shouldOverrideTextColor,
     colorScheme,
     overridePrimaryColor,

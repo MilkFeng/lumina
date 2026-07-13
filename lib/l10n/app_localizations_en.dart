@@ -676,6 +676,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerScale => 'Scale';
 
   @override
+  String get readerLineHeight => 'Line Height';
+
+  @override
   String get readerMargins => 'Margins';
 
   @override

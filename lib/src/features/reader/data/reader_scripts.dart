@@ -38,6 +38,7 @@ String generateSkeletonHtml(
     'direction': direction,
     'theme': {
       'zoom': theme.zoom,
+      'lineHeight': theme.lineHeight,
 
       'shouldOverrideTextColor': theme.shouldOverrideTextColor,
       'primaryColor': colorToMap(primaryColor),

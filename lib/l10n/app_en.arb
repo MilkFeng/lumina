@@ -1138,6 +1138,11 @@
     "description": "Reader scale / zoom sub-label"
   },
 
+  "readerLineHeight": "Line Height",
+  "@readerLineHeight": {
+    "description": "Reader line height"
+  },
+
   "readerMargins": "Margins",
   "@readerMargins": {
     "description": "Reader margins sub-label"

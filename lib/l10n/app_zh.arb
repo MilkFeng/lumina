@@ -1148,6 +1148,11 @@
     "description": "阅读器缩放滑块标签"
   },
 
+  "readerLineHeight": "行间距",
+  "@readerLineHeight": {
+    "description": "行间距调整滑块标签"
+  },
+
   "readerMargins": "边距",
   "@readerMargins": {
     "description": "阅读器边距子标题"

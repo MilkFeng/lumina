@@ -56,6 +56,12 @@ body {
   width: 100% !important;
   height: 100% !important;
   background-color: transparent;
+  line-height: var(--lumina-line-height) !important;
+}
+
+body,
+body * {
+  line-height: var(--lumina-line-height) !important;
 }
 
 html,

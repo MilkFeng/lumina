@@ -91,6 +91,7 @@ export function parseColorString(colorStr: string): Color | null {
 
 export interface ReaderTheme {
   zoom: number;
+  lineHeight: number;
   surfaceColor: Color;
   onSurfaceColor: Color;
   shouldOverrideTextColor: boolean;
