@@ -1,7 +1,6 @@
 part of '../reader_screen.dart';
 
 mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
-  // === Borrowed state (provided by _ReaderScreenState fields) ===
   BookSession get bookSession;
 
   ReaderRendererController get rendererController;

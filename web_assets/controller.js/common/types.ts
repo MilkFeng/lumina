@@ -105,7 +105,7 @@ export interface ReaderTheme {
   fontFileName?: string | null;
 }
 
-export interface ReaderConfig {
+export interface InitConfig {
   safeWidth: number;
   safeHeight: number;
   direction: number;
@@ -128,7 +128,7 @@ export interface ReaderState {
   anchors: Record<FrameSlot, string[]>;
   properties: Record<FrameSlot, string[]>;
   quadTree: QuadTree<InteractionItem> | null;
-  config: ReaderConfig;
+  config: InitConfig;
 }
 
 // ─── Method Params ───────────────────────────────────────────────────

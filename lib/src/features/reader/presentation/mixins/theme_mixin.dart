@@ -1,7 +1,6 @@
 part of '../reader_screen.dart';
 
 mixin _ThemeMixin on ConsumerState<ReaderScreen> {
-  // === Borrowed state (provided by _ReaderScreenState fields) ===
   ReaderRendererController get rendererController;
 
   ThemeData? get currentTheme;

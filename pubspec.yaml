@@ -8,7 +8,7 @@ version: 0.2.4+1
 
 environment:
   sdk: ^3.10.8
-  flutter: ">=3.38.0"
+  flutter: ">=3.44.6"
 
 dependencies:
   flutter:
@@ -24,54 +24,54 @@ dependencies:
   riverpod_annotation: ^2.6.1
 
   # Navigation
-  go_router: ^17.1.0
+  go_router: ^17.3.0
 
   # Database
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
-  path_provider: ^2.1.5
+  path_provider: ^2.1.6
   collection: ^1.19.1
 
   # Storage
-  shared_preferences: ^2.5.4
-  flutter_secure_storage: ^10.0.0
+  shared_preferences: ^2.5.5
+  flutter_secure_storage: ^10.3.1
 
   # Functional Programming
   fpdart: ^1.2.0
 
   # EPUB Parsing
-  xml: ^6.6.1
+  xml: ^7.0.1
   archive: ^4.0.7
   crypto: ^3.0.7
   convert: ^3.1.2
   
   # Reader
   flutter_inappwebview: ^6.1.5
-  flutter_widget_from_html_core: ^0.17.0
-  wakelock_plus: ^1.4.0
+  flutter_widget_from_html_core: ^0.17.2
+  wakelock_plus: ^1.6.1
 
   # File Picking & Permissions
   path: ^1.9.1
   
   # App Info & URL Launcher
-  package_info_plus: ^9.0.0
+  package_info_plus: ^10.2.0
   url_launcher: ^6.3.2
-  flutter_svg: ^2.2.3
+  flutter_svg: ^2.3.0
 
   # Image Compression
   flutter_image_compress: 2.4.0
-  saf_stream: ^0.12.3
-  saf_util: ^0.11.0
+  saf_stream: ^3.1.0
+  saf_util: ^3.1.0
   android_intent_plus: ^6.0.0
   
   # Speed Dial FAB
   flutter_speed_dial: ^7.0.0
 
   # File Sharing (iOS Share Sheet)
-  share_plus: ^12.0.1
+  share_plus: ^13.2.0
 
   # Rust FFI bridge
-  flutter_rust_bridge: 2.11.1
+  flutter_rust_bridge: 2.12.0
   lumina_rust:
     path: rust_builder
 
@@ -87,7 +87,7 @@ dev_dependencies:
   isar_generator: ^3.1.0+1
   
   # Testing
-  path_provider_platform_interface: ^2.1.2
+  path_provider_platform_interface: ^2.1.3
   plugin_platform_interface: ^2.1.8
   mockito: ^5.4.4
 

@@ -5,7 +5,7 @@ import {
   type Direction,
   WhiteColor,
   BlackColor,
-  ReaderConfig
+  InitConfig
 } from '../common/types';
 import { LuminaApi } from '../api/lumina_api';
 import { FlutterBridge } from '../api/flutter_bridge';
@@ -84,7 +84,7 @@ export class Renderer implements LuminaApi {
     };
   }
 
-  init(config: ReaderConfig): void {
+  init(config: InitConfig): void {
     this.state.config = config;
     this.state.config.safeHeight = Math.floor(this.state.config.safeHeight);
     this.state.config.safeWidth = Math.floor(this.state.config.safeWidth);
