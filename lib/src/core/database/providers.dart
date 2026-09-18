@@ -1,21 +1,22 @@
-import 'package:isar/isar.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'isar_database.dart';
-import 'isar_database_impl.dart';
+
+import 'lumina_database.dart';
+import 'lumina_database_impl.dart';
+import 'lumina_db.dart';
 
 part 'providers.g.dart';
 
-/// Provider for IsarDatabase interface
+/// Provider for the database lifecycle abstraction
 /// Use this to access the database throughout the app
 @Riverpod(keepAlive: true)
-IsarDatabase isarDatabase(IsarDatabaseRef ref) {
-  return IsarDatabaseImpl();
+LuminaDatabase luminaDatabase(Ref ref) {
+  return LuminaDatabaseImpl();
 }
 
-/// Provider for Isar instance
-/// Convenience provider that returns the actual Isar instance
+/// Provider for the opened drift database
+/// Convenience provider that returns the actual database instance
 @Riverpod(keepAlive: true)
-Future<Isar> isar(IsarRef ref) async {
-  final database = ref.watch(isarDatabaseProvider);
+Future<LuminaDb> database(Ref ref) async {
+  final database = ref.watch(luminaDatabaseProvider);
   return await database.getInstance();
 }

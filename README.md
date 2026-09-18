@@ -165,7 +165,7 @@ This project uses the following excellent open-source projects:
 
 - [Flutter](https://flutter.dev) - Google's UI toolkit
 - [Riverpod](https://riverpod.dev) - Reactive state management
-- [Isar](https://isar.dev) - High-performance NoSQL database
+- [Drift](https://drift.simonbinder.eu) - Reactive persistence library for Flutter and Dart, built on SQLite
 
 Thanks to all contributors for their support!
 

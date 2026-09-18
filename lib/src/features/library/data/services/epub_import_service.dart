@@ -14,7 +14,7 @@ import '../book_manifest_repository.dart';
 /// - Copies EPUB to AppDocDir/books/{fileHash}.epub (keeps compressed)
 /// - Extracts cover to AppDocDir/covers/{fileHash}.jpg
 /// - Parses metadata in-memory (no full unzip)
-/// - Saves to Isar: ShelfBook + BookManifest
+/// - Saves to the database: ShelfBook + BookManifest
 class EpubImportService {
   final ShelfBookRepository _shelfBookRepo;
   final BookManifestRepository _manifestRepo;

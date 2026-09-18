@@ -19,7 +19,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final location = state.uri.toString();
       if (location.startsWith('content://') || location.startsWith('file://')) {
         Future.microtask(() {
-          ref.read(pendingRouteFileProvider.notifier).state = location;
+          ref.read(pendingRouteFileProvider.notifier).setPath(location);
         });
         return '/';
       } else if (location.startsWith('/-')) {

@@ -211,6 +211,10 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   late EpubTheme _currentTheme;
   late bool _needPageTurnAnimation;
 
+  /// The page animation the renderer is currently configured for, used to
+  /// detect real changes when the settings notifier emits.
+  ReaderPageAnimation? _pageAnimation;
+
   EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
     final safePaddings = MediaQuery.paddingOf(context);
     final safeBottomPadding = max(safePaddings.bottom, 32);
@@ -246,9 +250,8 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     );
     _iosPageTurnSession = IOSPageTurnSession();
     _currentTheme = widget.initializeTheme;
-    _needPageTurnAnimation =
-        ref.read(readerSettingsNotifierProvider).pageAnimation !=
-        ReaderPageAnimation.none;
+    _pageAnimation = ref.read(readerSettingsProvider).pageAnimation;
+    _needPageTurnAnimation = _pageAnimation != ReaderPageAnimation.none;
   }
 
   @override
@@ -355,14 +358,18 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(readerSettingsNotifierProvider, (previous, next) {
-      if (previous?.pageAnimation != next.pageAnimation) {
+    // The listener receives the raw ReaderSettings value, so the current
+    // animation is tracked locally to detect a real change.
+    ref.listen(
+      readerSettingsProvider.select((s) => s.pageAnimation),
+      (previous, next) {
+        if (next == _pageAnimation) return;
+        _pageAnimation = next;
         setState(() {
-          _needPageTurnAnimation =
-              next.pageAnimation != ReaderPageAnimation.none;
+          _needPageTurnAnimation = next != ReaderPageAnimation.none;
         });
-      }
-    });
+      },
+    );
 
     return Positioned.fill(
       child: GestureDetector(

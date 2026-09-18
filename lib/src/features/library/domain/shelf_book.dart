@@ -1,18 +1,13 @@
-import 'package:isar/isar.dart';
-
-part 'shelf_book.g.dart';
-
-/// Lightweight Isar collection for UI display and sync operations.
+/// Lightweight entity for UI display and sync operations.
 /// Contains only essential metadata and reading progress.
 /// Uses "stream-from-zip" strategy: EPUB remains compressed on disk.
-@collection
 class ShelfBook {
-  /// Auto-increment primary key
-  Id id = Isar.autoIncrement;
+  /// Primary key. `0` means "not persisted yet"; the database assigns the real
+  /// id on insert.
+  int id = 0;
 
   /// SHA-256 hash of the original EPUB file (unique identifier)
-  @Index(unique: true)
-  late String fileHash;
+  String fileHash = '';
 
   // ==================== PATHS ====================
 
@@ -29,52 +24,46 @@ class ShelfBook {
   // ==================== METADATA ====================
 
   /// Book title
-  @Index()
-  late String title;
+  String title = '';
 
   /// Primary author (first author if multiple)
-  @Index()
-  late String author;
+  String author = '';
 
   /// All authors as a list
-  late List<String> authors;
+  List<String> authors = [];
 
   /// Book description/summary
   String? description;
 
   /// Subject tags/genres
-  late List<String> subjects;
+  List<String> subjects = [];
 
   /// Total number of chapters/navigation points
-  late int totalChapters;
+  int totalChapters = 0;
 
   /// EPUB version (e.g., "2.0", "3.0")
-  late String epubVersion;
+  String epubVersion = '';
 
   /// Timestamp when book was imported (milliseconds since epoch)
-  @Index()
-  late int importDate;
+  int importDate = 0;
 
   /// Reading direction (from spine "page-progression-direction" attribute)
   /// Possible values: "ltr" (left-to-right), "rtl" (right-to-left)
   /// LTR = 0, RTL = 1 for easier handling in the reader
-  late int direction;
+  int direction = 0;
 
   // ==================== READING PROGRESS ====================
 
   /// Current chapter index (0-based, flattened spine order)
-  @Index()
   int currentChapterIndex = 0;
 
   /// Overall reading progress (0.0 to 1.0)
-  @Index()
   double readingProgress = 0.0;
 
   /// Scroll position within current chapter (0.0 to 1.0)
   double? chapterScrollPosition = 0.0;
 
   /// Last time the book was opened (milliseconds since epoch)
-  @Index()
   int? lastOpenedDate;
 
   /// Whether the book has been marked as finished
@@ -84,26 +73,22 @@ class ShelfBook {
 
   /// Group name for organizing books (replaces groupId)
   /// Null means root level
-  @Index()
   String? groupName;
 
   /// Soft delete flag (for trash/sync safety)
-  @Index()
   bool isDeleted = false;
 
   // ==================== SYNC ====================
 
   /// Last modification timestamp (milliseconds since epoch, for conflict resolution)
-  @Index()
-  late int updatedAt;
+  int updatedAt = 0;
 
   /// Sync status: null = not synced, timestamp = last sync time
   int? lastSyncedDate;
 
-  // ==================== UI STATE (NOT SYNCED) ====================
+  // ==================== UI STATE (NOT PERSISTED) ====================
 
   /// Whether the book is currently being downloaded (transient UI state)
-  @ignore
   bool isDownloading = false;
 }
 

@@ -165,7 +165,7 @@ flutter build ios --release
 
 - [Flutter](https://flutter.dev) - Google 的 UI 工具包
 - [Riverpod](https://riverpod.dev) - 响应式状态管理
-- [Isar](https://isar.dev) - 高性能 NoSQL 数据库
+- [Drift](https://drift.simonbinder.eu) - 基于 SQLite 的 Flutter/Dart 响应式持久化库
 
 感谢所有贡献者的支持！
 

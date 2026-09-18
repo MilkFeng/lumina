@@ -6,28 +6,66 @@ part of 'import_backup_service_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$importBackupServiceHash() =>
-    r'e902e3c607bbbf9742c2787965875250a7d9ce1b';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Provider for [ImportBackupService].
+///
+/// Wires the repository layer and the unified import service together; all
+/// persistence goes through the repositories.
+
+@ProviderFor(importBackupService)
+final importBackupServiceProvider = ImportBackupServiceProvider._();
 
 /// Provider for [ImportBackupService].
 ///
-/// Injects the raw [Isar] instance directly so the service can call
-/// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-/// exposed through the higher-level repository layer.
-///
-/// Copied from [importBackupService].
-@ProviderFor(importBackupService)
-final importBackupServiceProvider =
-    AutoDisposeProvider<ImportBackupService>.internal(
-  importBackupService,
-  name: r'importBackupServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$importBackupServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+/// Wires the repository layer and the unified import service together; all
+/// persistence goes through the repositories.
 
-typedef ImportBackupServiceRef = AutoDisposeProviderRef<ImportBackupService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class ImportBackupServiceProvider
+    extends
+        $FunctionalProvider<
+          ImportBackupService,
+          ImportBackupService,
+          ImportBackupService
+        >
+    with $Provider<ImportBackupService> {
+  /// Provider for [ImportBackupService].
+  ///
+  /// Wires the repository layer and the unified import service together; all
+  /// persistence goes through the repositories.
+  ImportBackupServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'importBackupServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$importBackupServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<ImportBackupService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ImportBackupService create(Ref ref) {
+    return importBackupService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ImportBackupService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ImportBackupService>(value),
+    );
+  }
+}
+
+String _$importBackupServiceHash() =>
+    r'7c62909bc901d1b6c6fcb774c3a2c225a90f249f';

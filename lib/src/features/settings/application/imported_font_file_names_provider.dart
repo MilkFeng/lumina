@@ -8,5 +8,5 @@ part 'imported_font_file_names_provider.g.dart';
 /// Use this to check font existence without creating a direct
 /// notifier-to-notifier dependency.
 @riverpod
-Set<String> importedFontFileNames(ImportedFontFileNamesRef ref) =>
-    ref.watch(fontManagerNotifierProvider).map((f) => f.fileName).toSet();
+Set<String> importedFontFileNames(Ref ref) =>
+    ref.watch(fontManagerProvider).map((f) => f.fileName).toSet();

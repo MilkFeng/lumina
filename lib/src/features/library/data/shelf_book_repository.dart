@@ -1,8 +1,11 @@
-import 'package:isar/isar.dart';
+import 'package:collection/collection.dart';
+import 'package:drift/drift.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:lumina/src/core/database/lumina_db.dart';
+import 'package:lumina/src/core/database/mappers.dart';
+
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';
-import 'package:collection/collection.dart';
 
 /// Sorting options for shelf book list
 enum ShelfBookSortBy {
@@ -18,70 +21,77 @@ enum ShelfBookSortBy {
 /// Repository for ShelfBook CRUD operations
 /// Lightweight queries for UI display and sync
 class ShelfBookRepository {
-  final Isar _isar;
+  final LuminaDb _db;
 
-  ShelfBookRepository({required Isar isar}) : _isar = isar;
+  ShelfBookRepository({required LuminaDb db}) : _db = db;
+
+  SimpleSelectStatement<ShelfBooks, ShelfBookRow> get _books =>
+      _db.select(_db.shelfBooks);
+
+  SimpleSelectStatement<ShelfGroups, ShelfGroupRow> get _groups =>
+      _db.select(_db.shelfGroups);
 
   /// Get all books (excluding deleted) sorted by import date (newest first)
   Future<List<ShelfBook>> getAllBooks() async {
-    return await _isar.shelfBooks
-        .filter()
-        .isDeletedEqualTo(false)
-        .sortByImportDateDesc()
-        .findAll();
+    final query = _books
+      ..where((t) => t.isDeleted.equals(false))
+      ..orderBy([(t) => OrderingTerm.desc(t.importDate)]);
+    final rows = await query.get();
+    return rows.map((row) => row.toDomain()).toList();
   }
 
-  /// Get all file hashes across every record (including soft-deleted).
+  /// Get all file hashes across every record that is not soft-deleted.
   /// Used by [StorageCleanupService] to determine which physical files are valid.
   Future<Set<String>> getAllNotDeletedFileHashes() async {
-    final books = await _isar.shelfBooks
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
-    return books.map((b) => b.fileHash).toSet();
+    final query = _db.selectOnly(_db.shelfBooks)
+      ..addColumns([_db.shelfBooks.fileHash])
+      ..where(_db.shelfBooks.isDeleted.equals(false));
+    final rows = await query.get();
+    return rows.map((row) => row.read(_db.shelfBooks.fileHash)!).toSet();
   }
 
-  /// Get all books with advanced sorting and optional group filter
+  /// Get all books with advanced sorting and optional group filter.
+  ///
+  /// [includeAll] returns every non-deleted book; otherwise only the books of
+  /// [groupName] (or the root level when it is null) are returned.
   Future<List<ShelfBook>> getBooksSorted({
     ShelfBookSortBy sortBy = ShelfBookSortBy.recentlyAdded,
     String? groupName,
     bool includeAll = false,
   }) async {
-    final isar = _isar;
+    // A single `where` call: drift replaces the predicate when `where` is
+    // invoked twice, so the deleted filter and the group filter must be
+    // combined into one expression.
+    final query = _books
+      ..where(
+        (t) =>
+            t.isDeleted.equals(false) &
+            (includeAll
+                ? const Constant(true)
+                : (groupName == null
+                      ? t.groupName.isNull()
+                      : t.groupName.equals(groupName))),
+      );
 
-    // Build filter conditions
-    var query = isar.shelfBooks.filter().isDeletedEqualTo(false);
-
-    if (!includeAll) {
-      if (groupName != null) {
-        query = query.groupNameEqualTo(groupName);
-      } else {
-        query = query.groupNameIsNull();
-      }
-    }
-
-    // Cast to sortable query builder
-    final sortableQuery = query as QueryBuilder<ShelfBook, ShelfBook, QSortBy>;
-
-    // Neural sort by title or author (case-insensitive)
-    List<ShelfBook> books;
-
-    // Apply sorting
     switch (sortBy) {
+      case ShelfBookSortBy.recentlyRead:
+        query.orderBy([(t) => OrderingTerm.desc(t.lastOpenedDate)]);
+      case ShelfBookSortBy.recentlyAdded:
+        query.orderBy([(t) => OrderingTerm.desc(t.importDate)]);
+      case ShelfBookSortBy.progress:
+        query.orderBy([(t) => OrderingTerm.desc(t.readingProgress)]);
       case ShelfBookSortBy.titleAsc:
       case ShelfBookSortBy.titleDesc:
       case ShelfBookSortBy.authorAsc:
       case ShelfBookSortBy.authorDesc:
-        books = await query.findAll();
-      case ShelfBookSortBy.recentlyRead:
-        return await sortableQuery.sortByLastOpenedDateDesc().findAll();
-      case ShelfBookSortBy.recentlyAdded:
-        return await sortableQuery.sortByImportDateDesc().findAll();
-      case ShelfBookSortBy.progress:
-        return await sortableQuery.sortByReadingProgressDesc().findAll();
+        break;
     }
 
-    // Neural sort for title/author
+    final rows = await query.get();
+    final books = rows.map((row) => row.toDomain()).toList();
+
+    // SQLite has no natural sort, so title/author ordering stays in Dart to
+    // keep "Book 2" before "Book 10".
     switch (sortBy) {
       case ShelfBookSortBy.titleAsc:
         return books..sort((a, b) => compareNatural(a.title, b.title));
@@ -98,70 +108,72 @@ class ShelfBookRepository {
 
   /// Get all groups (flat structure, no nesting)
   Future<List<ShelfGroup>> getGroups() async {
-    final isar = _isar;
-    return await isar.shelfGroups
-        .filter()
-        .isDeletedEqualTo(false)
-        .sortByName()
-        .findAll();
+    final query = _groups
+      ..where((t) => t.isDeleted.equals(false))
+      ..orderBy([(t) => OrderingTerm.asc(t.name)]);
+    final rows = await query.get();
+    return rows.map((row) => row.toDomain()).toList();
   }
 
   /// Get group by ID
   Future<ShelfGroup?> getGroupById(int id) async {
-    final isar = _isar;
-    return await isar.shelfGroups.get(id);
+    final row = await (_groups..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row?.toDomain();
   }
 
   Future<ShelfGroup?> getGroupByName(String name) async {
-    final isar = _isar;
-    return await isar.shelfGroups
-        .filter()
-        .nameEqualTo(name)
-        .and()
-        .isDeletedEqualTo(false)
-        .findFirst();
+    final row = await (_groups
+          ..where(
+            (t) => t.name.equals(name) & (t.isDeleted.equals(false)),
+          ))
+        .getSingleOrNull();
+    return row?.toDomain();
   }
 
   Future<ShelfGroup> saveGroup(ShelfGroup group) async {
-    final isar = _isar;
-    final id = await isar.writeTxn(() async {
-      return await isar.shelfGroups.put(group);
-    });
+    final id = await _db
+        .into(_db.shelfGroups)
+        .insertOnConflictUpdate(group.toCompanion());
     return group..id = id;
   }
 
   /// Create a new group
   Future<Either<String, int>> createGroup({required String name}) async {
     try {
-      final isar = _isar;
       final now = DateTime.now().millisecondsSinceEpoch;
-      // check if group already exists
-      final existingGroup = await isar.shelfGroups
-          .where()
-          .nameEqualTo(name)
-          .findFirst();
+      final existingGroup = await getGroupByName(name);
       if (existingGroup != null) {
-        // if group is marked as deleted, undelete it
-        if (existingGroup.isDeleted) {
-          existingGroup.isDeleted = false;
-          existingGroup.updatedAt = now;
-          final id = await isar.writeTxn(() async {
-            return await isar.shelfGroups.put(existingGroup);
-          });
-          return right(id);
-        }
         return left('Group already exists');
-      } else {
-        final group = ShelfGroup()
-          ..name = name
-          ..creationDate = now
-          ..updatedAt = now
-          ..isDeleted = false;
-        final id = await isar.writeTxn(() async {
-          return await isar.shelfGroups.put(group);
-        });
-        return right(id);
       }
+
+      // A soft-deleted group with this name still occupies the unique index, so
+      // revive it instead of inserting a duplicate.
+      final deletedGroup = await (_groups
+            ..where((t) => t.name.equals(name) & t.isDeleted.equals(true)))
+          .getSingleOrNull();
+      if (deletedGroup != null) {
+        final revived = await (_db.update(_db.shelfGroups)
+              ..where((t) => t.id.equals(deletedGroup.id)))
+            .write(
+              ShelfGroupsCompanion(
+                isDeleted: const Value(false),
+                updatedAt: Value(now),
+              ),
+            );
+        return revived == 0
+            ? left('Create group failed')
+            : right(deletedGroup.id);
+      }
+
+      final group = ShelfGroup()
+        ..name = name
+        ..creationDate = now
+        ..updatedAt = now
+        ..isDeleted = false;
+      final id = await _db
+          .into(_db.shelfGroups)
+          .insert(group.toCompanion());
+      return right(id);
     } catch (e) {
       return left('Create group failed: $e');
     }
@@ -173,33 +185,34 @@ class ShelfBookRepository {
     required String name,
   }) async {
     try {
-      final isar = _isar;
-      return await isar.writeTxn(() async {
-        final group = await isar.shelfGroups.get(groupId);
-        if (group == null) {
-          return left('Group not found');
-        }
-        final oldGroupName = group.name;
-        group.name = name;
-        group.updatedAt = DateTime.now().millisecondsSinceEpoch;
-        await isar.shelfGroups.put(group);
-
-        final books = await isar.shelfBooks
-            .filter()
-            .groupNameEqualTo(oldGroupName)
-            .findAll();
-
-        for (final book in books) {
-          book.groupName = name;
-          book.updatedAt = DateTime.now().millisecondsSinceEpoch;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final updated = await _db.transaction(() async {
+        final existing = await (_groups..where((t) => t.id.equals(groupId)))
+            .getSingleOrNull();
+        if (existing == null) {
+          return false;
         }
 
-        if (books.isNotEmpty) {
-          await isar.shelfBooks.putAll(books);
-        }
-
-        return right(true);
+        final oldGroupName = existing.name;
+        await (_db.update(_db.shelfGroups)..where((t) => t.id.equals(groupId)))
+            .write(
+              ShelfGroupsCompanion(
+                name: Value(name),
+                updatedAt: Value(now),
+              ),
+            );
+        await (_db.update(_db.shelfBooks)
+              ..where((t) => t.groupName.equals(oldGroupName)))
+            .write(
+              ShelfBooksCompanion(
+                groupName: Value(name),
+                updatedAt: Value(now),
+              ),
+            );
+        return true;
       });
+
+      return updated ? right(true) : left('Group not found');
     } catch (e) {
       return left('Update group failed: $e');
     }
@@ -208,33 +221,36 @@ class ShelfBookRepository {
   /// Delete a group and unassign its books
   Future<Either<String, bool>> deleteGroup({required int groupId}) async {
     try {
-      final isar = _isar;
-      return await isar.writeTxn(() async {
-        final group = await isar.shelfGroups.get(groupId);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final deleted = await _db.transaction(() async {
+        final group = await (_groups..where((t) => t.id.equals(groupId)))
+            .getSingleOrNull();
         if (group == null) {
-          return left('Group not found');
+          return false;
         }
 
         // Unassign books from this group
-        final books = await isar.shelfBooks
-            .filter()
-            .groupNameEqualTo(group.name)
-            .findAll();
-        final now = DateTime.now().millisecondsSinceEpoch;
-        for (final book in books) {
-          book.groupName = null;
-          book.updatedAt = now;
-        }
-        if (books.isNotEmpty) {
-          await isar.shelfBooks.putAll(books);
-        }
+        await (_db.update(_db.shelfBooks)
+              ..where((t) => t.groupName.equals(group.name)))
+            .write(
+              ShelfBooksCompanion(
+                groupName: const Value(null),
+                updatedAt: Value(now),
+              ),
+            );
 
         // Soft delete the group
-        group.isDeleted = true;
-        group.updatedAt = now;
-        await isar.shelfGroups.put(group);
-        return right(true);
+        await (_db.update(_db.shelfGroups)..where((t) => t.id.equals(groupId)))
+            .write(
+              ShelfGroupsCompanion(
+                isDeleted: const Value(true),
+                updatedAt: Value(now),
+              ),
+            );
+        return true;
       });
+
+      return deleted ? right(true) : left('Group not found');
     } catch (e) {
       return left('Delete group failed: $e');
     }
@@ -246,15 +262,13 @@ class ShelfBookRepository {
     String? groupName,
   }) async {
     try {
-      final isar = _isar;
-      await isar.writeTxn(() async {
-        final book = await isar.shelfBooks.get(bookId);
-        if (book != null) {
-          book.groupName = groupName;
-          book.updatedAt = DateTime.now().millisecondsSinceEpoch;
-          await isar.shelfBooks.put(book);
-        }
-      });
+      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId)))
+          .write(
+            ShelfBooksCompanion(
+              groupName: Value(groupName),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
       return right(true);
     } catch (e) {
       return left('Update group failed: $e');
@@ -267,22 +281,20 @@ class ShelfBookRepository {
     String? targetGroupName,
   }) async {
     try {
-      final isar = _isar;
+      if (bookIds.isEmpty) {
+        return right(true);
+      }
+
       final now = DateTime.now().millisecondsSinceEpoch;
-      await isar.writeTxn(() async {
-        // Batch fetch all books in a single round-trip, then batch write.
-        final books = await isar.shelfBooks.getAll(bookIds.toList());
-        final toUpdate = <ShelfBook>[];
-        for (final book in books) {
-          if (book != null) {
-            book.groupName = targetGroupName;
-            book.updatedAt = now;
-            toUpdate.add(book);
-          }
-        }
-        if (toUpdate.isNotEmpty) {
-          await isar.shelfBooks.putAll(toUpdate);
-        }
+      await _db.transaction(() async {
+        await (_db.update(_db.shelfBooks)
+              ..where((t) => t.id.isIn(bookIds)))
+            .write(
+              ShelfBooksCompanion(
+                groupName: Value(targetGroupName),
+                updatedAt: Value(now),
+              ),
+            );
       });
       return right(true);
     } catch (e) {
@@ -293,31 +305,50 @@ class ShelfBookRepository {
   /// Soft delete a book (marks as deleted instead of removing)
   Future<Either<String, bool>> softDeleteBook(int bookId) async {
     try {
-      final isar = _isar;
-      await isar.writeTxn(() async {
-        final book = await isar.shelfBooks.get(bookId);
-        if (book != null) {
-          book.isDeleted = true;
-          book.updatedAt = DateTime.now().millisecondsSinceEpoch;
-          await isar.shelfBooks.put(book);
-        }
-      });
+      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId)))
+          .write(
+            ShelfBooksCompanion(
+              isDeleted: const Value(true),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
       return right(true);
     } catch (e) {
       return left('Soft delete failed: $e');
     }
   }
 
+  /// Undo a soft delete, clearing the sync marker.
+  ///
+  /// Used when re-importing a book that still exists as a soft-deleted row, or
+  /// when a backup contains a book the user previously deleted.
+  Future<Either<String, bool>> restoreBook(int bookId) async {
+    try {
+      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId)))
+          .write(
+            ShelfBooksCompanion(
+              isDeleted: const Value(false),
+              lastSyncedDate: const Value(null),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
+      return right(true);
+    } catch (e) {
+      return left('Restore failed: $e');
+    }
+  }
+
   /// Get book by ID
   Future<ShelfBook?> getBookById(int id) async {
-    final isar = _isar;
-    return await isar.shelfBooks.get(id);
+    final row = await (_books..where((t) => t.id.equals(id))).getSingleOrNull();
+    return row?.toDomain();
   }
 
   /// Get book by file hash
   Future<ShelfBook?> getBookByHash(String fileHash) async {
-    final isar = _isar;
-    return await isar.shelfBooks.where().fileHashEqualTo(fileHash).findFirst();
+    final row = await (_books..where((t) => t.fileHash.equals(fileHash)))
+        .getSingleOrNull();
+    return row?.toDomain();
   }
 
   /// Check if book exists by hash
@@ -333,7 +364,7 @@ class ShelfBookRepository {
   }
 
   /// Get book ID by hash
-  Future<Id> getBookIdByHash(String fileHash) async {
+  Future<int> getBookIdByHash(String fileHash) async {
     final book = await getBookByHash(fileHash);
     if (book != null) {
       return book.id;
@@ -342,14 +373,23 @@ class ShelfBookRepository {
     }
   }
 
-  /// Save or update a book
+  /// Save or update a book.
+  ///
+  /// Returns the id the row has in the database. Note that the return value of
+  /// `insertOnConflictUpdate` cannot be used for this: drift documents that it
+  /// reports the rowid of the last *insert*, which is the wrong row when the
+  /// call turned into an update.
   Future<Either<String, int>> saveBook(ShelfBook book) async {
     try {
-      final isar = _isar;
-      final id = await isar.writeTxn(() async {
-        return await isar.shelfBooks.put(book);
-      });
-      return right(id);
+      final isNew = book.id == 0;
+      if (isNew) {
+        book.id = await _db.into(_db.shelfBooks).insert(book.toCompanion());
+      } else {
+        await _db
+            .into(_db.shelfBooks)
+            .insertOnConflictUpdate(book.toCompanion());
+      }
+      return right(book.id);
     } catch (e) {
       return left('Save failed: $e');
     }
@@ -358,17 +398,19 @@ class ShelfBookRepository {
   /// Delete a book permanently by ID
   Future<Either<String, bool>> deleteBook(int id) async {
     try {
-      final isar = _isar;
-      final success = await isar.writeTxn(() async {
-        return await isar.shelfBooks.delete(id);
-      });
-      return right(success);
+      final deleted = await (_db.delete(_db.shelfBooks)
+            ..where((t) => t.id.equals(id)))
+          .go();
+      return right(deleted > 0);
     } catch (e) {
       return left('Delete failed: $e');
     }
   }
 
   /// Update reading progress
+  ///
+  /// This runs on every page turn, so it writes a single `UPDATE` instead of
+  /// reading the row and putting it back.
   Future<Either<String, bool>> updateProgress({
     required int bookId,
     required int currentChapterIndex,
@@ -376,18 +418,15 @@ class ShelfBookRepository {
     required double? scrollPosition,
   }) async {
     try {
-      final isar = _isar;
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await isar.writeTxn(() async {
-        final book = await isar.shelfBooks.get(bookId);
-        if (book != null) {
-          book.currentChapterIndex = currentChapterIndex;
-          book.readingProgress = progress;
-          book.chapterScrollPosition = scrollPosition;
-          book.lastOpenedDate = now;
-          await isar.shelfBooks.put(book);
-        }
-      });
+      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId)))
+          .write(
+            ShelfBooksCompanion(
+              currentChapterIndex: Value(currentChapterIndex),
+              readingProgress: Value(progress),
+              chapterScrollPosition: Value(scrollPosition),
+              lastOpenedDate: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
       return right(true);
     } catch (e) {
       return left('Update progress failed: $e');
@@ -397,16 +436,14 @@ class ShelfBookRepository {
   /// Mark book as finished
   Future<Either<String, bool>> markAsFinished(int bookId) async {
     try {
-      final isar = _isar;
-      await isar.writeTxn(() async {
-        final book = await isar.shelfBooks.get(bookId);
-        if (book != null) {
-          book.isFinished = true;
-          book.readingProgress = 1.0;
-          book.lastOpenedDate = DateTime.now().millisecondsSinceEpoch;
-          await isar.shelfBooks.put(book);
-        }
-      });
+      await (_db.update(_db.shelfBooks)..where((t) => t.id.equals(bookId)))
+          .write(
+            ShelfBooksCompanion(
+              isFinished: const Value(true),
+              readingProgress: const Value(1.0),
+              lastOpenedDate: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
       return right(true);
     } catch (e) {
       return left('Mark finished failed: $e');
@@ -415,32 +452,29 @@ class ShelfBookRepository {
 
   /// Get recently opened books
   Future<List<ShelfBook>> getRecentBooks({int limit = 10}) async {
-    final isar = _isar;
-    return await isar.shelfBooks
-        .filter()
-        .isDeletedEqualTo(false)
-        .and()
-        .lastOpenedDateIsNotNull()
-        .sortByLastOpenedDateDesc()
-        .limit(limit)
-        .findAll();
+    final query = _books
+      ..where((t) => t.isDeleted.equals(false) & t.lastOpenedDate.isNotNull())
+      ..orderBy([(t) => OrderingTerm.desc(t.lastOpenedDate)])
+      ..limit(limit);
+    final rows = await query.get();
+    return rows.map((row) => row.toDomain()).toList();
   }
 
-  /// Search books by title or author
+  /// Search books by title or author (case-insensitive).
+  ///
+  /// Soft-deleted rows are excluded, like every other shelf query.
+  /// `LIKE` is only case-insensitive for ASCII, which is enough for the current
+  /// library UI. Swap this for an FTS5 table if real full-text search (or CJK
+  /// tokenization) is needed later.
   Future<List<ShelfBook>> searchBooks(String query) async {
-    final isar = _isar;
-    final lowercaseQuery = query.toLowerCase();
-
-    return await isar.shelfBooks
-        .filter()
-        .isDeletedEqualTo(false)
-        .and()
-        .group(
-          (q) => q
-              .titleContains(lowercaseQuery, caseSensitive: false)
-              .or()
-              .authorContains(lowercaseQuery, caseSensitive: false),
-        )
-        .findAll();
+    final pattern = '%${query.toLowerCase()}%';
+    final search = _books
+      ..where(
+        (t) =>
+            t.isDeleted.equals(false) &
+            (t.title.lower().like(pattern) | t.author.lower().like(pattern)),
+      );
+    final rows = await search.get();
+    return rows.map((row) => row.toDomain()).toList();
   }
 }

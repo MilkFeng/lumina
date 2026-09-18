@@ -6,7 +6,7 @@ part 'epub_stream_service_provider.g.dart';
 /// Provider for EpubStreamService
 /// This service handles streaming EPUB files without extraction
 @Riverpod(keepAlive: true)
-EpubStreamService epubStreamService(EpubStreamServiceRef ref) {
+EpubStreamService epubStreamService(Ref ref) {
   final service = EpubStreamService();
   service.warmUp();
 

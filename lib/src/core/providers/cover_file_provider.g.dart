@@ -6,170 +6,87 @@ part of 'cover_file_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$coverFileHash() => r'69db774bf2b5d32c63765266765ff6b432eab6b4';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 /// Provider that caches cover file lookups by relative path.
 /// Returns null if path is null/empty or file doesn't exist.
-///
-/// Copied from [coverFile].
+
 @ProviderFor(coverFile)
-const coverFileProvider = CoverFileFamily();
+final coverFileProvider = CoverFileFamily._();
 
 /// Provider that caches cover file lookups by relative path.
 /// Returns null if path is null/empty or file doesn't exist.
-///
-/// Copied from [coverFile].
-class CoverFileFamily extends Family<AsyncValue<File?>> {
+
+final class CoverFileProvider
+    extends $FunctionalProvider<AsyncValue<File?>, File?, FutureOr<File?>>
+    with $FutureModifier<File?>, $FutureProvider<File?> {
   /// Provider that caches cover file lookups by relative path.
   /// Returns null if path is null/empty or file doesn't exist.
-  ///
-  /// Copied from [coverFile].
-  const CoverFileFamily();
+  CoverFileProvider._({
+    required CoverFileFamily super.from,
+    required String? super.argument,
+  }) : super(
+         retry: null,
+         name: r'coverFileProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// Provider that caches cover file lookups by relative path.
-  /// Returns null if path is null/empty or file doesn't exist.
-  ///
-  /// Copied from [coverFile].
-  CoverFileProvider call(
-    String? relativePath,
-  ) {
-    return CoverFileProvider(
-      relativePath,
-    );
+  @override
+  String debugGetCreateSourceHash() => _$coverFileHash();
+
+  @override
+  String toString() {
+    return r'coverFileProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  CoverFileProvider getProviderOverride(
-    covariant CoverFileProvider provider,
-  ) {
-    return call(
-      provider.relativePath,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<File?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'coverFileProvider';
-}
-
-/// Provider that caches cover file lookups by relative path.
-/// Returns null if path is null/empty or file doesn't exist.
-///
-/// Copied from [coverFile].
-class CoverFileProvider extends AutoDisposeFutureProvider<File?> {
-  /// Provider that caches cover file lookups by relative path.
-  /// Returns null if path is null/empty or file doesn't exist.
-  ///
-  /// Copied from [coverFile].
-  CoverFileProvider(
-    String? relativePath,
-  ) : this._internal(
-          (ref) => coverFile(
-            ref as CoverFileRef,
-            relativePath,
-          ),
-          from: coverFileProvider,
-          name: r'coverFileProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$coverFileHash,
-          dependencies: CoverFileFamily._dependencies,
-          allTransitiveDependencies: CoverFileFamily._allTransitiveDependencies,
-          relativePath: relativePath,
-        );
-
-  CoverFileProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.relativePath,
-  }) : super.internal();
-
-  final String? relativePath;
-
-  @override
-  Override overrideWith(
-    FutureOr<File?> Function(CoverFileRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CoverFileProvider._internal(
-        (ref) => create(ref as CoverFileRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        relativePath: relativePath,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<File?> createElement() {
-    return _CoverFileProviderElement(this);
+  FutureOr<File?> create(Ref ref) {
+    final argument = this.argument as String?;
+    return coverFile(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is CoverFileProvider && other.relativePath == relativePath;
+    return other is CoverFileProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, relativePath.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin CoverFileRef on AutoDisposeFutureProviderRef<File?> {
-  /// The parameter `relativePath` of this provider.
-  String? get relativePath;
-}
+String _$coverFileHash() => r'53d9da69bd65c57889a418654f6dba16b016a937';
 
-class _CoverFileProviderElement extends AutoDisposeFutureProviderElement<File?>
-    with CoverFileRef {
-  _CoverFileProviderElement(super.provider);
+/// Provider that caches cover file lookups by relative path.
+/// Returns null if path is null/empty or file doesn't exist.
+
+final class CoverFileFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<File?>, String?> {
+  CoverFileFamily._()
+    : super(
+        retry: null,
+        name: r'coverFileProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Provider that caches cover file lookups by relative path.
+  /// Returns null if path is null/empty or file doesn't exist.
+
+  CoverFileProvider call(String? relativePath) =>
+      CoverFileProvider._(argument: relativePath, from: this);
 
   @override
-  String? get relativePath => (origin as CoverFileProvider).relativePath;
+  String toString() => r'coverFileProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

@@ -183,7 +183,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   void setupVolumeControl() {
     final resume =
-        ref.read(readerSettingsNotifierProvider).volumeKeyTurnsPage &&
+        ref.read(readerSettingsProvider).volumeKeyTurnsPage &&
         !tocDrawerOpen &&
         !styleDrawerOpen &&
         lastLifecycleState == AppLifecycleState.resumed;
@@ -194,7 +194,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         event,
       ) {
         final isVolumeTurnEnabled = ref
-            .read(readerSettingsNotifierProvider)
+            .read(readerSettingsProvider)
             .volumeKeyTurnsPage;
         if (isVolumeTurnEnabled) {
           // If footnote overlay is open, volume keys should close it instead of turning page
@@ -293,7 +293,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   Widget build(BuildContext context) {
     // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
-    final settings = ref.watch(readerSettingsNotifierProvider);
+    final settings = ref.watch(readerSettingsProvider);
     if (!bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -317,22 +317,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             systemNavigationBarIconBrightness: Brightness.dark,
           );
 
-    ref.listen(readerSettingsNotifierProvider, (previous, next) {
-      if (previous != null && previous != next) {
-        // If zoom changed, use debounce to avoid excessive WebView reloads while dragging the slider
-        if (previous.fontFileName != next.fontFileName ||
-            previous.overrideFontFamily != next.overrideFontFamily) {
-          updateWebViewTheme();
-        } else if (previous.zoom != next.zoom) {
+    // React to typography changes. `select` keeps the comparison on primitive
+    // fields, since ReaderSettings has no value equality.
+    ref.listen(
+      readerSettingsProvider.select(
+        (s) => (s.fontFileName, s.overrideFontFamily),
+      ),
+      (previous, next) {
+        if (previous != next) updateWebViewTheme();
+      },
+    );
+    ref.listen(
+      readerSettingsProvider.select((s) => s.zoom),
+      (previous, next) {
+        if (previous != null && previous != next) {
           updateWebViewThemeWithDebounce();
-        } else {
-          updateWebViewTheme();
         }
-      }
-    });
+      },
+    );
 
     ref.listen(
-      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
+      readerSettingsProvider.select((s) => s.volumeKeyTurnsPage),
       (previous, next) {
         if (previous != next) {
           setupVolumeControl();

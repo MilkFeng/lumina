@@ -12,8 +12,23 @@ import 'core/services/toast_service.dart';
 import 'core/file_handling/platform_path.dart';
 import 'features/library/data/services/unified_import_service_provider.dart';
 
-// State provider to hold pending file path for processing after returning to library screen
-final pendingRouteFileProvider = StateProvider<String?>((ref) => null);
+/// Holds the pending file path for processing after returning to the library
+/// screen. Written by the router redirect and consumed (then cleared) by
+/// [GolbalShareHandler].
+///
+/// Implemented as a [Notifier] rather than the deprecated `StateProvider`,
+/// which Riverpod 3 moved out of the main library.
+class PendingRouteFileNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void setPath(String? path) => state = path;
+}
+
+final pendingRouteFileProvider =
+    NotifierProvider<PendingRouteFileNotifier, String?>(
+      PendingRouteFileNotifier.new,
+    );
 
 /// A transparent widget that lives above the app navigator and listens for
 /// incoming EPUB files from the OS ("Open with" / share-sheet).
@@ -38,7 +53,7 @@ class GolbalShareHandler extends ConsumerWidget {
         });
 
         Future.microtask(() {
-          ref.read(pendingRouteFileProvider.notifier).state = null;
+          ref.read(pendingRouteFileProvider.notifier).setPath(null);
         });
       }
     });
@@ -57,7 +72,7 @@ class GolbalShareHandler extends ConsumerWidget {
     final l10n = AppLocalizations.of(navContext)!;
 
     final stream = ref
-        .read(libraryNotifierProvider.notifier)
+        .read(libraryProvider.notifier)
         .importPipelineStream(paths);
 
     await showDialog(
@@ -73,7 +88,7 @@ class GolbalShareHandler extends ConsumerWidget {
     ref.read(unifiedImportServiceProvider).clearAllCache();
 
     // Refresh the bookshelf so the newly imported book appears immediately.
-    await ref.read(bookshelfNotifierProvider.notifier).refresh();
+    await ref.read(bookshelfProvider.notifier).refresh();
   }
 }
 

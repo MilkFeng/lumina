@@ -6,165 +6,87 @@ part of 'book_detail_screen.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$bookDetailHash() => r'd11c9ed01a0e9657c4bbd9caedc2cf25aea28eb2';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 /// Provider to fetch a single book by file hash.
-///
-/// Copied from [bookDetail].
+
 @ProviderFor(bookDetail)
-const bookDetailProvider = BookDetailFamily();
+final bookDetailProvider = BookDetailFamily._();
 
 /// Provider to fetch a single book by file hash.
-///
-/// Copied from [bookDetail].
-class BookDetailFamily extends Family<AsyncValue<ShelfBook?>> {
-  /// Provider to fetch a single book by file hash.
-  ///
-  /// Copied from [bookDetail].
-  const BookDetailFamily();
 
+final class BookDetailProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ShelfBook?>,
+          ShelfBook?,
+          FutureOr<ShelfBook?>
+        >
+    with $FutureModifier<ShelfBook?>, $FutureProvider<ShelfBook?> {
   /// Provider to fetch a single book by file hash.
-  ///
-  /// Copied from [bookDetail].
-  BookDetailProvider call(
-    String fileHash,
-  ) {
-    return BookDetailProvider(
-      fileHash,
-    );
+  BookDetailProvider._({
+    required BookDetailFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'bookDetailProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$bookDetailHash();
+
+  @override
+  String toString() {
+    return r'bookDetailProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  BookDetailProvider getProviderOverride(
-    covariant BookDetailProvider provider,
-  ) {
-    return call(
-      provider.fileHash,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
+  $FutureProviderElement<ShelfBook?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'bookDetailProvider';
-}
-
-/// Provider to fetch a single book by file hash.
-///
-/// Copied from [bookDetail].
-class BookDetailProvider extends AutoDisposeFutureProvider<ShelfBook?> {
-  /// Provider to fetch a single book by file hash.
-  ///
-  /// Copied from [bookDetail].
-  BookDetailProvider(
-    String fileHash,
-  ) : this._internal(
-          (ref) => bookDetail(
-            ref as BookDetailRef,
-            fileHash,
-          ),
-          from: bookDetailProvider,
-          name: r'bookDetailProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$bookDetailHash,
-          dependencies: BookDetailFamily._dependencies,
-          allTransitiveDependencies:
-              BookDetailFamily._allTransitiveDependencies,
-          fileHash: fileHash,
-        );
-
-  BookDetailProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.fileHash,
-  }) : super.internal();
-
-  final String fileHash;
-
-  @override
-  Override overrideWith(
-    FutureOr<ShelfBook?> Function(BookDetailRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: BookDetailProvider._internal(
-        (ref) => create(ref as BookDetailRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        fileHash: fileHash,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<ShelfBook?> createElement() {
-    return _BookDetailProviderElement(this);
+  FutureOr<ShelfBook?> create(Ref ref) {
+    final argument = this.argument as String;
+    return bookDetail(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is BookDetailProvider && other.fileHash == fileHash;
+    return other is BookDetailProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, fileHash.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin BookDetailRef on AutoDisposeFutureProviderRef<ShelfBook?> {
-  /// The parameter `fileHash` of this provider.
-  String get fileHash;
-}
+String _$bookDetailHash() => r'8a3acbd7a6527cbe1f047f6fde65c893f8ce6593';
 
-class _BookDetailProviderElement
-    extends AutoDisposeFutureProviderElement<ShelfBook?> with BookDetailRef {
-  _BookDetailProviderElement(super.provider);
+/// Provider to fetch a single book by file hash.
+
+final class BookDetailFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<ShelfBook?>, String> {
+  BookDetailFamily._()
+    : super(
+        retry: null,
+        name: r'bookDetailProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Provider to fetch a single book by file hash.
+
+  BookDetailProvider call(String fileHash) =>
+      BookDetailProvider._(argument: fileHash, from: this);
 
   @override
-  String get fileHash => (origin as BookDetailProvider).fileHash;
+  String toString() => r'bookDetailProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

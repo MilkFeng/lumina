@@ -8,7 +8,7 @@ part 'epub_import_service_provider.g.dart';
 /// Provider for EpubImportService
 /// This service handles EPUB file import, parsing, and storage
 @riverpod
-EpubImportService epubImportService(EpubImportServiceRef ref) {
+EpubImportService epubImportService(Ref ref) {
   final shelfBookRepo = ref.watch(shelfBookRepositoryProvider);
   final manifestRepo = ref.watch(bookManifestRepositoryProvider);
 
