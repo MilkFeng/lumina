@@ -1,40 +1,45 @@
-/// Heavy entity for the reading engine.
+import 'package:isar/isar.dart';
+
+part 'book_manifest.g.dart';
+
+/// Heavy Isar collection for the reading engine.
 /// Contains complete EPUB structure (spine, TOC) for navigation.
-/// Only loaded when opening the reader.
+/// Only queried when opening the reader.
+@collection
 class BookManifest {
-  /// Primary key. `0` means "not persisted yet"; the database assigns the real
-  /// id on insert.
-  int id = 0;
+  /// Auto-increment primary key
+  Id id = Isar.autoIncrement;
 
   /// SHA-256 hash of the original EPUB file (unique identifier, links to ShelfBook)
-  String fileHash = '';
+  @Index(unique: true)
+  late String fileHash;
 
   // ==================== EPUB STRUCTURE ====================
 
   /// Path to the OPF file within the ZIP
   /// e.g., "OEBPS/content.opf" or "content.opf"
-  String opfRootPath = '';
+  late String opfRootPath;
 
   /// Linear reading order (from spine element in OPF)
   /// Determines sequential navigation (Next/Previous page logic)
   /// Each item contains the complete spine metadata
-  List<SpineItem> spine = [];
+  late List<SpineItem> spine;
 
   /// Table of Contents structure (nested navigation tree)
   /// Parsed from NCX (EPUB 2.0) or NAV document (EPUB 3.0)
   /// Pure hierarchical navigation - does NOT need to cover every spine item
   /// Each TocItem points to a specific location (href + anchor) and references
   /// a spineIndex for quick lookup and progress tracking
-  List<TocItem> toc = [];
+  late List<TocItem> toc;
 
   /// Manifest map entries (id -> file path)
   /// Used for resource resolution (CSS, images, fonts)
-  List<ManifestItem> manifest = [];
+  late List<ManifestItem> manifest;
 
   // ==================== METADATA ====================
 
   /// EPUB version (e.g., "2.0", "3.0")
-  String epubVersion = '';
+  late String epubVersion;
 
   /// Timestamp when manifest was last updated
   late DateTime lastUpdated;
@@ -42,25 +47,26 @@ class BookManifest {
 
 /// Embedded object representing a single spine entry
 /// Spine defines the linear reading order (Next/Previous navigation)
+@embedded
 class SpineItem {
   /// Sequential order in the spine (0-based)
-  int index;
+  late int index;
 
   /// Relative path to the content resource (e.g., "text/chap1.xhtml")
   /// Path is relative to OPF root directory
-  String href;
+  late String href;
 
   /// ID reference from the OPF manifest
   /// Links this spine item to a manifest entry
-  String idref;
+  late String idref;
 
   /// Linear reading flag (from EPUB spine itemref "linear" attribute)
   /// If false, content is auxiliary (e.g., footnotes) and should be skipped
   /// during sequential navigation. Defaults to true.
-  bool linear;
+  late bool linear;
 
   /// Optional properties (e.g., "duokan-page-fitwindow")
-  String? properties;
+  late String? properties;
 
   SpineItem({
     this.index = 0,
@@ -72,12 +78,13 @@ class SpineItem {
 }
 
 /// Embedded object representing a file reference with optional anchor
+@embedded
 class Href {
   /// File path relative to OPF root
   late String path;
 
   /// Optional anchor (e.g., "chapter1.xhtml#section2")
-  String anchor = 'top';
+  late String anchor = 'top';
 
   @override
   bool operator ==(Object other) {
@@ -96,6 +103,7 @@ class Href {
 }
 
 /// Embedded object representing a single manifest entry
+@embedded
 class ManifestItem {
   /// Item ID (referenced by spine)
   late String id;
@@ -113,6 +121,7 @@ class ManifestItem {
 /// Embedded object representing a TOC navigation point
 /// Represents a pure navigation tree entry - NOT every spine item needs a TocItem
 /// Used exclusively for rendering the navigation drawer/menu
+@embedded
 class TocItem {
   /// Unique ID for this TOC item
   /// Used for identification and state management
@@ -138,7 +147,7 @@ class TocItem {
   late int parentId;
 
   /// Nested sub-items (for hierarchical TOC)
-  List<TocItem> children = [];
+  late List<TocItem> children;
 
   List<TocItem> flatten() {
     final result = <TocItem>[];

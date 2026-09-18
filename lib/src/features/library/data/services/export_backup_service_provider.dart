@@ -12,7 +12,7 @@ part 'export_backup_service_provider.g.dart';
 /// Because both repositories are synchronous providers, this provider
 /// is also synchronous — no [FutureProvider] overhead needed.
 @riverpod
-ExportBackupService exportBackupService(Ref ref) {
+ExportBackupService exportBackupService(ExportBackupServiceRef ref) {
   final shelfBookRepo = ref.watch(shelfBookRepositoryProvider);
   final manifestRepo = ref.watch(bookManifestRepositoryProvider);
 

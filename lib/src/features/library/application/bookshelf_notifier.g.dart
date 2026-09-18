@@ -6,54 +6,23 @@ part of 'bookshelf_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-// GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, type=warning
-/// Notifier for managing bookshelf operations with dependency injection
+String _$bookshelfNotifierHash() => r'e87999f7a0c257980110334f5ce4d5ccab3dee6b';
 
+/// Notifier for managing bookshelf operations with dependency injection
+///
+/// Copied from [BookshelfNotifier].
 @ProviderFor(BookshelfNotifier)
-final bookshelfProvider = BookshelfNotifierProvider._();
+final bookshelfNotifierProvider = AutoDisposeAsyncNotifierProvider<
+    BookshelfNotifier, BookshelfState>.internal(
+  BookshelfNotifier.new,
+  name: r'bookshelfNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$bookshelfNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-/// Notifier for managing bookshelf operations with dependency injection
-final class BookshelfNotifierProvider
-    extends $AsyncNotifierProvider<BookshelfNotifier, BookshelfState> {
-  /// Notifier for managing bookshelf operations with dependency injection
-  BookshelfNotifierProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'bookshelfProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$bookshelfNotifierHash();
-
-  @$internal
-  @override
-  BookshelfNotifier create() => BookshelfNotifier();
-}
-
-String _$bookshelfNotifierHash() => r'aff41ebd22c85fa94a8e6ecd6480b99c3642b803';
-
-/// Notifier for managing bookshelf operations with dependency injection
-
-abstract class _$BookshelfNotifier extends $AsyncNotifier<BookshelfState> {
-  FutureOr<BookshelfState> build();
-  @$mustCallSuper
-  @override
-  WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<BookshelfState>, BookshelfState>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AsyncValue<BookshelfState>, BookshelfState>,
-              AsyncValue<BookshelfState>,
-              Object?,
-              Object?
-            >;
-    return element.handleCreate(ref, build);
-  }
-}
+typedef _$BookshelfNotifier = AutoDisposeAsyncNotifier<BookshelfState>;
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

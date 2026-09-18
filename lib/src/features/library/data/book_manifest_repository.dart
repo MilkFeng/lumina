@@ -1,54 +1,44 @@
-import 'package:drift/drift.dart';
+import 'package:isar/isar.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:lumina/src/core/database/lumina_db.dart';
-import 'package:lumina/src/core/database/mappers.dart';
-
 import '../domain/book_manifest.dart';
 
 /// Repository for BookManifest CRUD operations
 /// Heavy queries only when opening the reader
 class BookManifestRepository {
-  final LuminaDb _db;
+  final Isar _isar;
 
-  BookManifestRepository({required LuminaDb db}) : _db = db;
-
-  SimpleSelectStatement<BookManifests, BookManifestRow> get _manifests =>
-      _db.select(_db.bookManifests);
+  BookManifestRepository({required Isar isar}) : _isar = isar;
 
   /// Get manifest by file hash
   /// This is the primary query when opening a book
   Future<BookManifest?> getManifestByHash(String fileHash) async {
-    final row = await (_manifests..where((t) => t.fileHash.equals(fileHash)))
-        .getSingleOrNull();
-    return row?.toDomain();
+    final isar = _isar;
+    return await isar.bookManifests
+        .where()
+        .fileHashEqualTo(fileHash)
+        .findFirst();
   }
 
   /// Get manifest by ID
   Future<BookManifest?> getManifestById(int id) async {
-    final row = await (_manifests..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
-    return row?.toDomain();
+    final isar = _isar;
+    return await isar.bookManifests.get(id);
   }
 
-  /// Save or update a manifest.
-  ///
-  /// Returns the row id. The return value of drift's `insertOnConflictUpdate`
-  /// is deliberately not used here: drift documents that it reports the rowid
-  /// of the last *insert*, which is the wrong row when the call turned into an
-  /// update.
+  /// Check if manifest exists by hash
+  Future<bool> manifestExists(String fileHash) async {
+    final manifest = await getManifestByHash(fileHash);
+    return manifest != null;
+  }
+
+  /// Save or update a manifest
   Future<Either<String, int>> saveManifest(BookManifest manifest) async {
     try {
-      final isNew = manifest.id == 0;
-      if (isNew) {
-        manifest.id = await _db
-            .into(_db.bookManifests)
-            .insert(manifest.toCompanion());
-      } else {
-        await _db
-            .into(_db.bookManifests)
-            .insertOnConflictUpdate(manifest.toCompanion());
-      }
-      return right(manifest.id);
+      final isar = _isar;
+      final id = await isar.writeTxn(() async {
+        return await isar.bookManifests.put(manifest);
+      });
+      return right(id);
     } catch (e) {
       return left('Save manifest failed: $e');
     }
@@ -57,10 +47,18 @@ class BookManifestRepository {
   /// Delete a manifest by file hash
   Future<Either<String, bool>> deleteManifestByHash(String fileHash) async {
     try {
-      final deleted = await (_db.delete(_db.bookManifests)
-            ..where((t) => t.fileHash.equals(fileHash)))
-          .go();
-      return right(deleted > 0);
+      final isar = _isar;
+      final success = await isar.writeTxn(() async {
+        final manifest = await isar.bookManifests
+            .where()
+            .fileHashEqualTo(fileHash)
+            .findFirst();
+        if (manifest != null) {
+          return await isar.bookManifests.delete(manifest.id);
+        }
+        return false;
+      });
+      return right(success);
     } catch (e) {
       return left('Delete manifest failed: $e');
     }
@@ -69,12 +67,55 @@ class BookManifestRepository {
   /// Delete a manifest by ID
   Future<Either<String, bool>> deleteManifest(int id) async {
     try {
-      final deleted = await (_db.delete(_db.bookManifests)
-            ..where((t) => t.id.equals(id)))
-          .go();
-      return right(deleted > 0);
+      final isar = _isar;
+      final success = await isar.writeTxn(() async {
+        return await isar.bookManifests.delete(id);
+      });
+      return right(success);
     } catch (e) {
       return left('Delete manifest failed: $e');
     }
+  }
+
+  /// Get all manifests (rarely used, mainly for debugging/migration)
+  Future<List<BookManifest>> getAllManifests() async {
+    final isar = _isar;
+    return await isar.bookManifests.where().findAll();
+  }
+
+  /// Get spine item by index
+  /// Convenience method to avoid loading full manifest for simple navigation
+  Future<SpineItem?> getSpineItemByIndex(String fileHash, int index) async {
+    final manifest = await getManifestByHash(fileHash);
+    if (manifest != null && index >= 0 && index < manifest.spine.length) {
+      return manifest.spine[index];
+    }
+    return null;
+  }
+
+  /// Get total spine count
+  Future<int?> getSpineCount(String fileHash) async {
+    final manifest = await getManifestByHash(fileHash);
+    return manifest?.spine.length;
+  }
+
+  /// Flatten TOC to a simple list (for UI display)
+  Future<List<TocItem>> getFlattenedToc(String fileHash) async {
+    final manifest = await getManifestByHash(fileHash);
+    if (manifest == null) return [];
+
+    return _flattenTocItems(manifest.toc);
+  }
+
+  /// Helper to recursively flatten TOC
+  List<TocItem> _flattenTocItems(List<TocItem> items) {
+    final result = <TocItem>[];
+    for (final item in items) {
+      result.add(item);
+      if (item.children.isNotEmpty) {
+        result.addAll(_flattenTocItems(item.children));
+      }
+    }
+    return result;
   }
 }

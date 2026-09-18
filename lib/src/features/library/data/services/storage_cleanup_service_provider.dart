@@ -10,7 +10,7 @@ part 'storage_cleanup_service_provider.g.dart';
 
 /// Provider for [StorageCleanupService].
 @riverpod
-StorageCleanupService storageCleanupService(Ref ref) {
+StorageCleanupService storageCleanupService(StorageCleanupServiceRef ref) {
   final shelfBookRepo = ref.watch(shelfBookRepositoryProvider);
   final ExportBackupService exportBackupService = ref.watch(
     exportBackupServiceProvider,

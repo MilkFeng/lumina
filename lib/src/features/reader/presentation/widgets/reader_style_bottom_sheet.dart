@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,7 +51,7 @@ class _ReaderStyleBottomSheetState
   @override
   void initState() {
     super.initState();
-    final s = ref.read(readerSettingsProvider);
+    final s = ref.read(readerSettingsNotifierProvider);
     _scale = s.zoom;
     _lineHeight = s.lineHeight;
     _topMargin = s.marginTop.toInt();
@@ -74,7 +74,7 @@ class _ReaderStyleBottomSheetState
   }
 
   ReaderSettingsNotifier get _notifier =>
-      ref.read(readerSettingsProvider.notifier);
+      ref.read(readerSettingsNotifierProvider.notifier);
 
   @override
   Widget build(BuildContext context) {

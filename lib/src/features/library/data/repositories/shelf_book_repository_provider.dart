@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 import '../../../../core/database/providers.dart';
 import '../shelf_book_repository.dart';
 
@@ -8,11 +7,11 @@ part 'shelf_book_repository_provider.g.dart';
 /// Provider for ShelfBookRepository
 /// Repository for managing shelf book CRUD operations
 @riverpod
-ShelfBookRepository shelfBookRepository(Ref ref) {
+ShelfBookRepository shelfBookRepository(ShelfBookRepositoryRef ref) {
   return ref
-      .watch(databaseProvider)
+      .watch(isarProvider)
       .when(
-        data: (db) => ShelfBookRepository(db: db),
+        data: (isar) => ShelfBookRepository(isar: isar),
         loading: () => throw StateError(
           'Database is still initializing. '
           'Ensure the app awaits database initialization before accessing repositories.',

@@ -372,8 +372,8 @@ class ImportBackupService {
   // ---------------------------------------------------------------------------
 
   /// Deserialises a [ShelfGroup] from its JSON map.
-  /// The `id` field is intentionally omitted — the database assigns it on
-  /// insert, and [ShelfBookRepository.createGroup] deduplicates by `name`.
+  /// The `id` field is intentionally omitted — Isar assigns it via the `name`
+  /// upsert index, preserving the existing row if the group already exists.
   ShelfGroup _mapToShelfGroup(Map<String, dynamic> m) {
     return ShelfGroup()
       ..name = m['name'] as String

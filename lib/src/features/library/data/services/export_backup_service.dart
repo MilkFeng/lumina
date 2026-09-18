@@ -258,7 +258,7 @@ class ExportBackupService {
   /// Serialises [ShelfBook] to a JSON-compatible map.
   ///
   /// Intentionally excludes:
-  ///   - [id]         — Local auto-increment key, meaningless outside this device.
+  ///   - [id]         — Isar auto-increment, meaningless outside this device.
   ///   - [filePath]   — Absolute device path; would break on a different device.
   ///   - [coverPath]  — Same reason as filePath.
   Map<String, dynamic> _shelfBookToMap(ShelfBook b) => {

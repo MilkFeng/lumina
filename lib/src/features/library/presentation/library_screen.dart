@@ -69,22 +69,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     if (newIndex == _lastTabIndex) return;
     _lastTabIndex = newIndex;
 
-    final state = ref.read(bookshelfProvider).value;
+    final state = ref.read(bookshelfNotifierProvider).valueOrNull;
     if (state == null) return;
 
     if (newIndex == 0) {
-      ref.read(bookshelfProvider.notifier).filterByGroup(null);
+      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(null);
       return;
     }
 
     if (newIndex == 1) {
-      ref.read(bookshelfProvider.notifier).filterByGroup(-1);
+      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(-1);
       return;
     }
 
     final newGroupId = state.availableGroups[newIndex - 2].id;
     if (state.filterGroupId != newGroupId) {
-      ref.read(bookshelfProvider.notifier).filterByGroup(newGroupId);
+      ref.read(bookshelfNotifierProvider.notifier).filterByGroup(newGroupId);
     }
   }
 
@@ -122,9 +122,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 
   Widget _buildContentWidget(BuildContext context) {
-    final bookshelfState = ref.watch(bookshelfProvider);
+    final bookshelfState = ref.watch(bookshelfNotifierProvider);
 
-    final state = ref.watch(bookshelfProvider).value;
+    final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
     final isSelectionMode = state?.isSelectionMode ?? false;
 
     return PopScope(
@@ -135,7 +135,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         }
 
         if (isSelectionMode) {
-          ref.read(bookshelfProvider.notifier).toggleSelectionMode();
+          ref.read(bookshelfNotifierProvider.notifier).toggleSelectionMode();
         }
       },
       child: Stack(
@@ -181,7 +181,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 
   Widget? _buildFAB(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(bookshelfProvider).value;
+    final state = ref.watch(bookshelfNotifierProvider).valueOrNull;
 
     if (state?.isSelectionMode ?? false) {
       return null;
@@ -267,12 +267,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 tabController: _tabController!,
                 onSortPressed: () => _showStyleBottomSheet(context, ref, state),
                 onSelectionToggle: () => ref
-                    .read(bookshelfProvider.notifier)
+                    .read(bookshelfNotifierProvider.notifier)
                     .toggleSelectionMode(),
                 onSelectAll: () =>
-                    ref.read(bookshelfProvider.notifier).selectAll(),
+                    ref.read(bookshelfNotifierProvider.notifier).selectAll(),
                 onClearSelection: () => ref
-                    .read(bookshelfProvider.notifier)
+                    .read(bookshelfNotifierProvider.notifier)
                     .clearSelection(),
                 onEditGroup: (group, l10n) =>
                     showEditGroupDialog(context, ref, group, l10n),
@@ -373,13 +373,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           currentSort: state.sortBy,
           onSortSelected: (sortBy) {
             ref
-                .read(bookshelfProvider.notifier)
+                .read(bookshelfNotifierProvider.notifier)
                 .changeSortOrder(sortBy);
             Navigator.pop(context);
           },
           currentViewMode: state.viewMode,
           onViewModeSelected: (mode) {
-            ref.read(bookshelfProvider.notifier).changeViewMode(mode);
+            ref.read(bookshelfNotifierProvider.notifier).changeViewMode(mode);
             Navigator.pop(context);
           },
         ),
@@ -436,10 +436,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               if (!state.isSelectionMode) {
                 HapticFeedback.selectionClick();
                 ref
-                    .read(bookshelfProvider.notifier)
+                    .read(bookshelfNotifierProvider.notifier)
                     .toggleSelectionMode();
                 ref
-                    .read(bookshelfProvider.notifier)
+                    .read(bookshelfNotifierProvider.notifier)
                     .toggleItemSelection(book);
               }
             },

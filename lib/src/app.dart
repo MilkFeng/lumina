@@ -15,7 +15,7 @@ class LuminaReaderApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final appTheme = ref.watch(appThemeProvider);
+    final appTheme = ref.watch(appThemeNotifierProvider);
 
     String systemLocale = Platform.localeName;
     final locale = Locale(systemLocale.split('_')[0]);

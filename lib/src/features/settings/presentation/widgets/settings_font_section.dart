@@ -18,8 +18,8 @@ class SettingsFontSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final fonts = ref.watch(fontManagerProvider);
-    final notifier = ref.read(fontManagerProvider.notifier);
+    final fonts = ref.watch(fontManagerNotifierProvider);
+    final notifier = ref.read(fontManagerNotifierProvider.notifier);
 
     return SettingsInfoSection(
       title: l10n.fontManagement,

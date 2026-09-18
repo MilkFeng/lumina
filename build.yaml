@@ -5,3 +5,8 @@ targets:
         generate_for:
           exclude:
             - lib/src/rust/**
+      
+      isar_generator:
+        generate_for:
+          exclude:
+            - lib/src/rust/**

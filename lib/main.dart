@@ -54,8 +54,8 @@ void main() async {
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
   );
 
-  // Initialize the drift database
-  await container.read(databaseProvider.future);
+  // Initialize Isar database
+  await container.read(isarProvider.future);
   container.read(epubStreamServiceProvider);
 
   // Register Rust licenses

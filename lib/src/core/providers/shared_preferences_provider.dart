@@ -9,7 +9,7 @@ part 'shared_preferences_provider.g.dart';
 /// It MUST be overridden in `main.dart` using `overrideWithValue`
 /// after `SharedPreferences.getInstance()` is awaited.
 @Riverpod(keepAlive: true)
-SharedPreferences sharedPreferences(Ref ref) {
+SharedPreferences sharedPreferences(SharedPreferencesRef ref) {
   throw UnimplementedError(
     'sharedPreferencesProvider MUST be initialized via override in main.dart using ProviderScope!',
   );

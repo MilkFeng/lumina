@@ -315,9 +315,9 @@ class BookGridItem extends ConsumerWidget {
 
   void _handleTap(BuildContext context, WidgetRef ref) {
     if (isSelectionMode) {
-      ref.read(bookshelfProvider.notifier).toggleItemSelection(book);
+      ref.read(bookshelfNotifierProvider.notifier).toggleItemSelection(book);
     } else {
-      final notifier = ref.read(bookshelfProvider.notifier);
+      final notifier = ref.read(bookshelfNotifierProvider.notifier);
       context.push('/book/${book.fileHash}', extra: book).then((_) {
         notifier.reloadQuietly();
       });

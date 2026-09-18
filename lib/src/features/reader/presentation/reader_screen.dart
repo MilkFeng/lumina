@@ -183,7 +183,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
   void setupVolumeControl() {
     final resume =
-        ref.read(readerSettingsProvider).volumeKeyTurnsPage &&
+        ref.read(readerSettingsNotifierProvider).volumeKeyTurnsPage &&
         !tocDrawerOpen &&
         !styleDrawerOpen &&
         lastLifecycleState == AppLifecycleState.resumed;
@@ -194,7 +194,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         event,
       ) {
         final isVolumeTurnEnabled = ref
-            .read(readerSettingsProvider)
+            .read(readerSettingsNotifierProvider)
             .volumeKeyTurnsPage;
         if (isVolumeTurnEnabled) {
           // If footnote overlay is open, volume keys should close it instead of turning page
@@ -293,7 +293,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   Widget build(BuildContext context) {
     // Block rendering until SharedPreferences (and thus ReaderSettings) are ready.
-    final settings = ref.watch(readerSettingsProvider);
+    final settings = ref.watch(readerSettingsNotifierProvider);
     if (!bookSession.isLoaded) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -317,27 +317,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             systemNavigationBarIconBrightness: Brightness.dark,
           );
 
-    // React to typography changes. `select` keeps the comparison on primitive
-    // fields, since ReaderSettings has no value equality.
-    ref.listen(
-      readerSettingsProvider.select(
-        (s) => (s.fontFileName, s.overrideFontFamily),
-      ),
-      (previous, next) {
-        if (previous != next) updateWebViewTheme();
-      },
-    );
-    ref.listen(
-      readerSettingsProvider.select((s) => s.zoom),
-      (previous, next) {
-        if (previous != null && previous != next) {
+    ref.listen(readerSettingsNotifierProvider, (previous, next) {
+      if (previous != null && previous != next) {
+        // If zoom changed, use debounce to avoid excessive WebView reloads while dragging the slider
+        if (previous.fontFileName != next.fontFileName ||
+            previous.overrideFontFamily != next.overrideFontFamily) {
+          updateWebViewTheme();
+        } else if (previous.zoom != next.zoom) {
           updateWebViewThemeWithDebounce();
+        } else {
+          updateWebViewTheme();
         }
-      },
-    );
+      }
+    });
 
     ref.listen(
-      readerSettingsProvider.select((s) => s.volumeKeyTurnsPage),
+      readerSettingsNotifierProvider.select((s) => s.volumeKeyTurnsPage),
       (previous, next) {
         if (previous != next) {
           setupVolumeControl();

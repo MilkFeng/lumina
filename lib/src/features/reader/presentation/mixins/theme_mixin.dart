@@ -13,7 +13,7 @@ mixin _ThemeMixin on ConsumerState<ReaderScreen> {
   set themeUpdateDebouncer(Timer? v);
 
   EpubTheme getEpubTheme() {
-    final settings = ref.read(readerSettingsProvider);
+    final settings = ref.read(readerSettingsNotifierProvider);
     return settings.toEpubTheme(context);
   }
 

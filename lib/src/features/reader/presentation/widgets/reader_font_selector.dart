@@ -28,7 +28,7 @@ class ReaderFontSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final fonts = ref.watch(fontManagerProvider);
+    final fonts = ref.watch(fontManagerNotifierProvider);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(

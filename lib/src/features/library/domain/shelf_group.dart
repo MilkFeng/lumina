@@ -1,19 +1,27 @@
+import 'package:isar/isar.dart';
+
+part 'shelf_group.g.dart';
+
 /// Folder-like grouping for organizing shelf books.
-/// Uses a flat structure (no nesting) with UUID-based sync.
+/// Now uses flat structure (no nesting) with UUID-based sync.
+@collection
 class ShelfGroup {
-  /// Primary key. `0` means "not persisted yet"; the database assigns the real
-  /// id on insert.
-  int id = 0;
+  /// Auto-increment primary key
+  Id id = Isar.autoIncrement;
 
   /// Display name for the folder
-  String name = '';
+  @Index(unique: true)
+  late String name;
 
   /// Timestamp when the folder was created (milliseconds since epoch)
-  int creationDate = 0;
+  @Index()
+  late int creationDate;
 
   /// Last update timestamp (milliseconds since epoch)
-  int updatedAt = 0;
+  @Index()
+  late int updatedAt;
 
   /// Soft delete flag for sync safety
+  @Index()
   bool isDeleted = false;
 }

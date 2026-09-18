@@ -45,7 +45,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     onImportablesReady();
 
     final stream = ref
-        .read(libraryProvider.notifier)
+        .read(libraryNotifierProvider.notifier)
         .importPipelineStream(paths);
 
     if (!context.mounted) return;
@@ -63,7 +63,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     ref.read(unifiedImportServiceProvider).clearAllCache();
 
     if (context.mounted) {
-      await ref.read(bookshelfProvider.notifier).refresh();
+      await ref.read(bookshelfNotifierProvider.notifier).refresh();
     }
   }
 
@@ -156,7 +156,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
 
     if (confirmed == true) {
       final success = await ref
-          .read(bookshelfProvider.notifier)
+          .read(bookshelfNotifierProvider.notifier)
           .deleteSelected();
       if (context.mounted) {
         if (success) {
@@ -192,7 +192,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       if (!context.mounted) return;
       if (name != null && name.trim().isNotEmpty) {
         final groupId = await ref
-            .read(bookshelfProvider.notifier)
+            .read(bookshelfNotifierProvider.notifier)
             .createGroup(name);
         if (!context.mounted) return;
 
@@ -218,7 +218,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     if (result != null) {
       final targetGroupId = result == -1 ? null : result;
       final success = await ref
-          .read(bookshelfProvider.notifier)
+          .read(bookshelfNotifierProvider.notifier)
           .moveSelectedItems(targetGroupId);
       if (!context.mounted) return;
       {
@@ -275,7 +275,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
             onPressed: () async {
               Navigator.pop(context);
               final result = await ref
-                  .read(bookshelfProvider.notifier)
+                  .read(bookshelfNotifierProvider.notifier)
                   .deleteGroup(group.id);
               if (context.mounted) {
                 if (result) {
@@ -297,7 +297,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
 
     if (result != null && result.isNotEmpty && result != group.name) {
       await ref
-          .read(bookshelfProvider.notifier)
+          .read(bookshelfNotifierProvider.notifier)
           .renameGroup(group.id, result);
     }
   }
@@ -332,7 +332,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       // 2. Start the stream before opening the dialog so that no work is
       //    duplicated on dialog rebuilds.
       final progressStream = ref
-          .read(libraryProvider.notifier)
+          .read(libraryNotifierProvider.notifier)
           .importLibraryFromFolder(selectedPath);
 
       // 3. Show the restore dialog; it subscribes to the stream and returns
@@ -360,7 +360,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
 
     // 4. Refresh the library shelf after a successful restore.
     if (context.mounted) {
-      await ref.read(bookshelfProvider.notifier).refresh();
+      await ref.read(bookshelfNotifierProvider.notifier).refresh();
     }
   }
 
