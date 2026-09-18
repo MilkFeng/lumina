@@ -1,256 +1,205 @@
 {
   "@@locale": "zh",
-  
   "appName": "Lumina",
   "@appName": {
     "description": "应用名称"
   },
-  
   "settings": "设置",
   "@settings": {
     "description": "设置标签"
   },
-  
   "importBook": "导入书籍",
   "@importBook": {
     "description": "导入书籍操作"
   },
-  
   "deleteBookConfirm": "确定要删除这本书吗？",
   "@deleteBookConfirm": {
     "description": "删除图书确认消息"
   },
-  
   "cancel": "取消",
   "@cancel": {
     "description": "取消按钮标签"
   },
-  
   "delete": "删除",
   "@delete": {
     "description": "删除按钮标签"
   },
-  
   "confirm": "确认",
   "@confirm": {
     "description": "确认按钮标签"
   },
-  
   "tableOfContents": "目录",
   "@tableOfContents": {
     "description": "目录标签"
   },
-  
   "chapter": "章节",
   "@chapter": {
     "description": "章节标签"
   },
-  
   "page": "页面",
   "@page": {
     "description": "页面标签"
   },
-  
   "progress": "进度",
   "@progress": {
     "description": "进度标签"
   },
-  
   "webdavSync": "WebDAV 同步",
   "@webdavSync": {
     "description": "WebDAV 同步标签"
   },
-  
   "syncNow": "立即同步",
   "@syncNow": {
     "description": "立即同步按钮标签"
   },
-  
   "serverUrl": "服务器地址",
   "@serverUrl": {
     "description": "服务器地址标签"
   },
-  
   "username": "用户名",
   "@username": {
     "description": "用户名标签"
   },
-  
   "password": "密码",
   "@password": {
     "description": "密码标签"
   },
-  
   "save": "保存",
   "@save": {
     "description": "保存按钮标签"
   },
-  
   "language": "语言",
   "@language": {
     "description": "语言设置标签"
   },
-  
   "theme": "主题",
   "@theme": {
     "description": "主题设置标签"
   },
-  
   "lastRead": "最后阅读",
   "@lastRead": {
     "description": "最后阅读时间标签"
   },
-  
   "noBooks": "还没有书籍",
   "@noBooks": {
     "description": "空书库消息"
   },
-  
   "addYourFirstBook": "添加您的第一本书开始阅读",
   "@addYourFirstBook": {
     "description": "空书库提示"
   },
-  
   "sortBy": "排序方式",
   "@sortBy": {
     "description": "排序标签"
   },
-  
   "title": "标题",
   "@title": {
     "description": "标题排序选项"
   },
-  
   "recentlyAdded": "最近添加",
   "@recentlyAdded": {
     "description": "最近添加排序选项"
   },
-  
   "recentlyRead": "最近阅读",
   "@recentlyRead": {
     "description": "最近阅读排序选项"
   },
-  
   "error": "错误",
   "@error": {
     "description": "错误标签"
   },
-  
   "success": "成功",
   "@success": {
     "description": "成功标签"
   },
-
   "failed": "失败",
   "@failed": {
     "description": "失败标签"
   },
-  
   "loading": "加载中",
   "@loading": {
     "description": "加载标签"
   },
-  
   "retry": "重试",
   "@retry": {
     "description": "重试按钮标签"
   },
-  
   "back": "返回",
   "@back": {
     "description": "返回按钮标签"
   },
-  
   "next": "下一页",
   "@next": {
     "description": "下一页按钮标签"
   },
-  
   "previous": "上一页",
   "@previous": {
     "description": "上一页按钮标签"
   },
-  
   "close": "关闭",
   "@close": {
     "description": "关闭按钮标签"
   },
-  
   "version": "版本",
   "@version": {
     "description": "版本标签"
   },
-  
   "all": "全部",
   "@all": {
     "description": "全部书籍标签"
   },
-  
   "uncategorized": "未分类",
   "@uncategorized": {
     "description": "未分类书籍标签"
   },
-  
   "selectAll": "全选",
   "@selectAll": {
     "description": "全选按钮标签"
   },
-  
   "deselectAll": "取消全选",
   "@deselectAll": {
     "description": "取消全选按钮标签"
   },
-  
   "sort": "排序",
   "@sort": {
     "description": "排序按钮提示"
   },
-  
   "editCategory": "编辑分类",
   "@editCategory": {
     "description": "编辑分类对话框标题"
   },
-  
   "categoryName": "分类名称",
   "@categoryName": {
     "description": "分类名称输入标签"
   },
-  
   "sortBooksBy": "排序方式",
   "@sortBooksBy": {
     "description": "图书排序底部表单标题"
   },
-  
   "titleAZ": "标题 (A-Z)",
   "@titleAZ": {
     "description": "按标题升序排序"
   },
-  
   "titleZA": "标题 (Z-A)",
   "@titleZA": {
     "description": "按标题降序排序"
   },
-  
   "authorAZ": "作者 (A-Z)",
   "@authorAZ": {
     "description": "按作者升序排序"
   },
-  
   "authorZA": "作者 (Z-A)",
   "@authorZA": {
     "description": "按作者降序排序"
   },
-  
   "readingProgress": "阅读进度",
   "@readingProgress": {
     "description": "按阅读进度排序"
   },
-  
   "noItemsInCategory": "此分类中没有项目",
   "@noItemsInCategory": {
     "description": "空分类消息"
   },
-  
   "selected": "已选择 {count} 项",
   "@selected": {
     "description": "选择计数标签",
@@ -260,47 +209,38 @@
       }
     }
   },
-  
   "move": "移动",
   "@move": {
     "description": "移动按钮标签"
   },
-  
   "deleted": "已删除",
   "@deleted": {
     "description": "已删除徽章标签"
   },
-  
   "moveTo": "移动到",
   "@moveTo": {
     "description": "移动到对话框标题"
   },
-  
   "createNewCategory": "创建新分类",
   "@createNewCategory": {
     "description": "创建新分类选项"
   },
-  
   "newCategory": "新分类",
   "@newCategory": {
     "description": "新分类对话框标题"
   },
-  
   "create": "创建",
   "@create": {
     "description": "创建按钮标签"
   },
-  
   "deleteBooks": "删除书籍",
   "@deleteBooks": {
     "description": "删除图书对话框标题"
   },
-  
   "deleteBooksConfirm": "永久删除所选书籍？",
   "@deleteBooksConfirm": {
     "description": "删除图书确认消息"
   },
-  
   "movedTo": "已移动到“{name}”",
   "@movedTo": {
     "description": "成功移动消息",
@@ -310,32 +250,26 @@
       }
     }
   },
-  
   "failedToMove": "移动失败",
   "@failedToMove": {
     "description": "移动失败错误消息"
   },
-  
   "failedToDelete": "删除失败",
   "@failedToDelete": {
     "description": "删除失败错误消息"
   },
-  
   "invalidFileSelected": "选择的文件无效",
   "@invalidFileSelected": {
     "description": "无效文件错误消息"
   },
-  
   "importing": "导入中",
   "@importing": {
     "description": "导入进度消息"
   },
-
   "importCompleted": "导入完成",
   "@importCompleted": {
     "description": "导入完成消息"
   },
-
   "importingProgress": "{success} 成功，{failed} 失败，{remaining} 剩余",
   "@importingProgress": {
     "description": "导入进度消息",
@@ -351,7 +285,6 @@
       }
     }
   },
-  
   "successfullyImported": "成功导入“{title}”",
   "@successfullyImported": {
     "description": "成功导入消息",
@@ -361,7 +294,6 @@
       }
     }
   },
-  
   "importFailed": "导入失败：{error}",
   "@importFailed": {
     "description": "导入失败错误消息",
@@ -371,7 +303,6 @@
       }
     }
   },
-
   "importingFile": "正在导入“{fileName}”",
   "@importingFile": {
     "description": "正在导入文件消息",
@@ -381,17 +312,14 @@
       }
     }
   },
-
   "details": "详情",
   "@details": {
     "description": "详情按钮标签"
   },
-  
   "syncCompleted": "同步完成",
   "@syncCompleted": {
     "description": "同步完成消息"
   },
-  
   "syncFailed": "同步失败（长按同步按钮进入设置）：{message}",
   "@syncFailed": {
     "description": "同步失败错误消息",
@@ -401,7 +329,6 @@
       }
     }
   },
-  
   "syncError": "同步错误：{error}",
   "@syncError": {
     "description": "同步错误消息",
@@ -411,12 +338,10 @@
       }
     }
   },
-  
   "tapSyncLongPressSettings": "点击：立即同步\n长按：设置",
   "@tapSyncLongPressSettings": {
     "description": "同步按钮提示"
   },
-  
   "errorLoadingLibrary": "加载书库时出错：{error}",
   "@errorLoadingLibrary": {
     "description": "加载书库错误消息",
@@ -426,12 +351,10 @@
       }
     }
   },
-  
   "bookNotFound": "未找到图书",
   "@bookNotFound": {
     "description": "未找到图书错误消息"
   },
-  
   "progressPercent": "进度：{percent}%",
   "@progressPercent": {
     "description": "阅读进度百分比",
@@ -441,12 +364,10 @@
       }
     }
   },
-  
   "notStarted": "未开始",
   "@notStarted": {
     "description": "图书未开始阅读状态"
   },
-  
   "chaptersCount": "{count} 章节",
   "@chaptersCount": {
     "description": "章节数量",
@@ -456,7 +377,6 @@
       }
     }
   },
-  
   "epubVersion": "EPUB {version}",
   "@epubVersion": {
     "description": "EPUB 版本标签",
@@ -466,32 +386,26 @@
       }
     }
   },
-  
   "continueReading": "继续阅读",
   "@continueReading": {
     "description": "继续阅读按钮标签"
   },
-  
   "startReading": "开始阅读",
   "@startReading": {
     "description": "开始阅读按钮标签"
   },
-  
   "collapse": "收起",
   "@collapse": {
     "description": "收起按钮标签"
   },
-  
   "expandAll": "展开全部",
   "@expandAll": {
     "description": "展开全部按钮标签"
   },
-  
   "bookManifestNotFound": "未找到图书清单",
   "@bookManifestNotFound": {
     "description": "未找到图书清单错误消息"
   },
-  
   "errorLoadingBook": "加载图书时出错：{error}",
   "@errorLoadingBook": {
     "description": "加载图书错误消息",
@@ -501,107 +415,86 @@
       }
     }
   },
-  
   "firstChapterOfBook": "这是本书的第一章",
   "@firstChapterOfBook": {
     "description": "第一章通知"
   },
-  
   "lastChapterOfBook": "这是本书的最后一章",
   "@lastChapterOfBook": {
     "description": "最后一章通知"
   },
-  
   "lastPageOfBook": "这是本书的最后一页",
   "@lastPageOfBook": {
     "description": "最后一页通知"
   },
-  
   "firstPageOfBook": "这是本书的第一页",
   "@firstPageOfBook": {
     "description": "第一页通知"
   },
-  
   "chapterHasNoContent": "本章节没有内容",
   "@chapterHasNoContent": {
     "description": "空章节通知"
   },
-  
   "serverSettings": "服务器设置",
   "@serverSettings": {
     "description": "服务器设置部分标题"
   },
-  
   "serverUrlHint": "https://cloud.example.com/remote.php/dav/files/username/",
   "@serverUrlHint": {
     "description": "服务器 URL 输入提示"
   },
-  
   "serverUrlRequired": "服务器 URL 为必填项",
   "@serverUrlRequired": {
     "description": "服务器 URL 验证错误"
   },
-  
   "urlMustStartWith": "URL 必须以 http:// 或 https:// 开头",
   "@urlMustStartWith": {
     "description": "URL 格式验证错误"
   },
-  
   "usernameRequired": "用户名为必填项",
   "@usernameRequired": {
     "description": "用户名验证错误"
   },
-  
   "passwordRequired": "密码为必填项",
   "@passwordRequired": {
     "description": "密码验证错误"
   },
-  
   "remoteFolderPath": "远程文件夹路径",
   "@remoteFolderPath": {
     "description": "远程文件夹路径标签"
   },
-  
   "remoteFolderHint": "LuminaReader/",
   "@remoteFolderHint": {
     "description": "远程文件夹路径提示"
   },
-  
   "folderPathRequired": "文件夹路径为必填项",
   "@folderPathRequired": {
     "description": "文件夹路径验证错误"
   },
-  
   "testing": "测试中...",
   "@testing": {
     "description": "测试连接状态"
   },
-  
   "testConnection": "测试连接",
   "@testConnection": {
     "description": "测试连接按钮标签"
   },
-  
   "syncInformation": "同步信息",
   "@syncInformation": {
     "description": "同步信息部分标题"
   },
-  
   "lastSync": "最后同步",
   "@lastSync": {
     "description": "最后同步时间标签"
   },
-  
   "never": "从未",
   "@never": {
     "description": "从未同步状态"
   },
-  
   "justNow": "刚刚",
   "@justNow": {
     "description": "刚刚时间指示器"
   },
-  
   "minutesAgo": "{minutes}分钟前",
   "@minutesAgo": {
     "description": "分钟前时间指示器",
@@ -611,7 +504,6 @@
       }
     }
   },
-  
   "hoursAgo": "{hours}小时前",
   "@hoursAgo": {
     "description": "小时前时间指示器",
@@ -621,7 +513,6 @@
       }
     }
   },
-  
   "daysAgo": "{days}天前",
   "@daysAgo": {
     "description": "天前时间指示器",
@@ -631,22 +522,18 @@
       }
     }
   },
-  
   "lastError": "最后错误",
   "@lastError": {
     "description": "最后错误标签"
   },
-  
   "fillAllRequiredFields": "请填写所有必填字段",
   "@fillAllRequiredFields": {
     "description": "填写所有字段验证消息"
   },
-  
   "connectionSuccessful": "连接成功！",
   "@connectionSuccessful": {
     "description": "连接测试成功消息"
   },
-  
   "connectionFailed": "连接失败，请检查您的设置：{details}",
   "@connectionFailed": {
     "description": "连接测试失败消息",
@@ -656,7 +543,6 @@
       }
     }
   },
-  
   "errorWithDetails": "错误：{error}",
   "@errorWithDetails": {
     "description": "带详情的错误消息",
@@ -666,17 +552,14 @@
       }
     }
   },
-
   "failedToCreateCategory": "创建分类失败！",
   "@failedToCreateCategory": {
     "description": "创建分类失败消息"
   },
-
   "categoryNameCannotBeEmpty": "分类名称不能为空",
   "@categoryNameCannotBeEmpty": {
     "description": "分类名称不能为空验证消息"
   },
-
   "categoryCreated": "分类“{name}”已创建",
   "@categoryCreated": {
     "description": "分类创建成功消息",
@@ -686,7 +569,6 @@
       }
     }
   },
-
   "categoryDeleted": "分类“{name}”已删除",
   "@categoryDeleted": {
     "description": "分类删除成功消息",
@@ -696,57 +578,46 @@
       }
     }
   },
-
   "failedToDeleteCategory": "删除分类失败！",
   "@failedToDeleteCategory": {
     "description": "删除分类失败消息"
   },
-
   "experimentalFeature": "实验性功能",
   "@experimentalFeature": {
     "description": "实验性功能标题"
   },
-
   "experimentalFeatureWarning": "WebDAV同步功能目前处于实验阶段，可能存在一些问题或不稳定的情况。\n\n使用前请确保：\n• 已备份重要数据\n• 了解WebDAV服务器的配置\n• 网络连接稳定\n\n如遇到问题，请及时反馈。",
   "@experimentalFeatureWarning": {
     "description": "实验性功能警告内容"
   },
-
   "iKnow": "我知道了",
   "@iKnow": {
     "description": "我知道了按钮文本"
   },
-
   "invalidFileType": "无效的文件类型，请选择一个 EPUB 文件",
   "@invalidFileType": {
     "description": "无效文件类型错误消息"
   },
-
   "fileAccessError": "无法访问文件",
   "@fileAccessError": {
     "description": "文件访问错误消息"
   },
-
   "about": "关于",
   "@about": {
     "description": "关于页面标题"
   },
-
   "storage": "存储",
   "@storage": {
     "description": "关于页面存储部分标题"
   },
-
   "cleanCache": "清理缓存",
   "@cleanCache": {
     "description": "清理缓存按钮文本"
   },
-
   "cleanCacheSubtitle": "删除存储中无用的孤立文件",
   "@cleanCacheSubtitle": {
     "description": "清理缓存副标题"
   },
-
   "cleanCacheSuccessWithCount": "清理完成，已删除 {count} 个无用文件",
   "@cleanCacheSuccessWithCount": {
     "description": "清理缓存成功消息",
@@ -756,162 +627,130 @@
       }
     }
   },
-
   "cleanCacheSuccess": "清理完成",
   "@cleanCacheSuccess": {
     "description": "缓存清理成功消息"
   },
-
   "appAppearance": "外观",
   "@appAppearance": {
     "description": "关于页面外观设置区块标题"
   },
-
   "appThemeMode": "主题",
   "@appThemeMode": {
     "description": "应用主题模式选择器标签"
   },
-
   "appThemeModeSystem": "跟随系统",
   "@appThemeModeSystem": {
     "description": "主题模式选项：跟随系统"
   },
-
   "appThemeModeLight": "浅色",
   "@appThemeModeLight": {
     "description": "主题模式选项：始终浅色"
   },
-
   "appThemeModeDark": "深色",
   "@appThemeModeDark": {
     "description": "主题模式选项：始终深色"
   },
-
   "appThemeVariant": "主题方案",
   "@appThemeVariant": {
     "description": "主题方案选择器标签"
   },
-
   "appThemeVariantStandard": "标准",
   "@appThemeVariantStandard": {
     "description": "主题方案：标准简洁风格"
   },
-
   "appThemeVariantEyeCare": "护眼",
   "@appThemeVariantEyeCare": {
     "description": "主题方案：暖色护眼风格"
   },
-
   "projectInfo": "项目信息",
   "@projectInfo": {
     "description": "项目信息部分标题"
   },
-
   "github": "GitHub",
   "@github": {
     "description": "GitHub 标签"
   },
-
   "author": "作者",
   "@author": {
     "description": "作者标签"
   },
-
   "openSourceLicenses": "开源许可证",
   "@openSourceLicenses": {
     "description": "开源许可证标签"
   },
-
   "openSourceLicensesSubtitle": "显示应用中使用的开源库及其许可证",
   "@openSourceLicensesSubtitle": {
     "description": "开源许可证副标题"
   },
-
   "checkForUpdates": "检查更新",
   "@checkForUpdates": {
     "description": "检查更新标签"
   },
-
   "checkForUpdatesSubtitle": "检查是否有新版本可用",
   "@checkForUpdatesSubtitle": {
     "description": "检查更新副标题"
   },
-
   "checkingForUpdates": "正在检查更新...",
   "@checkingForUpdates": {
     "description": "正在检查更新提示"
   },
-
   "upToDate": "已是最新版本",
   "@upToDate": {
     "description": "最新版本提示"
   },
-
   "newVersionAvailable": "发现新版本",
   "@newVersionAvailable": {
     "description": "发现新版本提示"
   },
-
   "updateViaChinaCloud": "蓝奏云下载",
   "@updateViaChinaCloud": {
     "description": "蓝奏云下载按钮标签"
   },
-
   "updateViaGithub": "GitHub 下载",
   "@updateViaGithub": {
     "description": "GitHub 下载按钮标签"
   },
-
   "passwordCopied": "密码已复制",
   "@passwordCopied": {
     "description": "密码复制成功提示"
   },
-
   "updateCheckFailed": "检查更新失败",
   "@updateCheckFailed": {
     "description": "检查更新失败提示"
   },
-
   "languageNameInEnglish": "Chinese",
   "@languageNameInEnglish": {
     "description": "当前语言的英文名称，用于在更新日志中选择对应的语言部分"
   },
-
   "tips": "使用提示",
   "@tips": {
     "description": "提示部分标题"
   },
-
   "tipLongPressTab": "长按标签页可编辑分组",
   "@tipLongPressTab": {
     "description": "长按标签页编辑分组的提示"
   },
-
   "tipLongPressSync": "长按同步按钮进入同步设置",
   "@tipLongPressSync": {
     "description": "长按同步按钮的提示"
   },
-
   "tipLongPressNextTrack": "长按上/下一页按钮跳到上/下一章节",
   "@tipLongPressNextTrack": {
     "description": "长按上/下一页按钮的提示"
   },
-
   "longPressToViewImage": "长按图片查看原图",
   "@longPressToViewImage": {
     "description": "长按图片查看原图的提示"
   },
-
   "importFromFolder": "扫描文件夹",
   "@importFromFolder": {
     "description": "从文件夹导入选项标签"
   },
-
   "importFiles": "导入文件",
   "@importFiles": {
     "description": "导入文件选项标签"
   },
-
   "backupSavedToDownloads": "备份已成功保存到下载文件夹：{path}",
   "@backupSavedToDownloads": {
     "description": "备份保存成功消息",
@@ -921,12 +760,10 @@
       }
     }
   },
-
   "backupShared": "备份已通过分享功能导出",
   "@backupShared": {
     "description": "备份分享成功消息"
   },
-
   "exportFailed": "备份失败：{message}",
   "@exportFailed": {
     "description": "备份失败消息",
@@ -936,7 +773,6 @@
       }
     }
   },
-
   "progressing": "正在处理：{fileName}",
   "@progressing": {
     "description": "正在处理文件消息",
@@ -946,42 +782,34 @@
       }
     }
   },
-
   "progressedAll": "全部处理完成",
   "@progressedAll": {
     "description": "全部处理完成消息"
   },
-
   "restoreFromBackup": "从备份恢复",
   "@restoreFromBackup": {
     "description": "从备份恢复选项标签"
   },
-
   "library": "书库",
   "@library": {
     "description": "书库部分标题"
   },
-
   "backupLibrary": "备份书库",
   "@backupLibrary": {
     "description": "备份书库选项标签"
   },
-
   "backupLibraryDescription": "将书库数据导出为一个文件夹，包括书籍文件和数据库备份",
   "@backupLibraryDescription": {
     "description": "备份书库功能描述"
   },
-
   "restoringBackup": "正在恢复备份",
   "@restoringBackup": {
     "description": "恢复进行中时显示的标题"
   },
-
   "restoreCompleted": "恢复完成",
   "@restoreCompleted": {
     "description": "恢复完成时显示的标题"
   },
-
   "restoreSuccess": "已成功恢复 {count} 本书",
   "@restoreSuccess": {
     "description": "恢复成功消息，包含书籍数量",
@@ -991,7 +819,6 @@
       }
     }
   },
-
   "restoreFailed": "备份恢复失败：{message}",
   "@restoreFailed": {
     "description": "恢复失败消息",
@@ -1001,12 +828,10 @@
       }
     }
   },
-
   "restoring": "正在恢复",
   "@restoring": {
     "description": "正在恢复时显示的标题"
   },
-
   "restoringProgress": "{success} 成功，{failed} 失败，{remaining} 剩余",
   "@restoringProgress": {
     "description": "恢复进度消息，包含成功、失败和未处理的书籍数量",
@@ -1022,32 +847,26 @@
       }
     }
   },
-
   "viewMode": "显示模式",
   "@viewMode": {
     "description": "样式底部弹窗中的显示模式标题"
   },
-
   "viewModeCompact": "紧凑",
   "@viewModeCompact": {
     "description": "紧凑视图模式选项"
   },
-
   "viewModeRelaxed": "宽松",
   "@viewModeRelaxed": {
     "description": "宽松视图模式选项"
   },
-
   "spliter": "，",
   "@spliter": {
     "description": "用于分隔多个值的分隔符"
   },
-
   "shareEpub": "分享 EPUB",
   "@shareEpub": {
     "description": "分享 EPUB 源文件操作"
   },
-
   "shareEpubFailed": "分享 EPUB 失败：{error}",
   "@shareEpubFailed": {
     "description": "分享 EPUB 失败时的错误提示",
@@ -1057,27 +876,22 @@
       }
     }
   },
-
   "editBook": "编辑书籍",
   "@editBook": {
     "description": "编辑书籍对话框标题"
   },
-
   "authors": "作者",
   "@authors": {
     "description": "作者字段标签"
   },
-
   "bookDescription": "简介",
   "@bookDescription": {
     "description": "书籍简介字段标签"
   },
-
   "bookSaved": "书籍已更新",
   "@bookSaved": {
     "description": "书籍保存成功提示"
   },
-
   "bookSaveFailed": "保存失败：{error}",
   "@bookSaveFailed": {
     "description": "书籍保存失败提示",
@@ -1087,22 +901,18 @@
       }
     }
   },
-
   "authorsTooltip": "多个作者请使用英文半角逗号分隔",
   "@authorsTooltip": {
     "description": "作者字段的提示信息"
   },
-
   "openStorageLocation": "打开存储位置",
   "@openStorageLocation": {
     "description": "打开存储位置操作"
   },
-
   "openStorageLocationSubtitle": "在文件管理器中打开 Lumina 的存储目录",
   "@openStorageLocationSubtitle": {
     "description": "打开存储位置的副标题"
   },
-
   "openStorageLocationFailed": "无法打开存储位置：{error}",
   "@openStorageLocationFailed": {
     "description": "打开存储位置失败的错误提示",
@@ -1112,224 +922,194 @@
       }
     }
   },
-
   "openStorageLocationIOSMessage": "请在文件应用中打开“我的 iPhone/iPad”下的“Lumina”文件夹来访问存储位置",
   "@openStorageLocationIOSMessage": {
     "description": "iOS 打开存储位置提示"
   },
-
   "unsavedChangesTitle": "未保存的修改",
   "@unsavedChangesTitle": {
     "description": "退出编辑模式时提示有未保存修改的对话框标题"
   },
-
   "unsavedChangesMessage": "您有未保存的修改，请选择操作。",
   "@unsavedChangesMessage": {
     "description": "退出编辑模式时提示有未保存修改的对话框正文"
   },
-
   "discard": "放弃修改",
   "@discard": {
     "description": "放弃未保存修改的按钮标签"
   },
-
   "titleRequired": "标题不能为空",
   "@titleRequired": {
     "description": "标题字段为空时保存的验证错误提示"
   },
-
   "readerTypographyLayout": "字体与排版",
   "@readerTypographyLayout": {
     "description": "阅读器样式面板排版区块标题"
   },
-
   "readerScale": "缩放",
   "@readerScale": {
     "description": "阅读器缩放滑块标签"
   },
-
   "readerLineHeight": "行间距",
   "@readerLineHeight": {
     "description": "行间距调整滑块标签"
   },
-
+  "readerChangeLineHeight": "修改行间距",
+  "@readerChangeLineHeight": {
+    "description": "修改行间距开关标签"
+  },
   "readerMargins": "边距",
   "@readerMargins": {
     "description": "阅读器边距子标题"
   },
-
   "readerMarginTop": "上",
   "@readerMarginTop": {
     "description": "上边距步进标签"
   },
-
   "readerMarginBottom": "下",
   "@readerMarginBottom": {
     "description": "下边距步进标签"
   },
-
   "readerMarginLeft": "左",
   "@readerMarginLeft": {
     "description": "左边距步进标签"
   },
-
   "readerMarginRight": "右",
   "@readerMarginRight": {
     "description": "右边距步进标签"
   },
-
   "readerAppearance": "外观与主题",
   "@readerAppearance": {
     "description": "阅读器样式面板外观区块标题"
   },
-
   "readerFollowAppTheme": "跟随应用主题",
   "@readerFollowAppTheme": {
     "description": "是否跟随应用主题颜色方案的开关标签"
   },
-
   "readerThemeLight": "浅色",
   "@readerThemeLight": {
     "description": "浅色阅读主题选项标签"
   },
-
   "readerThemeDark": "深色",
   "@readerThemeDark": {
     "description": "深色阅读主题选项标签"
   },
-
   "readerLinkHandlingSection": "链接处理",
   "@readerLinkHandlingSection": {
     "description": "阅读器样式面板链接处理区块标题"
   },
-
   "readerLinkHandlingAsk": "打开前询问",
   "@readerLinkHandlingAsk": {
     "description": "链接处理选项：打开前询问"
   },
-
   "readerLinkHandlingAlways": "总是打开",
   "@readerLinkHandlingAlways": {
     "description": "链接处理选项：总是直接打开"
   },
-
   "readerLinkHandlingNever": "从不打开",
   "@readerLinkHandlingNever": {
     "description": "链接处理选项：从不打开外部链接"
   },
-
   "readerHandleIntraLink": "跟随书内链接",
   "@readerHandleIntraLink": {
     "description": "是否跟随书内（epub://）链接跳转的开关标签"
   },
-
   "readerPageAnimationSection": "翻页",
   "@readerPageAnimationSection": {
     "description": "阅读器样式面板翻页动画区块标题"
   },
-
   "readerPageAnimationNone": "无动画",
   "@readerPageAnimationNone": {
     "description": "翻页动画选项：无动画"
   },
-
   "readerPageAnimationSlide": "滑动翻页",
   "@readerPageAnimationSlide": {
     "description": "翻页动画选项：滑动过渡"
   },
-
   "readerVolumeKeyTurnsPage": "用音量键翻页",
   "@readerVolumeKeyTurnsPage": {
     "description": "开关标签：使用硬件音量键翻页"
   },
-
   "readerFontSection": "自定义字体",
   "@readerFontSection": {
     "description": "阅读器样式面板自定义字体子区块标签"
   },
-
   "readerFontDefault": "书籍默认",
   "@readerFontDefault": {
     "description": "字体选择器中代表使用 epub 内置字体的选项"
   },
-
   "readerOverrideFontFamily": "强制使用该字体",
   "@readerOverrideFontFamily": {
     "description": "强制将自定义字体覆盖 epub 内置字体的开关标签"
   },
-
   "readerNoCustomFonts": "暂未导入任何自定义字体",
   "@readerNoCustomFonts": {
     "description": "字体选择器为空时的提示文字"
   },
-
   "readerManageFonts": "管理字体",
   "@readerManageFonts": {
     "description": "跳转到字体管理页的按钮/链接标签"
   },
-
   "readerFontManageTip": "前往设置页面管理自定义字体",
   "@readerFontManageTip": {
     "description": "阅读器自定义字体子区块显示的提示，引导用户前往设置页面"
   },
-
   "fontManagement": "字体管理",
   "@fontManagement": {
     "description": "字体管理页面标题"
   },
-
   "fontManagementSubtitle": "自定义字体（.ttf / .otf）",
   "@fontManagementSubtitle": {
     "description": "设置项中字体管理条目的副标题"
   },
-
   "importFont": "导入字体",
   "@importFont": {
     "description": "导入字体文件的按钮标签"
   },
-
   "importFontSuccess": "字体“{name}”已导入",
   "@importFontSuccess": {
     "description": "成功导入单个字体后显示的提示",
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
-
   "importFontsSuccess": "已导入 {count} 个字体",
   "@importFontsSuccess": {
     "description": "一次性导入多个字体后显示的提示",
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
-
   "importFontFailed": "导入字体失败：{error}",
   "@importFontFailed": {
     "description": "导入字体失败时显示的提示",
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
-
   "deleteFontConfirm": "移除字体",
   "@deleteFontConfirm": {
     "description": "删除字体的确认对话框标题"
   },
-
   "deleteFontConfirmText": "确定要删除字体“{name}”吗？此操作无法撤销",
   "@deleteFontConfirmText": {
     "description": "删除字体的确认对话框内容",
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
-
   "noFontsHint": "暂无自定义字体",
   "@noFontsHint": {
     "description": "字体管理页为空时显示的占位文字"
   },
-
   "cannotOpenLink": "无法打开链接：{url}",
   "@cannotOpenLink": {
     "description": "无法打开链接的错误提示",
@@ -1339,12 +1119,10 @@
       }
     }
   },
-
   "openExternalLink": "打开外部链接",
   "@openExternalLink": {
     "description": "打开外部链接的确认对话框标题"
   },
-
   "openExternalLinkConfirmation": "您正在尝试打开一个外部链接：{url}\n\n是否继续？",
   "@openExternalLinkConfirmation": {
     "description": "打开外部链接的确认对话框内容",
@@ -1354,12 +1132,10 @@
       }
     }
   },
-
   "open": "打开",
   "@open": {
     "description": "打开链接的按钮标签"
   },
-
   "chapterNotFoundInSpine": "未找到该章节",
   "@chapterNotFoundInSpine": {
     "description": "章节未找到错误提示，可能是因为该章节没有正确包含在 EPUB 的 spine 中"

@@ -33,15 +33,11 @@ class ReaderScaleSlider extends StatelessWidget {
           onTap: value > _min
               ? () => onChanged((value - _nudge).clamp(_min, _max))
               : null,
-          onLongPress: value > _min
-              ? () => onChanged(_min)
-              : null,
-          child: Text(
-            'A',
-            style: TextStyle(
-              fontSize: 12,
-              color: value > _min ? color : disabledColor,
-            ),
+          onLongPress: value > _min ? () => onChanged(_min) : null,
+          child: Icon(
+            Icons.text_decrease_outlined,
+            size: 24,
+            color: value > _min ? color : disabledColor,
           ),
         ),
         Expanded(
@@ -58,15 +54,11 @@ class ReaderScaleSlider extends StatelessWidget {
           onTap: value < _max
               ? () => onChanged((value + _nudge).clamp(_min, _max))
               : null,
-          onLongPress: value < _max
-              ? () => onChanged(_max)
-              : null,
-          child: Text(
-            'A',
-            style: TextStyle(
-              fontSize: 22,
-              color: value < _max ? color : disabledColor,
-            ),
+          onLongPress: value < _max ? () => onChanged(_max) : null,
+          child: Icon(
+            Icons.text_increase_outlined,
+            size: 24,
+            color: value < _max ? color : disabledColor,
           ),
         ),
       ],

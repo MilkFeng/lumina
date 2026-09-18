@@ -11,6 +11,7 @@ enum ReaderPageAnimation { none, slide }
 class ReaderSettings {
   final double zoom;
   final double lineHeight;
+  final bool changeLineHeight;
   final bool followAppTheme;
 
   /// Index into [AppThemeSettings.allColorSchemes] representing the reader theme.
@@ -36,6 +37,7 @@ class ReaderSettings {
   const ReaderSettings({
     this.zoom = 1.0,
     this.lineHeight = 1.6,
+    this.changeLineHeight = false,
     this.followAppTheme = true,
     this.themeIndex = 0,
     this.marginTop = 16.0,
@@ -57,6 +59,7 @@ class ReaderSettings {
   ReaderSettings copyWith({
     double? zoom,
     double? lineHeight,
+    bool? changeLineHeight,
     bool? followAppTheme,
     int? themeIndex,
     double? marginTop,
@@ -72,7 +75,8 @@ class ReaderSettings {
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
-      lineHeight: lineHeight?? this.lineHeight,
+      lineHeight: lineHeight ?? this.lineHeight,
+      changeLineHeight: changeLineHeight ?? this.changeLineHeight,
       followAppTheme: followAppTheme ?? this.followAppTheme,
       themeIndex: themeIndex ?? this.themeIndex,
       marginTop: marginTop ?? this.marginTop,
@@ -109,7 +113,7 @@ class ReaderSettings {
 
     return EpubTheme(
       zoom: zoom,
-      lineHeight: lineHeight,
+      lineHeight: changeLineHeight ? lineHeight : null,
       shouldOverrideTextColor: preset.shouldOverrideTextColor,
       colorScheme: colorScheme,
       overridePrimaryColor: preset.overridePrimaryColor,

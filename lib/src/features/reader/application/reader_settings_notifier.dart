@@ -11,6 +11,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   // ── Persistence keys ────────────────────────────────────────────────────────
   static const _kZoom = 'reader_zoom';
   static const _kLineHeight = 'reader_line_height';
+  static const _kChangeLineHeight = 'reader_change_line_height';
   static const _kFollowApp = 'reader_follow_app';
   static const _kThemeMode = 'reader_theme_mode';
   static const _kMarginTop = 'reader_margin_top';
@@ -80,6 +81,11 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setZoom(double zoom) async {
     await _prefs.setDouble(_kZoom, zoom);
     state = state.copyWith(zoom: zoom);
+  }
+
+  Future<void> setChangeLineHeight(bool changeLineHeight) async {
+    await _prefs.setBool(_kChangeLineHeight, changeLineHeight);
+    state = state.copyWith(changeLineHeight: changeLineHeight);
   }
 
   Future<void> setLineHeight(double lineHeight) async {

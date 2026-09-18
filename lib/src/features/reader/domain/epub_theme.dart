@@ -4,7 +4,7 @@ import 'package:lumina/src/features/reader/data/reader_scripts.dart';
 
 class EpubTheme {
   final double zoom;
-  final double lineHeight;
+  final double? lineHeight;
   final bool shouldOverrideTextColor;
   final ColorScheme colorScheme;
   final Color? overridePrimaryColor;
@@ -18,7 +18,7 @@ class EpubTheme {
 
   EpubTheme({
     required this.zoom,
-    required this.lineHeight,
+    this.lineHeight,
     required this.shouldOverrideTextColor,
     required this.colorScheme,
     this.overridePrimaryColor,

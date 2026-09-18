@@ -17,7 +17,7 @@ class ReaderLineHeightSlider extends StatelessWidget {
   final double value;
   final ValueChanged<double> onChanged;
 
-  static const double _min = 1.2;
+  static const double _min = 0.5;
   static const double _max = 2.5;
   static const double _nudge = 0.1;
 
@@ -32,15 +32,11 @@ class ReaderLineHeightSlider extends StatelessWidget {
           onTap: value > _min
               ? () => onChanged((value - _nudge).clamp(_min, _max))
               : null,
-          onLongPress: value > _min
-              ? () => onChanged(_min)
-              : null,
-          child: Text(
-            '≡↕',
-            style: TextStyle(
-              fontSize: 18,
-              color: value > _min ? color : disabledColor,
-            ),
+          onLongPress: value > _min ? () => onChanged(_min) : null,
+          child: Icon(
+            Icons.density_small_outlined,
+            size: 24,
+            color: value > _min ? color : disabledColor,
           ),
         ),
         Expanded(
@@ -57,15 +53,11 @@ class ReaderLineHeightSlider extends StatelessWidget {
           onTap: value < _max
               ? () => onChanged((value + _nudge).clamp(_min, _max))
               : null,
-          onLongPress: value < _max
-              ? () => onChanged(_max)
-              : null,
-          child: Text(
-            '≡↕',
-            style: TextStyle(
-              fontSize: 22,
-              color: value < _max ? color : disabledColor,
-            ),
+          onLongPress: value < _max ? () => onChanged(_max) : null,
+          child: Icon(
+            Icons.density_large_outlined,
+            size: 24,
+            color: value < _max ? color : disabledColor,
           ),
         ),
       ],

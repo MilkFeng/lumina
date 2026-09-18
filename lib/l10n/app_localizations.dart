@@ -1274,6 +1274,12 @@ abstract class AppLocalizations {
   /// **'Line Height'**
   String get readerLineHeight;
 
+  /// Reader change line height
+  ///
+  /// In en, this message translates to:
+  /// **'Change Line Height'**
+  String get readerChangeLineHeight;
+
   /// Reader margins sub-label
   ///
   /// In en, this message translates to:

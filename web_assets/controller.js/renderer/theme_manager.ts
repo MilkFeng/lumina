@@ -52,7 +52,7 @@ export class ThemeManager {
 
     return fontFaceBlock + ' :root {'
       + `--lumina-zoom: ${t.zoom};`
-      + `--lumina-line-height: ${t.lineHeight};`
+      + (t.lineHeight === null ? `--lumina-line-height: ${t.lineHeight};` : ``)
       + `--lumina-safe-width: ${cfg.safeWidth}px;`
       + `--lumina-safe-height: ${cfg.safeHeight}px;`
       + `--lumina-padding-top: ${cfg.padding.top}px;`
@@ -91,7 +91,11 @@ export class ThemeManager {
     const isV = this.frameMgr.isVertical();
 
     root.style.setProperty('--lumina-zoom', String(t.zoom));
-    root.style.setProperty('--lumina-line-height', String(t.lineHeight));
+    if (t.lineHeight === null) {
+      root.style.removeProperty('--lumina-line-height');
+    } else {
+      root.style.setProperty('--lumina-line-height', String(t.lineHeight));
+    }
     root.style.setProperty('--lumina-safe-width', cfg.safeWidth + 'px');
     root.style.setProperty('--lumina-safe-height', cfg.safeHeight + 'px');
     root.style.setProperty('--lumina-padding-top', cfg.padding.top + 'px');
@@ -119,6 +123,7 @@ export class ThemeManager {
       ? t.shouldOverrideTextColor && !this.haveBackground(iframe)
       : t.shouldOverrideTextColor;
 
+    body.classList.toggle('lumina-apply-line-height', t.lineHeight !== null);
     body.classList.toggle('lumina-override-color', overrideColor);
     body.classList.toggle('lumina-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
     body.classList.toggle('lumina-override-font', !!(t.fontFileName));

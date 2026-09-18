@@ -660,6 +660,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerLineHeight => '行间距';
 
   @override
+  String get readerChangeLineHeight => '修改行间距';
+
+  @override
   String get readerMargins => '边距';
 
   @override

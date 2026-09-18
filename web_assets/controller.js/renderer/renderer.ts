@@ -54,6 +54,7 @@ export class Renderer implements LuminaApi {
           surfaceContainerHighColor: BlackColor,
           fontFileName: null,
           overrideFontFamily: false,
+          lineHeight: null
         },
         paginationCss: '',
       },
