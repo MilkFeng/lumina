@@ -147,27 +147,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
-
-                // Tips section
-                SettingsInfoSection(
-                  title: l10n.tips,
-                  children: [
-                    SettingsTipTile(
-                      icon: Icons.touch_app_outlined,
-                      tip: l10n.tipLongPressTab,
-                    ),
-                    SettingsTipTile(
-                      icon: Icons.keyboard_double_arrow_right_outlined,
-                      tip: l10n.tipLongPressNextTrack,
-                    ),
-                    SettingsTipTile(
-                      icon: Icons.image_outlined,
-                      tip: l10n.longPressToViewImage,
-                    ),
-                  ],
-                ),
-
                 const SizedBox(height: 128),
               ],
             ),
