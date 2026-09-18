@@ -7,7 +7,7 @@ part 'cover_file_provider.g.dart';
 /// Provider that caches cover file lookups by relative path.
 /// Returns null if path is null/empty or file doesn't exist.
 @riverpod
-Future<File?> coverFile(CoverFileRef ref, String? relativePath) async {
+Future<File?> coverFile(Ref ref, String? relativePath) async {
   // Return null for invalid paths
   if (relativePath == null || relativePath.isEmpty) {
     return null;

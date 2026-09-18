@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 /// Abstract interface for Isar database operations
 /// This allows for dependency injection and testing with mocks

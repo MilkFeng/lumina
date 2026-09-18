@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'features/library/application/library_notifier.dart';
 import 'features/library/application/bookshelf_notifier.dart';
@@ -57,7 +58,7 @@ class GolbalShareHandler extends ConsumerWidget {
     final l10n = AppLocalizations.of(navContext)!;
 
     final stream = ref
-        .read(libraryNotifierProvider.notifier)
+        .read(libraryProvider.notifier)
         .importPipelineStream(paths);
 
     await showDialog(
@@ -73,7 +74,7 @@ class GolbalShareHandler extends ConsumerWidget {
     ref.read(unifiedImportServiceProvider).clearAllCache();
 
     // Refresh the bookshelf so the newly imported book appears immediately.
-    await ref.read(bookshelfNotifierProvider.notifier).refresh();
+    await ref.read(bookshelfProvider.notifier).refresh();
   }
 }
 

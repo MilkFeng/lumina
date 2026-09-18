@@ -6,7 +6,7 @@ targets:
           exclude:
             - lib/src/rust/**
       
-      isar_generator:
+      isar_community_generator:
         generate_for:
           exclude:
             - lib/src/rust/**

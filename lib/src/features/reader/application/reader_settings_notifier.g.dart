@@ -6,22 +6,59 @@ part of 'reader_settings_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$readerSettingsNotifierHash() =>
-    r'e46f76f33d5987ed6b14dcefba6d3375fda06e46';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [ReaderSettingsNotifier].
 @ProviderFor(ReaderSettingsNotifier)
-final readerSettingsNotifierProvider = AutoDisposeNotifierProvider<
-    ReaderSettingsNotifier, ReaderSettings>.internal(
-  ReaderSettingsNotifier.new,
-  name: r'readerSettingsNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$readerSettingsNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const readerSettingsProvider = ReaderSettingsNotifierProvider._();
 
-typedef _$ReaderSettingsNotifier = AutoDisposeNotifier<ReaderSettings>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class ReaderSettingsNotifierProvider
+    extends $NotifierProvider<ReaderSettingsNotifier, ReaderSettings> {
+  const ReaderSettingsNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'readerSettingsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$readerSettingsNotifierHash();
+
+  @$internal
+  @override
+  ReaderSettingsNotifier create() => ReaderSettingsNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ReaderSettings value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ReaderSettings>(value),
+    );
+  }
+}
+
+String _$readerSettingsNotifierHash() =>
+    r'83326832c12ce85e8efa65ab0bf40d06d7dfb455';
+
+abstract class _$ReaderSettingsNotifier extends $Notifier<ReaderSettings> {
+  ReaderSettings build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<ReaderSettings, ReaderSettings>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ReaderSettings, ReaderSettings>,
+              ReaderSettings,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

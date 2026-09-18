@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
 import '../domain/shelf_group.dart';

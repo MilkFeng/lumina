@@ -14,7 +14,7 @@ part 'unified_import_service_provider.g.dart';
 /// - Process files into cached, hashed ImportableEpub objects
 /// - Platform-agnostic API with native performance
 @riverpod
-UnifiedImportService unifiedImportService(UnifiedImportServiceRef ref) {
+UnifiedImportService unifiedImportService(Ref ref) {
   return UnifiedImportService();
 }
 
@@ -23,6 +23,6 @@ UnifiedImportService unifiedImportService(UnifiedImportServiceRef ref) {
 /// Manages the import cache directory and file operations.
 /// Can be used directly if you need lower-level cache management.
 @riverpod
-ImportCacheManager importCacheManager(ImportCacheManagerRef ref) {
+ImportCacheManager importCacheManager(Ref ref) {
   return ImportCacheManager();
 }

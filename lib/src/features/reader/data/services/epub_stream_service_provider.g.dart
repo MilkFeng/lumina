@@ -6,23 +6,59 @@ part of 'epub_stream_service_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$epubStreamServiceHash() => r'ec8820e99ac424e76349b410e26e61229f15e39e';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Provider for EpubStreamService
+/// This service handles streaming EPUB files without extraction
+
+@ProviderFor(epubStreamService)
+const epubStreamServiceProvider = EpubStreamServiceProvider._();
 
 /// Provider for EpubStreamService
 /// This service handles streaming EPUB files without extraction
-///
-/// Copied from [epubStreamService].
-@ProviderFor(epubStreamService)
-final epubStreamServiceProvider = Provider<EpubStreamService>.internal(
-  epubStreamService,
-  name: r'epubStreamServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$epubStreamServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef EpubStreamServiceRef = ProviderRef<EpubStreamService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class EpubStreamServiceProvider
+    extends
+        $FunctionalProvider<
+          EpubStreamService,
+          EpubStreamService,
+          EpubStreamService
+        >
+    with $Provider<EpubStreamService> {
+  /// Provider for EpubStreamService
+  /// This service handles streaming EPUB files without extraction
+  const EpubStreamServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'epubStreamServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$epubStreamServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<EpubStreamService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  EpubStreamService create(Ref ref) {
+    return epubStreamService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(EpubStreamService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<EpubStreamService>(value),
+    );
+  }
+}
+
+String _$epubStreamServiceHash() => r'2f90b6721b0eb99f2be9b13b012cf1ee4f898865';

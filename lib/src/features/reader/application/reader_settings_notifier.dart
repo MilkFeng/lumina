@@ -6,7 +6,7 @@ import '../domain/reader_settings.dart';
 
 part 'reader_settings_notifier.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   // ── Persistence keys ────────────────────────────────────────────────────────
   static const _kZoom = 'reader_zoom';

@@ -20,15 +20,15 @@ dependencies:
   intl: any
 
   # State Management
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
+  flutter_riverpod: ^3.0.3
+  riverpod_annotation: ^3.0.3
 
   # Navigation
   go_router: ^18.0.1
 
   # Database
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  isar_community: ^3.3.2
+  isar_community_flutter_libs: ^3.3.2
   path_provider: ^2.1.6
   collection: ^1.19.1
 
@@ -82,9 +82,9 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   
   # Code Generation
-  build_runner: ^2.4.13
-  riverpod_generator: ^2.4.0
-  isar_generator: ^3.1.0+1
+  build_runner: ^2.15.1
+  riverpod_generator: ^3.0.3
+  isar_community_generator: ^3.3.2
   
   # Testing
   path_provider_platform_interface: ^2.1.3

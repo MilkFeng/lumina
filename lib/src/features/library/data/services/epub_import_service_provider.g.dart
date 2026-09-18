@@ -6,24 +6,59 @@ part of 'epub_import_service_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$epubImportServiceHash() => r'b0db9f20cd3a4b92998840f283708275b9183ecd';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Provider for EpubImportService
+/// This service handles EPUB file import, parsing, and storage
+
+@ProviderFor(epubImportService)
+const epubImportServiceProvider = EpubImportServiceProvider._();
 
 /// Provider for EpubImportService
 /// This service handles EPUB file import, parsing, and storage
-///
-/// Copied from [epubImportService].
-@ProviderFor(epubImportService)
-final epubImportServiceProvider =
-    AutoDisposeProvider<EpubImportService>.internal(
-  epubImportService,
-  name: r'epubImportServiceProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$epubImportServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-typedef EpubImportServiceRef = AutoDisposeProviderRef<EpubImportService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class EpubImportServiceProvider
+    extends
+        $FunctionalProvider<
+          EpubImportService,
+          EpubImportService,
+          EpubImportService
+        >
+    with $Provider<EpubImportService> {
+  /// Provider for EpubImportService
+  /// This service handles EPUB file import, parsing, and storage
+  const EpubImportServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'epubImportServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$epubImportServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<EpubImportService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  EpubImportService create(Ref ref) {
+    return epubImportService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(EpubImportService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<EpubImportService>(value),
+    );
+  }
+}
+
+String _$epubImportServiceHash() => r'4ea83dd80df102c5ec2f3a19c976b793882264d1';

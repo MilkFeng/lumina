@@ -15,7 +15,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
   EpubTheme getEpubTheme();
 
   bool shouldHandleLinkTap(String url) {
-    final settings = ref.read(readerSettingsNotifierProvider);
+    final settings = ref.read(readerSettingsProvider);
     if (url.startsWith('epub://')) {
       if (!settings.handleIntraLink) return false;
       final index = bookSession.findSpineIndexByUrl(url);
@@ -37,7 +37,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
       }
     } else {
       final linkHandling = ref
-          .read(readerSettingsNotifierProvider)
+          .read(readerSettingsProvider)
           .linkHandling;
 
       final uri = Uri.tryParse(url);

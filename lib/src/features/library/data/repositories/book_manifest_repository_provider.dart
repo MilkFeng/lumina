@@ -7,7 +7,7 @@ part 'book_manifest_repository_provider.g.dart';
 /// Provider for BookManifestRepository
 /// Repository for managing book manifest CRUD operations
 @riverpod
-BookManifestRepository bookManifestRepository(BookManifestRepositoryRef ref) {
+BookManifestRepository bookManifestRepository(Ref ref) {
   return ref
       .watch(isarProvider)
       .when(

@@ -15,8 +15,8 @@ class SettingsAppearanceSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final settings = ref.watch(appThemeNotifierProvider);
-    final notifier = ref.read(appThemeNotifierProvider.notifier);
+    final settings = ref.watch(appThemeProvider);
+    final notifier = ref.read(appThemeProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
 
     final systemBrightness = MediaQuery.platformBrightnessOf(context);

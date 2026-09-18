@@ -61,7 +61,14 @@ class LibraryError extends LibraryState {
 }
 
 /// Notifier for managing library operations with dependency injection
-@riverpod
+///
+/// Must stay alive: `importPipelineStream` and `importLibraryFromFolder` are
+/// long-running generators that keep using `ref` and `state` across many async
+/// gaps. With the default `autoDispose`, the provider is disposed as soon as no
+/// widget is listening (e.g. the library screen is unmounted while the import
+/// progress dialog is showing), which makes every later `ref.read`/`state`
+/// assignment throw "Cannot use the Ref ... after it has been disposed".
+@Riverpod(keepAlive: true)
 class LibraryNotifier extends _$LibraryNotifier {
   @override
   Future<LibraryState> build() async {

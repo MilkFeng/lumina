@@ -13,7 +13,7 @@ part 'import_backup_service_provider.g.dart';
 /// index-based upsert methods (`putByFileHash`, `putByName`) that are not
 /// exposed through the higher-level repository layer.
 @riverpod
-ImportBackupService importBackupService(ImportBackupServiceRef ref) {
+ImportBackupService importBackupService(Ref ref) {
   final shelfBookRepo = ref.watch(shelfBookRepositoryProvider);
   final manifestRepo = ref.watch(bookManifestRepositoryProvider);
 

@@ -6,22 +6,59 @@ part of 'font_manager_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$fontManagerNotifierHash() =>
-    r'9f7ada19a6b56bfa2a4c3f736f27323789b980eb';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [FontManagerNotifier].
 @ProviderFor(FontManagerNotifier)
-final fontManagerNotifierProvider = AutoDisposeNotifierProvider<
-    FontManagerNotifier, List<ImportedFont>>.internal(
-  FontManagerNotifier.new,
-  name: r'fontManagerNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$fontManagerNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const fontManagerProvider = FontManagerNotifierProvider._();
 
-typedef _$FontManagerNotifier = AutoDisposeNotifier<List<ImportedFont>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class FontManagerNotifierProvider
+    extends $NotifierProvider<FontManagerNotifier, List<ImportedFont>> {
+  const FontManagerNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'fontManagerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$fontManagerNotifierHash();
+
+  @$internal
+  @override
+  FontManagerNotifier create() => FontManagerNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<ImportedFont> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<ImportedFont>>(value),
+    );
+  }
+}
+
+String _$fontManagerNotifierHash() =>
+    r'f7e24c743a92b480c72b2a9bc411de73eff7d305';
+
+abstract class _$FontManagerNotifier extends $Notifier<List<ImportedFont>> {
+  List<ImportedFont> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<List<ImportedFont>, List<ImportedFont>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<ImportedFont>, List<ImportedFont>>,
+              List<ImportedFont>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}

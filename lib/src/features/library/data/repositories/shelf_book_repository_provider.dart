@@ -7,7 +7,7 @@ part 'shelf_book_repository_provider.g.dart';
 /// Provider for ShelfBookRepository
 /// Repository for managing shelf book CRUD operations
 @riverpod
-ShelfBookRepository shelfBookRepository(ShelfBookRepositoryRef ref) {
+ShelfBookRepository shelfBookRepository(Ref ref) {
   return ref
       .watch(isarProvider)
       .when(

@@ -18,7 +18,7 @@ enum _DiscardAction { save, discard, cancel }
 
 /// Provider to fetch a single book by file hash.
 @riverpod
-Future<ShelfBook?> bookDetail(BookDetailRef ref, String fileHash) async {
+Future<ShelfBook?> bookDetail(Ref ref, String fileHash) async {
   final repository = ref.watch(shelfBookRepositoryProvider);
   return await repository.getBookByHash(fileHash);
 }
@@ -161,7 +161,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         },
         (_) {
           ref.invalidate(bookDetailProvider(widget.bookId));
-          ref.read(bookshelfNotifierProvider.notifier).refresh();
+          ref.read(bookshelfProvider.notifier).refresh();
 
           if (mounted) {
             ToastService.showSuccess(AppLocalizations.of(context)!.bookSaved);
@@ -265,7 +265,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   Widget build(BuildContext context) {
     final routeAnimation = ModalRoute.of(context)?.animation;
     final bookAsync = ref.watch(bookDetailProvider(widget.bookId));
-    final book = bookAsync.valueOrNull;
+    final book = bookAsync.value;
 
     return PopScope(
       // Prevent the system from popping the route while in edit mode.

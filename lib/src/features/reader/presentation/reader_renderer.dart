@@ -247,7 +247,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     _iosPageTurnSession = IOSPageTurnSession();
     _currentTheme = widget.initializeTheme;
     _needPageTurnAnimation =
-        ref.read(readerSettingsNotifierProvider).pageAnimation !=
+        ref.read(readerSettingsProvider).pageAnimation !=
         ReaderPageAnimation.none;
   }
 
@@ -355,7 +355,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(readerSettingsNotifierProvider, (previous, next) {
+    ref.listen(readerSettingsProvider, (previous, next) {
       if (previous?.pageAnimation != next.pageAnimation) {
         setState(() {
           _needPageTurnAnimation =
