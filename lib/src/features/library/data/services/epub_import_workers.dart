@@ -8,8 +8,8 @@ import '../parsers/epub_zip_parser.dart';
 
 /// Configuration constants for import workers
 class ImportWorkerConfig {
-  static const int imageThumbnailMaxHeight = 1200;
-  static const int imageCompressionQuality = 90;
+  static const int imageThumbnailMaxHeight = 800;
+  static const int imageCompressionQuality = 85;
 }
 
 /// Parameters for isolate parsing
