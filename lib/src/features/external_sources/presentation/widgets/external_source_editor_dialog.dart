@@ -9,6 +9,7 @@ import 'package:lumina/src/features/external_sources/domain/external_source.dart
 import 'package:lumina/src/features/external_sources/domain/external_source_config.dart';
 import 'package:lumina/src/features/external_sources/domain/external_source_type.dart';
 import 'package:lumina/src/features/external_sources/presentation/external_source_localizations.dart';
+import 'package:lumina/src/features/external_sources/presentation/widgets/type_selector_field.dart';
 
 /// What the editor should open on.
 sealed class ExternalSourceEditorRequest {
@@ -309,7 +310,7 @@ class _ExternalSourceEditorDialogState
                   // user can no longer see.
                   _buildNameField(l10n),
                   const SizedBox(height: 12),
-                  _buildTypeField(l10n, theme),
+                  _buildTypeField(l10n),
                   const SizedBox(height: 20),
                   Text(
                     l10n.externalSourceConfiguration,
@@ -356,7 +357,10 @@ class _ExternalSourceEditorDialogState
   Widget _buildNameField(AppLocalizations l10n) {
     return TextFormField(
       controller: _nameController,
-      autofocus: true,
+      // Deliberately not focused on open: both entry points already supply a
+      // usable name (the suggested one when creating, the stored one when
+      // editing), so raising the keyboard would cover most of the form to
+      // invite an edit the user usually does not need to make.
       enabled: !_busy,
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
@@ -373,28 +377,26 @@ class _ExternalSourceEditorDialogState
     );
   }
 
-  Widget _buildTypeField(AppLocalizations l10n, ThemeData theme) {
+  Widget _buildTypeField(AppLocalizations l10n) {
     final types = ref.watch(externalSourceRegistryProvider).supportedTypes;
-    return DropdownButtonFormField<ExternalSourceType>(
-      initialValue: _type,
-      decoration: InputDecoration(
-        labelText: l10n.externalSourceType,
-        isDense: true,
-      ),
+    // The type is chosen from a short list, so it is rendered as a selector
+    // field rather than a dropdown: a dropdown menu is drawn over the field it
+    // belongs to (see [TypeSelectorField]), which hides the field and its
+    // label at the moment the user is reading them.
+    return TypeSelectorField<ExternalSourceType>(
+      value: _type,
+      labelText: l10n.externalSourceType,
+      // A disabled field is how the rest of the form reports the running
+      // connection test; the selector greys out and stops opening with it.
+      enabled: !_busy,
       items: [
         for (final type in types)
-          DropdownMenuItem(
+          TypeSelectorItem(
             value: type,
-            child: Text(l10n.externalSourceTypeName(type)),
+            label: l10n.externalSourceTypeName(type),
           ),
       ],
-      // A null callback is how `DropdownButtonFormField` is disabled: it greys
-      // the field out along with everything else during the connection test.
-      onChanged: _busy
-          ? null
-          : (type) {
-              if (type != null) _onTypeChanged(type);
-            },
+      onChanged: _onTypeChanged,
     );
   }
 
