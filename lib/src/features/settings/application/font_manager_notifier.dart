@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:lumina/src/core/platform/provider.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
+import 'package:lumina/src/features/library/data/services/import_file_pipeline_provider.dart';
 import 'package:lumina/src/features/settings/domain/imported_font.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -38,9 +39,9 @@ class FontManagerNotifier extends _$FontManagerNotifier {
   /// Returns the list of successfully imported [ImportedFont]s,
   /// or an empty list if the picker was cancelled.
   Future<List<ImportedFont>> importFonts() async {
-    final unifiedImportService = ref.read(unifiedImportServiceProvider);
+    final pipeline = ref.read(importFilePipelineProvider);
 
-    final paths = await unifiedImportService.pickFontFiles();
+    final paths = await ref.read(filePickerProvider).pickFontFiles();
     if (paths.isEmpty) return [];
 
     // Ensure fonts directory exists.
@@ -59,7 +60,7 @@ class FontManagerNotifier extends _$FontManagerNotifier {
           final fileName = platformPath.name;
 
           // 1. Cache file from platform path to temp location.
-          cacheFile = await unifiedImportService.processFontFile(platformPath);
+          cacheFile = await pipeline.cacheFile(platformPath);
 
           // 2. Copy cached file to fonts directory.
           final destPath = '${fontsDir.path}/$fileName';
@@ -78,13 +79,13 @@ class FontManagerNotifier extends _$FontManagerNotifier {
         } finally {
           // 4. Always clean the cache file immediately after use.
           if (cacheFile != null) {
-            await unifiedImportService.cleanCache(cacheFile);
+            await pipeline.cleanCache(cacheFile);
           }
         }
       }
     } finally {
       // Release iOS security-scoped resources after all files are processed.
-      await unifiedImportService.releaseIosAccess();
+      await pipeline.releaseIosAccess();
     }
 
     if (current != state) {

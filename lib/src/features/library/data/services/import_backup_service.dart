@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/core/platform/platform.dart';
 import 'package:lumina/src/features/library/application/progress_log.dart';
 import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
 import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
+import 'package:lumina/src/features/library/data/services/backup_folder_resolver.dart';
+import 'package:lumina/src/features/library/data/services/import_file_pipeline.dart';
 import 'package:path/path.dart' as p;
 
 import '../../domain/book_manifest.dart';
@@ -119,15 +121,18 @@ class BackupImportProgress extends ProgressLog {
 class ImportBackupService {
   final ShelfBookRepository _shelfBookRepository;
   final BookManifestRepository _bookManifestRepository;
-  final UnifiedImportService _importService;
+  final FilePickerService _picker;
+  final ImportFilePipeline _pipeline;
 
   ImportBackupService({
     required ShelfBookRepository shelfBookRepository,
     required BookManifestRepository bookManifestRepository,
-    required UnifiedImportService importService,
+    required FilePickerService picker,
+    required ImportFilePipeline pipeline,
   }) : _shelfBookRepository = shelfBookRepository,
        _bookManifestRepository = bookManifestRepository,
-       _importService = importService;
+       _picker = picker,
+       _pipeline = pipeline;
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -162,9 +167,7 @@ class ImportBackupService {
       // 1. Read and parse the backup metadata *before* touching anything.
       // -----------------------------------------------------------------------
       yield ProgressLog('Reading backup metadata...', ProgressLogType.info);
-      final shelfString = await _importService.processPlainFile(
-        backupPaths.shelfFile,
-      );
+      final shelfString = await _pipeline.readText(backupPaths.shelfFile);
       final shelfJson = jsonDecode(shelfString) as Map<String, dynamic>;
 
       final groupsJson = (shelfJson['groups'] as List<dynamic>)
@@ -246,18 +249,16 @@ class ImportBackupService {
           // -- A. Copy the EPUB ----------------------------------------------
           final destEpub = File(p.join(internalBooksDir.path, '$hash.epub'));
           if (!destEpub.existsSync()) {
-            final importableEpub = await _importService.processEpub(
-              pathsForBook.epubPath,
-            );
-            await importableEpub.cacheFile.copy(destEpub.path);
-            await _importService.cleanCache(importableEpub.cacheFile);
+            final cachedEpub = await _pipeline.cacheFile(pathsForBook.epubPath);
+            await cachedEpub.copy(destEpub.path);
+            await _pipeline.cleanCache(cachedEpub);
           }
 
           // -- B. Copy the cover ---------------------------------------------
           String? restoredCoverPath;
           if (pathsForBook.coverPath != null) {
             try {
-              final coverBytes = await _importService.processBinaryFile(
+              final coverBytes = await _pipeline.readBytes(
                 pathsForBook.coverPath!,
               );
               final coverFileName = pathsForBook.coverPath!.name;
@@ -277,7 +278,7 @@ class ImportBackupService {
           }
 
           // -- C. Insert the manifest ----------------------------------------
-          final manifestString = await _importService.processPlainFile(
+          final manifestString = await _pipeline.readText(
             pathsForBook.manifestPath,
           );
           final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
@@ -349,7 +350,7 @@ class ImportBackupService {
       // picker plugin.  This is a no-op on Android; calling it unconditionally
       // keeps the code simple and guarantees no resource leaks on iOS even if
       // the restore fails or is cancelled.
-      await _importService.releaseIosAccess();
+      await _picker.releaseIosAccess();
     }
   }
 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lumina/src/core/platform/provider.dart';
 import 'package:lumina/src/core/providers/cover_file_provider.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
 import 'package:lumina/src/features/library/application/library_notifier.dart';
-import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
+import 'package:lumina/src/features/library/data/services/backup_folder_resolver.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/restore_progress_dialog.dart';
 import '../../../../../l10n/app_localizations.dart';
 
@@ -29,7 +30,7 @@ class _RestoreTileState extends ConsumerState<RestoreTile> {
     if (_isRestoring) return;
 
     final l10n = AppLocalizations.of(context)!;
-    final importService = ref.read(unifiedImportServiceProvider);
+    final picker = ref.read(filePickerProvider);
     setState(() => _isRestoring = true);
 
     // Stays `false` until the restore stream takes over the security-scoped
@@ -38,8 +39,8 @@ class _RestoreTileState extends ConsumerState<RestoreTile> {
     var streamOwnsAccess = false;
 
     try {
-      // 1. Let the user pick the backup folder.
-      final backupPaths = await importService.pickBackupFolder();
+      // 1. Let the user pick the backup folder and resolve its layout.
+      final backupPaths = await const BackupFolderResolver().pickAndResolve();
 
       // Cancelled — exit silently.
       if (backupPaths == null) return;
@@ -71,7 +72,7 @@ class _RestoreTileState extends ConsumerState<RestoreTile> {
       }
     } finally {
       if (!streamOwnsAccess) {
-        await importService.releaseIosAccess();
+        await picker.releaseIosAccess();
       }
       if (mounted) {
         setState(() => _isRestoring = false);

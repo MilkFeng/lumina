@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/core/platform/import_cache_manager.dart';
+import 'package:lumina/src/core/platform/platform_path.dart';
+import 'package:lumina/src/core/platform/provider.dart';
 import 'package:lumina/src/features/library/presentation/widgets/import_progress_dialog.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
 import '../../application/library_notifier.dart';
-import '../../data/services/unified_import_service_provider.dart';
 import '../../domain/shelf_group.dart';
 import '../widgets/group_selection_dialog.dart';
 
@@ -59,7 +60,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     );
 
     // Clean all temporary files after import is done
-    ref.read(unifiedImportServiceProvider).clearAllCache();
+    await ImportCacheManager().clearAll();
 
     if (context.mounted) {
       await ref.read(bookshelfProvider.notifier).refresh();
@@ -92,9 +93,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     try {
       isSelectingFiles = true;
 
-      // Use unified import service for cross-platform file picking
-      final importService = ref.read(unifiedImportServiceProvider);
-      final paths = await importService.pickFolder();
+      // Use the platform picker for cross-platform file picking
+      final picker = ref.read(filePickerProvider);
+      final paths = await picker.pickEpubFolder();
 
       if (context.mounted) {
         await _importPaths(context, ref, paths, () {
@@ -115,9 +116,9 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     try {
       isSelectingFiles = true;
 
-      // Use unified import service for cross-platform file picking
-      final importService = ref.read(unifiedImportServiceProvider);
-      final paths = await importService.pickFiles();
+      // Use the platform picker for cross-platform file picking
+      final picker = ref.read(filePickerProvider);
+      final paths = await picker.pickEpubFiles();
 
       if (context.mounted) {
         await _importPaths(context, ref, paths, () {

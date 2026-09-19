@@ -57,7 +57,7 @@ final class LibraryNotifierProvider
   LibraryNotifier create() => LibraryNotifier();
 }
 
-String _$libraryNotifierHash() => r'928701632823be8581b133e1dc6690cfc3494aba';
+String _$libraryNotifierHash() => r'81b4e3a52a71f80cce0a7d2f34d7128b66061c13';
 
 /// Notifier for managing library operations with dependency injection
 ///

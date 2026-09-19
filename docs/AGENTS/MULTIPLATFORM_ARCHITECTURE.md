@@ -47,9 +47,11 @@ flowchart LR
 
 | Flutter 文件 | 对应原生能力 |
 | --- | --- |
-| `lib/src/core/file_handling/unified_import_service.dart` | 统一文件/目录/备份/字体选择入口，调用 `com.lumina.ereader/native_picker`。 |
-| `lib/src/core/file_handling/platform_path.dart` | 用 `AndroidUriPath` 和 `IOSFilePath` 抽象平台路径。 |
-| `lib/src/core/file_handling/import_cache_manager.dart` | 将 Android SAF URI 或 iOS security-scoped 文件缓存到 app 内部，再计算 hash 或复制字体。 |
+| `lib/src/core/platform/file_picker_service.dart` | 平台文件/目录选择与读取入口，调用 `com.lumina.ereader/native_picker`。只负责取得句柄与读取字节，不理解 EPUB/备份/字体等业务。 |
+| `lib/src/core/platform/platform_path.dart` | 用 `AndroidUriPath` 和 `IOSFilePath` 抽象平台路径。 |
+| `lib/src/core/platform/import_cache_manager.dart` | 将 Android SAF URI 或 iOS security-scoped 文件缓存到 app 内部。 |
+| `lib/src/features/library/data/services/import_file_pipeline.dart` | 组合 picker 与 cache：读取文本/字节、缓存文件、计算 SHA-256。 |
+| `lib/src/features/library/data/services/backup_folder_resolver.dart` | 解析备份包目录结构（`shelf.json`/`books`/`manifests`/`covers`），是唯一理解备份布局的地方。 |
 | `lib/src/features/reader/data/services/volume_control_service.dart` | Android 音量键 MethodChannel/EventChannel 封装。 |
 | `lib/src/features/reader/presentation/page_turn/ios_page_turn_session.dart` | iOS 原生翻页动画 MethodChannel 封装。 |
 | `lib/src/features/reader/presentation/page_turn/android_page_turn_session.dart` | Android 翻页动画纯 Dart 实现，不走原生插件。 |
@@ -116,18 +118,17 @@ iOS 在 implicit Flutter engine 初始化后注册：
 
 ## 文件导入与选择
 
-### Flutter 统一抽象
+### Flutter 分层
 
-Flutter 侧通过 `UnifiedImportService` 提供平台无关 API：
+平台能力与业务编排分成两层，`core` 不理解书籍、备份或字体：
 
-- `pickFiles()`
-- `pickFolder()`
-- `pickBackupFolder()`
+**`core/platform/FilePickerService`** —— 只负责取得句柄与读取字节：
+
+- `pickEpubFiles()`
+- `pickEpubFolder()`
+- `pickFolderFiles()`（返回目录下全部文件，不做任何业务过滤）
 - `pickFontFiles()`
-- `processEpub(PlatformPath)`
-- `processPlainFile(PlatformPath)`
-- `processBinaryFile(PlatformPath)`
-- `processFontFile(PlatformPath)`
+- `readBytes(PlatformPath)` / `readPlainFile(PlatformPath)`
 - `releaseIosAccess()`
 
 返回路径统一包装成：
@@ -135,12 +136,19 @@ Flutter 侧通过 `UnifiedImportService` 提供平台无关 API：
 - Android：`AndroidUriPath(contentUri)`
 - iOS：`IOSFilePath(fileSystemPath)`
 
-后续处理由 `ImportCacheManager` 接管：
+**`features/library/data/services/ImportFilePipeline`** —— 组合 picker 与缓存：
+
+- `readText()` / `readBytes()` / `cacheFile()` / `cacheFileWithHash()` / `cleanCache()` / `clearCache()` / `releaseIosAccess()`
+
+缓存写入由 `core/platform/ImportCacheManager` 接管：
 
 - Android 使用 `saf_stream` 从 `content://` URI 流式读取到 import cache。
 - iOS 通过 Swift `fetchIosFile` 先复制到临时目录，再由 Dart rename/copy 到 import cache。
-- EPUB 计算 SHA-256 作为去重 hash。
-- 字体不算 hash，只保留扩展名并复制进 fonts 目录。
+- 缓存文件保留原始扩展名。
+- EPUB 的 SHA-256 去重 hash 由 `ImportFilePipeline.cacheFileWithHash()` 计算。
+- 字体不计算 hash，只复制进 fonts 目录。
+
+备份包的目录识别不属于平台层，见 [备份目录处理](#备份目录处理)。
 
 ### Android NativePickerPlugin
 
@@ -206,22 +214,22 @@ Flutter 必须在一次 pick + process 流程结束后调用 `releaseIosAccess()
 
 - 字体导入的 `finally`。
 - 备份导入的 `finally`。
-- `UnifiedImportService.releaseIosAccess()` 对 Android 是 no-op。
+- `FilePickerService.releaseIosAccess()` 对 Android 是 no-op。
 
 ## 备份目录处理
 
 原生层只返回一个“扁平文件列表”。备份结构识别由 Flutter 完成。
 
-`UnifiedImportService._classifyBackupFiles(...)` 根据文件名和父目录名识别：
+`BackupFolderResolver` 是唯一理解备份布局的地方。它根据文件名和父目录名识别：
 
 - `shelf.json`
 - `books/{hash}.epub`
 - `manifests/{hash}.json`
 - `covers/{hash}.{ext}`
 
-随后 `_buildBookPaths(...)` 只保留同时有 EPUB 和 manifest 的书籍。`ImportBackupService.importLibraryFromFolder(...)` 再逐本读取、复制、合并数据库记录。
+随后 `_buildBookPaths(...)` 只保留同时有 EPUB 和 manifest 的书籍；缺少 `shelf.json` 时抛 `FormatException`，调用方据此提示用户所选目录不是有效备份。`ImportBackupService.restoreLibrary(...)` 再逐本读取、复制、写入数据库记录。
 
-这个设计让 Android 和 iOS 原生层保持薄：它们只负责获得平台可访问的文件句柄，不理解 Lumina 的备份业务格式。
+这个设计让三层各自保持薄：Android/iOS 原生层只获得平台可访问的文件句柄，`core/platform` 只读出字节，只有 library 的 data 层理解 Lumina 的备份格式。
 
 ## 字体导入处理
 
@@ -230,10 +238,10 @@ Flutter 必须在一次 pick + process 流程结束后调用 `releaseIosAccess()
 ```mermaid
 flowchart LR
   UI["SettingsFontSection"] --> Notifier["FontManagerNotifier.importFonts"]
-  Notifier --> Unified["UnifiedImportService.pickFontFiles"]
-  Unified --> Native["native_picker.pickFontFiles"]
+  Notifier --> Picker["FilePickerService.pickFontFiles"]
+  Picker --> Native["native_picker.pickFontFiles"]
   Native --> Paths["PlatformPath list"]
-  Paths --> Cache["processFontFile"]
+  Paths --> Cache["ImportFilePipeline.cacheFile"]
   Cache --> Fonts["documents/fonts/{fileName}"]
 ```
 
@@ -437,7 +445,7 @@ iOS 声明：
 
 ## 维护注意事项
 
-- `com.lumina.ereader/native_picker` 是跨平台文件选择的稳定 channel；新增方法时需要同时评估 Android、iOS 和 `UnifiedImportService`。
+- `com.lumina.ereader/native_picker` 是跨平台文件选择的稳定 channel；新增方法时需要同时评估 Android、iOS 和 `FilePickerService`。
 - Android picker 当前只允许一个 pending operation；Flutter 不应并发调用多个 picker 方法。
 - iOS pick 后必须在 `finally` 中调用 `releaseIosAccess()`，否则 security-scoped resource 可能泄漏。
 - Android `DocumentsProvider` 对外只读；如果未来要支持外部写入或删除，需要新增 flags 和实现对应 provider 方法。

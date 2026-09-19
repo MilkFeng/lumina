@@ -10,8 +10,8 @@ import 'features/library/application/progress_log.dart';
 import 'features/library/presentation/widgets/progress_dialog.dart';
 import '../l10n/app_localizations.dart';
 import 'core/services/toast_service.dart';
-import 'core/file_handling/platform_path.dart';
-import 'features/library/data/services/unified_import_service_provider.dart';
+import 'core/platform/platform_path.dart';
+import 'features/library/data/services/import_file_pipeline_provider.dart';
 
 // State provider to hold pending file path for processing after returning to library screen
 final pendingRouteFileProvider = StateProvider<String?>((ref) => null);
@@ -71,7 +71,7 @@ class GlobalShareHandler extends ConsumerWidget {
     );
 
     // Clean up any leftover temp cache files created during this session.
-    ref.read(unifiedImportServiceProvider).clearAllCache();
+    ref.read(importFilePipelineProvider).clearCache();
 
     // Refresh the bookshelf so the newly imported book appears immediately.
     await ref.read(bookshelfProvider.notifier).refresh();

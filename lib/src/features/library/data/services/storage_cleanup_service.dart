@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/core/platform/platform.dart';
 import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
 import 'package:path/path.dart' as p;

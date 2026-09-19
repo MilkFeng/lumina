@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:lumina/src/core/file_handling/file_handling.dart';
+import 'package:lumina/src/core/platform/platform.dart';
 import 'package:lumina/src/features/library/application/progress_log.dart';
+import 'package:lumina/src/features/library/data/services/backup_folder_resolver.dart';
 import 'package:lumina/src/features/library/data/services/import_backup_service_provider.dart';
-import 'package:lumina/src/features/library/data/services/unified_import_service_provider.dart';
+import 'package:lumina/src/features/library/data/services/import_file_pipeline_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';
 import '../domain/shelf_book.dart';
@@ -158,7 +159,7 @@ class LibraryNotifier extends _$LibraryNotifier {
     final totalCount = paths.length;
     if (totalCount == 0) return;
 
-    final unifiedImportService = ref.read(unifiedImportServiceProvider);
+    final pipeline = ref.read(importFilePipelineProvider);
     final epubImportService = ref.read(epubImportServiceProvider);
 
     int currentCount = 0;
@@ -179,7 +180,7 @@ class LibraryNotifier extends _$LibraryNotifier {
         );
 
         // 2. Cache the file from URI to local temp directory
-        importable = await unifiedImportService.processEpub(path);
+        importable = await pipeline.cacheFileWithHash(path);
 
         yield ProgressLog(
           'Processing file $currentFileName ($currentCount of $totalCount)',
@@ -219,7 +220,7 @@ class LibraryNotifier extends _$LibraryNotifier {
         // 5. CRITICAL: Always clean up the temporary cache file IMMEDIATELY
         if (importable != null) {
           try {
-            await unifiedImportService.cleanCache(importable.cacheFile);
+            await pipeline.cleanCache(importable.cacheFile);
           } catch (cleanError) {
             debugPrint('Failed to clean cache file: $cleanError');
           }

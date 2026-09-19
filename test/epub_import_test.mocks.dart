@@ -255,6 +255,15 @@ class MockShelfBookRepository extends _i1.Mock
           as _i4.Future<_i6.Either<String, int>>);
 
   @override
+  _i4.Future<void> clearAll() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAll, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
   _i4.Future<_i6.Either<String, bool>> deleteBook(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#deleteBook, [id]),
@@ -389,6 +398,15 @@ class MockBookManifestRepository extends _i1.Mock
             ),
           )
           as _i4.Future<_i6.Either<String, bool>>);
+
+  @override
+  _i4.Future<void> clearAll() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAll, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 
   @override
   _i4.Future<List<_i9.BookManifest>> getAllManifests() =>
