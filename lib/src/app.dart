@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme_notifier.dart';
-import 'package:lumina/src/global_share_handler.dart';
+import 'package:lumina/src/features/library/presentation/shared_epub_handler.dart';
+import 'package:lumina/src/router.dart';
 import '../l10n/app_localizations.dart';
-import 'core/router/app_router.dart';
 
 /// Root application widget
 class LuminaReaderApp extends ConsumerWidget {
@@ -56,7 +56,7 @@ class LuminaReaderApp extends ConsumerWidget {
       // Navigation
       routerConfig: router,
       builder: (context, child) =>
-          GlobalShareHandler(child: child ?? const SizedBox.shrink()),
+          SharedEpubHandler(child: child ?? const SizedBox.shrink()),
     );
   }
 }

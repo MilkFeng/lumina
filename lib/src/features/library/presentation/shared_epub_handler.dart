@@ -3,24 +3,31 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:lumina/l10n/app_localizations.dart';
+import 'package:lumina/src/core/platform/platform_path.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/widgets/progress_dialog.dart';
+import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
+import 'package:lumina/src/features/library/application/library_notifier.dart';
+import 'package:lumina/src/features/library/data/services/import_file_pipeline_provider.dart';
 
-import 'features/library/application/library_notifier.dart';
-import 'features/library/application/bookshelf_notifier.dart';
-import 'core/widgets/progress_dialog.dart';
-import '../l10n/app_localizations.dart';
-import 'core/services/toast_service.dart';
-import 'core/platform/platform_path.dart';
-import 'features/library/data/services/import_file_pipeline_provider.dart';
-
-// State provider to hold pending file path for processing after returning to library screen
+/// Holds a file path handed over by the OS until the library screen is ready to
+/// process it.
+///
+/// The router writes into this from its redirect; [SharedEpubHandler] reads it
+/// once the app is on screen, so it has to outlive any single widget.
 final pendingRouteFileProvider = StateProvider<String?>((ref) => null);
 
 /// A transparent widget that lives above the app navigator and listens for
-/// incoming EPUB files from the OS ("Open with" / share-sheet).
-class GlobalShareHandler extends ConsumerWidget {
+/// incoming EPUB files from the OS ("Open with" / share sheet).
+///
+/// Owns the whole "an EPUB arrived from outside the app" flow: it takes the
+/// path the router parked in [pendingRouteFileProvider], runs it through the
+/// same import pipeline the bookshelf uses, and refreshes the shelf afterwards.
+class SharedEpubHandler extends ConsumerWidget {
   final Widget child;
 
-  const GlobalShareHandler({required this.child, super.key});
+  const SharedEpubHandler({required this.child, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78,7 +85,7 @@ class GlobalShareHandler extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Private stream-aware host widget for GlobalShareHandler's import dialog.
+// Private stream-aware host widget for SharedEpubHandler's import dialog.
 // ---------------------------------------------------------------------------
 
 class _ShareImportProgressDialog extends StatefulWidget {

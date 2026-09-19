@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/features/detail/presentation/book_detail_screen.dart';
 import 'package:lumina/src/features/library/domain/shelf_book.dart';
-import 'package:lumina/src/global_share_handler.dart';
-import '../services/toast_service.dart';
-import '../../features/library/presentation/library_screen.dart';
-import '../../features/detail/presentation/book_detail_screen.dart';
-import '../../features/reader/presentation/reader_screen.dart';
-import '../../features/settings/presentation/settings_screen.dart';
+import 'package:lumina/src/features/library/presentation/library_screen.dart';
+import 'package:lumina/src/features/library/presentation/shared_epub_handler.dart';
+import 'package:lumina/src/features/reader/presentation/reader_screen.dart';
+import 'package:lumina/src/features/settings/presentation/settings_screen.dart';
 
 /// App Router Configuration
+///
+/// Lives at the `src/` root rather than under `core/` because a route table is
+/// application assembly, not reusable infrastructure: it has to name every
+/// feature's screen. Keeping it here is what lets `core/` hold its
+/// "no `features/` imports" rule without an exemption.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: ToastService.navigatorKey,

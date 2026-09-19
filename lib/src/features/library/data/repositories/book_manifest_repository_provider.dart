@@ -1,5 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../../core/database/providers.dart';
+import '../database/isar_providers.dart';
 import '../book_manifest_repository.dart';
 
 part 'book_manifest_repository_provider.g.dart';

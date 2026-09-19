@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'providers.dart';
+part of 'isar_providers.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -8,20 +8,32 @@ part of 'providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provider for IsarDatabase interface
-/// Use this to access the database throughout the app
+/// Provider for the [IsarDatabase] interface.
+///
+/// **This is where collections get registered.** The schema list lives here
+/// rather than in `core/` because the entities belong to features; a new
+/// `@collection` class must be added to [_schemas] or it will silently not
+/// persist.
 
 @ProviderFor(isarDatabase)
 const isarDatabaseProvider = IsarDatabaseProvider._();
 
-/// Provider for IsarDatabase interface
-/// Use this to access the database throughout the app
+/// Provider for the [IsarDatabase] interface.
+///
+/// **This is where collections get registered.** The schema list lives here
+/// rather than in `core/` because the entities belong to features; a new
+/// `@collection` class must be added to [_schemas] or it will silently not
+/// persist.
 
 final class IsarDatabaseProvider
     extends $FunctionalProvider<IsarDatabase, IsarDatabase, IsarDatabase>
     with $Provider<IsarDatabase> {
-  /// Provider for IsarDatabase interface
-  /// Use this to access the database throughout the app
+  /// Provider for the [IsarDatabase] interface.
+  ///
+  /// **This is where collections get registered.** The schema list lives here
+  /// rather than in `core/` because the entities belong to features; a new
+  /// `@collection` class must be added to [_schemas] or it will silently not
+  /// persist.
   const IsarDatabaseProvider._()
     : super(
         from: null,
@@ -55,22 +67,19 @@ final class IsarDatabaseProvider
   }
 }
 
-String _$isarDatabaseHash() => r'bb1af5de2a34d59642cf30de84c81c52edc60362';
+String _$isarDatabaseHash() => r'd0c23c8adcacca6fcc7cb4262f5ec03ce3a8cfa0';
 
-/// Provider for Isar instance
-/// Convenience provider that returns the actual Isar instance
+/// Provider for the live [Isar] instance.
 
 @ProviderFor(isar)
 const isarProvider = IsarProvider._();
 
-/// Provider for Isar instance
-/// Convenience provider that returns the actual Isar instance
+/// Provider for the live [Isar] instance.
 
 final class IsarProvider
     extends $FunctionalProvider<AsyncValue<Isar>, Isar, FutureOr<Isar>>
     with $FutureModifier<Isar>, $FutureProvider<Isar> {
-  /// Provider for Isar instance
-  /// Convenience provider that returns the actual Isar instance
+  /// Provider for the live [Isar] instance.
   const IsarProvider._()
     : super(
         from: null,
