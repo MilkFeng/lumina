@@ -185,24 +185,12 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
             padding: const EdgeInsets.fromLTRB(32, 96, 32, 0),
             child: Column(
               children: [
-                Icon(
-                  Icons.cloud_off_outlined,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
                 Text(
                   l10n.externalSourceFailureMessage(failure),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton.tonal(
-                  onPressed: ref
-                      .read(externalSourceBrowserProvider(source.id).notifier)
-                      .refresh,
-                  child: Text(l10n.retry),
                 ),
               ],
             ),
@@ -260,7 +248,7 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
     }
 
     if (!item.isEpub) {
-      ToastService.showInfo(
+      ToastService.showError(
         AppLocalizations.of(context)!.externalSourceNotEpub,
       );
       return;
@@ -271,7 +259,7 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
 
   void _toggleSelection(ExternalSourceItem item) {
     if (!item.isEpub) {
-      ToastService.showInfo(
+      ToastService.showError(
         AppLocalizations.of(context)!.externalSourceNotEpub,
       );
       return;
