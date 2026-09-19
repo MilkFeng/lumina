@@ -130,17 +130,13 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
         ],
       ),
       actions: [
+        // Selection-mode only: reloading is pull-to-refresh, which keeps the
+        // list on screen while it works instead of replacing it.
         if (_isSelectionMode)
           IconButton(
             icon: const Icon(Icons.select_all_outlined),
             tooltip: l10n.selectAll,
             onPressed: () => _selectAll(state.items),
-          )
-        else
-          IconButton(
-            icon: const Icon(Icons.refresh_outlined),
-            tooltip: l10n.refresh,
-            onPressed: notifier.refresh,
           ),
       ],
     );
@@ -154,13 +150,23 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
   ) {
     final theme = Theme.of(context);
 
-    if (state.isLoading) {
+    // A full-page spinner only while the visible level has never loaded. A
+    // reload of a level already on screen keeps its entries: the
+    // pull-to-refresh spinner already says something is happening, and blanking
+    // the page under it would be both redundant and jarring.
+    if (!state.hasLoaded) {
       return const Center(child: CircularProgressIndicator(strokeWidth: 2));
     }
 
-    // The non-list states stay scrollable so pull-to-refresh keeps working on
-    // them, which is exactly when a retry is wanted.
-    if (state.failure case final failure?) {
+    final items = state.items;
+
+    // The empty and error states stay scrollable so pull-to-refresh keeps
+    // working on them, which is exactly when a retry is wanted.
+    //
+    // An error only replaces the list when there is no list to keep: a refresh
+    // that fails leaves the entries already on screen in place, rather than
+    // throwing them away for an error the user cannot act on.
+    if (state.failure case final failure? when items.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
@@ -194,7 +200,6 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
       );
     }
 
-    final items = state.items;
     if (items.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),

@@ -869,7 +869,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get externalSourcePassword => '密码';
 
   @override
-  String get externalSourceTesting => '正在测试连接…';
+  String get externalSourceTesting => '测试中';
 
   @override
   String get externalSourceTestSuccess => '连接成功';
@@ -958,9 +958,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get externalSourceNotFound => '该外部源已不存在';
-
-  @override
-  String get refresh => '刷新';
 
   @override
   String get externalSourceUp => '返回上一级';

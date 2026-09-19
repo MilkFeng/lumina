@@ -891,7 +891,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get externalSourcePassword => 'Password';
 
   @override
-  String get externalSourceTesting => 'Testing connection…';
+  String get externalSourceTesting => 'Testing';
 
   @override
   String get externalSourceTestSuccess => 'Connection successful';
@@ -985,9 +985,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalSourceNotFound => 'This external source no longer exists';
-
-  @override
-  String get refresh => 'Refresh';
 
   @override
   String get externalSourceUp => 'Up one folder';

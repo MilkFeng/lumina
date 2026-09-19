@@ -303,6 +303,10 @@ class _ExternalSourceEditorDialogState
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Every input is disabled while the connection test runs:
+                  // the values being tested are the ones on screen, so editing
+                  // them mid-test would make the result describe something the
+                  // user can no longer see.
                   _buildNameField(l10n),
                   const SizedBox(height: 12),
                   _buildTypeField(l10n, theme),
@@ -321,31 +325,31 @@ class _ExternalSourceEditorDialogState
           ),
         },
       ),
-      actions: _busy
-          ? [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    l10n.externalSourceTesting,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ]
-          : [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(onPressed: _confirm, child: Text(l10n.confirm)),
-            ],
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        // The progress lives inside the confirm button rather than replacing
+        // the actions row, so the dialog does not change shape mid-test.
+        FilledButton(
+          onPressed: _busy ? null : _confirm,
+          child: _busy
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(l10n.externalSourceTesting),
+                  ],
+                )
+              : Text(l10n.confirm),
+        ),
+      ],
     );
   }
 
@@ -353,6 +357,7 @@ class _ExternalSourceEditorDialogState
     return TextFormField(
       controller: _nameController,
       autofocus: true,
+      enabled: !_busy,
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         labelText: l10n.externalSourceName,
@@ -383,6 +388,8 @@ class _ExternalSourceEditorDialogState
             child: Text(l10n.externalSourceTypeName(type)),
           ),
       ],
+      // A null callback is how `DropdownButtonFormField` is disabled: it greys
+      // the field out along with everything else during the connection test.
       onChanged: _busy
           ? null
           : (type) {
@@ -406,6 +413,7 @@ class _ExternalSourceEditorDialogState
           padding: const EdgeInsets.only(bottom: 12),
           child: TextFormField(
             controller: _controllers[field.key],
+            enabled: !_busy,
             keyboardType: switch (field.type) {
               ExternalSourceFieldType.url => TextInputType.url,
               _ => TextInputType.text,

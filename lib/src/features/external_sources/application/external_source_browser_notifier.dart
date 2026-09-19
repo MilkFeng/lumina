@@ -13,15 +13,21 @@ part 'external_source_browser_notifier.g.dart';
 class ExternalSourceBrowserState {
   const ExternalSourceBrowserState({
     this.path = const ExternalSourcePath(),
-    this.isLoading = true,
+    this.hasLoaded = false,
     this.failure,
   });
 
   /// Folder stack currently shown.
   final ExternalSourcePath path;
 
-  /// Whether the visible level's listing is in flight.
-  final bool isLoading;
+  /// Whether the visible level has ever finished loading.
+  ///
+  /// This is what distinguishes "nothing to show yet" from "loaded, and empty":
+  /// both have no entries, but only the first deserves a spinner. It is reset
+  /// whenever the visible level changes, so opening a folder shows the spinner
+  /// while its own listing is fetched, while a pull-to-refresh of a level
+  /// already on screen does not.
+  final bool hasLoaded;
 
   /// Why the last listing attempt failed, or `null` when it succeeded.
   final ExternalSourceFailure? failure;
@@ -29,18 +35,15 @@ class ExternalSourceBrowserState {
   /// Entries of the visible level.
   List<ExternalSourceItem> get items => path.items;
 
-  /// Whether the visible level has been listed and came back empty.
-  bool get isEmpty => !isLoading && failure == null && items.isEmpty;
-
   ExternalSourceBrowserState copyWith({
     ExternalSourcePath? path,
-    bool? isLoading,
+    bool? hasLoaded,
     ExternalSourceFailure? failure,
     bool clearFailure = false,
   }) {
     return ExternalSourceBrowserState(
       path: path ?? this.path,
-      isLoading: isLoading ?? this.isLoading,
+      hasLoaded: hasLoaded ?? this.hasLoaded,
       failure: clearFailure ? null : (failure ?? this.failure),
     );
   }
@@ -88,14 +91,14 @@ class ExternalSourceBrowserNotifier extends _$ExternalSourceBrowserNotifier {
   /// Goes back to the parent folder.
   ///
   /// Restored from the stack without touching the network: the parent's entries
-  /// were fetched on the way down.
+  /// were fetched on the way down, so it is already loaded.
   void goUp() {
     if (!state.path.canGoUp) return;
     // Any in-flight listing belongs to the level being left.
     _requestToken++;
     state = state.copyWith(
       path: state.path.popped(),
-      isLoading: false,
+      hasLoaded: true,
       clearFailure: true,
     );
   }
@@ -106,15 +109,20 @@ class ExternalSourceBrowserNotifier extends _$ExternalSourceBrowserNotifier {
   /// the parent chain that [goUp] walks back through.
   Future<void> _list(ExternalSourcePath target) async {
     final token = ++_requestToken;
-    state = state.copyWith(path: target, isLoading: true, clearFailure: true);
+    // A listing for a level other than the one on screen (a folder just opened)
+    // starts unloaded, so the UI shows a spinner instead of the empty-folder
+    // message while its entries are on the way. Re-listing the level already
+    // shown — a pull-to-refresh — keeps `hasLoaded`, so its entries stay put.
+    state = state.copyWith(
+      path: target,
+      hasLoaded: state.hasLoaded && target.path == state.path.path,
+      clearFailure: true,
+    );
 
     final source = await _resolveSource();
     if (!_isCurrent(token)) return;
     if (source == null) {
-      state = state.copyWith(
-        isLoading: false,
-        failure: ExternalSourceFailure.notFound(),
-      );
+      state = state.copyWith(failure: ExternalSourceFailure.notFound());
       return;
     }
 
@@ -128,10 +136,10 @@ class ExternalSourceBrowserNotifier extends _$ExternalSourceBrowserNotifier {
     if (!_isCurrent(token)) return;
 
     result.match(
-      (failure) => state = state.copyWith(isLoading: false, failure: failure),
+      (failure) => state = state.copyWith(failure: failure),
       (items) => state = state.copyWith(
         path: target.replacingItems(items),
-        isLoading: false,
+        hasLoaded: true,
         clearFailure: true,
       ),
     );

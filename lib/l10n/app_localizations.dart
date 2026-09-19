@@ -1658,10 +1658,10 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get externalSourcePassword;
 
-  /// Message shown while the external source connection is being tested
+  /// Label of the confirm button while the external source connection is being tested
   ///
   /// In en, this message translates to:
-  /// **'Testing connection…'**
+  /// **'Testing'**
   String get externalSourceTesting;
 
   /// Message shown when the external source connection test succeeds
@@ -1807,12 +1807,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This external source no longer exists'**
   String get externalSourceNotFound;
-
-  /// Tooltip of the button that reloads the current listing
-  ///
-  /// In en, this message translates to:
-  /// **'Refresh'**
-  String get refresh;
 
   /// Tooltip of the back button while inside a folder of an external source
   ///

@@ -1250,9 +1250,9 @@
   "@externalSourcePassword": {
     "description": "外部源密码输入框的标签"
   },
-  "externalSourceTesting": "正在测试连接…",
+  "externalSourceTesting": "测试中",
   "@externalSourceTesting": {
-    "description": "正在测试外部源连接时显示的文字"
+    "description": "正在测试外部源连接时确认按钮的文字"
   },
   "externalSourceTestSuccess": "连接成功",
   "@externalSourceTestSuccess": {
@@ -1389,10 +1389,6 @@
   "externalSourceNotFound": "该外部源已不存在",
   "@externalSourceNotFound": {
     "description": "打开已删除外部源页面时显示的提示"
-  },
-  "refresh": "刷新",
-  "@refresh": {
-    "description": "重新加载当前列表按钮的提示"
   },
   "externalSourceUp": "返回上一级",
   "@externalSourceUp": {

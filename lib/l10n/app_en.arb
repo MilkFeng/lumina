@@ -1242,9 +1242,9 @@
   "@externalSourcePassword": {
     "description": "Label of the external source password field"
   },
-  "externalSourceTesting": "Testing connection…",
+  "externalSourceTesting": "Testing",
   "@externalSourceTesting": {
-    "description": "Message shown while the external source connection is being tested"
+    "description": "Label of the confirm button while the external source connection is being tested"
   },
   "externalSourceTestSuccess": "Connection successful",
   "@externalSourceTestSuccess": {
@@ -1381,10 +1381,6 @@
   "externalSourceNotFound": "This external source no longer exists",
   "@externalSourceNotFound": {
     "description": "Message shown when a source screen is opened for a deleted source"
-  },
-  "refresh": "Refresh",
-  "@refresh": {
-    "description": "Tooltip of the button that reloads the current listing"
   },
   "externalSourceUp": "Up one folder",
   "@externalSourceUp": {
