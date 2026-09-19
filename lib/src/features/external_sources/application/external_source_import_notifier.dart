@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:lumina/src/core/platform/import_cache_manager.dart';
@@ -28,6 +29,14 @@ part 'external_source_import_notifier.g.dart';
 /// the progress dialog is the only thing on screen.
 @Riverpod(keepAlive: true)
 class ExternalSourceImportNotifier extends _$ExternalSourceImportNotifier {
+  /// Shortest gap between two reported download ticks.
+  ///
+  /// A chunk is a few kilobytes, so a book reports hundreds of times, and every
+  /// tick repaints the progress dialog. Ten updates a second is more than the
+  /// counter can show; the end of a download always gets through regardless, so
+  /// the last number the user sees is the file's real size.
+  static const Duration tickInterval = Duration(milliseconds: 100);
+
   @override
   void build() {}
 
@@ -65,7 +74,55 @@ class ExternalSourceImportNotifier extends _$ExternalSourceImportNotifier {
       try {
         cached = await cache.createCacheFile(extensionOf(item));
 
-        final failure = await _download(source, item, cached, sources);
+        // A generator cannot `yield` from inside a callback, so the ticks the
+        // download reports are pushed into a controller: the download runs as a
+        // future while the loop below turns those ticks into stream events, and
+        // the failure is read off the future once it has settled.
+        final ticks = StreamController<FileTransferProgress>();
+        final clock = Stopwatch()..start();
+        var lastTickAt = Duration.zero;
+
+        final downloading = _download(
+          source,
+          item,
+          cached,
+          sources,
+          onProgress: (received, total) {
+            // Dropped once the mirroring loop is over: a tick that arrives after
+            // the file is finished describes nothing anyone still shows.
+            if (ticks.isClosed) return;
+
+            final isComplete = total != null && received >= total;
+            final now = clock.elapsed;
+            if (!isComplete && now - lastTickAt < tickInterval) return;
+            lastTickAt = now;
+
+            ticks.add(
+              FileTransferProgress(
+                fileName: item.name,
+                receivedBytes: received,
+                // Servers are free to answer without a `Content-Length`; the
+                // listing already reported the size, so that is the fallback.
+                totalBytes: total ?? item.size,
+              ),
+            );
+          },
+        );
+        // Registered before the ticks are drained, so the loop always ends.
+        // Handling the error here keeps it from being reported as unhandled;
+        // the `await` below still receives it.
+        unawaited(
+          downloading.then<void>(
+            (_) => ticks.close(),
+            onError: (_) => ticks.close(),
+          ),
+        );
+
+        await for (final tick in ticks.stream) {
+          yield tick;
+        }
+
+        final failure = await downloading;
         if (failure != null) {
           yield ImportProgress(
             totalCount: total,
@@ -124,13 +181,14 @@ class ExternalSourceImportNotifier extends _$ExternalSourceImportNotifier {
     await ref.read(bookshelfProvider.notifier).refresh();
   }
 
-  /// Streams one entry to [target].
+  /// Streams one entry to [target], reporting bytes received to [onProgress].
   Future<ExternalSourceFailure?> _download(
     ExternalSource source,
     ExternalSourceItem item,
     File target,
-    ExternalSourcesNotifier sources,
-  ) async {
+    ExternalSourcesNotifier sources, {
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
     final adapter = ref
         .read(externalSourceRegistryProvider)
         .createAdapter(
@@ -138,7 +196,11 @@ class ExternalSourceImportNotifier extends _$ExternalSourceImportNotifier {
           credentials: await sources.credentialsFor(source),
         );
     try {
-      final result = await adapter.downloadTo(item.path, target);
+      final result = await adapter.downloadTo(
+        item.path,
+        target,
+        onProgress: onProgress,
+      );
       return result.fold<ExternalSourceFailure?>(
         (failure) => failure,
         (_) => null,

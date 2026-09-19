@@ -17,6 +17,37 @@ class ProgressLog {
   ProgressLog(this.message, this.type);
 }
 
+/// How far the transfer of the file currently being processed has come.
+///
+/// A stream of these is *state*, not a log: one arrives per reported step, so a
+/// large file produces hundreds of them. [ProgressDialog] therefore renders the
+/// latest one as the live measurement and never appends it to the details list.
+class FileTransferProgress extends ProgressLog {
+  FileTransferProgress({
+    required this.fileName,
+    required this.receivedBytes,
+    this.totalBytes,
+  }) : super('Transferring $fileName', ProgressLogType.info);
+
+  /// Name of the file the bytes belong to.
+  final String fileName;
+
+  /// Bytes received so far.
+  final int receivedBytes;
+
+  /// Total the transport declared, or `null` when it did not declare one
+  /// (a chunked response, for instance).
+  final int? totalBytes;
+
+  /// [receivedBytes] as a percentage of [totalBytes], clamped to 0–100, or
+  /// `null` when the total is unknown or nonsensical.
+  int? get percent {
+    final total = totalBytes;
+    if (total == null || total <= 0) return null;
+    return ((receivedBytes / total) * 100).clamp(0, 100).round();
+  }
+}
+
 /// A "dumb" progress dialog that renders purely from the values passed to it.
 ///
 /// All stream subscription, state accumulation, and completion handling must
@@ -26,6 +57,16 @@ class ProgressDialog extends StatefulWidget {
   final String completeTitle;
   final String progressMessage;
   final String processingMessage;
+
+  /// Optional live measurement of the step currently running — the bytes a
+  /// download has received, for instance — rendered as a line of its own under
+  /// [processingMessage].
+  ///
+  /// Its own line rather than a suffix on [processingMessage] because that one
+  /// shares a row with the details link and runs out of width early. Pass `null`
+  /// when there is nothing to measure, or once the operation is complete.
+  final String? progressDetail;
+
   final double? progressValue;
 
   /// When `true` the dialog shows the complete title and enables the Close
@@ -40,6 +81,7 @@ class ProgressDialog extends StatefulWidget {
     required this.completeTitle,
     required this.progressMessage,
     required this.processingMessage,
+    this.progressDetail,
     required this.progressValue,
     required this.isCompleted,
     required this.logs,
@@ -117,6 +159,20 @@ class _ProgressDialogState extends State<ProgressDialog> {
                     ),
                 ],
               ),
+
+              if (!widget.isCompleted && widget.progressDetail != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  widget.progressDetail!,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
             ],
 
             AnimatedSize(

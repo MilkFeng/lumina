@@ -39,10 +39,17 @@ abstract class ExternalSourceAdapter {
   ]);
 
   /// Downloads the entry at [path] into [target].
+  ///
+  /// [onProgress] is called as the transfer advances, with the bytes received so
+  /// far and the total size when the protocol knows it ([ExternalSourceItem.size]
+  /// is the fallback for a transport that does not declare one). An adapter whose
+  /// protocol cannot report progress may ignore it, so callers must treat the
+  /// counter as best-effort rather than as something that always arrives.
   Future<Either<ExternalSourceFailure, Unit>> downloadTo(
     String path,
-    File target,
-  );
+    File target, {
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  });
 
   /// Releases any transport held open by this adapter.
   void dispose() {}

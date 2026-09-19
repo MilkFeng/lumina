@@ -140,7 +140,16 @@ class WebDavClient {
   /// Streamed rather than buffered: an EPUB is easily larger than is
   /// comfortable to hold in memory on a phone, and the import pipeline wants a
   /// file on disk anyway.
-  Future<void> downloadTo(String path, File target) async {
+  ///
+  /// [onProgress] is called after every chunk with the bytes received so far and
+  /// the length declared up front, which is `null` for a chunked response.
+  /// Reporting is deliberately unthrottled — how often the counter is worth
+  /// repainting is the UI's call, not the transport's.
+  Future<void> downloadTo(
+    String path,
+    File target, {
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
     final uri = resolve(path);
     final request = http.Request('GET', uri);
     _authorize(request);
@@ -173,6 +182,7 @@ class WebDavClient {
           throw const WebDavTooLargeException(maxDownloadBytes);
         }
         sink.add(chunk);
+        onProgress?.call(written, declaredLength);
       }
       await sink.flush();
     } finally {

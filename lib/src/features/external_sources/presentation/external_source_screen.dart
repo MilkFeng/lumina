@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/core/utils/byte_size.dart';
 import 'package:lumina/src/features/external_sources/application/external_source_browser_notifier.dart';
 import 'package:lumina/src/features/external_sources/application/external_source_import_notifier.dart';
 import 'package:lumina/src/features/external_sources/application/external_sources_notifier.dart';
@@ -114,7 +115,6 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
     final notifier = ref.read(
       externalSourceBrowserProvider(source.id).notifier,
     );
-    final theme = Theme.of(context);
     final canGoUp = state.path.canGoUp;
 
     // Selection mode recolours the bar. The bookshelf uses `surfaceContainer`
@@ -645,24 +645,11 @@ class _SourceEntryRow extends StatelessWidget {
         l10n.externalSourceFolder
       else if (!item.isEpub)
         l10n.externalSourceNotImportable,
-      if (item.size case final size?) _formatSize(size),
+      if (item.size case final size?) formatByteSize(size),
       if (item.lastModified case final modified?) _formatDate(modified),
     ];
     return parts.isEmpty ? null : parts.join(' · ');
   }
-}
-
-/// Renders a byte count the way a file manager does.
-String _formatSize(int bytes) {
-  const units = ['B', 'KB', 'MB', 'GB'];
-  var value = bytes.toDouble();
-  var unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit++;
-  }
-  final digits = value >= 100 || unit == 0 ? 0 : 1;
-  return '${value.toStringAsFixed(digits)} ${units[unit]}';
 }
 
 /// `2024-05-03 14:05`, in the device's own time zone.

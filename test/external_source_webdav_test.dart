@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:lumina/src/features/external_sources/data/adapters/webdav_config_codec.dart';
 import 'package:lumina/src/features/external_sources/data/services/webdav_client.dart';
 import 'package:lumina/src/features/external_sources/data/services/webdav_exception.dart';
@@ -7,9 +11,10 @@ import 'package:lumina/src/features/external_sources/domain/webdav_config.dart';
 
 /// Unit tests for the external sources data layer.
 ///
-/// Only the pure parts are covered — URL building, `207 Multi-Status` parsing
-/// and configuration serialisation. Everything above them needs a database, a
-/// keychain or a network, none of which exist in a widget-test environment.
+/// The pure parts — URL building, `207 Multi-Status` parsing and configuration
+/// serialisation — need nothing behind them. Downloading is covered against a
+/// canned HTTP layer and a temporary directory, so it stays hermetic too: no
+/// database, no keychain, no network.
 void main() {
   group('WebDavClient.resolve', () {
     test('appends a trailing slash for a collection', () {
@@ -237,6 +242,83 @@ void main() {
         () => WebDavClient.parseMultiStatus('<not-xml'),
         throwsA(isA<WebDavMalformedResponseException>()),
       );
+    });
+  });
+
+  group('WebDavClient.downloadTo', () {
+    late Directory cacheDir;
+
+    setUp(() async {
+      cacheDir = await Directory.systemTemp.createTemp('lumina_webdav_test_');
+    });
+
+    tearDown(() async {
+      if (cacheDir.existsSync()) await cacheDir.delete(recursive: true);
+    });
+
+    /// A client whose `GET` answers with [chunks], declaring [declaredLength] as
+    /// the `Content-Length` (`null` for a server that declares none).
+    WebDavClient clientServing(
+      List<List<int>> chunks, {
+      int? declaredLength,
+    }) {
+      return WebDavClient(
+        baseUrl: 'https://dav.example.com',
+        httpClient: MockClient.streaming(
+          (request, bodyStream) async => http.StreamedResponse(
+            Stream.fromIterable(chunks),
+            200,
+            contentLength: declaredLength,
+          ),
+        ),
+      );
+    }
+
+    File target() => File('${cacheDir.path}/book.epub');
+
+    test('reports the bytes received after every chunk', () async {
+      final ticks = <(int, int?)>[];
+      final client = clientServing([
+        List.filled(3, 0x41),
+        List.filled(4, 0x42),
+      ], declaredLength: 7);
+
+      await client.downloadTo(
+        'books/book.epub',
+        target(),
+        onProgress: (received, total) => ticks.add((received, total)),
+      );
+
+      expect(ticks, [(3, 7), (7, 7)]);
+      expect(await target().length(), 7);
+    });
+
+    test('reports a null total when no length was declared', () async {
+      final ticks = <(int, int?)>[];
+      final client = clientServing([
+        List.filled(5, 0x41),
+      ]);
+
+      await client.downloadTo(
+        'books/book.epub',
+        target(),
+        onProgress: (received, total) => ticks.add((received, total)),
+      );
+
+      // A chunked response: the caller still gets the running total, and still
+      // gets the file.
+      expect(ticks, [(5, null)]);
+      expect(await target().length(), 5);
+    });
+
+    test('downloads when no one is listening for progress', () async {
+      final client = clientServing([
+        List.filled(2, 0x41),
+      ], declaredLength: 2);
+
+      await client.downloadTo('books/book.epub', target());
+
+      expect(await target().length(), 2);
     });
   });
 

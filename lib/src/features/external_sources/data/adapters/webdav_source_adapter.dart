@@ -71,11 +71,12 @@ class WebDavSourceAdapter extends ExternalSourceAdapter {
   @override
   Future<Either<ExternalSourceFailure, Unit>> downloadTo(
     String path,
-    File target,
-  ) async {
+    File target, {
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
     final client = createClient();
     try {
-      await client.downloadTo(path, target);
+      await client.downloadTo(path, target, onProgress: onProgress);
       return right(unit);
     } catch (error) {
       return left(describeError(error));
