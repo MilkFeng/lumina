@@ -51,10 +51,21 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
     final state = ref.watch(externalSourceBrowserProvider(source.id));
 
     return PopScope(
-      // Back leaves selection mode first, so a long-press is never a trap.
-      canPop: !_isSelectionMode,
+      // The system back gesture has to mirror the app bar's back button: it
+      // climbs out of folders first, and only leaves the screen from the root.
+      // Leaving `canPop` true here is what made back jump straight to the
+      // library from inside a folder.
+      canPop: !_isSelectionMode && !state.path.canGoUp,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) setState(_selected.clear);
+        if (didPop) return;
+        // Order matters: back leaves selection mode first, then the folder.
+        // Otherwise a long-press would be a trap — the gesture would walk out
+        // of the folder while the selection bar is still on screen.
+        if (_isSelectionMode) {
+          setState(_selected.clear);
+        } else {
+          ref.read(externalSourceBrowserProvider(source.id).notifier).goUp();
+        }
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,

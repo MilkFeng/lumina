@@ -122,7 +122,13 @@ class ExternalSourceBrowserNotifier extends _$ExternalSourceBrowserNotifier {
     final source = await _resolveSource();
     if (!_isCurrent(token)) return;
     if (source == null) {
-      state = state.copyWith(failure: ExternalSourceFailure.notFound());
+      // Deliberately marks the level as loaded: there is nothing more to wait
+      // for, so the screen must show the failure rather than a spinner that
+      // never ends.
+      state = state.copyWith(
+        hasLoaded: true,
+        failure: ExternalSourceFailure.notFound(),
+      );
       return;
     }
 
@@ -136,7 +142,7 @@ class ExternalSourceBrowserNotifier extends _$ExternalSourceBrowserNotifier {
     if (!_isCurrent(token)) return;
 
     result.match(
-      (failure) => state = state.copyWith(failure: failure),
+      (failure) => state = state.copyWith(hasLoaded: true, failure: failure),
       (items) => state = state.copyWith(
         path: target.replacingItems(items),
         hasLoaded: true,
