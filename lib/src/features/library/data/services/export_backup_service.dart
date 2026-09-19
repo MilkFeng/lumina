@@ -275,7 +275,6 @@ class ExportBackupService {
     'chapterScrollPosition': b.chapterScrollPosition,
     'lastOpenedDate': b.lastOpenedDate,
     'groupName': b.groupName,
-    'isDeleted': b.isDeleted,
     'updatedAt': b.updatedAt,
     'direction': b.direction,
   };
@@ -287,7 +286,6 @@ class ExportBackupService {
     'name': g.name,
     'creationDate': g.creationDate,
     'updatedAt': g.updatedAt,
-    'isDeleted': g.isDeleted,
   };
 
   /// Serialises the full [BookManifest] (and all embedded objects) to a map.

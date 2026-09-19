@@ -69,7 +69,7 @@ class BookGridItem extends ConsumerWidget {
               fontSize: 12,
             ),
           ),
-        if (book.readingProgress > 0 && !book.isDeleted)
+        if (book.readingProgress > 0)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: ClipRRect(

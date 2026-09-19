@@ -80,10 +80,6 @@ class ShelfBook {
   @Index()
   String? groupName;
 
-  /// Soft delete flag (for trash/sync safety)
-  @Index()
-  bool isDeleted = false;
-
   // ==================== SYNC ====================
 
   /// Last modification timestamp (milliseconds since epoch, for conflict resolution)

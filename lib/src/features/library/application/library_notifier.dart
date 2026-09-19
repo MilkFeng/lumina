@@ -242,21 +242,12 @@ class LibraryNotifier extends _$LibraryNotifier {
       final repository = ref.read(shelfBookRepositoryProvider);
       final importService = ref.read(epubImportServiceProvider);
 
-      // Soft-delete first; only proceed with file cleanup when confirmed.
-      final result = await repository.softDeleteBook(bookId);
-      if (result.isLeft()) {
-        return left(result.getLeft().toNullable()!);
-      }
-      if (result.getRight().toNullable() == false) {
-        return left('Delete failed');
-      }
-
       final book = await repository.getBookById(bookId);
       if (book == null) {
         return left('Book not found');
       }
 
-      // Remove physical files + manifest record.
+      // Remove the database record, manifest record and physical files.
       final deleteResult = await importService.deleteBook(book);
       if (deleteResult.isLeft()) {
         return left(deleteResult.getLeft().toNullable()!);

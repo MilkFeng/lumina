@@ -20,8 +20,4 @@ class ShelfGroup {
   /// Last update timestamp (milliseconds since epoch)
   @Index()
   late int updatedAt;
-
-  /// Soft delete flag for sync safety
-  @Index()
-  bool isDeleted = false;
 }

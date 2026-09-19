@@ -72,34 +72,29 @@ const ShelfBookSchema = CollectionSchema(
       name: r'importDate',
       type: IsarType.long,
     ),
-    r'isDeleted': PropertySchema(
-      id: 11,
-      name: r'isDeleted',
-      type: IsarType.bool,
-    ),
     r'lastOpenedDate': PropertySchema(
-      id: 12,
+      id: 11,
       name: r'lastOpenedDate',
       type: IsarType.long,
     ),
     r'readingProgress': PropertySchema(
-      id: 13,
+      id: 12,
       name: r'readingProgress',
       type: IsarType.double,
     ),
     r'subjects': PropertySchema(
-      id: 14,
+      id: 13,
       name: r'subjects',
       type: IsarType.stringList,
     ),
-    r'title': PropertySchema(id: 15, name: r'title', type: IsarType.string),
+    r'title': PropertySchema(id: 14, name: r'title', type: IsarType.string),
     r'totalChapters': PropertySchema(
-      id: 16,
+      id: 15,
       name: r'totalChapters',
       type: IsarType.long,
     ),
     r'updatedAt': PropertySchema(
-      id: 17,
+      id: 16,
       name: r'updatedAt',
       type: IsarType.long,
     ),
@@ -202,19 +197,6 @@ const ShelfBookSchema = CollectionSchema(
         ),
       ],
     ),
-    r'isDeleted': IndexSchema(
-      id: -786475870904832312,
-      name: r'isDeleted',
-      unique: false,
-      replace: false,
-      properties: [
-        IndexPropertySchema(
-          name: r'isDeleted',
-          type: IndexType.value,
-          caseSensitive: false,
-        ),
-      ],
-    ),
     r'updatedAt': IndexSchema(
       id: -6238191080293565125,
       name: r'updatedAt',
@@ -305,13 +287,12 @@ void _shelfBookSerialize(
   writer.writeString(offsets[8], object.filePath);
   writer.writeString(offsets[9], object.groupName);
   writer.writeLong(offsets[10], object.importDate);
-  writer.writeBool(offsets[11], object.isDeleted);
-  writer.writeLong(offsets[12], object.lastOpenedDate);
-  writer.writeDouble(offsets[13], object.readingProgress);
-  writer.writeStringList(offsets[14], object.subjects);
-  writer.writeString(offsets[15], object.title);
-  writer.writeLong(offsets[16], object.totalChapters);
-  writer.writeLong(offsets[17], object.updatedAt);
+  writer.writeLong(offsets[11], object.lastOpenedDate);
+  writer.writeDouble(offsets[12], object.readingProgress);
+  writer.writeStringList(offsets[13], object.subjects);
+  writer.writeString(offsets[14], object.title);
+  writer.writeLong(offsets[15], object.totalChapters);
+  writer.writeLong(offsets[16], object.updatedAt);
 }
 
 ShelfBook _shelfBookDeserialize(
@@ -333,13 +314,12 @@ ShelfBook _shelfBookDeserialize(
   object.groupName = reader.readStringOrNull(offsets[9]);
   object.id = id;
   object.importDate = reader.readLong(offsets[10]);
-  object.isDeleted = reader.readBool(offsets[11]);
-  object.lastOpenedDate = reader.readLongOrNull(offsets[12]);
-  object.readingProgress = reader.readDouble(offsets[13]);
-  object.subjects = reader.readStringList(offsets[14]) ?? [];
-  object.title = reader.readString(offsets[15]);
-  object.totalChapters = reader.readLong(offsets[16]);
-  object.updatedAt = reader.readLong(offsets[17]);
+  object.lastOpenedDate = reader.readLongOrNull(offsets[11]);
+  object.readingProgress = reader.readDouble(offsets[12]);
+  object.subjects = reader.readStringList(offsets[13]) ?? [];
+  object.title = reader.readString(offsets[14]);
+  object.totalChapters = reader.readLong(offsets[15]);
+  object.updatedAt = reader.readLong(offsets[16]);
   return object;
 }
 
@@ -373,18 +353,16 @@ P _shelfBookDeserializeProp<P>(
     case 10:
       return (reader.readLong(offset)) as P;
     case 11:
-      return (reader.readBool(offset)) as P;
-    case 12:
       return (reader.readLongOrNull(offset)) as P;
-    case 13:
+    case 12:
       return (reader.readDouble(offset)) as P;
-    case 14:
+    case 13:
       return (reader.readStringList(offset) ?? []) as P;
-    case 15:
+    case 14:
       return (reader.readString(offset)) as P;
-    case 16:
+    case 15:
       return (reader.readLong(offset)) as P;
-    case 17:
+    case 16:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -496,14 +474,6 @@ extension ShelfBookQueryWhereSort
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'lastOpenedDate'),
-      );
-    });
-  }
-
-  QueryBuilder<ShelfBook, ShelfBook, QAfterWhere> anyIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        const IndexWhereClause.any(indexName: r'isDeleted'),
       );
     });
   }
@@ -1206,60 +1176,6 @@ extension ShelfBookQueryWhere
                 indexName: r'groupName',
                 lower: [],
                 upper: [groupName],
-                includeUpper: false,
-              ),
-            );
-      }
-    });
-  }
-
-  QueryBuilder<ShelfBook, ShelfBook, QAfterWhereClause> isDeletedEqualTo(
-    bool isDeleted,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        IndexWhereClause.equalTo(indexName: r'isDeleted', value: [isDeleted]),
-      );
-    });
-  }
-
-  QueryBuilder<ShelfBook, ShelfBook, QAfterWhereClause> isDeletedNotEqualTo(
-    bool isDeleted,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      if (query.whereSort == Sort.asc) {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [],
-                upper: [isDeleted],
-                includeUpper: false,
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [isDeleted],
-                includeLower: false,
-                upper: [],
-              ),
-            );
-      } else {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [isDeleted],
-                includeLower: false,
-                upper: [],
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [],
-                upper: [isDeleted],
                 includeUpper: false,
               ),
             );
@@ -2845,16 +2761,6 @@ extension ShelfBookQueryFilter
     });
   }
 
-  QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition> isDeletedEqualTo(
-    bool value,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'isDeleted', value: value),
-      );
-    });
-  }
-
   QueryBuilder<ShelfBook, ShelfBook, QAfterFilterCondition>
   lastOpenedDateIsNull() {
     return QueryBuilder.apply(this, (query) {
@@ -3585,18 +3491,6 @@ extension ShelfBookQuerySortBy on QueryBuilder<ShelfBook, ShelfBook, QSortBy> {
     });
   }
 
-  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByIsDeletedDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.desc);
-    });
-  }
-
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> sortByLastOpenedDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastOpenedDate', Sort.asc);
@@ -3795,18 +3689,6 @@ extension ShelfBookQuerySortThenBy
     });
   }
 
-  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByIsDeletedDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.desc);
-    });
-  }
-
   QueryBuilder<ShelfBook, ShelfBook, QAfterSortBy> thenByLastOpenedDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastOpenedDate', Sort.asc);
@@ -3950,12 +3832,6 @@ extension ShelfBookQueryWhereDistinct
     });
   }
 
-  QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'isDeleted');
-    });
-  }
-
   QueryBuilder<ShelfBook, ShelfBook, QDistinct> distinctByLastOpenedDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastOpenedDate');
@@ -4067,12 +3943,6 @@ extension ShelfBookQueryProperty
   QueryBuilder<ShelfBook, int, QQueryOperations> importDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'importDate');
-    });
-  }
-
-  QueryBuilder<ShelfBook, bool, QQueryOperations> isDeletedProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'isDeleted');
     });
   }
 

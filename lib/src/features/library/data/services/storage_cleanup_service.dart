@@ -36,9 +36,9 @@ class StorageCleanupService {
   ///
   /// Returns the total number of files deleted.
   Future<int> cleanOrphanFiles() async {
-    // Collect all hashes that are known to the database (including
-    // soft-deleted records so we don't accidentally wipe them).
-    final validHashes = await _shelfBookRepo.getAllNotDeletedFileHashes();
+    // Collect all hashes that are known to the database so the files
+    // belonging to them are kept.
+    final validHashes = await _shelfBookRepo.getAllFileHashes();
 
     int deletedCount = 0;
     deletedCount += await _cleanDirectory(

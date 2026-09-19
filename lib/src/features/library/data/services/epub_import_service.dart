@@ -36,9 +36,9 @@ class EpubImportService {
         file,
       ).then((result) => result.getOrElse((error) => throw Exception(error)));
 
-      final bookExists = await _checkBookExistence(fileHash);
-      if (bookExists.isLeft()) {
-        return left(bookExists.getLeft().toNullable()!);
+      final existsError = await _checkBookExistence(fileHash);
+      if (existsError != null) {
+        return left(existsError);
       }
 
       final epubPath = await _copyToAppStorage(
@@ -70,7 +70,6 @@ class EpubImportService {
         epubPath,
         coverPath,
         parseData,
-        bookExists.getRight().toNullable()!,
       );
 
       final savedBook =
@@ -98,20 +97,11 @@ class EpubImportService {
     return compute(ImportWorkers.calculateFileHash, file.path);
   }
 
-  /// Check if book already exists
-  /// Returns Either:
-  ///   - Left: error (book already exists)
-  ///   - Right: true if book exists but deleted, false if never existed
-  Future<Either<String, bool>> _checkBookExistence(String fileHash) async {
-    final existsAndNotDeleted = await _shelfBookRepo.bookExistsAndNotDeleted(
-      fileHash,
-    );
-    if (existsAndNotDeleted) {
-      return left('Book already exists');
-    }
-
+  /// Check if the book already exists.
+  /// Returns an error message if it does, otherwise null.
+  Future<String?> _checkBookExistence(String fileHash) async {
     final exists = await _shelfBookRepo.bookExists(fileHash);
-    return right(exists);
+    return exists ? 'Book already exists' : null;
   }
 
   /// Parse EPUB and extract metadata using isolate
@@ -137,7 +127,6 @@ class EpubImportService {
     String epubPath,
     String? coverPath,
     ParseResult parseData,
-    bool bookExisted,
   ) async {
     final relativePath = epubPath.replaceAll(AppStorage.documentsPath, '');
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -155,10 +144,6 @@ class EpubImportService {
       ..importDate = now
       ..updatedAt = now
       ..direction = parseData.readDirection;
-
-    if (bookExisted) {
-      shelfBook.id = await _shelfBookRepo.getBookIdByHash(fileHash);
-    }
 
     final manifest = BookManifest()
       ..fileHash = fileHash
@@ -326,7 +311,7 @@ class EpubImportService {
   Future<Either<String, bool>> deleteBook(ShelfBook book) async {
     try {
       // Delete from database
-      await _shelfBookRepo.softDeleteBook(book.id);
+      await _shelfBookRepo.deleteBook(book.id);
       await _manifestRepo.deleteManifestByHash(book.fileHash);
 
       // Delete files

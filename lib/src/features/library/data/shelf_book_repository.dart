@@ -22,22 +22,15 @@ class ShelfBookRepository {
 
   ShelfBookRepository({required Isar isar}) : _isar = isar;
 
-  /// Get all books (excluding deleted) sorted by import date (newest first)
+  /// Get all books sorted by import date (newest first)
   Future<List<ShelfBook>> getAllBooks() async {
-    return await _isar.shelfBooks
-        .filter()
-        .isDeletedEqualTo(false)
-        .sortByImportDateDesc()
-        .findAll();
+    return await _isar.shelfBooks.where().sortByImportDateDesc().findAll();
   }
 
-  /// Get all file hashes across every record (including soft-deleted).
+  /// Get all file hashes.
   /// Used by [StorageCleanupService] to determine which physical files are valid.
-  Future<Set<String>> getAllNotDeletedFileHashes() async {
-    final books = await _isar.shelfBooks
-        .where()
-        .isDeletedEqualTo(false)
-        .findAll();
+  Future<Set<String>> getAllFileHashes() async {
+    final books = await _isar.shelfBooks.where().findAll();
     return books.map((b) => b.fileHash).toSet();
   }
 
@@ -49,39 +42,21 @@ class ShelfBookRepository {
   }) async {
     final isar = _isar;
 
-    // Build filter conditions
-    var query = isar.shelfBooks.filter().isDeletedEqualTo(false);
-
-    if (!includeAll) {
-      if (groupName != null) {
-        query = query.groupNameEqualTo(groupName);
-      } else {
-        query = query.groupNameIsNull();
-      }
+    // Load the candidate set: every book, or just the requested group.
+    final List<ShelfBook> books;
+    if (includeAll) {
+      books = await isar.shelfBooks.where().findAll();
+    } else if (groupName != null) {
+      books = await isar.shelfBooks
+          .where()
+          .groupNameEqualTo(groupName)
+          .findAll();
+    } else {
+      books = await isar.shelfBooks.where().groupNameIsNull().findAll();
     }
 
-    // Cast to sortable query builder
-    final sortableQuery = query as QueryBuilder<ShelfBook, ShelfBook, QSortBy>;
-
-    // Neural sort by title or author (case-insensitive)
-    List<ShelfBook> books;
-
-    // Apply sorting
-    switch (sortBy) {
-      case ShelfBookSortBy.titleAsc:
-      case ShelfBookSortBy.titleDesc:
-      case ShelfBookSortBy.authorAsc:
-      case ShelfBookSortBy.authorDesc:
-        books = await query.findAll();
-      case ShelfBookSortBy.recentlyRead:
-        return await sortableQuery.sortByLastOpenedDateDesc().findAll();
-      case ShelfBookSortBy.recentlyAdded:
-        return await sortableQuery.sortByImportDateDesc().findAll();
-      case ShelfBookSortBy.progress:
-        return await sortableQuery.sortByReadingProgressDesc().findAll();
-    }
-
-    // Neural sort for title/author
+    // Sorting is applied in Dart so titles and authors can use natural
+    // (human-friendly) comparison.
     switch (sortBy) {
       case ShelfBookSortBy.titleAsc:
         return books..sort((a, b) => compareNatural(a.title, b.title));
@@ -103,19 +78,23 @@ class ShelfBookRepository {
               a.authors.firstOrNull ?? '',
             ),
           );
-      default:
-        return books;
+      case ShelfBookSortBy.recentlyRead:
+        return books
+          ..sort(
+            (a, b) => (b.lastOpenedDate ?? 0).compareTo(a.lastOpenedDate ?? 0),
+          );
+      case ShelfBookSortBy.recentlyAdded:
+        return books..sort((a, b) => b.importDate.compareTo(a.importDate));
+      case ShelfBookSortBy.progress:
+        return books
+          ..sort((a, b) => b.readingProgress.compareTo(a.readingProgress));
     }
   }
 
   /// Get all groups (flat structure, no nesting)
   Future<List<ShelfGroup>> getGroups() async {
     final isar = _isar;
-    return await isar.shelfGroups
-        .filter()
-        .isDeletedEqualTo(false)
-        .sortByName()
-        .findAll();
+    return await isar.shelfGroups.where().sortByName().findAll();
   }
 
   /// Get group by ID
@@ -126,12 +105,7 @@ class ShelfBookRepository {
 
   Future<ShelfGroup?> getGroupByName(String name) async {
     final isar = _isar;
-    return await isar.shelfGroups
-        .filter()
-        .nameEqualTo(name)
-        .and()
-        .isDeletedEqualTo(false)
-        .findFirst();
+    return await isar.shelfGroups.where().nameEqualTo(name).findFirst();
   }
 
   Future<ShelfGroup> saveGroup(ShelfGroup group) async {
@@ -153,27 +127,17 @@ class ShelfBookRepository {
           .nameEqualTo(name)
           .findFirst();
       if (existingGroup != null) {
-        // if group is marked as deleted, undelete it
-        if (existingGroup.isDeleted) {
-          existingGroup.isDeleted = false;
-          existingGroup.updatedAt = now;
-          final id = await isar.writeTxn(() async {
-            return await isar.shelfGroups.put(existingGroup);
-          });
-          return right(id);
-        }
         return left('Group already exists');
-      } else {
-        final group = ShelfGroup()
-          ..name = name
-          ..creationDate = now
-          ..updatedAt = now
-          ..isDeleted = false;
-        final id = await isar.writeTxn(() async {
-          return await isar.shelfGroups.put(group);
-        });
-        return right(id);
       }
+
+      final group = ShelfGroup()
+        ..name = name
+        ..creationDate = now
+        ..updatedAt = now;
+      final id = await isar.writeTxn(() async {
+        return await isar.shelfGroups.put(group);
+      });
+      return right(id);
     } catch (e) {
       return left('Create group failed: $e');
     }
@@ -241,10 +205,7 @@ class ShelfBookRepository {
           await isar.shelfBooks.putAll(books);
         }
 
-        // Soft delete the group
-        group.isDeleted = true;
-        group.updatedAt = now;
-        await isar.shelfGroups.put(group);
+        await isar.shelfGroups.delete(groupId);
         return right(true);
       });
     } catch (e) {
@@ -302,24 +263,6 @@ class ShelfBookRepository {
     }
   }
 
-  /// Soft delete a book (marks as deleted instead of removing)
-  Future<Either<String, bool>> softDeleteBook(int bookId) async {
-    try {
-      final isar = _isar;
-      await isar.writeTxn(() async {
-        final book = await isar.shelfBooks.get(bookId);
-        if (book != null) {
-          book.isDeleted = true;
-          book.updatedAt = DateTime.now().millisecondsSinceEpoch;
-          await isar.shelfBooks.put(book);
-        }
-      });
-      return right(true);
-    } catch (e) {
-      return left('Soft delete failed: $e');
-    }
-  }
-
   /// Get book by ID
   Future<ShelfBook?> getBookById(int id) async {
     final isar = _isar;
@@ -336,12 +279,6 @@ class ShelfBookRepository {
   Future<bool> bookExists(String fileHash) async {
     final book = await getBookByHash(fileHash);
     return book != null;
-  }
-
-  /// Check if book is marked as deleted by hash
-  Future<bool> bookExistsAndNotDeleted(String fileHash) async {
-    final book = await getBookByHash(fileHash);
-    return book != null && !book.isDeleted;
   }
 
   /// Get book ID by hash
@@ -411,8 +348,6 @@ class ShelfBookRepository {
     final isar = _isar;
     return await isar.shelfBooks
         .filter()
-        .isDeletedEqualTo(false)
-        .and()
         .lastOpenedDateIsNotNull()
         .sortByLastOpenedDateDesc()
         .limit(limit)
@@ -426,8 +361,6 @@ class ShelfBookRepository {
 
     return await isar.shelfBooks
         .filter()
-        .isDeletedEqualTo(false)
-        .and()
         .group(
           (q) => q
               .titleContains(lowercaseQuery, caseSensitive: false)

@@ -56,9 +56,9 @@ class MockShelfBookRepository extends _i1.Mock
           as _i4.Future<List<_i5.ShelfBook>>);
 
   @override
-  _i4.Future<Set<String>> getAllNotDeletedFileHashes() =>
+  _i4.Future<Set<String>> getAllFileHashes() =>
       (super.noSuchMethod(
-            Invocation.method(#getAllNotDeletedFileHashes, []),
+            Invocation.method(#getAllFileHashes, []),
             returnValue: _i4.Future<Set<String>>.value(<String>{}),
           )
           as _i4.Future<Set<String>>);
@@ -210,19 +210,6 @@ class MockShelfBookRepository extends _i1.Mock
           as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i4.Future<_i6.Either<String, bool>> softDeleteBook(int? bookId) =>
-      (super.noSuchMethod(
-            Invocation.method(#softDeleteBook, [bookId]),
-            returnValue: _i4.Future<_i6.Either<String, bool>>.value(
-              _i7.dummyValue<_i6.Either<String, bool>>(
-                this,
-                Invocation.method(#softDeleteBook, [bookId]),
-              ),
-            ),
-          )
-          as _i4.Future<_i6.Either<String, bool>>);
-
-  @override
   _i4.Future<_i5.ShelfBook?> getBookById(int? id) =>
       (super.noSuchMethod(
             Invocation.method(#getBookById, [id]),
@@ -242,14 +229,6 @@ class MockShelfBookRepository extends _i1.Mock
   _i4.Future<bool> bookExists(String? fileHash) =>
       (super.noSuchMethod(
             Invocation.method(#bookExists, [fileHash]),
-            returnValue: _i4.Future<bool>.value(false),
-          )
-          as _i4.Future<bool>);
-
-  @override
-  _i4.Future<bool> bookExistsAndNotDeleted(String? fileHash) =>
-      (super.noSuchMethod(
-            Invocation.method(#bookExistsAndNotDeleted, [fileHash]),
             returnValue: _i4.Future<bool>.value(false),
           )
           as _i4.Future<bool>);

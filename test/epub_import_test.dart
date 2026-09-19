@@ -30,23 +30,19 @@ void main() {
 
     group('Repository Mock Verification', () {
       test(
-        'ShelfBookRepository.bookExistsAndNotDeleted should be called correctly',
+        'ShelfBookRepository.bookExists should be called correctly',
         () async {
           // Arrange
           when(
-            mockShelfBookRepo.bookExistsAndNotDeleted(any),
+            mockShelfBookRepo.bookExists(any),
           ).thenAnswer((_) async => true);
 
           // Act
-          final result = await mockShelfBookRepo.bookExistsAndNotDeleted(
-            'test-hash',
-          );
+          final result = await mockShelfBookRepo.bookExists('test-hash');
 
           // Assert
           expect(result, true);
-          verify(
-            mockShelfBookRepo.bookExistsAndNotDeleted('test-hash'),
-          ).called(1);
+          verify(mockShelfBookRepo.bookExists('test-hash')).called(1);
         },
       );
 
@@ -84,19 +80,19 @@ void main() {
       );
 
       test(
-        'ShelfBookRepository.softDeleteBook should perform soft delete',
+        'ShelfBookRepository.deleteBook should delete the book',
         () async {
           // Arrange
           when(
-            mockShelfBookRepo.softDeleteBook(1),
+            mockShelfBookRepo.deleteBook(1),
           ).thenAnswer((_) async => right(true));
 
           // Act
-          final result = await mockShelfBookRepo.softDeleteBook(1);
+          final result = await mockShelfBookRepo.deleteBook(1);
 
           // Assert
           expect(result.isRight(), true);
-          verify(mockShelfBookRepo.softDeleteBook(1)).called(1);
+          verify(mockShelfBookRepo.deleteBook(1)).called(1);
         },
       );
 
@@ -124,13 +120,11 @@ void main() {
       test('Should return error when book already exists', () async {
         // Arrange
         when(
-          mockShelfBookRepo.bookExistsAndNotDeleted(any),
+          mockShelfBookRepo.bookExists(any),
         ).thenAnswer((_) async => true);
 
         // Act & Assert
-        final exists = await mockShelfBookRepo.bookExistsAndNotDeleted(
-          'existing-hash',
-        );
+        final exists = await mockShelfBookRepo.bookExists('existing-hash');
         expect(exists, true);
 
         // Verify that save method should not be called if book exists

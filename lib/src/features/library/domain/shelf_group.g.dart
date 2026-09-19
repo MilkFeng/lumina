@@ -22,14 +22,9 @@ const ShelfGroupSchema = CollectionSchema(
       name: r'creationDate',
       type: IsarType.long,
     ),
-    r'isDeleted': PropertySchema(
-      id: 1,
-      name: r'isDeleted',
-      type: IsarType.bool,
-    ),
-    r'name': PropertySchema(id: 2, name: r'name', type: IsarType.string),
+    r'name': PropertySchema(id: 1, name: r'name', type: IsarType.string),
     r'updatedAt': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'updatedAt',
       type: IsarType.long,
     ),
@@ -80,19 +75,6 @@ const ShelfGroupSchema = CollectionSchema(
         ),
       ],
     ),
-    r'isDeleted': IndexSchema(
-      id: -786475870904832312,
-      name: r'isDeleted',
-      unique: false,
-      replace: false,
-      properties: [
-        IndexPropertySchema(
-          name: r'isDeleted',
-          type: IndexType.value,
-          caseSensitive: false,
-        ),
-      ],
-    ),
   },
   links: {},
   embeddedSchemas: {},
@@ -120,9 +102,8 @@ void _shelfGroupSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.creationDate);
-  writer.writeBool(offsets[1], object.isDeleted);
-  writer.writeString(offsets[2], object.name);
-  writer.writeLong(offsets[3], object.updatedAt);
+  writer.writeString(offsets[1], object.name);
+  writer.writeLong(offsets[2], object.updatedAt);
 }
 
 ShelfGroup _shelfGroupDeserialize(
@@ -134,9 +115,8 @@ ShelfGroup _shelfGroupDeserialize(
   final object = ShelfGroup();
   object.creationDate = reader.readLong(offsets[0]);
   object.id = id;
-  object.isDeleted = reader.readBool(offsets[1]);
-  object.name = reader.readString(offsets[2]);
-  object.updatedAt = reader.readLong(offsets[3]);
+  object.name = reader.readString(offsets[1]);
+  object.updatedAt = reader.readLong(offsets[2]);
   return object;
 }
 
@@ -150,10 +130,8 @@ P _shelfGroupDeserializeProp<P>(
     case 0:
       return (reader.readLong(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
-    case 2:
       return (reader.readString(offset)) as P;
-    case 3:
+    case 2:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -246,14 +224,6 @@ extension ShelfGroupQueryWhereSort
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'updatedAt'),
-      );
-    });
-  }
-
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterWhere> anyIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        const IndexWhereClause.any(indexName: r'isDeleted'),
       );
     });
   }
@@ -592,60 +562,6 @@ extension ShelfGroupQueryWhere
       );
     });
   }
-
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterWhereClause> isDeletedEqualTo(
-    bool isDeleted,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(
-        IndexWhereClause.equalTo(indexName: r'isDeleted', value: [isDeleted]),
-      );
-    });
-  }
-
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterWhereClause> isDeletedNotEqualTo(
-    bool isDeleted,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      if (query.whereSort == Sort.asc) {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [],
-                upper: [isDeleted],
-                includeUpper: false,
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [isDeleted],
-                includeLower: false,
-                upper: [],
-              ),
-            );
-      } else {
-        return query
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [isDeleted],
-                includeLower: false,
-                upper: [],
-              ),
-            )
-            .addWhereClause(
-              IndexWhereClause.between(
-                indexName: r'isDeleted',
-                lower: [],
-                upper: [isDeleted],
-                includeUpper: false,
-              ),
-            );
-      }
-    });
-  }
 }
 
 extension ShelfGroupQueryFilter
@@ -760,16 +676,6 @@ extension ShelfGroupQueryFilter
           upper: upper,
           includeUpper: includeUpper,
         ),
-      );
-    });
-  }
-
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterFilterCondition> isDeletedEqualTo(
-    bool value,
-  ) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'isDeleted', value: value),
       );
     });
   }
@@ -998,18 +904,6 @@ extension ShelfGroupQuerySortBy
     });
   }
 
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterSortBy> sortByIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterSortBy> sortByIsDeletedDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.desc);
-    });
-  }
-
   QueryBuilder<ShelfGroup, ShelfGroup, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1061,18 +955,6 @@ extension ShelfGroupQuerySortThenBy
     });
   }
 
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterSortBy> thenByIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.asc);
-    });
-  }
-
-  QueryBuilder<ShelfGroup, ShelfGroup, QAfterSortBy> thenByIsDeletedDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isDeleted', Sort.desc);
-    });
-  }
-
   QueryBuilder<ShelfGroup, ShelfGroup, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1106,12 +988,6 @@ extension ShelfGroupQueryWhereDistinct
     });
   }
 
-  QueryBuilder<ShelfGroup, ShelfGroup, QDistinct> distinctByIsDeleted() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'isDeleted');
-    });
-  }
-
   QueryBuilder<ShelfGroup, ShelfGroup, QDistinct> distinctByName({
     bool caseSensitive = true,
   }) {
@@ -1138,12 +1014,6 @@ extension ShelfGroupQueryProperty
   QueryBuilder<ShelfGroup, int, QQueryOperations> creationDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'creationDate');
-    });
-  }
-
-  QueryBuilder<ShelfGroup, bool, QQueryOperations> isDeletedProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'isDeleted');
     });
   }
 

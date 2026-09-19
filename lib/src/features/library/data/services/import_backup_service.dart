@@ -356,12 +356,6 @@ class ImportBackupService {
           backupBook.coverPath = existingBook.coverPath;
         }
         await _shelfBookRepository.saveBook(backupBook);
-      } else {
-        if (!backupBook.isDeleted && existingBook.isDeleted) {
-          backupBook.id = existingBook.id;
-          backupBook.isDeleted = false;
-          await _shelfBookRepository.saveBook(backupBook);
-        }
       }
     }
   }
@@ -377,8 +371,7 @@ class ImportBackupService {
     return ShelfGroup()
       ..name = m['name'] as String
       ..creationDate = m['creationDate'] as int
-      ..updatedAt = m['updatedAt'] as int
-      ..isDeleted = (m['isDeleted'] as bool? ?? false);
+      ..updatedAt = m['updatedAt'] as int;
   }
 
   /// Deserialises a [ShelfBook] from its JSON map.
@@ -407,7 +400,6 @@ class ImportBackupService {
       ..chapterScrollPosition = (m['chapterScrollPosition'] as num?)?.toDouble()
       ..lastOpenedDate = m['lastOpenedDate'] as int?
       ..groupName = m['groupName'] as String?
-      ..isDeleted = m['isDeleted'] as bool? ?? false
       ..updatedAt = m['updatedAt'] as int
       ..direction = m['direction'] as int? ?? 0;
   }
