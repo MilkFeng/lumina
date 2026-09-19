@@ -1003,4 +1003,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalSourceImportSelected => 'Import';
+
+  @override
+  String get externalSourceSelect => 'Select';
+
+  @override
+  String get externalSourceDeselect => 'Deselect';
+
+  @override
+  String get externalSourceDeselectAll => 'Clear selection';
 }

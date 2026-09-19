@@ -1843,6 +1843,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import'**
   String get externalSourceImportSelected;
+
+  /// Tooltip of the button that adds an entry to the import selection
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get externalSourceSelect;
+
+  /// Tooltip of the button that removes an entry from the import selection
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect'**
+  String get externalSourceDeselect;
+
+  /// Tooltip of the button that clears the whole import selection
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get externalSourceDeselectAll;
 }
 
 class _AppLocalizationsDelegate

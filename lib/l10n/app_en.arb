@@ -1405,5 +1405,17 @@
   "externalSourceImportSelected": "Import",
   "@externalSourceImportSelected": {
     "description": "Button that imports the selected books from an external source"
+  },
+  "externalSourceSelect": "Select",
+  "@externalSourceSelect": {
+    "description": "Tooltip of the button that adds an entry to the import selection"
+  },
+  "externalSourceDeselect": "Deselect",
+  "@externalSourceDeselect": {
+    "description": "Tooltip of the button that removes an entry from the import selection"
+  },
+  "externalSourceDeselectAll": "Clear selection",
+  "@externalSourceDeselectAll": {
+    "description": "Tooltip of the button that clears the whole import selection"
   }
 }

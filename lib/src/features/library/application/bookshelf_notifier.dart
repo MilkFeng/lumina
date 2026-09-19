@@ -238,9 +238,25 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   }
 
   /// Toggle selection mode
-  void toggleSelectionMode() {
+  void toggleSelectionMode({bool? force}) {
     final currentState = state.value;
     if (currentState == null) return;
+
+    if (force != null) {
+      if (force == true) {
+        // Enter selection mode
+        state = AsyncValue.data(currentState.copyWith(isSelectionMode: true));
+      } else {
+        // Exit selection mode and clear selections
+        state = AsyncValue.data(
+          currentState.copyWith(
+            isSelectionMode: false,
+            selectedBookIds: {},
+            selectedGroupIds: {},
+          ),
+        );
+      }
+    }
 
     if (currentState.isSelectionMode) {
       // Exit selection mode and clear selections
@@ -268,9 +284,21 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     } else {
       newSelection.add(book.id);
     }
-    state = AsyncValue.data(
-      currentState.copyWith(selectedBookIds: newSelection),
-    );
+
+    if (newSelection.isEmpty) {
+      // Exit selection mode when no items are selected
+      state = AsyncValue.data(
+        currentState.copyWith(
+          isSelectionMode: false,
+          selectedBookIds: {},
+          selectedGroupIds: {},
+        ),
+      );
+    } else {
+      state = AsyncValue.data(
+        currentState.copyWith(selectedBookIds: newSelection),
+      );
+    }
   }
 
   /// Select all books

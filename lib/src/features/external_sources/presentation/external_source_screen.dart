@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/features/external_sources/application/external_source_browser_notifier.dart';
 import 'package:lumina/src/features/external_sources/application/external_source_import_notifier.dart';
 import 'package:lumina/src/features/external_sources/application/external_sources_notifier.dart';
@@ -70,19 +71,36 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: _buildAppBar(context, l10n, source, state),
-        body: RefreshIndicator(
-          onRefresh: () => ref
-              .read(externalSourceBrowserProvider(source.id).notifier)
-              .refresh(),
-          child: _buildBody(context, l10n, source, state),
-        ),
-        bottomNavigationBar: _isSelectionMode
-            ? _ImportSelectionBar(
+        body: Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: () => ref
+                  .read(externalSourceBrowserProvider(source.id).notifier)
+                  .refresh(),
+              child: _buildBody(context, l10n, source, state),
+            ),
+            // The bar is part of the body rather than `bottomNavigationBar` so
+            // it can slide in and out; a Scaffold slot would only appear and
+            // disappear. It starts a full bar-height below the bottom edge,
+            // which covers the safe-area inset it carries.
+            AnimatedPositioned(
+              duration: const Duration(
+                milliseconds: AppTheme.defaultAnimationDurationMs,
+              ),
+              curve: Curves.easeInOut,
+              left: 0,
+              right: 0,
+              bottom: _isSelectionMode
+                  ? 0
+                  : -(_ImportSelectionBar.height +
+                        MediaQuery.of(context).padding.bottom),
+              child: _ImportSelectionBar(
                 count: _selected.length,
                 onImport: () => _importSelected(source, state.items),
-                onSelectAll: () => _selectAll(state.items),
-              )
-            : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -93,60 +111,105 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
     ExternalSource source,
     ExternalSourceBrowserState state,
   ) {
-    final theme = Theme.of(context);
     final notifier = ref.read(
       externalSourceBrowserProvider(source.id).notifier,
     );
+    final theme = Theme.of(context);
     final canGoUp = state.path.canGoUp;
 
-    return AppBar(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_outlined),
-        tooltip: canGoUp ? l10n.externalSourceUp : null,
-        onPressed: () {
-          if (_isSelectionMode) {
-            setState(_selected.clear);
-          } else if (canGoUp) {
-            notifier.goUp();
-          } else {
-            Navigator.of(context).pop();
-          }
-        },
+    // Selection mode recolours the bar. The bookshelf uses `surfaceContainer`
+    // for this, but this theme's surface containers are all but identical to the
+    // background — `surface` is `#FFFFFF` and `surfaceContainer` is `#FCFCFB`, a
+    // 3/255 step that is invisible in practice — so this takes the far end of the
+    // ramp, which is the only step that actually reads. The selection bar uses
+    // the same value, so the two read as one mode.
+    return _AnimatedBackgroundAppBar(
+      isSelectionMode: _isSelectionMode,
+      appBar: AppBar(
+        // While selecting, the leading button leaves selection mode rather than
+        // navigating — hence the close icon, which says so without a tooltip.
+        leading: IconButton(
+          icon: Icon(
+            _isSelectionMode ? Icons.close_outlined : Icons.arrow_back_outlined,
+          ),
+          tooltip: _isSelectionMode
+              ? l10n.cancel
+              : (canGoUp ? l10n.externalSourceUp : null),
+          onPressed: () {
+            if (_isSelectionMode) {
+              setState(_selected.clear);
+            } else if (canGoUp) {
+              notifier.goUp();
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+        title: _buildAppBarTitle(context, source, state),
+        actions: _buildAppBarActions(l10n, state),
       ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            source.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleMedium,
+    );
+  }
+
+  Widget _buildAppBarTitle(
+    BuildContext context,
+    ExternalSource source,
+    ExternalSourceBrowserState state,
+  ) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          source.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.titleMedium,
+        ),
+        // Where inside the source the user is. The title stays the source, so
+        // the two never swap places while navigating.
+        Text(
+          state.path.packagePath,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-          // Where inside the source the user is. The title stays the source, so
-          // the two never swap places while navigating.
-          Text(
-            state.path.packagePath,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        // Selection-mode only: reloading is pull-to-refresh, which keeps the
-        // list on screen while it works instead of replacing it.
-        if (_isSelectionMode)
-          IconButton(
-            icon: const Icon(Icons.select_all_outlined),
-            tooltip: l10n.selectAll,
-            onPressed: () => _selectAll(state.items),
-          ),
+        ),
       ],
     );
+  }
+
+  List<Widget> _buildAppBarActions(
+    AppLocalizations l10n,
+    ExternalSourceBrowserState state,
+  ) {
+    // Select-all flips to its opposite once nothing is left to add. Computed
+    // from the EPUB entries only: folders and other files can never be selected,
+    // so counting them would make the state unreachable in any folder that holds
+    // more than books.
+    final selectable = state.items.where((item) => item.isEpub).toList();
+    final allSelected =
+        selectable.isNotEmpty &&
+        selectable.every((item) => _selected.contains(item.path));
+
+    return [
+      // Only while selecting. Outside selection mode there are no app-bar
+      // actions at all: reloading is pull-to-refresh, which leaves the list on
+      // screen instead of replacing it.
+      if (_isSelectionMode)
+        IconButton(
+          icon: Icon(
+            allSelected ? Icons.deselect_outlined : Icons.select_all_outlined,
+          ),
+          tooltip: allSelected
+              ? l10n.externalSourceDeselectAll
+              : l10n.selectAll,
+          onPressed: () =>
+              allSelected ? setState(_selected.clear) : _selectAll(state.items),
+        ),
+    ];
   }
 
   Widget _buildBody(
@@ -215,7 +278,9 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 96),
+      // Clears the selection bar when it slides in, so the last entry stays
+      // reachable instead of sitting under an opaque overlay.
+      padding: const EdgeInsets.only(bottom: 128),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -224,14 +289,18 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
           isSelectionMode: _isSelectionMode,
           isSelected: _selected.contains(item.path),
           onTap: () => _onEntryTap(source, item),
-          onToggleSelection: () => _toggleSelection(item),
-          onLongPress: () => _enterSelection(item),
+          // Only books can be selected, so only they get a tappable icon.
+          onIconTap: item.isEpub ? () => _toggleSelection(item) : null,
         );
       },
     );
   }
 
-  /// Handles a tap on an entry: open folders, import files.
+  /// Handles a tap on a row's body: open folders, import files.
+  ///
+  /// While selecting, the body toggles the entry too — the icon is how
+  /// selection mode is *entered*, but once it is on, both halves of the row
+  /// behave the same way.
   void _onEntryTap(ExternalSource source, ExternalSourceItem item) {
     if (_isSelectionMode) {
       _toggleSelection(item);
@@ -253,6 +322,8 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
     _import(source, [item]);
   }
 
+  /// Adds or removes [item] from the selection, entering selection mode the
+  /// first time.
   void _toggleSelection(ExternalSourceItem item) {
     if (!item.isEpub) {
       ToastService.showError(
@@ -265,11 +336,10 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
     });
   }
 
-  void _enterSelection(ExternalSourceItem item) {
-    if (!item.isEpub) return;
-    _toggleSelection(item);
-  }
-
+  /// Selects every importable entry in [items].
+  ///
+  /// Folders and other files are skipped, so the resulting selection is exactly
+  /// what an import would act on.
   void _selectAll(List<ExternalSourceItem> items) {
     setState(() {
       _selected
@@ -330,42 +400,106 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
 }
 
 /// The action bar shown while books are selected.
+///
+/// Only the count and the import action: select-all lives in the app bar, where
+/// a single control can flip between selecting and clearing.
+///
+/// Built like the bookshelf's selection bar — opaque `surfaceContainer` over the
+/// full height it slides through, so the list never shows underneath it — but it
+/// holds a button rather than icon actions, hence the shorter height.
 class _ImportSelectionBar extends StatelessWidget {
-  const _ImportSelectionBar({
-    required this.count,
-    required this.onImport,
-    required this.onSelectAll,
-  });
+  const _ImportSelectionBar({required this.count, required this.onImport});
+
+  /// Matches the height the sliding animation reserves for this bar.
+  static const double height = AppTheme.kBottomAppBarHeight;
 
   final int count;
   final VoidCallback onImport;
-  final VoidCallback onSelectAll;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 16, 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.externalSourceSelectedCount(count),
-                style: theme.textTheme.bodyMedium,
+    return Container(
+      height: height + MediaQuery.of(context).padding.bottom,
+      // Same colour the app bar settles on in selection mode.
+      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.externalSourceSelectedCount(count),
+                  style: theme.textTheme.bodyMedium,
+                ),
               ),
-            ),
-            TextButton(onPressed: onSelectAll, child: Text(l10n.selectAll)),
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: onImport,
-              child: Text(l10n.externalSourceImportSelected),
-            ),
-          ],
+              FilledButton(
+                onPressed: onImport,
+                child: Text(l10n.externalSourceImportSelected),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// An [AppBar] whose background cross-fades when selection mode is entered or
+/// left.
+///
+/// Exists because `AppBar`'s own background animation only runs while it scrolls
+/// under the status bar; a plain property change jumps. The bar is kept
+/// transparent and the colour is animated in its `flexibleSpace`, which already
+/// spans the status-bar inset and sits behind the toolbar — so the content is
+/// built once per rebuild rather than once per animation frame.
+class _AnimatedBackgroundAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  const _AnimatedBackgroundAppBar({
+    required this.isSelectionMode,
+    required this.appBar,
+  });
+
+  final bool isSelectionMode;
+
+  /// The bar to paint the background behind, minus its `backgroundColor` and
+  /// `flexibleSpace`.
+  final AppBar appBar;
+
+  static const Duration _duration = Duration(
+    milliseconds: AppTheme.defaultAnimationDurationMs,
+  );
+
+  @override
+  Size get preferredSize => appBar.preferredSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(
+        end: isSelectionMode
+            ? theme.colorScheme.surfaceContainer
+            : theme.scaffoldBackgroundColor,
+      ),
+      duration: _duration,
+      curve: Curves.easeInOut,
+      builder: (context, color, _) => AppBar(
+        backgroundColor: color,
+        leading: appBar.leading,
+        automaticallyImplyLeading: appBar.automaticallyImplyLeading,
+        title: appBar.title,
+        actions: appBar.actions,
+        flexibleSpace: appBar.flexibleSpace,
+        bottom: appBar.bottom,
+        elevation: appBar.elevation,
+        scrolledUnderElevation: appBar.scrolledUnderElevation,
+        centerTitle: appBar.centerTitle,
+        toolbarOpacity: appBar.toolbarOpacity,
       ),
     );
   }
@@ -378,16 +512,17 @@ class _SourceEntryRow extends StatelessWidget {
     required this.isSelectionMode,
     required this.isSelected,
     required this.onTap,
-    required this.onToggleSelection,
-    required this.onLongPress,
+    required this.onIconTap,
   });
 
   final ExternalSourceItem item;
   final bool isSelectionMode;
   final bool isSelected;
   final VoidCallback onTap;
-  final VoidCallback onToggleSelection;
-  final VoidCallback onLongPress;
+
+  /// Toggles selection for this entry, or `null` when it cannot be selected
+  /// (folders, and files that are not EPUBs).
+  final VoidCallback? onIconTap;
 
   @override
   Widget build(BuildContext context) {
@@ -396,27 +531,9 @@ class _SourceEntryRow extends StatelessWidget {
     final subtitle = _subtitle(l10n);
     final isImportable = item.isEpub;
 
-    // In selection mode the checkbox carries the tap: tapping the row itself
-    // must not start a single-file import while a batch is being assembled.
-    final leading = isSelectionMode
-        ? Checkbox(
-            value: isSelected,
-            onChanged: isImportable ? (_) => onToggleSelection() : null,
-          )
-        : Icon(
-            item.isDirectory
-                ? Icons.folder_outlined
-                : (isImportable
-                      ? Icons.menu_book_outlined
-                      : Icons.insert_drive_file_outlined),
-            color: item.isDirectory || isImportable
-                ? theme.colorScheme.onSurfaceVariant
-                : theme.colorScheme.outlineVariant,
-          );
-
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: leading,
+      leading: _buildLeading(theme, isImportable, l10n),
       // Book file names are long and their tail is the informative part
       // (`… - 作者.epub`), so the title wraps instead of ellipsising after one
       // line. Two lines covers almost every real name; three would start to
@@ -441,7 +558,83 @@ class _SourceEntryRow extends StatelessWidget {
               ),
             ),
       onTap: onTap,
-      onLongPress: onLongPress,
+    );
+  }
+
+  /// Side of the square every leading widget occupies.
+  ///
+  /// Both variants use it, so the glyphs cannot drift apart in size or position:
+  /// the tappable one gets its tap target from this box, and the plain one is
+  /// simply centred in an identical box.
+  static const double _leadingExtent = 40;
+
+  /// The leading icon of the row: the entry's kind (folder, EPUB, other file),
+  /// as plain as it has always been.
+  ///
+  /// For an EPUB it is also the selection control — tapping it selects that
+  /// book, which is what turns selection mode on. The icon itself never changes
+  /// shape; being selected shows as a filled tinted disc behind it, so the row
+  /// keeps saying *what* the entry is while indicating that it is picked.
+  ///
+  /// Folders and non-EPUB files keep a plain, inert icon: they cannot be
+  /// imported, so there is nothing to select. While selecting they are greyed a
+  /// step further, to read as "not available in this mode" rather than merely
+  /// not-chosen.
+  Widget _buildLeading(
+    ThemeData theme,
+    bool isImportable,
+    AppLocalizations l10n,
+  ) {
+    final icon = Icon(
+      item.isDirectory
+          ? Icons.folder_outlined
+          : (isImportable
+                ? Icons.menu_book_outlined
+                : Icons.insert_drive_file_outlined),
+      color: switch ((item.isDirectory, isImportable, isSelected)) {
+        // Selected books are tinted to match the disc behind them.
+        (false, true, true) => theme.colorScheme.onPrimaryContainer,
+        // Importable but unselected.
+        (false, true, false) => theme.colorScheme.onSurfaceVariant,
+        // Folders take part in the navigation, so they keep full contrast when
+        // not selecting and step back while a selection is being assembled.
+        (true, _, _) =>
+          isSelectionMode
+              ? theme.colorScheme.outlineVariant
+              : theme.colorScheme.onSurfaceVariant,
+        // Anything else in the listing, which was never selectable.
+        _ => theme.colorScheme.outlineVariant,
+      },
+    );
+
+    if (!isImportable) {
+      return SizedBox(
+        width: _leadingExtent,
+        height: _leadingExtent,
+        child: Center(child: icon),
+      );
+    }
+
+    return Tooltip(
+      message: isSelected
+          ? l10n.externalSourceDeselect
+          : l10n.externalSourceSelect,
+      child: Material(
+        color: isSelected
+            ? theme.colorScheme.primaryContainer
+            : Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onIconTap,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: _leadingExtent,
+            height: _leadingExtent,
+            child: Center(child: icon),
+          ),
+        ),
+      ),
     );
   }
 

@@ -976,4 +976,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get externalSourceImportSelected => '导入';
+
+  @override
+  String get externalSourceSelect => '选择';
+
+  @override
+  String get externalSourceDeselect => '取消选择';
+
+  @override
+  String get externalSourceDeselectAll => '取消全选';
 }

@@ -1413,5 +1413,17 @@
   "externalSourceImportSelected": "导入",
   "@externalSourceImportSelected": {
     "description": "导入所选外部源书籍的按钮"
+  },
+  "externalSourceSelect": "选择",
+  "@externalSourceSelect": {
+    "description": "把条目加入导入选择的按钮提示"
+  },
+  "externalSourceDeselect": "取消选择",
+  "@externalSourceDeselect": {
+    "description": "把条目移出导入选择的按钮提示"
+  },
+  "externalSourceDeselectAll": "取消全选",
+  "@externalSourceDeselectAll": {
+    "description": "清空整个导入选择的按钮提示"
   }
 }
