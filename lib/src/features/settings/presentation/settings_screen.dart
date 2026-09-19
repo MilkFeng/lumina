@@ -5,7 +5,7 @@ import 'package:android_intent_plus/flag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/core/url_launcher/url_launcher.dart';
+import 'package:lumina/src/core/services/url_launcher.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_font_section.dart';

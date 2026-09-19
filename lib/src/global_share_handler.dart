@@ -18,10 +18,10 @@ final pendingRouteFileProvider = StateProvider<String?>((ref) => null);
 
 /// A transparent widget that lives above the app navigator and listens for
 /// incoming EPUB files from the OS ("Open with" / share-sheet).
-class GolbalShareHandler extends ConsumerWidget {
+class GlobalShareHandler extends ConsumerWidget {
   final Widget child;
 
-  const GolbalShareHandler({required this.child, super.key});
+  const GlobalShareHandler({required this.child, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -79,7 +79,7 @@ class GolbalShareHandler extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Private stream-aware host widget for GolbalShareHandler's import dialog.
+// Private stream-aware host widget for GlobalShareHandler's import dialog.
 // ---------------------------------------------------------------------------
 
 class _ShareImportProgressDialog extends StatefulWidget {

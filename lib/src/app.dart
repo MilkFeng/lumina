@@ -56,7 +56,7 @@ class LuminaReaderApp extends ConsumerWidget {
       // Navigation
       routerConfig: router,
       builder: (context, child) =>
-          GolbalShareHandler(child: child ?? const SizedBox.shrink()),
+          GlobalShareHandler(child: child ?? const SizedBox.shrink()),
     );
   }
 }

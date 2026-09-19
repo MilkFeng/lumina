@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/core/url_launcher/url_launcher.dart';
+import 'package:lumina/src/core/services/url_launcher.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/simple_markdown.dart';
 import 'package:package_info_plus/package_info_plus.dart';

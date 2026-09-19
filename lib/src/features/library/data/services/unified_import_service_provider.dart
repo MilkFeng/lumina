@@ -17,12 +17,3 @@ part 'unified_import_service_provider.g.dart';
 UnifiedImportService unifiedImportService(Ref ref) {
   return UnifiedImportService();
 }
-
-/// Provider for ImportCacheManager
-///
-/// Manages the import cache directory and file operations.
-/// Can be used directly if you need lower-level cache management.
-@riverpod
-ImportCacheManager importCacheManager(Ref ref) {
-  return ImportCacheManager();
-}
