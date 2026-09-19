@@ -8,6 +8,7 @@ import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
 import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
 import 'package:lumina/src/features/backup/data/services/backup_folder_resolver.dart';
+import 'package:lumina/src/features/backup/data/services/backup_format.dart';
 import 'package:lumina/src/features/library/data/services/import_file_pipeline.dart';
 import 'package:path/path.dart' as p;
 
@@ -113,6 +114,9 @@ class BackupImportProgress extends ProgressLog {
 /// identical to the state that was exported, and it removes every chance of a
 /// backup row colliding with a local one.
 ///
+/// Because of that, a package is refused outright unless it declares a format
+/// version this build understands — see [BackupFormat].
+///
 /// Memory profile:
 ///   Physical files (.epub, covers) are restored with [File.copy] — a
 ///   kernel-level operation that never loads file bytes into the Dart heap.
@@ -147,9 +151,11 @@ class ImportBackupService {
   /// Order of operations:
   ///   1. `shelf.json` is read and parsed **first** — an unreadable or foreign
   ///      folder can therefore never wipe the user's library.
-  ///   2. Every `ShelfBook`, `ShelfGroup` and `BookManifest` row is deleted,
+  ///   2. Its format version is checked: a package without one, or one written
+  ///      by a newer build, is rejected while the current library is intact.
+  ///   3. Every `ShelfBook`, `ShelfGroup` and `BookManifest` row is deleted,
   ///      together with the `books/` and `covers/` directories.
-  ///   3. Every book of the backup is copied into internal storage and inserted
+  ///   4. Every book of the backup is copied into internal storage and inserted
   ///      as a brand-new row.
   ///
   /// The final event carries either [ImportSuccess] or [ImportFailure].
@@ -169,6 +175,37 @@ class ImportBackupService {
       yield ProgressLog('Reading backup metadata...', ProgressLogType.info);
       final shelfString = await _pipeline.readText(backupPaths.shelfFile);
       final shelfJson = jsonDecode(shelfString) as Map<String, dynamic>;
+
+      // -----------------------------------------------------------------------
+      // 2. Reject a package this build cannot read, while the current library
+      //    is still untouched. Every check below this point is allowed to be
+      //    destructive, because the backup has proven to be usable.
+      // -----------------------------------------------------------------------
+      final backupVersion = _readBackupVersion(shelfJson);
+      if (backupVersion == null) {
+        debugPrint(
+          '[RestoreLibrary] Refusing backup without a format version '
+          '(${AppStorageConstants.shelfFile}).',
+        );
+        yield failure(
+          'This folder does not look like a Lumina backup: its '
+          '${AppStorageConstants.shelfFile} has no format version',
+        );
+        return;
+      }
+
+      if (backupVersion > BackupFormat.current) {
+        debugPrint(
+          '[RestoreLibrary] Refusing backup format v$backupVersion: '
+          'this build restores up to v${BackupFormat.current}.',
+        );
+        yield failure(
+          'This backup was created by a newer version of Lumina '
+          '(backup format v$backupVersion, this app supports up to '
+          'v${BackupFormat.current}). Update Lumina and try again',
+        );
+        return;
+      }
 
       final groupsJson = (shelfJson['groups'] as List<dynamic>)
           .cast<Map<String, dynamic>>();
@@ -192,7 +229,7 @@ class ImportBackupService {
       }
 
       // -----------------------------------------------------------------------
-      // 2. Wipe the current library: database rows and physical files.
+      // 3. Wipe the current library: database rows and physical files.
       // -----------------------------------------------------------------------
       yield ProgressLog(
         'Clearing the current library before restoring '
@@ -202,7 +239,7 @@ class ImportBackupService {
       await _clearCurrentLibrary();
 
       // -----------------------------------------------------------------------
-      // 3. Restore groups as-is; Isar assigns fresh ids.
+      // 4. Restore groups as-is; Isar assigns fresh ids.
       // -----------------------------------------------------------------------
       if (groupsJson.isNotEmpty) {
         yield ProgressLog('Restoring shelf groups...', ProgressLogType.info);
@@ -213,7 +250,7 @@ class ImportBackupService {
       }
 
       // -----------------------------------------------------------------------
-      // 4. Ensure internal storage directories exist.
+      // 5. Ensure internal storage directories exist.
       // -----------------------------------------------------------------------
       final internalBooksDir = await Directory(
         p.join(AppStorage.documentsPath, AppStorageConstants.booksDir),
@@ -224,7 +261,7 @@ class ImportBackupService {
       ).create(recursive: true);
 
       // -----------------------------------------------------------------------
-      // 5. Restore books one-by-one, yielding progress; insert each immediately.
+      // 6. Restore books one-by-one, yielding progress; insert each immediately.
       //    A single corrupt book only produces a warning: the previous library
       //    is already gone, so aborting would leave the user with even less.
       // -----------------------------------------------------------------------
@@ -377,6 +414,18 @@ class ImportBackupService {
         debugPrint('[RestoreLibrary] Failed to reset $dirName: $e');
       }
     }
+  }
+
+  /// Reads the package format version stamped into `shelf.json` by
+  /// [BackupFormat.current] at export time.
+  ///
+  /// Returns `null` when the field is missing or is not a number: such a folder
+  /// was not written by the exporter, so it cannot be trusted to follow the
+  /// format at all. A fractional value is rounded **up**, so that an unexpected
+  /// number can never pass for an older format.
+  static int? _readBackupVersion(Map<String, dynamic> shelfJson) {
+    final version = shelfJson['version'];
+    return version is num ? version.ceil() : null;
   }
 
   // ---------------------------------------------------------------------------

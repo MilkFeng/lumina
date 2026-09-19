@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
+import 'package:lumina/src/features/backup/data/services/backup_format.dart';
 import 'package:lumina/src/features/library/domain/book_manifest.dart';
 import 'package:lumina/src/features/library/domain/shelf_book.dart';
 import 'package:lumina/src/features/library/domain/shelf_group.dart';
@@ -250,7 +251,7 @@ class ExportBackupService {
     List<ShelfBook> books,
     List<ShelfGroup> groups,
   ) => {
-    'version': 1, // for future-proofing the format
+    'version': BackupFormat.current,
     'books': books.map(_shelfBookToMap).toList(),
     'groups': groups.map(_shelfGroupToMap).toList(),
   };
@@ -292,7 +293,7 @@ class ExportBackupService {
   ///
   /// Excludes [id] — the [fileHash] is the canonical identifier.
   Map<String, dynamic> _manifestToMap(BookManifest m) => {
-    'version': 1, // for future-proofing the format
+    'version': BackupFormat.current,
     'fileHash': m.fileHash,
     'opfRootPath': m.opfRootPath,
     'epubVersion': m.epubVersion,

@@ -229,6 +229,8 @@ Flutter 必须在一次 pick + process 流程结束后调用 `releaseIosAccess()
 
 随后 `_buildBookPaths(...)` 只保留同时有 EPUB 和 manifest 的书籍；缺少 `shelf.json` 时抛 `FormatException`，调用方据此提示用户所选目录不是有效备份。`ImportBackupService.restoreLibrary(...)` 再逐本读取、复制、写入数据库记录。
 
+`shelf.json` 顶层带有 `version` 字段，每个 `manifests/{hash}.json` 也带同一个版本号，两者都由 `BackupFormat.current` 写入（当前为 2）。恢复时以 `shelf.json` 的版本为准：缺少 `version` 字段、或版本高于当前构建支持的版本时直接报错拒绝恢复（返回 `ImportFailure`，此时本地书库尚未被清空），因为恢复是整库替换，接受一个读不懂的包会直接毁掉现有书库；版本更旧则照常恢复。
+
 这个设计让三层各自保持薄：Android/iOS 原生层只获得平台可访问的文件句柄，`core/platform` 只读出字节，只有 library 的 data 层理解 Lumina 的备份格式。
 
 ## 字体导入处理
