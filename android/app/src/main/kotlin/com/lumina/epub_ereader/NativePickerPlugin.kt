@@ -87,6 +87,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "pickEpubFolder" -> pickEpubFolder(result)
             "pickBackupFolder" -> pickBackupFolder(result)
             "pickFontFiles" -> pickFontFiles(result)
+            "getDisplayNames" -> getDisplayNames(call, result)
             else -> result.notImplemented()
         }
     }
@@ -306,6 +307,42 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         } catch (e: Exception) {
             pendingResult = null
             result.error("PICKER_ERROR", "Failed to launch font picker: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Resolves the display names (file names) of the given document URIs.
+     *
+     * Dart only receives opaque `content://` URIs from the pickers, and a URI's
+     * last path segment is not a file name: the Downloads provider, for
+     * example, hands out `msf:1000000123` identifiers. Callers that need a real
+     * name (the fonts directory layout) ask the ContentResolver here instead of
+     * parsing the URI.
+     *
+     * Names are advisory: a `null` entry means "could not resolve", and the
+     * caller falls back to a generated name. A failure to resolve therefore
+     * never fails the call.
+     */
+    private fun getDisplayNames(call: MethodCall, result: Result) {
+        val uris = (call.arguments as? List<*>)?.filterIsInstance<String>().orEmpty()
+
+        val lifecycleOwner = activity as? LifecycleOwner
+        if (lifecycleOwner == null) {
+            result.success(List<String?>(uris.size) { null })
+            return
+        }
+
+        lifecycleOwner.lifecycleScope.launch {
+            val names = withContext(Dispatchers.IO) {
+                uris.map { uriString ->
+                    try {
+                        queryDisplayName(Uri.parse(uriString))
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
+            }
+            result.success(names)
         }
     }
 
@@ -541,48 +578,45 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     // File validation helpers  (run on Dispatchers.IO)
     // -------------------------------------------------------------------------
 
-    private fun isEpubFile(uri: Uri): Boolean {
-        val activity = this.activity ?: return false
+    /**
+     * Queries [DocumentsContract.Document.COLUMN_DISPLAY_NAME] for [uri].
+     *
+     * Returns `null` when there is no attached activity, the provider exposes
+     * no name, or the query fails.
+     */
+    private fun queryDisplayName(uri: Uri): String? {
+        val activity = this.activity ?: return null
 
-        val displayName = try {
+        return try {
             activity.contentResolver.query(
                 uri,
                 arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
                 null, null, null
             )?.use { cursor ->
-                if (cursor.moveToFirst()) cursor.getString(0) else null
+                if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getString(0) else null
             }
         } catch (_: Exception) {
             null
         }
+    }
 
-        if (displayName?.endsWith(".epub", ignoreCase = true) == true) return true
+    private fun isEpubFile(uri: Uri): Boolean {
+        if (queryDisplayName(uri)?.endsWith(".epub", ignoreCase = true) == true) return true
 
-        val mimeType = activity.contentResolver.getType(uri)
+        val mimeType = activity?.contentResolver?.getType(uri)
         return mimeType == "application/epub+zip"
     }
 
     private fun isFontFile(uri: Uri): Boolean {
-        val activity = this.activity ?: return false
+        val displayName = queryDisplayName(uri)?.lowercase()
 
-        val displayName = try {
-            activity.contentResolver.query(
-                uri,
-                arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
-                null, null, null
-            )?.use { cursor ->
-                if (cursor.moveToFirst()) cursor.getString(0) else null
-            }
-        } catch (_: Exception) {
-            null
+        if (displayName != null &&
+            (displayName.endsWith(".ttf") || displayName.endsWith(".otf"))
+        ) {
+            return true
         }
 
-        if (displayName != null) {
-            val lower = displayName.lowercase()
-            if (lower.endsWith(".ttf") || lower.endsWith(".otf")) return true
-        }
-
-        val mimeType = activity.contentResolver.getType(uri)
+        val mimeType = activity?.contentResolver?.getType(uri)
         return mimeType != null && (
             mimeType == "font/ttf" ||
             mimeType == "font/otf" ||

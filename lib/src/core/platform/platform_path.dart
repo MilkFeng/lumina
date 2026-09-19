@@ -63,8 +63,16 @@ final class AndroidUriPath extends PlatformPath {
   @override
   String get name {
     final location = _documentIdPath;
-    if (location == null) return 'unknown.epub';
-    return location.split('/').last;
+    if (location != null) {
+      final fileName = location.split('/').last;
+      if (fileName.isNotEmpty) return fileName;
+    }
+
+    // The document id could not be recovered. Fall back to the tail of the raw
+    // URI rather than a constant placeholder: callers treat [name] as a file
+    // identity, so one shared placeholder makes different files collide and
+    // overwrite each other (which is exactly what happened to imported fonts).
+    return _lastRawSegment;
   }
 
   @override
@@ -74,17 +82,30 @@ final class AndroidUriPath extends PlatformPath {
   ///
   /// A document URI looks like
   /// `content://authority/document/primary%3ABooks%2Fshelf.json`, so the last
-  /// path segment holds a percent-encoded `volume:relative/path`. Returns
+  /// path segment holds a `volume:relative/path` document id. [Uri.pathSegments]
+  /// has **already** percent-decoded every segment, so the segment must not be
+  /// decoded a second time: a document id that legitimately contains a `%` would
+  /// make that second pass throw and push every name onto the fallback. Returns
   /// `null` when the URI cannot be parsed.
   String? get _documentIdPath {
     try {
       final segments = Uri.parse(uri).pathSegments;
       if (segments.isEmpty) return null;
-      return Uri.decodeFull(segments.last);
+      final documentId = segments.last;
+      return documentId.isEmpty ? null : documentId;
     } catch (e) {
       debugPrint('Error decoding document id from URI: $e');
       return null;
     }
+  }
+
+  /// Last non-empty `/`-separated segment of the raw URI, or the whole URI when
+  /// it holds no segment at all.
+  String get _lastRawSegment {
+    for (final segment in uri.split('/').reversed) {
+      if (segment.isNotEmpty) return segment;
+    }
+    return uri;
   }
 }
 

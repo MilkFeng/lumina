@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restoring asks for confirmation before deleting anything and can no longer be interrupted halfway through.
 - **Backup Format Version**: Backup packages are written with format version 2, and a restore now refuses a package that declares no version at all or a version newer than the app supports — the current library is left untouched in that case.
 
+#### Fixed
+
+- **Font Import Naming**: Imported fonts no longer collapse into a single entry named "unknown". Font file names are now resolved by the platform (`getDisplayNames`) instead of being guessed from the picker's opaque handle, path separators and URL-breaking characters are stripped, and a font whose name cannot be resolved gets a unique generated name rather than a shared placeholder.
+
 ### Chinese
 
 #### 变更与优化
@@ -25,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **恢复行为**：恢复时会先清空当前书库（书籍、分组、阅读进度及对应文件），再应用备份中的书库，不再逐本合并导入，因此恢复结果与备份完全一致，也不会再出现记录冲突。
 - 恢复前会先弹出确认提示，且恢复过程中无法中断。
 - **备份格式版本**：备份包统一写入格式版本 2；恢复时若备份包未声明版本、或版本高于当前应用支持的版本，会在清空本地书库之前直接报错拒绝恢复。
+
+#### 修复
+
+- **字体导入命名**：导入字体不再全部显示为 “unknown” 且互相覆盖。字体文件名改由平台查询得到（`getDisplayNames`），不再从 picker 返回的不透明句柄里猜测；文件名会剔除路径分隔符与破坏 URL 的字符，实在取不到名字时使用唯一的生成名，而不是共用的占位名。
 
 ## [v0.2.4] - 2026-09-19
 

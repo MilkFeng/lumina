@@ -71,6 +71,9 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     case "pickFontFiles":
       pickFontFiles(result: result)
 
+    case "getDisplayNames":
+      getDisplayNames(call: call, result: result)
+
     case "fetchIosFile":
       guard let originalPath = call.arguments as? String else {
         result(FlutterError(
@@ -226,6 +229,24 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
       picker.modalPresentationStyle = .formSheet
       self.presentPicker(picker)
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // MARK: - getDisplayNames
+  // -------------------------------------------------------------------------
+
+  /// Returns the file name of every given path.
+  ///
+  /// Android answers this with a ContentResolver query, because its pickers
+  /// return opaque `content://` URIs whose last path segment is not a file
+  /// name. iOS pickers already hand back real file-system paths, so the last
+  /// path component is the display name, and the answer needs no lookup.
+  ///
+  /// - Parameter call: arguments must be a list of path strings.
+  /// - Parameter result: one name per input path, in the same order.
+  private func getDisplayNames(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    let paths = (call.arguments as? [String]) ?? []
+    result(paths.map { URL(fileURLWithPath: $0).lastPathComponent })
   }
 
   // -------------------------------------------------------------------------

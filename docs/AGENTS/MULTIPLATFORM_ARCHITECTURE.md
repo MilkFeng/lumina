@@ -108,6 +108,7 @@ iOS 在 implicit Flutter engine 初始化后注册：
 | `com.lumina.ereader/native_picker` | MethodChannel | Android/iOS | `pickEpubFolder` | 选择目录并扫描 EPUB。 |
 | `com.lumina.ereader/native_picker` | MethodChannel | Android/iOS | `pickBackupFolder` | 选择备份目录并返回可用文件列表。 |
 | `com.lumina.ereader/native_picker` | MethodChannel | Android/iOS | `pickFontFiles` | 选择字体文件。 |
+| `com.lumina.ereader/native_picker` | MethodChannel | Android/iOS | `getDisplayNames` | 批量解析 `content://` URI / 路径的显示名（文件名）。 |
 | `com.lumina.ereader/native_picker` | MethodChannel | iOS | `fetchIosFile` | 在安全域仍有效时复制单个文件到临时目录。 |
 | `com.lumina.ereader/native_picker` | MethodChannel | iOS | `releaseIosAccess` | 释放 iOS security-scoped resource。 |
 | `lumina/volume_control` | MethodChannel | Android | `enableInterception` | 开启音量键拦截。 |
@@ -128,6 +129,7 @@ iOS 在 implicit Flutter engine 初始化后注册：
 - `pickEpubFolder()`
 - `pickFolderFiles()`（返回目录下全部文件，不做任何业务过滤）
 - `pickFontFiles()`
+- `resolveDisplayNames(List<PlatformPath>)` —— 向平台查询真实文件名（见 [字体导入处理](#字体导入处理)）
 - `readBytes(PlatformPath)` / `readPlainFile(PlatformPath)`
 - `releaseIosAccess()`
 
@@ -135,6 +137,8 @@ iOS 在 implicit Flutter engine 初始化后注册：
 
 - Android：`AndroidUriPath(contentUri)`
 - iOS：`IOSFilePath(fileSystemPath)`
+
+`PlatformPath` 只是不透明的平台句柄：`AndroidUriPath.name` 由 SAF document id 推导，只在 URI 形态标准时才是真实文件名（Downloads provider 返回的是 `msf:1000000123` 这类 id），因此需要真实文件名时必须调用 `resolveDisplayNames()`，不要解析 URI。
 
 **`features/library/data/services/ImportFilePipeline`** —— 组合 picker 与缓存：
 
@@ -173,6 +177,7 @@ ALREADY_ACTIVE
 | `pickEpubFolder` | `ACTION_OPEN_DOCUMENT_TREE`，持久读权限 | 递归扫描出的 EPUB `content://` URI 列表。 |
 | `pickBackupFolder` | `ACTION_OPEN_DOCUMENT_TREE`，读权限 | 递归扫描出的所有文件 URI 列表。 |
 | `pickFontFiles` | `ACTION_OPEN_DOCUMENT`，字体 MIME，允许多选 | `.ttf` / `.otf` 字体 URI 列表。 |
+| `getDisplayNames` | 不启动 picker | 逐个 URI 查询 `COLUMN_DISPLAY_NAME`，返回与入参等长的名字列表；查不到的位置是 `null`。 |
 
 重工作都放到 `Dispatchers.IO`：
 
@@ -243,7 +248,8 @@ flowchart LR
   Notifier --> Picker["FilePickerService.pickFontFiles"]
   Picker --> Native["native_picker.pickFontFiles"]
   Native --> Paths["PlatformPath list"]
-  Paths --> Cache["ImportFilePipeline.cacheFile"]
+  Paths --> Names["resolveDisplayNames → getDisplayNames"]
+  Names --> Cache["ImportFilePipeline.cacheFile"]
   Cache --> Fonts["documents/fonts/{fileName}"]
 ```
 
@@ -253,7 +259,15 @@ flowchart LR
 {AppStorage.documentsPath}/fonts/{fileName}
 ```
 
-阅读器 WebView 通过 `epub://localhost/fonts/{fileName}` 读取这些字体。
+阅读器 WebView 通过 `epub://localhost/fonts/{fileName}` 读取这些字体。因为文件名会被写进 `@font-face` 的 URL，`FontManagerNotifier` 会把它清洗成一个安全的纯文件名（去掉路径分隔符，`#`、`?`、`%`、引号等替换为 `_`），并保证带字体扩展名。
+
+文件名来源按优先级：
+
+1. `resolveDisplayNames()` 返回的平台显示名 —— 唯一可靠的名字来源。
+2. `PlatformPath.name` —— 由 URI 推导，只在 URI 形态标准时正确。
+3. 形如 `font_{microseconds}.ttf` 的生成名。
+
+第 3 步不能用固定占位名：文件名就是字体在列表里的身份，所有导入共用一个占位名会被去重逻辑当成同一个字体，后导入的字体会覆盖前一个（历史 bug：全部显示为 `unknown`）。
 
 ## Android 音量键翻页
 

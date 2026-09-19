@@ -53,6 +53,50 @@ class FilePickerService {
   /// Picks multiple font files (`.ttf` / `.otf`).
   Future<List<PlatformPath>> pickFontFiles() => _pickPathList('pickFontFiles');
 
+  /// Resolves the display name (the name the system shows for the file) of
+  /// every entry in [paths].
+  ///
+  /// A [PlatformPath] only carries an opaque platform handle. On Android that
+  /// handle is a `content://` URI whose last path segment is **not** guaranteed
+  /// to be a file name — the Downloads provider hands out `msf:1000000123`
+  /// identifiers, and document ids may be partially escaped — so callers that
+  /// need a real name (the fonts directory layout, for instance) ask the
+  /// platform through this method instead of parsing the URI themselves.
+  ///
+  /// The returned list always has the same length as [paths]; an entry is
+  /// `null` when the name could not be resolved.
+  Future<List<String?>> resolveDisplayNames(List<PlatformPath> paths) async {
+    if (paths.isEmpty) return const [];
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return List<String?>.filled(paths.length, null);
+    }
+
+    final handles = paths.map((path) {
+      switch (path) {
+        case AndroidUriPath(:final uri):
+          return uri;
+        case IOSFilePath(path: final filePath):
+          return filePath;
+      }
+    }).toList();
+
+    try {
+      final result = await _channel.invokeMethod<List<Object?>>(
+        'getDisplayNames',
+        handles,
+      );
+      if (result == null) return List<String?>.filled(paths.length, null);
+
+      return List<String?>.generate(paths.length, (index) {
+        final name = index < result.length ? result[index] : null;
+        return name is String && name.trim().isNotEmpty ? name : null;
+      });
+    } on PlatformException catch (e) {
+      debugPrint('File picker error (getDisplayNames): ${e.message}');
+      return List<String?>.filled(paths.length, null);
+    }
+  }
+
   /// Invokes a list-returning picker method and wraps the result.
   ///
   /// Every platform-specific quirk (URI vs path wrapping, error swallowing,
