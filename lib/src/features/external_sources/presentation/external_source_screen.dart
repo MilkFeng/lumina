@@ -126,18 +126,14 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
           ),
           // Where inside the source the user is. The title stays the source, so
           // the two never swap places while navigating.
-          if (state.path.displayPath.isNotEmpty)
-            Tooltip(
-              message: state.path.displayPath,
-              child: Text(
-                state.path.folderName ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+          Text(
+            state.path.packagePath,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
+          ),
         ],
       ),
       actions: [
@@ -419,11 +415,15 @@ class _SourceEntryRow extends StatelessWidget {
           );
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: leading,
+      // Book file names are long and their tail is the informative part
+      // (`… - 作者.epub`), so the title wraps instead of ellipsising after one
+      // line. Two lines covers almost every real name; three would start to
+      // crowd the metadata line.
       title: Text(
         item.name,
-        maxLines: 1,
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: item.isDirectory || isImportable
             ? null
@@ -433,6 +433,8 @@ class _SourceEntryRow extends StatelessWidget {
           ? null
           : Text(
               subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13,
                 color: theme.colorScheme.onSurfaceVariant,
@@ -450,15 +452,15 @@ class _SourceEntryRow extends StatelessWidget {
         l10n.externalSourceFolder
       else if (!item.isEpub)
         l10n.externalSourceNotImportable,
-      if (item.size case final size?) formatSourceSize(size),
-      if (item.lastModified case final modified?) formatSourceDate(modified),
+      if (item.size case final size?) _formatSize(size),
+      if (item.lastModified case final modified?) _formatDate(modified),
     ];
     return parts.isEmpty ? null : parts.join(' · ');
   }
 }
 
 /// Renders a byte count the way a file manager does.
-String formatSourceSize(int bytes) {
+String _formatSize(int bytes) {
   const units = ['B', 'KB', 'MB', 'GB'];
   var value = bytes.toDouble();
   var unit = 0;
@@ -471,7 +473,7 @@ String formatSourceSize(int bytes) {
 }
 
 /// `2024-05-03 14:05`, in the device's own time zone.
-String formatSourceDate(DateTime dateTime) {
+String _formatDate(DateTime dateTime) {
   final local = dateTime.toLocal();
   String pad(int value) => value.toString().padLeft(2, '0');
   return '${local.year}-${pad(local.month)}-${pad(local.day)} '

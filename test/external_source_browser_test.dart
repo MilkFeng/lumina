@@ -1,4 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:lumina/src/features/external_sources/application/external_source_import_notifier.dart';
 import 'package:lumina/src/features/external_sources/domain/external_source_failure.dart';
 import 'package:lumina/src/features/external_sources/domain/external_source_item.dart';
@@ -23,17 +23,16 @@ void main() {
 
       expect(path.levels, isEmpty);
       expect(path.path, '');
-      expect(path.folderName, isNull);
       expect(path.items, isEmpty);
       expect(path.canGoUp, isFalse);
-      expect(path.displayPath, '');
+      expect(path.packagePath, '/');
     });
 
     test('holds the root listing as the first level', () {
       final path = const ExternalSourcePath().withRoot([file('a.epub')]);
 
       expect(path.path, '');
-      expect(path.folderName, isNull);
+      expect(path.packagePath, '/');
       expect(path.items.single.name, 'a.epub');
       expect(path.canGoUp, isFalse);
     });
@@ -51,8 +50,7 @@ void main() {
       final inside = root.pushed(folder('books'));
 
       expect(inside.path, 'books');
-      expect(inside.folderName, 'books');
-      expect(inside.displayPath, 'books');
+      expect(inside.packagePath, '/books');
       expect(inside.canGoUp, isTrue);
       // Pushed levels start empty; the listing fills them in.
       expect(inside.items, isEmpty);
@@ -115,8 +113,7 @@ void main() {
           .replacingItems([file('c.epub', 'a/b/c.epub')]);
 
       expect(deep.path, 'b');
-      expect(deep.displayPath, 'a / b');
-      expect(deep.folderName, 'b');
+      expect(deep.packagePath, '/a/b');
 
       final up = deep.popped();
       expect(up.path, 'a');

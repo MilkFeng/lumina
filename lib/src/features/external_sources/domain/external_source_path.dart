@@ -48,13 +48,6 @@ class ExternalSourcePath {
   /// Path of the level currently shown, or `''` for the root.
   String get path => levels.isEmpty ? '' : levels.last.path;
 
-  /// Name of the folder currently shown, or `null` at the root.
-  String? get folderName {
-    if (levels.isEmpty) return null;
-    final name = levels.last.name;
-    return name.isEmpty ? null : name;
-  }
-
   /// Entries at the level currently shown.
   List<ExternalSourceItem> get items =>
       levels.isEmpty ? const [] : levels.last.items;
@@ -62,14 +55,18 @@ class ExternalSourcePath {
   /// Whether going up is possible.
   bool get canGoUp => levels.length > 1;
 
-  /// `a / b` form of the whole stack, for a tooltip.
+  /// Where the user is, as a path inside the source: `/`, `/books`,
+  /// `/books/travel`.
   ///
-  /// The root level contributes nothing: its name is empty, and a leading
-  /// separator would read as a folder that does not exist.
-  String get displayPath => levels
-      .map((level) => level.name)
-      .where((name) => name.isNotEmpty)
-      .join(' / ');
+  /// Absolute-looking on purpose — the leading slash is what says "inside the
+  /// source", which a bare `books` does not, and makes the root read as the root
+  /// rather than as a missing value.
+  String get packagePath {
+    final segments = levels
+        .map((level) => level.name)
+        .where((name) => name.isNotEmpty);
+    return '/${segments.join('/')}';
+  }
 
   /// This stack with the root's listing attached.
   ExternalSourcePath withRoot(List<ExternalSourceItem> items) {
