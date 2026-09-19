@@ -1796,12 +1796,6 @@ abstract class AppLocalizations {
   /// **'Import files from “{name}”'**
   String importFromExternalSource(String name);
 
-  /// Title of the screen that lists a source's files
-  ///
-  /// In en, this message translates to:
-  /// **'Import from “{name}”'**
-  String externalSourceScreenTitle(String name);
-
   /// Message shown when a source screen is opened for a deleted source
   ///
   /// In en, this message translates to:

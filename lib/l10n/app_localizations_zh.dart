@@ -952,11 +952,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String externalSourceScreenTitle(String name) {
-    return '从“$name”中导入';
-  }
-
-  @override
   String get externalSourceNotFound => '该外部源已不存在';
 
   @override

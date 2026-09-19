@@ -1369,15 +1369,6 @@
       }
     }
   },
-  "externalSourceScreenTitle": "Import from “{name}”",
-  "@externalSourceScreenTitle": {
-    "description": "Title of the screen that lists a source's files",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "externalSourceNotFound": "This external source no longer exists",
   "@externalSourceNotFound": {
     "description": "Message shown when a source screen is opened for a deleted source"

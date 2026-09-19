@@ -1377,15 +1377,6 @@
       }
     }
   },
-  "externalSourceScreenTitle": "从“{name}”中导入",
-  "@externalSourceScreenTitle": {
-    "description": "列出外部源文件的页面标题",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "externalSourceNotFound": "该外部源已不存在",
   "@externalSourceNotFound": {
     "description": "打开已删除外部源页面时显示的提示"

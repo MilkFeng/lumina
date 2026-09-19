@@ -119,7 +119,7 @@ class _ExternalSourceScreenState extends ConsumerState<ExternalSourceScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            l10n.externalSourceScreenTitle(source.name),
+            source.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.titleMedium,

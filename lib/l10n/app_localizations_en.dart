@@ -979,11 +979,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String externalSourceScreenTitle(String name) {
-    return 'Import from “$name”';
-  }
-
-  @override
   String get externalSourceNotFound => 'This external source no longer exists';
 
   @override
