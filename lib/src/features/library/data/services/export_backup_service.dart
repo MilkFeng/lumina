@@ -275,11 +275,9 @@ class ExportBackupService {
     'readingProgress': b.readingProgress,
     'chapterScrollPosition': b.chapterScrollPosition,
     'lastOpenedDate': b.lastOpenedDate,
-    'isFinished': b.isFinished,
     'groupName': b.groupName,
     'isDeleted': b.isDeleted,
     'updatedAt': b.updatedAt,
-    'lastSyncedDate': b.lastSyncedDate,
     'direction': b.direction,
   };
 

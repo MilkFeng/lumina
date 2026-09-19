@@ -342,7 +342,6 @@ class ImportBackupService {
           existingBook.currentChapterIndex = backupBook.currentChapterIndex;
           existingBook.readingProgress = backupBook.readingProgress;
           existingBook.chapterScrollPosition = backupBook.chapterScrollPosition;
-          existingBook.isFinished = backupBook.isFinished;
           existingBook.lastOpenedDate = backupBook.lastOpenedDate;
         }
       }
@@ -408,11 +407,9 @@ class ImportBackupService {
       ..readingProgress = (m['readingProgress'] as num? ?? 0.0).toDouble()
       ..chapterScrollPosition = (m['chapterScrollPosition'] as num?)?.toDouble()
       ..lastOpenedDate = m['lastOpenedDate'] as int?
-      ..isFinished = m['isFinished'] as bool? ?? false
       ..groupName = m['groupName'] as String?
       ..isDeleted = m['isDeleted'] as bool? ?? false
       ..updatedAt = m['updatedAt'] as int
-      ..lastSyncedDate = m['lastSyncedDate'] as int?
       ..direction = m['direction'] as int? ?? 0;
   }
 

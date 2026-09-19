@@ -317,19 +317,6 @@ class MockShelfBookRepository extends _i1.Mock
           as _i4.Future<_i6.Either<String, bool>>);
 
   @override
-  _i4.Future<_i6.Either<String, bool>> markAsFinished(int? bookId) =>
-      (super.noSuchMethod(
-            Invocation.method(#markAsFinished, [bookId]),
-            returnValue: _i4.Future<_i6.Either<String, bool>>.value(
-              _i7.dummyValue<_i6.Either<String, bool>>(
-                this,
-                Invocation.method(#markAsFinished, [bookId]),
-              ),
-            ),
-          )
-          as _i4.Future<_i6.Either<String, bool>>);
-
-  @override
   _i4.Future<List<_i5.ShelfBook>> getRecentBooks({int? limit = 10}) =>
       (super.noSuchMethod(
             Invocation.method(#getRecentBooks, [], {#limit: limit}),

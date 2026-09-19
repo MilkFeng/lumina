@@ -261,7 +261,7 @@ class BookGridItem extends ConsumerWidget {
 
   /// Frosted-glass percentage badge (comfortable / compact modes).
   Widget _buildProgressBadge(BuildContext context) {
-    if (book.readingProgress <= 0 || book.isFinished || isSelectionMode) {
+    if (book.readingProgress <= 0 || isSelectionMode) {
       return const SizedBox.shrink();
     }
     return Positioned(

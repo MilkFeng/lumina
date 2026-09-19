@@ -77,9 +77,6 @@ class ShelfBook {
   @Index()
   int? lastOpenedDate;
 
-  /// Whether the book has been marked as finished
-  bool isFinished = false;
-
   // ==================== BOOKSHELF MANAGEMENT ====================
 
   /// Group name for organizing books (replaces groupId)
@@ -96,15 +93,6 @@ class ShelfBook {
   /// Last modification timestamp (milliseconds since epoch, for conflict resolution)
   @Index()
   late int updatedAt;
-
-  /// Sync status: null = not synced, timestamp = last sync time
-  int? lastSyncedDate;
-
-  // ==================== UI STATE (NOT SYNCED) ====================
-
-  /// Whether the book is currently being downloaded (transient UI state)
-  @ignore
-  bool isDownloading = false;
 }
 
 String directionToString(int direction) {

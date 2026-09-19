@@ -394,25 +394,6 @@ class ShelfBookRepository {
     }
   }
 
-  /// Mark book as finished
-  Future<Either<String, bool>> markAsFinished(int bookId) async {
-    try {
-      final isar = _isar;
-      await isar.writeTxn(() async {
-        final book = await isar.shelfBooks.get(bookId);
-        if (book != null) {
-          book.isFinished = true;
-          book.readingProgress = 1.0;
-          book.lastOpenedDate = DateTime.now().millisecondsSinceEpoch;
-          await isar.shelfBooks.put(book);
-        }
-      });
-      return right(true);
-    } catch (e) {
-      return left('Mark finished failed: $e');
-    }
-  }
-
   /// Get recently opened books
   Future<List<ShelfBook>> getRecentBooks({int limit = 10}) async {
     final isar = _isar;
