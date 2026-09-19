@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
-import 'package:lumina/src/features/settings/application/imported_font_file_names_provider.dart';
+import 'package:lumina/src/features/fonts/application/imported_font_file_names_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/reader_settings.dart';
 

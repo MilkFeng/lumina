@@ -51,7 +51,10 @@ class BackupPaths {
 /// [FilePickerService] passes it through untouched, so this layout stays a
 /// Flutter-side concern.
 class BackupFolderResolver {
-  const BackupFolderResolver();
+  final FilePickerService _picker;
+
+  const BackupFolderResolver({required FilePickerService picker})
+    : _picker = picker;
 
   /// Picks a backup folder and resolves its structure.
   ///
@@ -63,7 +66,7 @@ class BackupFolderResolver {
   /// On iOS the returned handles are only valid until [FilePickerService
   /// .releaseIosAccess] is called.
   Future<BackupPaths?> pickAndResolve() async {
-    final files = await FilePickerService().pickFolderFiles();
+    final files = await _picker.pickFolderFiles();
     if (files.isEmpty) return null;
     return resolve(files);
   }

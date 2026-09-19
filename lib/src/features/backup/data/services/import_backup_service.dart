@@ -3,17 +3,17 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:lumina/src/core/platform/platform.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
+import 'package:lumina/src/core/widgets/progress_dialog.dart';
 import 'package:lumina/src/core/storage/app_storage_constants.dart';
 import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
 import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
-import 'package:lumina/src/features/library/data/services/backup_folder_resolver.dart';
+import 'package:lumina/src/features/backup/data/services/backup_folder_resolver.dart';
 import 'package:lumina/src/features/library/data/services/import_file_pipeline.dart';
 import 'package:path/path.dart' as p;
 
-import '../../domain/book_manifest.dart';
-import '../../domain/shelf_book.dart';
-import '../../domain/shelf_group.dart';
+import 'package:lumina/src/features/library/domain/book_manifest.dart';
+import 'package:lumina/src/features/library/domain/shelf_book.dart';
+import 'package:lumina/src/features/library/domain/shelf_group.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 
 // ---------------------------------------------------------------------------

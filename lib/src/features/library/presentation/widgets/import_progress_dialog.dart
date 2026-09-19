@@ -4,8 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/library/application/library_notifier.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
-import 'package:lumina/src/features/library/presentation/widgets/progress_dialog.dart';
+import 'package:lumina/src/core/widgets/progress_dialog.dart';
 
 /// Hosts the import-pipeline progress dialog.
 /// Subscribes to [stream] exactly once (in initState) and accumulates

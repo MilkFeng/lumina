@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/platform/platform.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
-import 'package:lumina/src/features/library/data/services/backup_folder_resolver.dart';
-import 'package:lumina/src/features/library/data/services/import_backup_service_provider.dart';
+import 'package:lumina/src/core/widgets/progress_dialog.dart';
+import 'package:lumina/src/features/backup/data/services/backup_folder_resolver.dart';
+import 'package:lumina/src/features/backup/data/services/import_backup_service_provider.dart';
 import 'package:lumina/src/features/library/data/services/import_file_pipeline_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:fpdart/fpdart.dart';

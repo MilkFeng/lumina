@@ -4,7 +4,7 @@ import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
 import 'package:lumina/src/core/widgets/labeled_switch_tile.dart';
 import 'package:lumina/src/core/widgets/settings_sub_label.dart';
-import 'package:lumina/src/features/settings/application/font_manager_notifier.dart';
+import 'package:lumina/src/features/fonts/application/font_manager_notifier.dart';
 
 /// Subsection widget for picking a custom font in the reader style sheet.
 ///

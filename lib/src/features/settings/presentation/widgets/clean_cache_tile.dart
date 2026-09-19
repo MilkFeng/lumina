@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
+import 'package:lumina/src/features/library/data/services/epub_share_service_provider.dart';
 import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
 import '../../../../../l10n/app_localizations.dart';
 
@@ -23,7 +24,7 @@ class _CleanCacheTileState extends ConsumerState<CleanCacheTile> {
     final service = ref.read(storageCleanupServiceProvider);
     await service.cleanCacheFiles();
     final deletedBookCount = await service.cleanOrphanFiles();
-    await service.cleanShareFiles();
+    await ref.read(epubShareServiceProvider).cleanShareFiles();
     final deletedFontCount = await service.cleanOrphanFontFiles();
 
     final deletedCount = deletedBookCount + deletedFontCount;

@@ -3,9 +3,8 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
-import 'package:lumina/src/features/library/data/services/import_backup_service.dart';
-import 'package:lumina/src/features/library/presentation/widgets/progress_dialog.dart';
+import 'package:lumina/src/core/widgets/progress_dialog.dart';
+import 'package:lumina/src/features/backup/data/services/import_backup_service.dart';
 
 /// Hosts the restore-backup progress dialog.
 ///

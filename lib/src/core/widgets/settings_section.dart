@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// A titled section container used throughout the Settings screen.
 class SettingsInfoSection extends StatelessWidget {

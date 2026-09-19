@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../repositories/book_manifest_repository_provider.dart';
-import '../repositories/shelf_book_repository_provider.dart';
+import 'package:lumina/src/features/library/data/repositories/book_manifest_repository_provider.dart';
+import 'package:lumina/src/features/library/data/repositories/shelf_book_repository_provider.dart';
 import 'export_backup_service.dart';
 
 part 'export_backup_service_provider.g.dart';

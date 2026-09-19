@@ -42,7 +42,7 @@ final class FontManagerNotifierProvider
 }
 
 String _$fontManagerNotifierHash() =>
-    r'f7e24c743a92b480c72b2a9bc411de73eff7d305';
+    r'4aa29ebb4ed4ac5fdf6926f74d5abafca2bc22b7';
 
 abstract class _$FontManagerNotifier extends $Notifier<List<ImportedFont>> {
   List<ImportedFont> build();

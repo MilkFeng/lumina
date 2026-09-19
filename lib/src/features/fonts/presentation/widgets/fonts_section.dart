@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/settings/application/font_manager_notifier.dart';
-import 'package:lumina/src/features/settings/domain/imported_font.dart';
-import 'settings_info_section.dart';
+import 'package:lumina/src/core/widgets/settings_section.dart';
+import 'package:lumina/src/features/fonts/application/font_manager_notifier.dart';
+import 'package:lumina/src/features/fonts/domain/imported_font.dart';
 
-/// Inline font management section embedded directly in the Settings screen.
+/// Inline font management section.
 ///
 /// Lists all imported custom fonts with delete actions, and provides an
 /// "Import Font" action. No separate navigation screen is required.
-class SettingsFontSection extends ConsumerWidget {
+class FontsSection extends ConsumerWidget {
   final Function(bool) onChangeSelectingState;
 
-  const SettingsFontSection({super.key, required this.onChangeSelectingState});
+  const FontsSection({super.key, required this.onChangeSelectingState});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

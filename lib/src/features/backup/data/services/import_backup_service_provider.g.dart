@@ -10,18 +10,16 @@ part of 'import_backup_service_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// Provider for [ImportBackupService].
 ///
-/// Injects the raw [Isar] instance directly so the service can call
-/// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-/// exposed through the higher-level repository layer.
+/// Injects the platform picker (for iOS security-scope release) and the import
+/// pipeline (for reading and caching backup payloads).
 
 @ProviderFor(importBackupService)
 const importBackupServiceProvider = ImportBackupServiceProvider._();
 
 /// Provider for [ImportBackupService].
 ///
-/// Injects the raw [Isar] instance directly so the service can call
-/// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-/// exposed through the higher-level repository layer.
+/// Injects the platform picker (for iOS security-scope release) and the import
+/// pipeline (for reading and caching backup payloads).
 
 final class ImportBackupServiceProvider
     extends
@@ -33,9 +31,8 @@ final class ImportBackupServiceProvider
     with $Provider<ImportBackupService> {
   /// Provider for [ImportBackupService].
   ///
-  /// Injects the raw [Isar] instance directly so the service can call
-  /// index-based upsert methods (`putByFileHash`, `putByName`) that are not
-  /// exposed through the higher-level repository layer.
+  /// Injects the platform picker (for iOS security-scope release) and the import
+  /// pipeline (for reading and caching backup payloads).
   const ImportBackupServiceProvider._()
     : super(
         from: null,
@@ -71,4 +68,4 @@ final class ImportBackupServiceProvider
 }
 
 String _$importBackupServiceHash() =>
-    r'7c62909bc901d1b6c6fcb774c3a2c225a90f249f';
+    r'fda6bcb43138bba77b5e0ae545341e37ff3fc19a';

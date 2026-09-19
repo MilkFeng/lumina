@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/library/data/services/storage_cleanup_service_provider.dart';
+import 'package:lumina/src/features/library/data/services/epub_share_service_provider.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -18,19 +18,20 @@ Future<void> shareEpub(
   ShelfBook book,
   WidgetRef ref,
 ) async {
-  final service = ref.read(storageCleanupServiceProvider);
+  final service = ref.read(epubShareServiceProvider);
 
   File? tempFile;
   try {
     final sourcePath = '${AppStorage.documentsPath}${book.filePath}';
-    tempFile = await service.saveTempFileForSharing(
+    final saved = await service.saveTempFileForSharing(
       File(sourcePath),
       book.title,
     );
+    tempFile = saved;
 
     final params = ShareParams(
       subject: book.title,
-      files: [XFile(tempFile.path, mimeType: 'application/epub+zip')],
+      files: [XFile(saved.path, mimeType: 'application/epub+zip')],
     );
     await SharePlus.instance.share(params);
   } catch (e) {

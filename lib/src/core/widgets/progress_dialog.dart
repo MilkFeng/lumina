@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
-import 'package:lumina/src/features/library/application/progress_log.dart';
 
-import '../../../../../l10n/app_localizations.dart';
+import '../../../l10n/app_localizations.dart';
+
+/// Severity of a single progress log entry.
+enum ProgressLogType { info, warning, error, success }
+
+/// One line of progress output emitted by a long-running batch operation.
+///
+/// Feature layers subclass this to carry their own counters (see
+/// `ImportProgress` and `BackupImportProgress`).
+class ProgressLog {
+  final String message;
+  final ProgressLogType type;
+
+  ProgressLog(this.message, this.type);
+}
 
 /// A "dumb" progress dialog that renders purely from the values passed to it.
+///
 /// All stream subscription, state accumulation, and completion handling must
 /// be done by the caller; this widget has no internal stream logic.
 class ProgressDialog extends StatefulWidget {

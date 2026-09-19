@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service.dart';
-import 'package:lumina/src/features/library/data/services/export_backup_service_provider.dart';
-import '../../../../../l10n/app_localizations.dart';
+import 'package:lumina/src/features/backup/data/services/export_backup_service.dart';
+import 'package:lumina/src/features/backup/data/services/export_backup_service_provider.dart';
+import 'package:lumina/l10n/app_localizations.dart';
 
 /// List tile that triggers a full library backup export.
 ///

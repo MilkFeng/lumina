@@ -5,9 +5,9 @@ import 'package:lumina/src/core/providers/cover_file_provider.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
 import 'package:lumina/src/features/library/application/library_notifier.dart';
-import 'package:lumina/src/features/library/data/services/backup_folder_resolver.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/restore_progress_dialog.dart';
-import '../../../../../l10n/app_localizations.dart';
+import 'package:lumina/src/features/backup/data/services/backup_folder_resolver.dart';
+import 'package:lumina/src/features/backup/presentation/widgets/restore_progress_dialog.dart';
+import 'package:lumina/l10n/app_localizations.dart';
 
 /// List tile that replaces the current library with a backup folder.
 ///
@@ -40,7 +40,9 @@ class _RestoreTileState extends ConsumerState<RestoreTile> {
 
     try {
       // 1. Let the user pick the backup folder and resolve its layout.
-      final backupPaths = await const BackupFolderResolver().pickAndResolve();
+      final backupPaths = await BackupFolderResolver(
+        picker: picker,
+      ).pickAndResolve();
 
       // Cancelled — exit silently.
       if (backupPaths == null) return;

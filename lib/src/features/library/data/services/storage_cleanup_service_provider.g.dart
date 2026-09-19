@@ -9,11 +9,19 @@ part of 'storage_cleanup_service_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Provider for [StorageCleanupService].
+///
+/// Wires the app-wide maintenance service to the pieces it cannot know about
+/// by itself: the set of hashes the library still references, and the two
+/// caches that belong to the import pipeline and the backup exporter.
 
 @ProviderFor(storageCleanupService)
 const storageCleanupServiceProvider = StorageCleanupServiceProvider._();
 
 /// Provider for [StorageCleanupService].
+///
+/// Wires the app-wide maintenance service to the pieces it cannot know about
+/// by itself: the set of hashes the library still references, and the two
+/// caches that belong to the import pipeline and the backup exporter.
 
 final class StorageCleanupServiceProvider
     extends
@@ -24,6 +32,10 @@ final class StorageCleanupServiceProvider
         >
     with $Provider<StorageCleanupService> {
   /// Provider for [StorageCleanupService].
+  ///
+  /// Wires the app-wide maintenance service to the pieces it cannot know about
+  /// by itself: the set of hashes the library still references, and the two
+  /// caches that belong to the import pipeline and the backup exporter.
   const StorageCleanupServiceProvider._()
     : super(
         from: null,
@@ -59,4 +71,4 @@ final class StorageCleanupServiceProvider
 }
 
 String _$storageCleanupServiceHash() =>
-    r'f4d44e13bb0942fd36f3e14596e3c12b2e6de85b';
+    r'e6230d8cb1c10a58968d02b61a6269cb630da54f';

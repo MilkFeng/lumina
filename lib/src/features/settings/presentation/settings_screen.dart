@@ -6,14 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/services/url_launcher.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_app_header.dart';
+import 'package:lumina/src/core/widgets/settings_app_header.dart';
+import 'package:lumina/src/core/widgets/settings_section.dart';
+import 'package:lumina/src/features/backup/presentation/widgets/backup_section.dart';
+import 'package:lumina/src/features/fonts/presentation/widgets/fonts_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_font_section.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/backup_tile.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/check_update_tile.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/clean_cache_tile.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/restore_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -82,10 +81,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 24),
 
                 // Library section
-                SettingsInfoSection(
-                  title: l10n.library,
-                  children: const [BackupTile(), RestoreTile()],
-                ),
+                const BackupSection(),
 
                 const SizedBox(height: 24),
 
@@ -108,7 +104,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 24),
 
                 // Fonts section (inline management)
-                SettingsFontSection(
+                FontsSection(
                   onChangeSelectingState: (state) {
                     setState(() {
                       isSelectingFiles = state;

@@ -4,7 +4,7 @@ import 'package:lumina/src/core/theme/app_theme_notifier.dart';
 import 'package:lumina/src/core/theme/app_theme_settings.dart';
 import 'package:lumina/src/core/widgets/segmented_option_chip.dart';
 import 'package:lumina/src/core/widgets/theme_variant_chip.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
+import 'package:lumina/src/core/widgets/settings_section.dart';
 import '../../../../../l10n/app_localizations.dart';
 
 /// Renders the Appearance card on the Settings screen, containing the theme-mode

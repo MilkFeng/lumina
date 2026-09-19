@@ -6,11 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 
-import '../../domain/book_manifest.dart';
-import '../../domain/shelf_book.dart';
-import '../../domain/shelf_group.dart';
-import '../book_manifest_repository.dart';
-import '../shelf_book_repository.dart';
+import 'package:lumina/src/features/library/domain/book_manifest.dart';
+import 'package:lumina/src/features/library/domain/shelf_book.dart';
+import 'package:lumina/src/features/library/domain/shelf_group.dart';
+import 'package:lumina/src/features/library/data/book_manifest_repository.dart';
+import 'package:lumina/src/features/library/data/shelf_book_repository.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
 import 'package:lumina/src/core/storage/app_storage_constants.dart';
 

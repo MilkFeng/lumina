@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/core/services/url_launcher.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/settings_info_section.dart';
-import 'package:lumina/src/features/settings/presentation/widgets/simple_markdown.dart';
+import 'package:lumina/src/core/widgets/settings_section.dart';
+import 'package:lumina/src/core/widgets/simple_markdown.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 const _versionUrl = 'https://lumina.milkfeng.top/version';
