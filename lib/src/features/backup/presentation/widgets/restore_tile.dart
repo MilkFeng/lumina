@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/platform/provider.dart';
 import 'package:lumina/src/core/providers/cover_file_provider.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
-import 'package:lumina/src/features/library/application/library_notifier.dart';
+import 'package:lumina/src/features/backup/application/backup_notifier.dart';
 import 'package:lumina/src/features/backup/data/services/backup_folder_resolver.dart';
 import 'package:lumina/src/features/backup/presentation/widgets/restore_progress_dialog.dart';
+import 'package:lumina/src/features/library/application/bookshelf_notifier.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 
 /// List tile that replaces the current library with a backup folder.
@@ -55,8 +55,8 @@ class _RestoreTileState extends ConsumerState<RestoreTile> {
       // 3. Start the stream before opening the dialog so that no work is
       //    duplicated on dialog rebuilds.
       final stream = ref
-          .read(libraryProvider.notifier)
-          .restoreLibraryFromBackup(backupPaths);
+          .read(backupProvider.notifier)
+          .restoreFromBackup(backupPaths);
       streamOwnsAccess = true;
 
       // 4. Show the progress dialog; it closes itself once the stream is done.

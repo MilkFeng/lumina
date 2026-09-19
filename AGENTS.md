@@ -32,11 +32,16 @@ lib/
       theme/                    AppTheme, color schemes, theme notifier
       widgets/                  cross-feature widgets
     features/
-      library/                  bookshelf, import, backup import/export
+      library/                  bookshelf, import pipeline, shelf data owner
         domain/ data/ application/ presentation/
+      backup/                   library backup export, restore, storage cleanup
+        data/ application/ presentation/
+      fonts/                    imported custom fonts (import, list, delete)
+        domain/ application/ presentation/
       reader/                   WebView reading engine
       detail/                   book detail screen
-      settings/                 settings UI
+      settings/                 settings UI only (no domain of its own)
+        presentation/
     rust/                       flutter_rust_bridge generated Dart bindings
     web/                        generated web-asset bundle + WebView bridge
       api/
@@ -49,10 +54,12 @@ docs/AGENTS/                    architecture deep-dives (see §9)
 
 ### Layering rules
 
-- **`core/` must not import from `features/`.** If core code needs to know a feature's domain or its on-disk layout, that code belongs in the feature.
+- **`core/` must not import from `features/`.** If core code needs a feature's domain or its on-disk layout, that code belongs in the feature. When a `core/` service needs feature data, inject it as a callback or through a provider that lives in the feature — never import the feature.
 - Within a feature, dependencies flow `presentation → application → data → domain`. `domain/` depends on nothing but Isar annotations.
+- **No dependency cycles between features.** The intended shape is acyclic and it currently is: `backup → library`, `detail → library`, `fonts → library`, `reader → library`, `reader → fonts`, `settings → {backup, fonts, library}`. If you need an edge that would close a cycle, move the shared piece down into `core/`, or move the *caller* into the feature that already owns the dependency.
 - Cross-feature reuse goes through `core/` only for genuinely generic capability. Domain models are not "generic": `ShelfBook` lives in `features/library/domain/`.
-- Feature modules use a four-layer split: `domain/` (Isar entities and pure models), `data/` (repositories, services, parsers), `application/` (notifiers and business logic), `presentation/` (screens, widgets, mixins).
+- Feature modules use a four-layer split: `domain/` (Isar entities and pure models), `data/` (repositories, services, parsers), `application/` (notifiers and business logic), `presentation/` (screens, widgets, mixins). A feature creates only the layers it actually needs — `settings/` has just `presentation/`.
+- A feature may expose a composable section widget (for example `BackupSection`, `FontsSection`) so a host screen can embed it without reaching into the feature's internals.
 
 ## 3. Reading Engine (Red Line)
 
@@ -66,7 +73,7 @@ The reader renders EPUB content in a **WebView driving three absolutely position
 ## 4. UI & UX Red Lines
 
 1. **Never use the default `SnackBar` or `Toast` for user messages.** All success / error / info prompts go through `ToastService` (`lib/src/core/services/toast_service.dart`), which renders a floating, blurred pill bubble at the bottom of the screen via `ToastBubble`. Call `ToastService.showSuccess` / `showError` / `showInfo`.
-2. **Serif-leaning, content-first, restrained design.** Minimal chrome, no shadows, typography-led layout. Reuse existing primitives in `lib/src/core/widgets/` (and the settings section widgets) before writing a new one.
+2. **Serif-leaning, content-first, restrained design.** Minimal chrome, no shadows, typography-led layout. Reuse the existing primitives in `lib/src/core/widgets/` (`settings_section.dart`, `settings_section_title.dart`, `settings_sub_label.dart`, `labeled_switch_tile.dart`, `integer_stepper.dart`, …) before writing a new one.
 3. **Never hardcode user-visible strings.** Every string goes through `AppLocalizations`; add new keys to the `.arb` files and regenerate.
 
 ## 5. Native Rust Layer
@@ -87,7 +94,7 @@ The EPUB read path runs in Rust, not Dart. `EpubStreamService` is a thin async f
 ## 6. State, Data & Persistence
 
 - **State**: Riverpod 3 with code generation. Declare providers with `@riverpod` / `@Riverpod(keepAlive: true)` in `*_notifier.dart` or `*_provider.dart` files next to the feature they serve.
-- **Long-running generators must be `keepAlive`.** See the comment on `LibraryNotifier`: import and restore streams keep using `ref` across async gaps, and an `autoDispose` provider will throw once the screen unmounts.
+- **Long-running generators must be `keepAlive`.** See `LibraryNotifier.importPipelineStream` and `BackupNotifier.restoreFromBackup`: they keep using `ref` across many async gaps, and an `autoDispose` provider would throw once no widget is listening (for example while a progress dialog is the only thing on screen).
 - **Database**: Isar (`isar_community`). Entities are annotated `@collection` in `features/*/domain/` and registered in `lib/src/core/database/isar_database_impl.dart` — a new collection must be added to that list or it will silently not persist.
 - **Storage**: `AppStorage` owns the documents / temp / support roots; `AppStorageConstants` owns the directory and file-name layout (`books/`, `covers/`, `manifests/`, `fonts/`, `shelf.json`).
 - **Preferences**: `SharedPreferences` via `sharedPreferencesProvider`; `flutter_secure_storage` is reserved for secrets.
