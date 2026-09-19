@@ -957,8 +957,31 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get externalSourceScreenPlaceholder => '该外部源的文件浏览与导入功能尚未实现。';
+  String get externalSourceNotFound => '该外部源已不存在';
 
   @override
-  String get externalSourceNotFound => '该外部源已不存在';
+  String get refresh => '刷新';
+
+  @override
+  String get externalSourceUp => '返回上一级';
+
+  @override
+  String get externalSourceFolderEmpty => '该目录为空';
+
+  @override
+  String get externalSourceFolder => '目录';
+
+  @override
+  String get externalSourceNotImportable => '不是 EPUB 文件';
+
+  @override
+  String get externalSourceNotEpub => '只能导入 EPUB 文件';
+
+  @override
+  String externalSourceSelectedCount(int count) {
+    return '已选择 $count 项';
+  }
+
+  @override
+  String get externalSourceImportSelected => '导入';
 }

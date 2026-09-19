@@ -1386,12 +1386,45 @@
       }
     }
   },
-  "externalSourceScreenPlaceholder": "该外部源的文件浏览与导入功能尚未实现。",
-  "@externalSourceScreenPlaceholder": {
-    "description": "尚未实现的外部源页面占位说明"
-  },
   "externalSourceNotFound": "该外部源已不存在",
   "@externalSourceNotFound": {
     "description": "打开已删除外部源页面时显示的提示"
+  },
+  "refresh": "刷新",
+  "@refresh": {
+    "description": "重新加载当前列表按钮的提示"
+  },
+  "externalSourceUp": "返回上一级",
+  "@externalSourceUp": {
+    "description": "在外部源目录内时返回按钮的提示"
+  },
+  "externalSourceFolderEmpty": "该目录为空",
+  "@externalSourceFolderEmpty": {
+    "description": "外部源目录没有任何内容时显示的提示"
+  },
+  "externalSourceFolder": "目录",
+  "@externalSourceFolder": {
+    "description": "标记目录条目的行副标题"
+  },
+  "externalSourceNotImportable": "不是 EPUB 文件",
+  "@externalSourceNotImportable": {
+    "description": "标记无法导入的条目的行副标题"
+  },
+  "externalSourceNotEpub": "只能导入 EPUB 文件",
+  "@externalSourceNotEpub": {
+    "description": "尝试导入非 EPUB 文件时显示的提示"
+  },
+  "externalSourceSelectedCount": "已选择 {count} 项",
+  "@externalSourceSelectedCount": {
+    "description": "已选中待导入条目的数量",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "externalSourceImportSelected": "导入",
+  "@externalSourceImportSelected": {
+    "description": "导入所选外部源书籍的按钮"
   }
 }

@@ -165,7 +165,7 @@ Current known-incomplete areas, so you do not mistake them for finished work:
 
 - **CI has no `flutter analyze` step and no Rust check** (§8).
 - **WebDAV sync is not implemented.** `webdavSync` exists in the l10n files but nothing references it; there is no sync feature directory.
-- **External source browsing is not implemented.** `features/external_sources/` can add, edit, test and delete WebDAV sources, and `/source/:id` resolves them, but the screen behind that route is a placeholder: it does not list or import files yet. The adapter interface already exposes `list` / `downloadTo` for it.
+- **External sources support WebDAV only, with HTTP Basic auth.** `features/external_sources/` can add, edit, test and delete sources, browse their folders and import EPUBs into the library. Digest/NTLM auth, and importing anything other than EPUB, are not implemented.
 - **External "open with EPUB" handling is incomplete.** Android and iOS declare EPUB document types, and `features/library/presentation/shared_epub_handler.dart` consumes whatever reaches it through the router, but the native `onNewIntent` / `application(_:open:)` hand-off is not implemented — so a document opened from the file manager may never arrive.
 - **`greet()` in `rust/src/api/simple.rs`** is unused template code.
 - **Platform support beyond Android/iOS** (Linux, macOS, Windows) is wired through `rust_builder` and Flutter's plugin manifests but not exercised or documented as supported.

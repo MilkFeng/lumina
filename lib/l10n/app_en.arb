@@ -1378,12 +1378,45 @@
       }
     }
   },
-  "externalSourceScreenPlaceholder": "Browsing and importing files from this source is not available yet.",
-  "@externalSourceScreenPlaceholder": {
-    "description": "Placeholder body of the not-yet-implemented source screen"
-  },
   "externalSourceNotFound": "This external source no longer exists",
   "@externalSourceNotFound": {
     "description": "Message shown when a source screen is opened for a deleted source"
+  },
+  "refresh": "Refresh",
+  "@refresh": {
+    "description": "Tooltip of the button that reloads the current listing"
+  },
+  "externalSourceUp": "Up one folder",
+  "@externalSourceUp": {
+    "description": "Tooltip of the back button while inside a folder of an external source"
+  },
+  "externalSourceFolderEmpty": "This folder is empty",
+  "@externalSourceFolderEmpty": {
+    "description": "Message shown when a folder of an external source has no entries"
+  },
+  "externalSourceFolder": "Folder",
+  "@externalSourceFolder": {
+    "description": "Row subtitle marking a folder entry"
+  },
+  "externalSourceNotImportable": "Not an EPUB file",
+  "@externalSourceNotImportable": {
+    "description": "Row subtitle marking an entry that cannot be imported"
+  },
+  "externalSourceNotEpub": "Only EPUB files can be imported",
+  "@externalSourceNotEpub": {
+    "description": "Message shown when the user tries to import a file that is not an EPUB"
+  },
+  "externalSourceSelectedCount": "{count} selected",
+  "@externalSourceSelectedCount": {
+    "description": "How many entries are selected for import",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "externalSourceImportSelected": "Import",
+  "@externalSourceImportSelected": {
+    "description": "Button that imports the selected books from an external source"
   }
 }

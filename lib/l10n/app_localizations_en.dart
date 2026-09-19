@@ -984,9 +984,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get externalSourceScreenPlaceholder =>
-      'Browsing and importing files from this source is not available yet.';
+  String get externalSourceNotFound => 'This external source no longer exists';
 
   @override
-  String get externalSourceNotFound => 'This external source no longer exists';
+  String get refresh => 'Refresh';
+
+  @override
+  String get externalSourceUp => 'Up one folder';
+
+  @override
+  String get externalSourceFolderEmpty => 'This folder is empty';
+
+  @override
+  String get externalSourceFolder => 'Folder';
+
+  @override
+  String get externalSourceNotImportable => 'Not an EPUB file';
+
+  @override
+  String get externalSourceNotEpub => 'Only EPUB files can be imported';
+
+  @override
+  String externalSourceSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get externalSourceImportSelected => 'Import';
 }

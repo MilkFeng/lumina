@@ -43,9 +43,7 @@ class ImportCacheManager {
       return _cacheDirectory!;
     }
 
-    final cacheDir = Directory(
-      path.join(AppStorage.tempPath, _importCacheDir),
-    );
+    final cacheDir = Directory(path.join(AppStorage.tempPath, _importCacheDir));
 
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);
@@ -53,6 +51,31 @@ class ImportCacheManager {
 
     _cacheDirectory = cacheDir;
     return cacheDir;
+  }
+
+  /// Creates an empty cache file with [extension] for content that is not
+  /// coming from a [PlatformPath] — a download, for instance.
+  ///
+  /// Same directory and naming scheme as [writeToCache], so that
+  /// [clean] and [clearAll] cover it without knowing where it came from. The
+  /// caller owns the returned file.
+  ///
+  /// Throws when [extension] would escape the cache directory.
+  Future<File> createCacheFile(String extension) async {
+    final cacheDir = await _getCacheDirectory();
+    final safeExtension = extension.startsWith('.') ? extension : '.$extension';
+    if (safeExtension.contains('/') ||
+        safeExtension.contains(r'\') ||
+        safeExtension.contains('..')) {
+      throw ArgumentError.value(extension, 'extension', 'Unsafe extension');
+    }
+
+    return File(
+      path.join(
+        cacheDir.path,
+        'temp_${DateTime.now().microsecondsSinceEpoch}$safeExtension',
+      ),
+    );
   }
 
   /// Copies [platformPath] into the import cache and returns the cached file.

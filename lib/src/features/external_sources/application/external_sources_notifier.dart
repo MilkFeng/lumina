@@ -1,4 +1,4 @@
-import 'package:fpdart/fpdart.dart';
+﻿import 'package:fpdart/fpdart.dart';
 import 'package:lumina/src/features/external_sources/data/adapters/external_source_registry.dart';
 import 'package:lumina/src/features/external_sources/data/repositories/external_source_repository.dart';
 import 'package:lumina/src/features/external_sources/data/repositories/external_source_repository_provider.dart';
@@ -19,6 +19,20 @@ part 'external_sources_notifier.g.dart';
 @Riverpod(keepAlive: true)
 ExternalSourceRegistry externalSourceRegistry(Ref ref) =>
     const ExternalSourceRegistry();
+
+/// Finds one source by id, or `null` when it is gone.
+///
+/// An extension rather than a method on the entity so that the Isar generator
+/// keeps seeing [ExternalSource] as plain columns plus `id`.
+extension ExternalSourceLookup on List<ExternalSource> {
+  ExternalSource? byId(int? id) {
+    if (id == null) return null;
+    for (final source in this) {
+      if (source.id == id) return source;
+    }
+    return null;
+  }
+}
 
 /// Every configured external source, ordered by name.
 ///
@@ -182,7 +196,7 @@ class ExternalSourcesNotifier extends _$ExternalSourcesNotifier {
     final registry = ref.read(externalSourceRegistryProvider);
     return registry.draftFrom(
       source,
-      credentials: await _credentialsFor(source),
+      credentials: await credentialsFor(source),
     );
   }
 
@@ -226,7 +240,7 @@ class ExternalSourcesNotifier extends _$ExternalSourcesNotifier {
   Future<ExternalSourceFailure?> testConnection(ExternalSource source) async {
     final adapter = ref
         .read(externalSourceRegistryProvider)
-        .createAdapter(source, credentials: await _credentialsFor(source));
+        .createAdapter(source, credentials: await credentialsFor(source));
     try {
       return await adapter.testConnection();
     } finally {
@@ -262,7 +276,7 @@ class ExternalSourcesNotifier extends _$ExternalSourcesNotifier {
   ]) async {
     final adapter = ref
         .read(externalSourceRegistryProvider)
-        .createAdapter(source, credentials: await _credentialsFor(source));
+        .createAdapter(source, credentials: await credentialsFor(source));
     try {
       return await adapter.list(path);
     } finally {
@@ -270,7 +284,13 @@ class ExternalSourcesNotifier extends _$ExternalSourcesNotifier {
     }
   }
 
-  Future<ExternalSourceCredentials> _credentialsFor(
+  /// Secrets declared by [source]'s own configuration type, read from the
+  /// keychain.
+  ///
+  /// Public because the import pipeline has to build its own adapter from the
+  /// same stored secrets, and this is the only place that knows which fields a
+  /// type treats as secret.
+  Future<ExternalSourceCredentials> credentialsFor(
     ExternalSource source,
   ) async {
     final keys = _secretKeysOf(source);

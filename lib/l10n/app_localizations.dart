@@ -1802,17 +1802,59 @@ abstract class AppLocalizations {
   /// **'Import from “{name}”'**
   String externalSourceScreenTitle(String name);
 
-  /// Placeholder body of the not-yet-implemented source screen
-  ///
-  /// In en, this message translates to:
-  /// **'Browsing and importing files from this source is not available yet.'**
-  String get externalSourceScreenPlaceholder;
-
   /// Message shown when a source screen is opened for a deleted source
   ///
   /// In en, this message translates to:
   /// **'This external source no longer exists'**
   String get externalSourceNotFound;
+
+  /// Tooltip of the button that reloads the current listing
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// Tooltip of the back button while inside a folder of an external source
+  ///
+  /// In en, this message translates to:
+  /// **'Up one folder'**
+  String get externalSourceUp;
+
+  /// Message shown when a folder of an external source has no entries
+  ///
+  /// In en, this message translates to:
+  /// **'This folder is empty'**
+  String get externalSourceFolderEmpty;
+
+  /// Row subtitle marking a folder entry
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get externalSourceFolder;
+
+  /// Row subtitle marking an entry that cannot be imported
+  ///
+  /// In en, this message translates to:
+  /// **'Not an EPUB file'**
+  String get externalSourceNotImportable;
+
+  /// Message shown when the user tries to import a file that is not an EPUB
+  ///
+  /// In en, this message translates to:
+  /// **'Only EPUB files can be imported'**
+  String get externalSourceNotEpub;
+
+  /// How many entries are selected for import
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String externalSourceSelectedCount(int count);
+
+  /// Button that imports the selected books from an external source
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get externalSourceImportSelected;
 }
 
 class _AppLocalizationsDelegate

@@ -118,7 +118,7 @@ final class ExternalSourcesNotifierProvider
 }
 
 String _$externalSourcesNotifierHash() =>
-    r'8b7b6ae9b13b45e418da7069a4b02ad8613165bb';
+    r'3d1f682a3ccc4d071666e8fca11fcfab010c3139';
 
 /// Every configured external source, ordered by name.
 ///
