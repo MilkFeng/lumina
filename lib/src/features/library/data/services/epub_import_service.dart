@@ -147,7 +147,6 @@ class EpubImportService {
       ..filePath = relativePath
       ..coverPath = coverPath
       ..title = parseData.title
-      ..author = parseData.author
       ..authors = parseData.authors
       ..description = parseData.description
       ..subjects = parseData.subjects

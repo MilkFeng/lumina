@@ -16,6 +16,10 @@ analyzer:
     - build/**
     - android/**
     - ios/**
+    # Vendored Cargokit build tool (copied from the flutter_rust_bridge
+    # template). It is a standalone nested package with its own pubspec, so
+    # its imports cannot be resolved with this app's package config.
+    - rust_builder/cargokit/**
 
 linter:
   # The lint rules applied to this project can be customized in the

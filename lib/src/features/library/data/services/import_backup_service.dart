@@ -396,7 +396,6 @@ class ImportBackupService {
       ..filePath = filePath
       ..coverPath = coverPath
       ..title = m['title'] as String
-      ..author = m['author'] as String
       ..authors = (m['authors'] as List<dynamic>).cast<String>()
       ..description = m['description'] as String?
       ..subjects = (m['subjects'] as List<dynamic>).cast<String>()

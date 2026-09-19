@@ -32,10 +32,6 @@ class ShelfBook {
   @Index()
   late String title;
 
-  /// Primary author (first author if multiple)
-  @Index()
-  late String author;
-
   /// All authors as a list
   late List<String> authors;
 

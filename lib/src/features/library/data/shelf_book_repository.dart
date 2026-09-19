@@ -88,9 +88,21 @@ class ShelfBookRepository {
       case ShelfBookSortBy.titleDesc:
         return books..sort((a, b) => compareNatural(b.title, a.title));
       case ShelfBookSortBy.authorAsc:
-        return books..sort((a, b) => compareNatural(a.author, b.author));
+        return books
+          ..sort(
+            (a, b) => compareNatural(
+              a.authors.firstOrNull ?? '',
+              b.authors.firstOrNull ?? '',
+            ),
+          );
       case ShelfBookSortBy.authorDesc:
-        return books..sort((a, b) => compareNatural(b.author, a.author));
+        return books
+          ..sort(
+            (a, b) => compareNatural(
+              b.authors.firstOrNull ?? '',
+              a.authors.firstOrNull ?? '',
+            ),
+          );
       default:
         return books;
     }
@@ -420,7 +432,7 @@ class ShelfBookRepository {
           (q) => q
               .titleContains(lowercaseQuery, caseSensitive: false)
               .or()
-              .authorContains(lowercaseQuery, caseSensitive: false),
+              .authorsElementContains(lowercaseQuery, caseSensitive: false),
         )
         .findAll();
   }

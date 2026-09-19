@@ -264,7 +264,6 @@ class ExportBackupService {
   Map<String, dynamic> _shelfBookToMap(ShelfBook b) => {
     'fileHash': b.fileHash,
     'title': b.title,
-    'author': b.author,
     'authors': b.authors,
     'description': b.description,
     'subjects': b.subjects,

@@ -341,10 +341,10 @@ class _TocDrawerState extends State<TocDrawer> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (widget.book.author.isNotEmpty) ...[
+                  if (widget.book.authors.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      widget.book.author,
+                      widget.book.authors.first,
                       style: widget.themeData.textTheme.bodySmall?.copyWith(
                         color: widget.themeData.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w400,

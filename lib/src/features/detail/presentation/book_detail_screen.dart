@@ -132,14 +132,12 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     // keeping the in-memory Isar object consistent with the database.
     final originalTitle = book.title;
     final originalAuthors = List<String>.from(book.authors);
-    final originalAuthor = book.author;
     final originalDescription = book.description;
     final originalUpdatedAt = book.updatedAt;
 
     try {
       book.title = newTitle;
       book.authors = newAuthors;
-      book.author = newAuthors.isNotEmpty ? newAuthors.first : '';
       book.description = newDescription.isEmpty ? null : newDescription;
       book.updatedAt = DateTime.now().millisecondsSinceEpoch;
 
@@ -150,7 +148,6 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
           // Roll back the in-memory mutation so the object stays consistent with DB.
           book.title = originalTitle;
           book.authors = originalAuthors;
-          book.author = originalAuthor;
           book.description = originalDescription;
           book.updatedAt = originalUpdatedAt;
           if (mounted) {
@@ -173,7 +170,6 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
       // Roll back the in-memory mutation so the object stays consistent with DB.
       book.title = originalTitle;
       book.authors = originalAuthors;
-      book.author = originalAuthor;
       book.description = originalDescription;
       book.updatedAt = originalUpdatedAt;
       if (mounted) {

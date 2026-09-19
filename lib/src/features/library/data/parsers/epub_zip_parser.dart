@@ -614,7 +614,7 @@ class EpubZipParser {
         final epubType =
             element.getAttribute(
               'type',
-              namespace: 'http://www.idpf.org/2007/ops',
+              namespaceUri: 'http://www.idpf.org/2007/ops',
             ) ??
             element.getAttribute('epub:type') ??
             element.getAttribute('type');

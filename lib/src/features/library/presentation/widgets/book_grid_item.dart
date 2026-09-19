@@ -59,9 +59,9 @@ class BookGridItem extends ConsumerWidget {
         const SizedBox(height: 12),
         MiddleEllipsisTwoLinesText(book.title),
         const SizedBox(height: 4),
-        if (book.author.isNotEmpty)
+        if (book.authors.isNotEmpty)
           Text(
-            book.author,
+            book.authors.first,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
