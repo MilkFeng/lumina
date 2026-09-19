@@ -9,6 +9,7 @@ import 'package:lumina/src/core/services/url_launcher.dart';
 import 'package:lumina/src/core/widgets/settings_app_header.dart';
 import 'package:lumina/src/core/widgets/settings_section.dart';
 import 'package:lumina/src/features/backup/presentation/widgets/backup_section.dart';
+import 'package:lumina/src/features/external_sources/presentation/widgets/external_sources_section.dart';
 import 'package:lumina/src/features/fonts/presentation/widgets/fonts_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/settings_appearance_section.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/check_update_tile.dart';
@@ -111,6 +112,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     });
                   },
                 ),
+
+                const SizedBox(height: 24),
+
+                // External sources section (inline management)
+                const ExternalSourcesSection(),
 
                 const SizedBox(height: 24),
 

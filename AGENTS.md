@@ -22,8 +22,9 @@ lib/
   src/
     app.dart                    MaterialApp.router root
     router.dart                 GoRouter route table (app assembly — see layering rules)
+    providers.dart              Isar schema list + keychain store (app assembly — see layering rules)
     core/                       shared infrastructure — must not know about any feature
-      database/                 Isar lifecycle (schemas injected by the library feature)
+      database/                 Isar lifecycle (schemas injected at the assembly root)
       platform/                 native file picking, PlatformPath, import cache
       providers/                app-wide providers
       services/                 ToastService, UrlLauncher, StorageCleanupService
@@ -37,6 +38,8 @@ lib/
         data/ application/ presentation/
       fonts/                    imported custom fonts (import, list, delete)
         domain/ application/ presentation/
+      external_sources/         remote book sources (WebDAV today)
+        domain/ data/ application/ presentation/
       reader/                   WebView reading engine
       detail/                   book detail screen
       settings/                 settings UI only (no domain of its own)
@@ -54,9 +57,9 @@ docs/AGENTS/                    architecture deep-dives (see §9)
 ### Layering rules
 
 - **`core/` must not import from `features/`.** This holds with **no exemptions**. When a `core/` service needs feature data, inject it as a callback or through a provider that lives in the feature. Code that inherently has to name features — the route table, the app root — belongs at the `src/` root (`app.dart`, `router.dart`) or inside a feature, not in `core/`.
-- **`lib/src/` root is the assembly layer.** `main.dart`, `app.dart` and `router.dart` wire the app together and are allowed to import features. Keep it to those; anything reusable belongs in `core/`, anything domain-specific in a feature.
+- **`lib/src/` root is the assembly layer.** `main.dart`, `app.dart`, `router.dart` and `providers.dart` wire the app together and are allowed to import features. Keep it to those; anything reusable belongs in `core/`, anything domain-specific in a feature.
 - Within a feature, dependencies flow `presentation → application → data → domain`. `domain/` depends on nothing but Isar annotations.
-- **No dependency cycles between features.** The intended shape is acyclic and it currently is: `backup → library`, `detail → library`, `fonts → library`, `reader → library`, `reader → fonts`, `settings → {backup, fonts, library}`. If you need an edge that would close a cycle, move the shared piece down into `core/`, or move the *caller* into the feature that already owns the dependency.
+- **No dependency cycles between features.** The intended shape is acyclic and it currently is: `backup → library`, `detail → library`, `external_sources → library` (import pipeline only), `fonts → library`, `library → external_sources` (import menu entries only), `reader → library`, `reader → fonts`, `settings → {backup, external_sources, fonts, library}`. If you need an edge that would close a cycle, move the shared piece down into `core/`, move the *caller* into the feature that already owns the dependency, or — when two features genuinely have to name each other, as the schema list does — hoist that one piece to the `src/` assembly root.
 - Cross-feature reuse goes through `core/` only for genuinely generic capability. Domain models are not "generic": `ShelfBook` lives in `features/library/domain/`.
 - Feature modules use a four-layer split: `domain/` (Isar entities and pure models), `data/` (repositories, services, parsers), `application/` (notifiers and business logic), `presentation/` (screens, widgets, mixins). A feature creates only the layers it actually needs — `settings/` has just `presentation/`.
 - A feature may expose a composable section widget (for example `BackupSection`, `FontsSection`) so a host screen can embed it without reaching into the feature's internals.
@@ -95,7 +98,7 @@ The EPUB read path runs in Rust, not Dart. `EpubStreamService` is a thin async f
 
 - **State**: Riverpod 3 with code generation. Declare providers with `@riverpod` / `@Riverpod(keepAlive: true)` in `*_notifier.dart` or `*_provider.dart` files next to the feature they serve.
 - **Long-running generators must be `keepAlive`.** See `LibraryNotifier.importPipelineStream` and `BackupNotifier.restoreFromBackup`: they keep using `ref` across many async gaps, and an `autoDispose` provider would throw once no widget is listening (for example while a progress dialog is the only thing on screen).
-- **Database**: Isar (`isar_community`). Entities are annotated `@collection` in `features/*/domain/` and registered in the `_schemas` list in `lib/src/features/library/data/database/isar_providers.dart` — a new collection must be added there or it will silently not persist. The `core/database/` classes take the schema list as a constructor argument so they stay feature-agnostic.
+- **Database**: Isar (`isar_community`). Entities are annotated `@collection` in `features/*/domain/` and registered in the `appDatabaseSchemas` list in `lib/src/providers.dart` — a new collection must be added there or it will silently not persist. The list lives at the `src/` assembly root because it inherently names every entity-owning feature; `core/database/` takes it as a constructor argument so it stays feature-agnostic.
 - **Storage**: `AppStorage` owns the documents / temp / support roots; `AppStorageConstants` owns the directory and file-name layout (`books/`, `covers/`, `manifests/`, `fonts/`, `shelf.json`).
 - **Preferences**: `SharedPreferences` via `sharedPreferencesProvider`; `flutter_secure_storage` is reserved for secrets.
 - **Errors**: use `fpdart` `Either` / `Option` in service and notifier boundaries rather than throwing across layers.
@@ -162,6 +165,7 @@ Current known-incomplete areas, so you do not mistake them for finished work:
 
 - **CI has no `flutter analyze` step and no Rust check** (§8).
 - **WebDAV sync is not implemented.** `webdavSync` exists in the l10n files but nothing references it; there is no sync feature directory.
+- **External source browsing is not implemented.** `features/external_sources/` can add, edit, test and delete WebDAV sources, and `/source/:id` resolves them, but the screen behind that route is a placeholder: it does not list or import files yet. The adapter interface already exposes `list` / `downloadTo` for it.
 - **External "open with EPUB" handling is incomplete.** Android and iOS declare EPUB document types, and `features/library/presentation/shared_epub_handler.dart` consumes whatever reaches it through the router, but the native `onNewIntent` / `application(_:open:)` hand-off is not implemented — so a document opened from the file manager may never arrive.
 - **`greet()` in `rust/src/api/simple.rs`** is unused template code.
 - **Platform support beyond Android/iOS** (Linux, macOS, Windows) is wired through `rust_builder` and Flutter's plugin manifests but not exercised or documented as supported.

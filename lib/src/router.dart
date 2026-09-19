@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
 import 'package:lumina/src/features/detail/presentation/book_detail_screen.dart';
+import 'package:lumina/src/features/external_sources/presentation/external_source_screen.dart';
 import 'package:lumina/src/features/library/domain/shelf_book.dart';
 import 'package:lumina/src/features/library/presentation/library_screen.dart';
 import 'package:lumina/src/features/library/presentation/shared_epub_handler.dart';
@@ -77,6 +78,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return MaterialPage(
             key: state.pageKey,
             child: const SettingsScreen(),
+          );
+        },
+      ),
+
+      // External Source Screen (browse and import from a remote source)
+      GoRoute(
+        path: '/source/:id',
+        name: 'external-source',
+        pageBuilder: (context, state) {
+          return MaterialPage(
+            key: state.pageKey,
+            child: ExternalSourceScreen(
+              sourceId: int.tryParse(state.pathParameters['id'] ?? ''),
+            ),
           );
         },
       ),

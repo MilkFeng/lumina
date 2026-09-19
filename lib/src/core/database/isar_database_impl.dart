@@ -7,8 +7,7 @@ import 'package:lumina/src/core/storage/app_storage.dart';
 ///
 /// The collection schemas are injected rather than imported, so this `core`
 /// class never has to know which features define entities. The list is
-/// supplied by `isarDatabaseProvider` in
-/// `features/library/data/database/isar_providers.dart`.
+/// supplied by `isarDatabaseProvider` in `src/providers.dart`.
 class IsarDatabaseImpl implements IsarDatabase {
   final List<CollectionSchema<dynamic>> _schemas;
   final String _directory;

@@ -7,7 +7,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/providers/shared_preferences_provider.dart';
 import 'package:lumina/src/core/storage/app_storage.dart';
-import 'package:lumina/src/features/library/data/database/isar_providers.dart';
+import 'package:lumina/src/providers.dart';
 import 'package:lumina/src/features/reader/data/services/epub_stream_service_provider.dart';
 import 'package:lumina/src/features/reader/presentation/reader_webview.dart';
 import 'package:lumina/src/rust/frb_generated.dart';

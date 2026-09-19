@@ -808,4 +808,157 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chapterNotFoundInSpine => '未找到该章节';
+
+  @override
+  String get externalSources => '外部源';
+
+  @override
+  String get noExternalSources => '暂无外部源';
+
+  @override
+  String get addExternalSource => '添加外部源';
+
+  @override
+  String get addExternalSourceSubtitle => '从 WebDAV 等远程来源导入书籍';
+
+  @override
+  String externalSourceDefaultName(int number) {
+    return '外部源 $number';
+  }
+
+  @override
+  String get externalSourceName => '名称';
+
+  @override
+  String get externalSourceNameRequired => '请输入名称';
+
+  @override
+  String get externalSourceNameDuplicate => '名称已被使用';
+
+  @override
+  String get externalSourceRequiredField => '必填';
+
+  @override
+  String get externalSourceType => '类型';
+
+  @override
+  String get externalSourceTypeWebdav => 'WebDAV';
+
+  @override
+  String get externalSourceConfiguration => '配置';
+
+  @override
+  String get externalSourceConfigurationLoadFailed => '无法读取该外部源的配置。';
+
+  @override
+  String get externalSourceWebdavUrl => '服务器地址';
+
+  @override
+  String get externalSourceWebdavUrlHint => 'https://dav.example.com';
+
+  @override
+  String get externalSourceWebdavPath => '目录（可选）';
+
+  @override
+  String get externalSourceWebdavPathHint => 'books';
+
+  @override
+  String get externalSourceUsername => '用户名';
+
+  @override
+  String get externalSourcePassword => '密码';
+
+  @override
+  String get externalSourceTesting => '正在测试连接…';
+
+  @override
+  String get externalSourceTestSuccess => '连接成功';
+
+  @override
+  String externalSourceTestFailed(String reason) {
+    return '连接失败：$reason';
+  }
+
+  @override
+  String externalSourceAdded(String name) {
+    return '已添加“$name”';
+  }
+
+  @override
+  String externalSourceUpdated(String name) {
+    return '已更新“$name”';
+  }
+
+  @override
+  String externalSourceDeleted(String name) {
+    return '已删除“$name”';
+  }
+
+  @override
+  String get externalSourceDeleteFailed => '删除外部源失败';
+
+  @override
+  String get externalSourceDeleteConfirm => '删除外部源';
+
+  @override
+  String externalSourceDeleteConfirmText(String name) {
+    return '确定要删除“$name”及其配置吗？已导入的书籍不受影响。';
+  }
+
+  @override
+  String get externalSourceEdit => '编辑';
+
+  @override
+  String get externalSourceTestConnection => '测试连接';
+
+  @override
+  String get externalSourceErrorAuth => '服务器拒绝了用户名或密码';
+
+  @override
+  String get externalSourceErrorNotFound => '未找到该目录';
+
+  @override
+  String get externalSourceErrorInvalidUrl => '服务器地址不是有效的 http(s) 地址';
+
+  @override
+  String get externalSourceErrorInvalidResponse => '服务器未返回 WebDAV 数据';
+
+  @override
+  String get externalSourceErrorTimeout => '服务器响应超时';
+
+  @override
+  String get externalSourceErrorNetwork => '无法连接到服务器';
+
+  @override
+  String get externalSourceErrorTls => '无法建立安全连接';
+
+  @override
+  String get externalSourceErrorTooLarge => '文件过大，无法下载';
+
+  @override
+  String externalSourceErrorStatus(int status) {
+    return '服务器返回错误 $status';
+  }
+
+  @override
+  String get externalSourceErrorDuplicateName => '已有其他外部源使用该名称';
+
+  @override
+  String get externalSourceErrorUnknown => '未知错误';
+
+  @override
+  String importFromExternalSource(String name) {
+    return '从“$name”中导入文件';
+  }
+
+  @override
+  String externalSourceScreenTitle(String name) {
+    return '从“$name”中导入';
+  }
+
+  @override
+  String get externalSourceScreenPlaceholder => '该外部源的文件浏览与导入功能尚未实现。';
+
+  @override
+  String get externalSourceNotFound => '该外部源已不存在';
 }

@@ -1543,6 +1543,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chapter not found in book spine'**
   String get chapterNotFoundInSpine;
+
+  /// Settings section title for the list of external book sources
+  ///
+  /// In en, this message translates to:
+  /// **'External Sources'**
+  String get externalSources;
+
+  /// Placeholder shown when no external source has been configured
+  ///
+  /// In en, this message translates to:
+  /// **'No external sources yet'**
+  String get noExternalSources;
+
+  /// Settings tile that opens the new external source dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Add external source'**
+  String get addExternalSource;
+
+  /// Subtitle of the add external source tile
+  ///
+  /// In en, this message translates to:
+  /// **'Import books from WebDAV and other remote sources'**
+  String get addExternalSourceSubtitle;
+
+  /// Default name offered when creating an external source
+  ///
+  /// In en, this message translates to:
+  /// **'External Source {number}'**
+  String externalSourceDefaultName(int number);
+
+  /// Label of the external source name field
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get externalSourceName;
+
+  /// Validation error when the external source name is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a name'**
+  String get externalSourceNameRequired;
+
+  /// Validation error when the external source name is not unique
+  ///
+  /// In en, this message translates to:
+  /// **'Name already in use'**
+  String get externalSourceNameDuplicate;
+
+  /// Validation error for an empty required field of an external source
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get externalSourceRequiredField;
+
+  /// Label of the external source type selector
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get externalSourceType;
+
+  /// Display name of the WebDAV external source type
+  ///
+  /// In en, this message translates to:
+  /// **'WebDAV'**
+  String get externalSourceTypeWebdav;
+
+  /// Heading above the type-specific fields of the external source dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration'**
+  String get externalSourceConfiguration;
+
+  /// Shown in the external source dialog when its stored configuration cannot be read
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read this source\'s configuration.'**
+  String get externalSourceConfigurationLoadFailed;
+
+  /// Label of the WebDAV server URL field
+  ///
+  /// In en, this message translates to:
+  /// **'Server URL'**
+  String get externalSourceWebdavUrl;
+
+  /// Example value shown in the WebDAV server URL field
+  ///
+  /// In en, this message translates to:
+  /// **'https://dav.example.com'**
+  String get externalSourceWebdavUrlHint;
+
+  /// Label of the folder inside the WebDAV server
+  ///
+  /// In en, this message translates to:
+  /// **'Folder (optional)'**
+  String get externalSourceWebdavPath;
+
+  /// Example value shown in the WebDAV folder field
+  ///
+  /// In en, this message translates to:
+  /// **'books'**
+  String get externalSourceWebdavPathHint;
+
+  /// Label of the external source username field
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get externalSourceUsername;
+
+  /// Label of the external source password field
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get externalSourcePassword;
+
+  /// Message shown while the external source connection is being tested
+  ///
+  /// In en, this message translates to:
+  /// **'Testing connection…'**
+  String get externalSourceTesting;
+
+  /// Message shown when the external source connection test succeeds
+  ///
+  /// In en, this message translates to:
+  /// **'Connection successful'**
+  String get externalSourceTestSuccess;
+
+  /// Message shown when the external source connection test fails
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed: {reason}'**
+  String externalSourceTestFailed(String reason);
+
+  /// Message shown after an external source has been added
+  ///
+  /// In en, this message translates to:
+  /// **'Added “{name}”'**
+  String externalSourceAdded(String name);
+
+  /// Message shown after an external source has been changed
+  ///
+  /// In en, this message translates to:
+  /// **'Updated “{name}”'**
+  String externalSourceUpdated(String name);
+
+  /// Message shown after an external source has been deleted
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted “{name}”'**
+  String externalSourceDeleted(String name);
+
+  /// Message shown when deleting an external source fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the source'**
+  String get externalSourceDeleteFailed;
+
+  /// Title of the external source delete confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Delete source'**
+  String get externalSourceDeleteConfirm;
+
+  /// Body of the external source delete confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{name}” and its configuration? Imported books are not affected.'**
+  String externalSourceDeleteConfirmText(String name);
+
+  /// Action that opens the external source editor
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get externalSourceEdit;
+
+  /// Action that tests an external source connection
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get externalSourceTestConnection;
+
+  /// Connection failure explanation for a rejected login
+  ///
+  /// In en, this message translates to:
+  /// **'the server rejected the username or password'**
+  String get externalSourceErrorAuth;
+
+  /// Connection failure explanation for a missing folder
+  ///
+  /// In en, this message translates to:
+  /// **'the folder was not found'**
+  String get externalSourceErrorNotFound;
+
+  /// Connection failure explanation for a malformed URL
+  ///
+  /// In en, this message translates to:
+  /// **'the server URL is not a valid http(s) URL'**
+  String get externalSourceErrorInvalidUrl;
+
+  /// Connection failure explanation for an unusable response body
+  ///
+  /// In en, this message translates to:
+  /// **'the server did not answer with WebDAV data'**
+  String get externalSourceErrorInvalidResponse;
+
+  /// Connection failure explanation for a request timeout
+  ///
+  /// In en, this message translates to:
+  /// **'the server did not respond in time'**
+  String get externalSourceErrorTimeout;
+
+  /// Connection failure explanation for a network error
+  ///
+  /// In en, this message translates to:
+  /// **'the server could not be reached'**
+  String get externalSourceErrorNetwork;
+
+  /// Connection failure explanation for a certificate error
+  ///
+  /// In en, this message translates to:
+  /// **'the secure connection could not be established'**
+  String get externalSourceErrorTls;
+
+  /// Connection failure explanation for an oversized download
+  ///
+  /// In en, this message translates to:
+  /// **'the file is too large to download'**
+  String get externalSourceErrorTooLarge;
+
+  /// Connection failure explanation carrying an HTTP status code
+  ///
+  /// In en, this message translates to:
+  /// **'the server answered with error {status}'**
+  String externalSourceErrorStatus(int status);
+
+  /// Failure explanation for a name collision
+  ///
+  /// In en, this message translates to:
+  /// **'another source already uses this name'**
+  String get externalSourceErrorDuplicateName;
+
+  /// Fallback explanation for an unrecognised failure
+  ///
+  /// In en, this message translates to:
+  /// **'unexpected error'**
+  String get externalSourceErrorUnknown;
+
+  /// Home screen menu entry that opens an external source
+  ///
+  /// In en, this message translates to:
+  /// **'Import files from “{name}”'**
+  String importFromExternalSource(String name);
+
+  /// Title of the screen that lists a source's files
+  ///
+  /// In en, this message translates to:
+  /// **'Import from “{name}”'**
+  String externalSourceScreenTitle(String name);
+
+  /// Placeholder body of the not-yet-implemented source screen
+  ///
+  /// In en, this message translates to:
+  /// **'Browsing and importing files from this source is not available yet.'**
+  String get externalSourceScreenPlaceholder;
+
+  /// Message shown when a source screen is opened for a deleted source
+  ///
+  /// In en, this message translates to:
+  /// **'This external source no longer exists'**
+  String get externalSourceNotFound;
 }
 
 class _AppLocalizationsDelegate

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
+import 'package:lumina/src/features/external_sources/application/external_sources_notifier.dart';
 import '../application/bookshelf_notifier.dart';
 import '../domain/shelf_book.dart';
 import 'mixins/library_actions_mixin.dart';
@@ -227,6 +229,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           AppLocalizations.of(context)!.importFromFolder,
           () => _scanFolder(context, ref),
         ),
+        // One entry per configured external source. The list lives in its own
+        // feature; the library only renders the entries and routes to them.
+        for (final source
+            in ref.watch(externalSourcesProvider).value ?? const [])
+          buildSpeedDialChild(
+            Icons.cloud_outlined,
+            AppLocalizations.of(context)!.importFromExternalSource(source.name),
+            () => context.pushNamed(
+              'external-source',
+              pathParameters: {'id': '${source.id}'},
+            ),
+          ),
       ],
     );
   }
@@ -261,14 +275,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 state: state,
                 tabController: _tabController!,
                 onSortPressed: () => _showStyleBottomSheet(context, ref, state),
-                onSelectionToggle: () => ref
-                    .read(bookshelfProvider.notifier)
-                    .toggleSelectionMode(),
+                onSelectionToggle: () =>
+                    ref.read(bookshelfProvider.notifier).toggleSelectionMode(),
                 onSelectAll: () =>
                     ref.read(bookshelfProvider.notifier).selectAll(),
-                onClearSelection: () => ref
-                    .read(bookshelfProvider.notifier)
-                    .clearSelection(),
+                onClearSelection: () =>
+                    ref.read(bookshelfProvider.notifier).clearSelection(),
                 onEditGroup: (group, l10n) =>
                     showEditGroupDialog(context, ref, group, l10n),
               ),
@@ -367,9 +379,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         child: StyleBottomSheet(
           currentSort: state.sortBy,
           onSortSelected: (sortBy) {
-            ref
-                .read(bookshelfProvider.notifier)
-                .changeSortOrder(sortBy);
+            ref.read(bookshelfProvider.notifier).changeSortOrder(sortBy);
             Navigator.pop(context);
           },
           currentViewMode: state.viewMode,
@@ -430,12 +440,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             onLongPress: () {
               if (!state.isSelectionMode) {
                 HapticFeedback.selectionClick();
-                ref
-                    .read(bookshelfProvider.notifier)
-                    .toggleSelectionMode();
-                ref
-                    .read(bookshelfProvider.notifier)
-                    .toggleItemSelection(book);
+                ref.read(bookshelfProvider.notifier).toggleSelectionMode();
+                ref.read(bookshelfProvider.notifier).toggleItemSelection(book);
               }
             },
           );

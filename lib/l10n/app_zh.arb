@@ -1168,5 +1168,230 @@
   "chapterNotFoundInSpine": "未找到该章节",
   "@chapterNotFoundInSpine": {
     "description": "章节未找到错误提示，可能是因为该章节没有正确包含在 EPUB 的 spine 中"
+  },
+  "externalSources": "外部源",
+  "@externalSources": {
+    "description": "设置页中外部源列表的分区标题"
+  },
+  "noExternalSources": "暂无外部源",
+  "@noExternalSources": {
+    "description": "尚未配置任何外部源时显示的占位文字"
+  },
+  "addExternalSource": "添加外部源",
+  "@addExternalSource": {
+    "description": "打开新增外部源对话框的设置项"
+  },
+  "addExternalSourceSubtitle": "从 WebDAV 等远程来源导入书籍",
+  "@addExternalSourceSubtitle": {
+    "description": "添加外部源设置项的副标题"
+  },
+  "externalSourceDefaultName": "外部源 {number}",
+  "@externalSourceDefaultName": {
+    "description": "新建外部源时提供的默认名称",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "externalSourceName": "名称",
+  "@externalSourceName": {
+    "description": "外部源名称输入框的标签"
+  },
+  "externalSourceNameRequired": "请输入名称",
+  "@externalSourceNameRequired": {
+    "description": "外部源名称为空时的校验提示"
+  },
+  "externalSourceNameDuplicate": "名称已被使用",
+  "@externalSourceNameDuplicate": {
+    "description": "外部源名称不唯一时的校验提示"
+  },
+  "externalSourceRequiredField": "必填",
+  "@externalSourceRequiredField": {
+    "description": "外部源必填项为空时的校验提示"
+  },
+  "externalSourceType": "类型",
+  "@externalSourceType": {
+    "description": "外部源类型选择器的标签"
+  },
+  "externalSourceTypeWebdav": "WebDAV",
+  "@externalSourceTypeWebdav": {
+    "description": "WebDAV 外部源类型的显示名称"
+  },
+  "externalSourceConfiguration": "配置",
+  "@externalSourceConfiguration": {
+    "description": "外部源对话框中类型专属字段上方的标题"
+  },
+  "externalSourceConfigurationLoadFailed": "无法读取该外部源的配置。",
+  "@externalSourceConfigurationLoadFailed": {
+    "description": "外部源对话框无法读取已保存配置时显示的提示"
+  },
+  "externalSourceWebdavUrl": "服务器地址",
+  "@externalSourceWebdavUrl": {
+    "description": "WebDAV 服务器地址输入框的标签"
+  },
+  "externalSourceWebdavUrlHint": "https://dav.example.com",
+  "@externalSourceWebdavUrlHint": {
+    "description": "WebDAV 服务器地址输入框的示例值"
+  },
+  "externalSourceWebdavPath": "目录（可选）",
+  "@externalSourceWebdavPath": {
+    "description": "WebDAV 服务器内目录输入框的标签"
+  },
+  "externalSourceWebdavPathHint": "books",
+  "@externalSourceWebdavPathHint": {
+    "description": "WebDAV 目录输入框的示例值"
+  },
+  "externalSourceUsername": "用户名",
+  "@externalSourceUsername": {
+    "description": "外部源用户名输入框的标签"
+  },
+  "externalSourcePassword": "密码",
+  "@externalSourcePassword": {
+    "description": "外部源密码输入框的标签"
+  },
+  "externalSourceTesting": "正在测试连接…",
+  "@externalSourceTesting": {
+    "description": "正在测试外部源连接时显示的文字"
+  },
+  "externalSourceTestSuccess": "连接成功",
+  "@externalSourceTestSuccess": {
+    "description": "外部源连接测试成功时显示的提示"
+  },
+  "externalSourceTestFailed": "连接失败：{reason}",
+  "@externalSourceTestFailed": {
+    "description": "外部源连接测试失败时显示的提示",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceAdded": "已添加“{name}”",
+  "@externalSourceAdded": {
+    "description": "成功添加外部源后显示的提示",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceUpdated": "已更新“{name}”",
+  "@externalSourceUpdated": {
+    "description": "成功修改外部源后显示的提示",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceDeleted": "已删除“{name}”",
+  "@externalSourceDeleted": {
+    "description": "成功删除外部源后显示的提示",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceDeleteFailed": "删除外部源失败",
+  "@externalSourceDeleteFailed": {
+    "description": "删除外部源失败时显示的提示"
+  },
+  "externalSourceDeleteConfirm": "删除外部源",
+  "@externalSourceDeleteConfirm": {
+    "description": "删除外部源确认对话框的标题"
+  },
+  "externalSourceDeleteConfirmText": "确定要删除“{name}”及其配置吗？已导入的书籍不受影响。",
+  "@externalSourceDeleteConfirmText": {
+    "description": "删除外部源确认对话框的内容",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceEdit": "编辑",
+  "@externalSourceEdit": {
+    "description": "打开外部源编辑对话框的操作"
+  },
+  "externalSourceTestConnection": "测试连接",
+  "@externalSourceTestConnection": {
+    "description": "测试外部源连接的操作"
+  },
+  "externalSourceErrorAuth": "服务器拒绝了用户名或密码",
+  "@externalSourceErrorAuth": {
+    "description": "登录被拒绝时的连接失败说明"
+  },
+  "externalSourceErrorNotFound": "未找到该目录",
+  "@externalSourceErrorNotFound": {
+    "description": "目录不存在时的连接失败说明"
+  },
+  "externalSourceErrorInvalidUrl": "服务器地址不是有效的 http(s) 地址",
+  "@externalSourceErrorInvalidUrl": {
+    "description": "地址格式错误时的连接失败说明"
+  },
+  "externalSourceErrorInvalidResponse": "服务器未返回 WebDAV 数据",
+  "@externalSourceErrorInvalidResponse": {
+    "description": "响应内容不可用时的连接失败说明"
+  },
+  "externalSourceErrorTimeout": "服务器响应超时",
+  "@externalSourceErrorTimeout": {
+    "description": "请求超时时的连接失败说明"
+  },
+  "externalSourceErrorNetwork": "无法连接到服务器",
+  "@externalSourceErrorNetwork": {
+    "description": "网络错误时的连接失败说明"
+  },
+  "externalSourceErrorTls": "无法建立安全连接",
+  "@externalSourceErrorTls": {
+    "description": "证书错误时的连接失败说明"
+  },
+  "externalSourceErrorTooLarge": "文件过大，无法下载",
+  "@externalSourceErrorTooLarge": {
+    "description": "下载文件超出大小限制时的连接失败说明"
+  },
+  "externalSourceErrorStatus": "服务器返回错误 {status}",
+  "@externalSourceErrorStatus": {
+    "description": "带有 HTTP 状态码的连接失败说明",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "externalSourceErrorDuplicateName": "已有其他外部源使用该名称",
+  "@externalSourceErrorDuplicateName": {
+    "description": "名称冲突时的失败说明"
+  },
+  "externalSourceErrorUnknown": "未知错误",
+  "@externalSourceErrorUnknown": {
+    "description": "无法识别的失败时的兜底说明"
+  },
+  "importFromExternalSource": "从“{name}”中导入文件",
+  "@importFromExternalSource": {
+    "description": "主页菜单中打开外部源的入口",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceScreenTitle": "从“{name}”中导入",
+  "@externalSourceScreenTitle": {
+    "description": "列出外部源文件的页面标题",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceScreenPlaceholder": "该外部源的文件浏览与导入功能尚未实现。",
+  "@externalSourceScreenPlaceholder": {
+    "description": "尚未实现的外部源页面占位说明"
+  },
+  "externalSourceNotFound": "该外部源已不存在",
+  "@externalSourceNotFound": {
+    "description": "打开已删除外部源页面时显示的提示"
   }
 }

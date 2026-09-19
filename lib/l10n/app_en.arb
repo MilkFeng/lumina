@@ -1160,5 +1160,230 @@
   "chapterNotFoundInSpine": "Chapter not found in book spine",
   "@chapterNotFoundInSpine": {
     "description": "Error message shown when trying to navigate to a chapter that doesn't exist in the book spine"
+  },
+  "externalSources": "External Sources",
+  "@externalSources": {
+    "description": "Settings section title for the list of external book sources"
+  },
+  "noExternalSources": "No external sources yet",
+  "@noExternalSources": {
+    "description": "Placeholder shown when no external source has been configured"
+  },
+  "addExternalSource": "Add external source",
+  "@addExternalSource": {
+    "description": "Settings tile that opens the new external source dialog"
+  },
+  "addExternalSourceSubtitle": "Import books from WebDAV and other remote sources",
+  "@addExternalSourceSubtitle": {
+    "description": "Subtitle of the add external source tile"
+  },
+  "externalSourceDefaultName": "External Source {number}",
+  "@externalSourceDefaultName": {
+    "description": "Default name offered when creating an external source",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "externalSourceName": "Name",
+  "@externalSourceName": {
+    "description": "Label of the external source name field"
+  },
+  "externalSourceNameRequired": "Please enter a name",
+  "@externalSourceNameRequired": {
+    "description": "Validation error when the external source name is empty"
+  },
+  "externalSourceNameDuplicate": "Name already in use",
+  "@externalSourceNameDuplicate": {
+    "description": "Validation error when the external source name is not unique"
+  },
+  "externalSourceRequiredField": "Required",
+  "@externalSourceRequiredField": {
+    "description": "Validation error for an empty required field of an external source"
+  },
+  "externalSourceType": "Type",
+  "@externalSourceType": {
+    "description": "Label of the external source type selector"
+  },
+  "externalSourceTypeWebdav": "WebDAV",
+  "@externalSourceTypeWebdav": {
+    "description": "Display name of the WebDAV external source type"
+  },
+  "externalSourceConfiguration": "Configuration",
+  "@externalSourceConfiguration": {
+    "description": "Heading above the type-specific fields of the external source dialog"
+  },
+  "externalSourceConfigurationLoadFailed": "Could not read this source's configuration.",
+  "@externalSourceConfigurationLoadFailed": {
+    "description": "Shown in the external source dialog when its stored configuration cannot be read"
+  },
+  "externalSourceWebdavUrl": "Server URL",
+  "@externalSourceWebdavUrl": {
+    "description": "Label of the WebDAV server URL field"
+  },
+  "externalSourceWebdavUrlHint": "https://dav.example.com",
+  "@externalSourceWebdavUrlHint": {
+    "description": "Example value shown in the WebDAV server URL field"
+  },
+  "externalSourceWebdavPath": "Folder (optional)",
+  "@externalSourceWebdavPath": {
+    "description": "Label of the folder inside the WebDAV server"
+  },
+  "externalSourceWebdavPathHint": "books",
+  "@externalSourceWebdavPathHint": {
+    "description": "Example value shown in the WebDAV folder field"
+  },
+  "externalSourceUsername": "Username",
+  "@externalSourceUsername": {
+    "description": "Label of the external source username field"
+  },
+  "externalSourcePassword": "Password",
+  "@externalSourcePassword": {
+    "description": "Label of the external source password field"
+  },
+  "externalSourceTesting": "Testing connection…",
+  "@externalSourceTesting": {
+    "description": "Message shown while the external source connection is being tested"
+  },
+  "externalSourceTestSuccess": "Connection successful",
+  "@externalSourceTestSuccess": {
+    "description": "Message shown when the external source connection test succeeds"
+  },
+  "externalSourceTestFailed": "Connection failed: {reason}",
+  "@externalSourceTestFailed": {
+    "description": "Message shown when the external source connection test fails",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceAdded": "Added “{name}”",
+  "@externalSourceAdded": {
+    "description": "Message shown after an external source has been added",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceUpdated": "Updated “{name}”",
+  "@externalSourceUpdated": {
+    "description": "Message shown after an external source has been changed",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceDeleted": "Deleted “{name}”",
+  "@externalSourceDeleted": {
+    "description": "Message shown after an external source has been deleted",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceDeleteFailed": "Could not delete the source",
+  "@externalSourceDeleteFailed": {
+    "description": "Message shown when deleting an external source fails"
+  },
+  "externalSourceDeleteConfirm": "Delete source",
+  "@externalSourceDeleteConfirm": {
+    "description": "Title of the external source delete confirmation dialog"
+  },
+  "externalSourceDeleteConfirmText": "Delete “{name}” and its configuration? Imported books are not affected.",
+  "@externalSourceDeleteConfirmText": {
+    "description": "Body of the external source delete confirmation dialog",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceEdit": "Edit",
+  "@externalSourceEdit": {
+    "description": "Action that opens the external source editor"
+  },
+  "externalSourceTestConnection": "Test connection",
+  "@externalSourceTestConnection": {
+    "description": "Action that tests an external source connection"
+  },
+  "externalSourceErrorAuth": "the server rejected the username or password",
+  "@externalSourceErrorAuth": {
+    "description": "Connection failure explanation for a rejected login"
+  },
+  "externalSourceErrorNotFound": "the folder was not found",
+  "@externalSourceErrorNotFound": {
+    "description": "Connection failure explanation for a missing folder"
+  },
+  "externalSourceErrorInvalidUrl": "the server URL is not a valid http(s) URL",
+  "@externalSourceErrorInvalidUrl": {
+    "description": "Connection failure explanation for a malformed URL"
+  },
+  "externalSourceErrorInvalidResponse": "the server did not answer with WebDAV data",
+  "@externalSourceErrorInvalidResponse": {
+    "description": "Connection failure explanation for an unusable response body"
+  },
+  "externalSourceErrorTimeout": "the server did not respond in time",
+  "@externalSourceErrorTimeout": {
+    "description": "Connection failure explanation for a request timeout"
+  },
+  "externalSourceErrorNetwork": "the server could not be reached",
+  "@externalSourceErrorNetwork": {
+    "description": "Connection failure explanation for a network error"
+  },
+  "externalSourceErrorTls": "the secure connection could not be established",
+  "@externalSourceErrorTls": {
+    "description": "Connection failure explanation for a certificate error"
+  },
+  "externalSourceErrorTooLarge": "the file is too large to download",
+  "@externalSourceErrorTooLarge": {
+    "description": "Connection failure explanation for an oversized download"
+  },
+  "externalSourceErrorStatus": "the server answered with error {status}",
+  "@externalSourceErrorStatus": {
+    "description": "Connection failure explanation carrying an HTTP status code",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "externalSourceErrorDuplicateName": "another source already uses this name",
+  "@externalSourceErrorDuplicateName": {
+    "description": "Failure explanation for a name collision"
+  },
+  "externalSourceErrorUnknown": "unexpected error",
+  "@externalSourceErrorUnknown": {
+    "description": "Fallback explanation for an unrecognised failure"
+  },
+  "importFromExternalSource": "Import files from “{name}”",
+  "@importFromExternalSource": {
+    "description": "Home screen menu entry that opens an external source",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceScreenTitle": "Import from “{name}”",
+  "@externalSourceScreenTitle": {
+    "description": "Title of the screen that lists a source's files",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "externalSourceScreenPlaceholder": "Browsing and importing files from this source is not available yet.",
+  "@externalSourceScreenPlaceholder": {
+    "description": "Placeholder body of the not-yet-implemented source screen"
+  },
+  "externalSourceNotFound": "This external source no longer exists",
+  "@externalSourceNotFound": {
+    "description": "Message shown when a source screen is opened for a deleted source"
   }
 }

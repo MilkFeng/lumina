@@ -828,4 +828,165 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chapterNotFoundInSpine => 'Chapter not found in book spine';
+
+  @override
+  String get externalSources => 'External Sources';
+
+  @override
+  String get noExternalSources => 'No external sources yet';
+
+  @override
+  String get addExternalSource => 'Add external source';
+
+  @override
+  String get addExternalSourceSubtitle =>
+      'Import books from WebDAV and other remote sources';
+
+  @override
+  String externalSourceDefaultName(int number) {
+    return 'External Source $number';
+  }
+
+  @override
+  String get externalSourceName => 'Name';
+
+  @override
+  String get externalSourceNameRequired => 'Please enter a name';
+
+  @override
+  String get externalSourceNameDuplicate => 'Name already in use';
+
+  @override
+  String get externalSourceRequiredField => 'Required';
+
+  @override
+  String get externalSourceType => 'Type';
+
+  @override
+  String get externalSourceTypeWebdav => 'WebDAV';
+
+  @override
+  String get externalSourceConfiguration => 'Configuration';
+
+  @override
+  String get externalSourceConfigurationLoadFailed =>
+      'Could not read this source\'s configuration.';
+
+  @override
+  String get externalSourceWebdavUrl => 'Server URL';
+
+  @override
+  String get externalSourceWebdavUrlHint => 'https://dav.example.com';
+
+  @override
+  String get externalSourceWebdavPath => 'Folder (optional)';
+
+  @override
+  String get externalSourceWebdavPathHint => 'books';
+
+  @override
+  String get externalSourceUsername => 'Username';
+
+  @override
+  String get externalSourcePassword => 'Password';
+
+  @override
+  String get externalSourceTesting => 'Testing connection…';
+
+  @override
+  String get externalSourceTestSuccess => 'Connection successful';
+
+  @override
+  String externalSourceTestFailed(String reason) {
+    return 'Connection failed: $reason';
+  }
+
+  @override
+  String externalSourceAdded(String name) {
+    return 'Added “$name”';
+  }
+
+  @override
+  String externalSourceUpdated(String name) {
+    return 'Updated “$name”';
+  }
+
+  @override
+  String externalSourceDeleted(String name) {
+    return 'Deleted “$name”';
+  }
+
+  @override
+  String get externalSourceDeleteFailed => 'Could not delete the source';
+
+  @override
+  String get externalSourceDeleteConfirm => 'Delete source';
+
+  @override
+  String externalSourceDeleteConfirmText(String name) {
+    return 'Delete “$name” and its configuration? Imported books are not affected.';
+  }
+
+  @override
+  String get externalSourceEdit => 'Edit';
+
+  @override
+  String get externalSourceTestConnection => 'Test connection';
+
+  @override
+  String get externalSourceErrorAuth =>
+      'the server rejected the username or password';
+
+  @override
+  String get externalSourceErrorNotFound => 'the folder was not found';
+
+  @override
+  String get externalSourceErrorInvalidUrl =>
+      'the server URL is not a valid http(s) URL';
+
+  @override
+  String get externalSourceErrorInvalidResponse =>
+      'the server did not answer with WebDAV data';
+
+  @override
+  String get externalSourceErrorTimeout => 'the server did not respond in time';
+
+  @override
+  String get externalSourceErrorNetwork => 'the server could not be reached';
+
+  @override
+  String get externalSourceErrorTls =>
+      'the secure connection could not be established';
+
+  @override
+  String get externalSourceErrorTooLarge => 'the file is too large to download';
+
+  @override
+  String externalSourceErrorStatus(int status) {
+    return 'the server answered with error $status';
+  }
+
+  @override
+  String get externalSourceErrorDuplicateName =>
+      'another source already uses this name';
+
+  @override
+  String get externalSourceErrorUnknown => 'unexpected error';
+
+  @override
+  String importFromExternalSource(String name) {
+    return 'Import files from “$name”';
+  }
+
+  @override
+  String externalSourceScreenTitle(String name) {
+    return 'Import from “$name”';
+  }
+
+  @override
+  String get externalSourceScreenPlaceholder =>
+      'Browsing and importing files from this source is not available yet.';
+
+  @override
+  String get externalSourceNotFound => 'This external source no longer exists';
 }
