@@ -10,7 +10,7 @@ part of 'library_notifier.dart';
 // ignore_for_file: type=lint, type=warning
 /// Notifier for managing library operations with dependency injection
 ///
-/// Must stay alive: `importPipelineStream` and `importLibraryFromFolder` are
+/// Must stay alive: `importPipelineStream` and `restoreLibraryFromBackup` are
 /// long-running generators that keep using `ref` and `state` across many async
 /// gaps. With the default `autoDispose`, the provider is disposed as soon as no
 /// widget is listening (e.g. the library screen is unmounted while the import
@@ -22,7 +22,7 @@ const libraryProvider = LibraryNotifierProvider._();
 
 /// Notifier for managing library operations with dependency injection
 ///
-/// Must stay alive: `importPipelineStream` and `importLibraryFromFolder` are
+/// Must stay alive: `importPipelineStream` and `restoreLibraryFromBackup` are
 /// long-running generators that keep using `ref` and `state` across many async
 /// gaps. With the default `autoDispose`, the provider is disposed as soon as no
 /// widget is listening (e.g. the library screen is unmounted while the import
@@ -32,7 +32,7 @@ final class LibraryNotifierProvider
     extends $AsyncNotifierProvider<LibraryNotifier, LibraryState> {
   /// Notifier for managing library operations with dependency injection
   ///
-  /// Must stay alive: `importPipelineStream` and `importLibraryFromFolder` are
+  /// Must stay alive: `importPipelineStream` and `restoreLibraryFromBackup` are
   /// long-running generators that keep using `ref` and `state` across many async
   /// gaps. With the default `autoDispose`, the provider is disposed as soon as no
   /// widget is listening (e.g. the library screen is unmounted while the import
@@ -61,7 +61,7 @@ String _$libraryNotifierHash() => r'928701632823be8581b133e1dc6690cfc3494aba';
 
 /// Notifier for managing library operations with dependency injection
 ///
-/// Must stay alive: `importPipelineStream` and `importLibraryFromFolder` are
+/// Must stay alive: `importPipelineStream` and `restoreLibraryFromBackup` are
 /// long-running generators that keep using `ref` and `state` across many async
 /// gaps. With the default `autoDispose`, the provider is disposed as soon as no
 /// widget is listening (e.g. the library screen is unmounted while the import

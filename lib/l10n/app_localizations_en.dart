@@ -561,6 +561,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoreFromBackup => 'Restore from Backup';
 
   @override
+  String get restoreBackupDescription =>
+      'Replace the current library with the books stored in a backup folder';
+
+  @override
+  String get restoreConfirmTitle => 'Restore from backup';
+
+  @override
+  String get restoreConfirmMessage =>
+      'Your current library is erased first — every book, cover and reading progress — and then replaced by the backup. This cannot be undone.';
+
+  @override
+  String restoreConfirmSource(String name) {
+    return 'Backup folder: $name';
+  }
+
+  @override
+  String get restoreConfirmAction => 'Erase and restore';
+
+  @override
+  String get restoreFailedTitle => 'Restore Failed';
+
+  @override
   String get backupLibrary => 'Backup Library';
 
   @override

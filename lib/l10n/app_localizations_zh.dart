@@ -551,6 +551,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get restoreFromBackup => '从备份恢复';
 
   @override
+  String get restoreBackupDescription => '用备份文件夹中的书籍替换当前书库';
+
+  @override
+  String get restoreConfirmTitle => '从备份恢复书库';
+
+  @override
+  String get restoreConfirmMessage =>
+      '当前书库会先被清空（包括所有书籍、封面和阅读进度），然后替换为备份中的内容。此操作无法撤销。';
+
+  @override
+  String restoreConfirmSource(String name) {
+    return '备份文件夹：$name';
+  }
+
+  @override
+  String get restoreConfirmAction => '清空并恢复';
+
+  @override
+  String get restoreFailedTitle => '恢复失败';
+
+  @override
   String get backupLibrary => '备份书库';
 
   @override

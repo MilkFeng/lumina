@@ -782,6 +782,35 @@
   "@restoreFromBackup": {
     "description": "Restore from backup option label"
   },
+  "restoreBackupDescription": "Replace the current library with the books stored in a backup folder",
+  "@restoreBackupDescription": {
+    "description": "Restore library feature description"
+  },
+  "restoreConfirmTitle": "Restore from backup",
+  "@restoreConfirmTitle": {
+    "description": "Title of the dialog that confirms a destructive restore"
+  },
+  "restoreConfirmMessage": "Your current library is erased first — every book, cover and reading progress — and then replaced by the backup. This cannot be undone.",
+  "@restoreConfirmMessage": {
+    "description": "Warning shown before the current library is cleared by a restore"
+  },
+  "restoreConfirmSource": "Backup folder: {name}",
+  "@restoreConfirmSource": {
+    "description": "Name of the backup folder that is about to be restored",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreConfirmAction": "Erase and restore",
+  "@restoreConfirmAction": {
+    "description": "Confirm button of the destructive restore dialog"
+  },
+  "restoreFailedTitle": "Restore Failed",
+  "@restoreFailedTitle": {
+    "description": "Title shown when a restore did not finish successfully"
+  },
   "backupLibrary": "Backup Library",
   "@backupLibrary": {
     "description": "Backup library option label"

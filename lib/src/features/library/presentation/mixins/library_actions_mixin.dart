@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/file_handling/file_handling.dart';
 import 'package:lumina/src/features/library/presentation/widgets/import_progress_dialog.dart';
-import 'package:lumina/src/features/library/presentation/widgets/restore_progress_dialog.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/services/toast_service.dart';
 import '../../application/bookshelf_notifier.dart';
@@ -299,68 +298,6 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       await ref
           .read(bookshelfProvider.notifier)
           .renameGroup(group.id, result);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Backup
-  // ---------------------------------------------------------------------------
-
-  /// Triggers a full library backup restore.
-  ///
-  /// Uses [UnifiedImportService.pickBackupDirectory] to select the folder so
-  /// that all platform-specific picker logic stays in one place.
-  Future<void> handleRestoreBackup(BuildContext context, WidgetRef ref) async {
-    isSelectingFiles = true;
-    try {
-      // 1. Ask the user to select the backup directory.
-      final selectedPath = await ref
-          .read(unifiedImportServiceProvider)
-          .pickBackupFolder();
-
-      // User cancelled — exit silently.
-      if (selectedPath == null) {
-        isSelectingFiles = false;
-        return;
-      }
-
-      if (!context.mounted) {
-        isSelectingFiles = false;
-        return;
-      }
-
-      // 2. Start the stream before opening the dialog so that no work is
-      //    duplicated on dialog rebuilds.
-      final progressStream = ref
-          .read(libraryProvider.notifier)
-          .importLibraryFromFolder(selectedPath);
-
-      // 3. Show the restore dialog; it subscribes to the stream and returns
-      //    the final ImportResult when the user closes it.
-      final l10n = AppLocalizations.of(context)!;
-
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Theme.of(
-          context,
-        ).colorScheme.scrim.withValues(alpha: 0.5),
-        builder: (ctx) =>
-            RestoreProgressDialog(stream: progressStream, l10n: l10n),
-      );
-    } catch (e) {
-      if (context.mounted) {
-        ToastService.showError(
-          AppLocalizations.of(context)!.restoreFailed(e.toString()),
-        );
-      }
-    } finally {
-      isSelectingFiles = false;
-    }
-
-    // 4. Refresh the library shelf after a successful restore.
-    if (context.mounted) {
-      await ref.read(bookshelfProvider.notifier).refresh();
     }
   }
 

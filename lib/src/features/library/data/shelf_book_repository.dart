@@ -304,6 +304,19 @@ class ShelfBookRepository {
     }
   }
 
+  /// Delete every book and group record.
+  ///
+  /// Used by the restore flow, which replaces the whole library with a backup
+  /// instead of merging into the existing data. Auto-increment counters are
+  /// left untouched so that ids of the removed rows are never reused.
+  Future<void> clearAll() async {
+    final isar = _isar;
+    await isar.writeTxn(() async {
+      await isar.shelfBooks.clear();
+      await isar.shelfGroups.clear();
+    });
+  }
+
   /// Delete a book permanently by ID
   Future<Either<String, bool>> deleteBook(int id) async {
     try {

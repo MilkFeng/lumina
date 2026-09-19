@@ -3,14 +3,19 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
-import 'package:lumina/src/features/library/application/library_notifier.dart';
 import 'package:lumina/src/features/library/application/progress_log.dart';
 import 'package:lumina/src/features/library/data/services/import_backup_service.dart';
 import 'package:lumina/src/features/library/presentation/widgets/progress_dialog.dart';
 
 /// Hosts the restore-backup progress dialog.
-/// Identical architecture to [_ImportProgressDialog] but interprets
-/// [BackupImportProgress] events instead of [ImportProgress].
+///
+/// Interprets [BackupImportProgress] events instead of the plain [ProgressLog]s
+/// of the import pipeline, and reports the outcome once the stream is done: a
+/// failed restore must never look like a successful one, because the previous
+/// library has already been cleared by the time it fails.
+///
+/// The dialog cannot be dismissed while the stream is running — aborting in the
+/// middle would leave the library half restored.
 class RestoreProgressDialog extends StatefulWidget {
   final Stream<ProgressLog> stream;
   final AppLocalizations l10n;
@@ -34,6 +39,7 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
   int _failedCount = 0;
   String _currentFileName = '';
   bool _isCompleted = false;
+  String? _failureMessage;
   final List<ProgressLog> _logs = [];
 
   @override
@@ -55,10 +61,12 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
         _totalCount = log.total;
         _currentCount = log.current;
         _currentFileName = log.currentFileName;
-        if (log.result is ImportSuccess) {
+        final result = log.result;
+        if (result is ImportSuccess) {
           _successCount++;
-        } else if (log.result is ImportFailure) {
+        } else if (result is ImportFailure) {
           _failedCount++;
+          _failureMessage = result.message;
         }
       }
     });
@@ -66,14 +74,24 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
 
   void _onError(Object error, StackTrace st) {
     if (!mounted) return;
-    setState(() => _isCompleted = true);
-    ToastService.showError(widget.l10n.restoreFailed(error.toString()));
+    setState(() {
+      _isCompleted = true;
+      _failureMessage = error.toString();
+    });
   }
 
   void _onDone() {
     if (!mounted) return;
+    final failure = _failureMessage;
     setState(() => _isCompleted = true);
-    ToastService.showSuccess(widget.l10n.restoreCompleted);
+
+    if (failure != null) {
+      ToastService.showError(widget.l10n.restoreFailed(failure));
+    } else if (_successCount > 0) {
+      ToastService.showSuccess(widget.l10n.restoreSuccess(_successCount));
+    } else {
+      ToastService.showSuccess(widget.l10n.restoreCompleted);
+    }
   }
 
   @override
@@ -90,19 +108,27 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
     final progressValue = hasProgress
         ? (isDone ? 1.0 : _currentCount / _totalCount)
         : null;
+    final remaining = isDone
+        ? 0
+        : _totalCount - _successCount - _failedCount;
 
-    return ProgressDialog(
-      title: widget.l10n.restoring,
-      completeTitle: widget.l10n.restoreCompleted,
-      progressMessage: widget.l10n.restoringProgress(
-        _successCount,
-        _failedCount,
-        _totalCount - _successCount - _failedCount,
+    return PopScope(
+      canPop: isDone,
+      child: ProgressDialog(
+        title: widget.l10n.restoring,
+        completeTitle: _failureMessage == null
+            ? widget.l10n.restoreCompleted
+            : widget.l10n.restoreFailedTitle,
+        progressMessage: widget.l10n.restoringProgress(
+          _successCount,
+          _failedCount,
+          remaining,
+        ),
+        processingMessage: widget.l10n.progressing(_currentFileName),
+        progressValue: progressValue,
+        isCompleted: isDone,
+        logs: _logs,
       ),
-      processingMessage: widget.l10n.progressing(_currentFileName),
-      progressValue: progressValue,
-      isCompleted: isDone,
-      logs: _logs,
     );
   }
 }

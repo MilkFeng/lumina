@@ -62,7 +62,7 @@ class LibraryError extends LibraryState {
 
 /// Notifier for managing library operations with dependency injection
 ///
-/// Must stay alive: `importPipelineStream` and `importLibraryFromFolder` are
+/// Must stay alive: `importPipelineStream` and `restoreLibraryFromBackup` are
 /// long-running generators that keep using `ref` and `state` across many async
 /// gaps. With the default `autoDispose`, the provider is disposed as soon as no
 /// widget is listening (e.g. the library screen is unmounted while the import
@@ -114,31 +114,36 @@ class LibraryNotifier extends _$LibraryNotifier {
     }
   }
 
-  Stream<ProgressLog> importLibraryFromFolder(BackupPaths backupPaths) async* {
+  /// Replaces the whole library with the one stored in [backupPaths].
+  ///
+  /// The current library is erased by [ImportBackupService.restoreLibrary]
+  /// before the backup is applied, so the caller is responsible for asking the
+  /// user to confirm. The stream ends with either an `ImportSuccess` or an
+  /// `ImportFailure` progress event; the library state is refreshed afterwards
+  /// in both cases so the UI never keeps showing deleted books.
+  Stream<ProgressLog> restoreLibraryFromBackup(BackupPaths backupPaths) async* {
     yield ProgressLog(
-      'Starting import from folder: ${backupPaths.rootPath}',
+      'Starting restore from folder: ${backupPaths.rootPath}',
       ProgressLogType.info,
     );
 
     final importService = ref.read(importBackupServiceProvider);
 
     try {
-      await for (final progress in importService.importLibraryFromFolder(
-        backupPaths,
-      )) {
+      await for (final progress in importService.restoreLibrary(backupPaths)) {
         yield progress;
       }
     } catch (e) {
       yield ProgressLog(
-        'Failed to import from folder: $e',
+        'Failed to restore from folder: $e',
         ProgressLogType.error,
       );
-      debugPrint('Import from folder error: $e');
+      debugPrint('Restore from folder error: $e');
     }
 
     yield ProgressLog(
-      'Import from folder completed. Refreshing library...',
-      ProgressLogType.success,
+      'Restore from folder finished. Refreshing library...',
+      ProgressLogType.info,
     );
     await refresh();
   }

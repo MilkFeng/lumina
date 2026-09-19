@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### English
+
+#### Changed
+
+- **Restore Entry Point**: "Restore from Backup" moved from the library floating action menu to Settings → Library, next to "Backup Library".
+- **Restore Behaviour**: Restoring now clears the current library (books, groups, reading progress and their files) and then applies the backup, instead of merging the backup book by book. The restored library is therefore an exact copy of the backup, with no risk of record conflicts.
+- Restoring asks for confirmation before deleting anything and can no longer be interrupted halfway through.
+
+### Chinese
+
+#### 变更与优化
+
+- **恢复入口**：将“从备份恢复”从书库悬浮菜单移到设置 → 书库，与“备份书库”放在一起。
+- **恢复行为**：恢复时会先清空当前书库（书籍、分组、阅读进度及对应文件），再应用备份中的书库，不再逐本合并导入，因此恢复结果与备份完全一致，也不会再出现记录冲突。
+- 恢复前会先弹出确认提示，且恢复过程中无法中断。
+
 ## [v0.2.4] - 2026-09-19
 
 ### English

@@ -384,6 +384,19 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     state = await AsyncValue.guard(() => _loadBooks());
   }
 
+  /// Reloads the shelf after the whole library has been replaced by a backup.
+  ///
+  /// Group ids and the per-tab cache all describe the previous library, so they
+  /// are dropped instead of being reused — otherwise the shelf would keep
+  /// filtering on a group that no longer exists.
+  Future<void> resetAfterRestore() async {
+    _cacheOrder.clear();
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => _loadBooks(clearGroup: true, clearFilter: true),
+    );
+  }
+
   Future<bool> reloadQuietly() async {
     if (state.value == null) return true;
     try {

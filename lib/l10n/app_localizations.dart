@@ -1082,6 +1082,42 @@ abstract class AppLocalizations {
   /// **'Restore from Backup'**
   String get restoreFromBackup;
 
+  /// Restore library feature description
+  ///
+  /// In en, this message translates to:
+  /// **'Replace the current library with the books stored in a backup folder'**
+  String get restoreBackupDescription;
+
+  /// Title of the dialog that confirms a destructive restore
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from backup'**
+  String get restoreConfirmTitle;
+
+  /// Warning shown before the current library is cleared by a restore
+  ///
+  /// In en, this message translates to:
+  /// **'Your current library is erased first — every book, cover and reading progress — and then replaced by the backup. This cannot be undone.'**
+  String get restoreConfirmMessage;
+
+  /// Name of the backup folder that is about to be restored
+  ///
+  /// In en, this message translates to:
+  /// **'Backup folder: {name}'**
+  String restoreConfirmSource(String name);
+
+  /// Confirm button of the destructive restore dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Erase and restore'**
+  String get restoreConfirmAction;
+
+  /// Title shown when a restore did not finish successfully
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Failed'**
+  String get restoreFailedTitle;
+
   /// Backup library option label
   ///
   /// In en, this message translates to:

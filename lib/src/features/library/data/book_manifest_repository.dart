@@ -77,6 +77,17 @@ class BookManifestRepository {
     }
   }
 
+  /// Delete every manifest record.
+  ///
+  /// Used by the restore flow, which replaces the whole library with a backup
+  /// instead of merging into the existing data.
+  Future<void> clearAll() async {
+    final isar = _isar;
+    await isar.writeTxn(() async {
+      await isar.bookManifests.clear();
+    });
+  }
+
   /// Get all manifests (rarely used, mainly for debugging/migration)
   Future<List<BookManifest>> getAllManifests() async {
     final isar = _isar;

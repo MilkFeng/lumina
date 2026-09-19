@@ -790,6 +790,35 @@
   "@restoreFromBackup": {
     "description": "从备份恢复选项标签"
   },
+  "restoreBackupDescription": "用备份文件夹中的书籍替换当前书库",
+  "@restoreBackupDescription": {
+    "description": "恢复书库功能描述"
+  },
+  "restoreConfirmTitle": "从备份恢复书库",
+  "@restoreConfirmTitle": {
+    "description": "确认清空书库并恢复的对话框标题"
+  },
+  "restoreConfirmMessage": "当前书库会先被清空（包括所有书籍、封面和阅读进度），然后替换为备份中的内容。此操作无法撤销。",
+  "@restoreConfirmMessage": {
+    "description": "清空书库前的警告文本"
+  },
+  "restoreConfirmSource": "备份文件夹：{name}",
+  "@restoreConfirmSource": {
+    "description": "即将恢复的备份文件夹名称",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreConfirmAction": "清空并恢复",
+  "@restoreConfirmAction": {
+    "description": "清空书库并恢复的确认按钮"
+  },
+  "restoreFailedTitle": "恢复失败",
+  "@restoreFailedTitle": {
+    "description": "恢复未能成功完成时显示的标题"
+  },
   "library": "书库",
   "@library": {
     "description": "书库部分标题"

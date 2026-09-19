@@ -13,6 +13,7 @@ import 'package:lumina/src/features/settings/presentation/widgets/settings_info_
 import 'package:lumina/src/features/settings/presentation/widgets/backup_tile.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/check_update_tile.dart';
 import 'package:lumina/src/features/settings/presentation/widgets/clean_cache_tile.dart';
+import 'package:lumina/src/features/settings/presentation/widgets/restore_tile.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -83,7 +84,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 // Library section
                 SettingsInfoSection(
                   title: l10n.library,
-                  children: const [BackupTile()],
+                  children: const [BackupTile(), RestoreTile()],
                 ),
 
                 const SizedBox(height: 24),

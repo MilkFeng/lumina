@@ -63,7 +63,7 @@ ProgressLogType _importResultToLogType(ImportResult? result) {
   }
 }
 
-/// Snapshot of the restore progress emitted by [ImportBackupService.importLibraryFromFolder].
+/// Snapshot of the restore progress emitted by [ImportBackupService.restoreLibrary].
 class BackupImportProgress extends ProgressLog {
   BackupImportProgress({
     required this.current,
@@ -84,7 +84,9 @@ class BackupImportProgress extends ProgressLog {
   /// Title (or hash) of the book currently being processed.
   final String currentFileName;
 
-  /// Populated only on the final event. Either [ImportSuccess] or [ImportFailure].
+  /// Populated once a book finishes restoring ([ImportSuccess]), or on the
+  /// final event of an aborted restore ([ImportFailure]). A `null` value means
+  /// the book is still being processed.
   final ImportResult? result;
 }
 
@@ -102,6 +104,12 @@ class BackupImportProgress extends ProgressLog {
 ///   ├── manifests/     ← {hash}.json (serialised BookManifest)
 ///   └── shelf.json     ← ShelfBook list + ShelfGroup list
 /// ```
+///
+/// A restore is a **full replacement**, never a merge: the library that is
+/// currently on the device is cleared (database rows plus `books/` and
+/// `covers/`) and then rebuilt from the backup. This is what makes the result
+/// identical to the state that was exported, and it removes every chance of a
+/// backup row colliding with a local one.
 ///
 /// Memory profile:
 ///   Physical files (.epub, covers) are restored with [File.copy] — a
@@ -125,13 +133,22 @@ class ImportBackupService {
   // Public API
   // ---------------------------------------------------------------------------
 
-  /// Restores a library from [backupPaths], emitting [BackupImportProgress]
-  /// events in real time so the UI can display a progress indicator.
+  /// Replaces the entire library with the contents of [backupPaths], emitting
+  /// [BackupImportProgress] events in real time so the UI can display progress.
   ///
-  /// The final event always has [BackupImportProgress.isCompleted] == `true`
-  /// and its [BackupImportProgress.result] is either [ImportSuccess] or
-  /// [ImportFailure].
-  Stream<ProgressLog> importLibraryFromFolder(BackupPaths backupPaths) async* {
+  /// **Destructive:** the current library is erased before the backup is
+  /// applied, so callers must obtain explicit user confirmation first.
+  ///
+  /// Order of operations:
+  ///   1. `shelf.json` is read and parsed **first** — an unreadable or foreign
+  ///      folder can therefore never wipe the user's library.
+  ///   2. Every `ShelfBook`, `ShelfGroup` and `BookManifest` row is deleted,
+  ///      together with the `books/` and `covers/` directories.
+  ///   3. Every book of the backup is copied into internal storage and inserted
+  ///      as a brand-new row.
+  ///
+  /// The final event carries either [ImportSuccess] or [ImportFailure].
+  Stream<ProgressLog> restoreLibrary(BackupPaths backupPaths) async* {
     // Helper to emit a completed failure event.
     BackupImportProgress failure(String message) => BackupImportProgress(
       current: 0,
@@ -142,7 +159,7 @@ class ImportBackupService {
 
     try {
       // -----------------------------------------------------------------------
-      // 1. Read and parse global shelf.json via UnifiedImportService
+      // 1. Read and parse the backup metadata *before* touching anything.
       // -----------------------------------------------------------------------
       yield ProgressLog('Reading backup metadata...', ProgressLogType.info);
       final shelfString = await _importService.processPlainFile(
@@ -155,27 +172,45 @@ class ImportBackupService {
       final booksJson = (shelfJson['books'] as List<dynamic>)
           .cast<Map<String, dynamic>>();
 
-      // Emit the initial state so the UI can show indeterminate progress
-      // while groups & directories are being set up.
-      yield ProgressLog(
-        'Preparing to restore ${booksJson.length} books...',
-        ProgressLogType.info,
-      );
+      // Books whose files are missing from the folder cannot be restored;
+      // filtering them here keeps the progress totals honest.
+      final restorableBooks = booksJson
+          .where(
+            (m) => backupPaths.bookPaths.containsKey(m['fileHash'] as String),
+          )
+          .toList();
 
-      // -----------------------------------------------------------------------
-      // 2. Restore groups (upsert by name to avoid duplicates).
-      // -----------------------------------------------------------------------
-      yield ProgressLog('Restoring shelf groups...', ProgressLogType.info);
-
-      if (groupsJson.isNotEmpty) {
-        final groups = groupsJson.map(_mapToShelfGroup).toList();
-        await _mergeGroup(groups);
+      // Refuse to clear the library for a backup that holds no usable book.
+      if (booksJson.isNotEmpty && restorableBooks.isEmpty) {
+        yield failure(
+          'None of the ${booksJson.length} books in this backup has files in the folder',
+        );
+        return;
       }
 
-      yield ProgressLog('Groups restored.', ProgressLogType.info);
+      // -----------------------------------------------------------------------
+      // 2. Wipe the current library: database rows and physical files.
+      // -----------------------------------------------------------------------
+      yield ProgressLog(
+        'Clearing the current library before restoring '
+        '${restorableBooks.length} books...',
+        ProgressLogType.warning,
+      );
+      await _clearCurrentLibrary();
 
       // -----------------------------------------------------------------------
-      // 3. Ensure internal storage directories exist.
+      // 3. Restore groups as-is; Isar assigns fresh ids.
+      // -----------------------------------------------------------------------
+      if (groupsJson.isNotEmpty) {
+        yield ProgressLog('Restoring shelf groups...', ProgressLogType.info);
+        for (final groupMap in groupsJson) {
+          await _shelfBookRepository.saveGroup(_mapToShelfGroup(groupMap));
+        }
+        yield ProgressLog('Groups restored.', ProgressLogType.info);
+      }
+
+      // -----------------------------------------------------------------------
+      // 4. Ensure internal storage directories exist.
       // -----------------------------------------------------------------------
       final internalBooksDir = await Directory(
         p.join(AppStorage.documentsPath, AppStorageConstants.booksDir),
@@ -186,176 +221,159 @@ class ImportBackupService {
       ).create(recursive: true);
 
       // -----------------------------------------------------------------------
-      // 4. Restore books one-by-one, yielding progress; upsert each immediately.
+      // 5. Restore books one-by-one, yielding progress; insert each immediately.
+      //    A single corrupt book only produces a warning: the previous library
+      //    is already gone, so aborting would leave the user with even less.
       // -----------------------------------------------------------------------
       yield ProgressLog('Restoring books...', ProgressLogType.info);
-      int importedCount = 0;
+      int restoredCount = 0;
+      int failedCount = 0;
 
-      for (final bookMap in booksJson) {
+      for (final bookMap in restorableBooks) {
         final hash = bookMap['fileHash'] as String;
         final title = (bookMap['title'] as String?)?.trim();
         final displayName = (title != null && title.isNotEmpty) ? title : hash;
+        final pathsForBook = backupPaths.bookPaths[hash]!;
 
         // Yield “processing this book” before doing any heavy I/O.
         yield BackupImportProgress(
-          current: importedCount,
-          total: booksJson.length,
+          current: restoredCount,
+          total: restorableBooks.length,
           currentFileName: displayName,
         );
 
-        final pathsForBook = backupPaths.bookPaths[hash];
-        if (pathsForBook == null) {
+        try {
+          // -- A. Copy the EPUB ----------------------------------------------
+          final destEpub = File(p.join(internalBooksDir.path, '$hash.epub'));
+          if (!destEpub.existsSync()) {
+            final importableEpub = await _importService.processEpub(
+              pathsForBook.epubPath,
+            );
+            await importableEpub.cacheFile.copy(destEpub.path);
+            await _importService.cleanCache(importableEpub.cacheFile);
+          }
+
+          // -- B. Copy the cover ---------------------------------------------
+          String? restoredCoverPath;
+          if (pathsForBook.coverPath != null) {
+            try {
+              final coverBytes = await _importService.processBinaryFile(
+                pathsForBook.coverPath!,
+              );
+              final coverFileName = pathsForBook.coverPath!.name;
+              final destCover = File(
+                p.join(internalCoversDir.path, coverFileName),
+              );
+              await destCover.writeAsBytes(coverBytes);
+              restoredCoverPath =
+                  '${AppStorageConstants.coversDir}/$coverFileName';
+            } catch (e) {
+              debugPrint('[RestoreLibrary] Cover failed for $hash: $e');
+              yield ProgressLog(
+                'Warning: Failed to restore cover for "$displayName", skipping cover.',
+                ProgressLogType.warning,
+              );
+            }
+          }
+
+          // -- C. Insert the manifest ----------------------------------------
+          final manifestString = await _importService.processPlainFile(
+            pathsForBook.manifestPath,
+          );
+          final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
+          await _bookManifestRepository.saveManifest(
+            _mapToBookManifest(manifestMap),
+          );
+
+          // -- D. Insert the shelf book --------------------------------------
+          await _shelfBookRepository.saveBook(
+            _mapToShelfBook(
+              bookMap,
+              filePath: '${AppStorageConstants.booksDir}/$hash.epub',
+              coverPath: restoredCoverPath,
+            ),
+          );
+
+          restoredCount++;
           debugPrint(
-            '[ImportBackup] Files for book $hash not found in backup paths, skipping.',
+            '[RestoreLibrary] Restored "$displayName" '
+            '($restoredCount/${restorableBooks.length}).',
+          );
+
+          yield BackupImportProgress(
+            current: restoredCount,
+            total: restorableBooks.length,
+            currentFileName: displayName,
+            result: ImportSuccess(importedBooks: restoredCount),
+          );
+        } catch (e, st) {
+          failedCount++;
+          debugPrint(
+            '[RestoreLibrary] Failed to restore "$displayName": $e\n$st',
           );
           yield ProgressLog(
-            'Warning: Files for "$displayName" not found, skipping.',
+            'Warning: Failed to restore "$displayName": $e',
             ProgressLogType.warning,
           );
-          continue;
         }
-
-        // -- A. Process & Copy EPUB --
-        final destEpub = File(p.join(internalBooksDir.path, '$hash.epub'));
-        if (!destEpub.existsSync()) {
-          final importableEpub = await _importService.processEpub(
-            pathsForBook.epubPath,
-          );
-          await importableEpub.cacheFile.copy(destEpub.path);
-          await _importService.cleanCache(importableEpub.cacheFile);
-        }
-
-        // -- B. Process & Copy Cover --
-        String? restoredCoverPath;
-        if (pathsForBook.coverPath != null) {
-          try {
-            final coverBytes = await _importService.processBinaryFile(
-              pathsForBook.coverPath!,
-            );
-            final coverFileName = pathsForBook.coverPath!.name;
-            final destCover = File(
-              p.join(internalCoversDir.path, coverFileName),
-            );
-            await destCover.writeAsBytes(coverBytes);
-            restoredCoverPath =
-                '${AppStorageConstants.coversDir}/$coverFileName';
-          } catch (e) {
-            debugPrint('[ImportBackup] Failed to process cover for $hash: $e');
-            yield ProgressLog(
-              'Warning: Failed to restore cover for "$displayName", skipping cover.',
-              ProgressLogType.warning,
-            );
-          }
-        }
-
-        // -- C. Process Manifest JSON --
-        final manifestString = await _importService.processPlainFile(
-          pathsForBook.manifestPath,
-        );
-        final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
-        final manifest = _mapToBookManifest(manifestMap);
-        await _mergeManifest(manifest);
-
-        // -- D. Build ShelfBook and upsert immediately --
-        final book = _mapToShelfBook(
-          bookMap,
-          filePath: '${AppStorageConstants.booksDir}/$hash.epub',
-          coverPath: restoredCoverPath,
-        );
-        await _mergeBook(book);
-
-        importedCount++;
-        debugPrint(
-          '[ImportBackup] Upserted "$displayName" ($importedCount/${booksJson.length}).',
-        );
-
-        yield BackupImportProgress(
-          current: importedCount,
-          total: booksJson.length,
-          currentFileName: displayName,
-          result: ImportSuccess(importedBooks: importedCount),
-        );
       }
 
-      debugPrint('[ImportBackup] Import complete. Total books: $importedCount');
+      // Every book failed: the library is empty now, so say so loudly instead
+      // of reporting a successful restore of nothing.
+      if (restoredCount == 0 && failedCount > 0) {
+        yield failure('No book could be restored from this backup');
+        return;
+      }
+
+      debugPrint(
+        '[RestoreLibrary] Restore complete. '
+        'Restored: $restoredCount, failed: $failedCount.',
+      );
       yield ProgressLog(
-        'Import completed: $importedCount books imported.',
-        ProgressLogType.success,
+        restorableBooks.isEmpty
+            ? 'Restore completed: the backup contains an empty library.'
+            : (failedCount == 0
+                  ? 'Restore completed: $restoredCount books restored.'
+                  : 'Restore completed: $restoredCount books restored, '
+                        '$failedCount failed.'),
+        failedCount == 0 ? ProgressLogType.success : ProgressLogType.warning,
       );
     } on FormatException catch (e) {
-      debugPrint('[ImportBackup] JSON parse error: $e');
+      debugPrint('[RestoreLibrary] JSON parse error: $e');
       yield failure('Failed to parse backup data: ${e.message}');
     } catch (e, st) {
-      debugPrint('[ImportBackup] Unexpected error: $e\n$st');
-      yield failure('Import failed: $e');
+      debugPrint('[RestoreLibrary] Unexpected error: $e\n$st');
+      yield failure('Restore failed: $e');
     } finally {
       // Release all security-scoped resource accesses held by the native iOS
       // picker plugin.  This is a no-op on Android; calling it unconditionally
       // keeps the code simple and guarantees no resource leaks on iOS even if
-      // the import fails or is cancelled.
+      // the restore fails or is cancelled.
       await _importService.releaseIosAccess();
     }
   }
 
-  Future<void> _mergeGroup(List<ShelfGroup> backupGroups) async {
-    for (final backupGroup in backupGroups) {
-      final existingGroup = await _shelfBookRepository.getGroupByName(
-        backupGroup.name,
-      );
+  /// Deletes every trace of the current library.
+  ///
+  /// Database rows are cleared first. Failures while removing physical files
+  /// stay non-fatal: the restore rewrites every file it references, and the
+  /// storage cleanup service sweeps the leftovers later.
+  Future<void> _clearCurrentLibrary() async {
+    await _shelfBookRepository.clearAll();
+    await _bookManifestRepository.clearAll();
 
-      if (existingGroup == null) {
-        await _shelfBookRepository.createGroup(name: backupGroup.name);
-      } else {
-        if (backupGroup.updatedAt > existingGroup.updatedAt) {
-          backupGroup.id = existingGroup.id;
-          await _shelfBookRepository.saveGroup(backupGroup);
+    for (final dirName in const [
+      AppStorageConstants.booksDir,
+      AppStorageConstants.coversDir,
+    ]) {
+      final dir = Directory(p.join(AppStorage.documentsPath, dirName));
+      try {
+        if (await dir.exists()) {
+          await dir.delete(recursive: true);
         }
-      }
-    }
-  }
-
-  Future<void> _mergeManifest(BookManifest backupManifest) async {
-    final existingManifest = await _bookManifestRepository.getManifestByHash(
-      backupManifest.fileHash,
-    );
-
-    if (existingManifest == null) {
-      await _bookManifestRepository.saveManifest(backupManifest);
-    } else {
-      if (backupManifest.lastUpdated.isAfter(existingManifest.lastUpdated)) {
-        await _bookManifestRepository.saveManifest(backupManifest);
-      }
-    }
-  }
-
-  Future<void> _mergeBook(ShelfBook backupBook) async {
-    final existingBook = await _shelfBookRepository.getBookByHash(
-      backupBook.fileHash,
-    );
-    if (existingBook == null) {
-      await _shelfBookRepository.saveBook(backupBook);
-    } else {
-      // merge `currentChapterIndex` and `readingProgress` by `lastOpenedDate`
-      if (backupBook.lastOpenedDate != null &&
-          existingBook.lastOpenedDate != null) {
-        if (backupBook.lastOpenedDate! > existingBook.lastOpenedDate!) {
-          existingBook.currentChapterIndex = backupBook.currentChapterIndex;
-          existingBook.readingProgress = backupBook.readingProgress;
-          existingBook.chapterScrollPosition = backupBook.chapterScrollPosition;
-          existingBook.lastOpenedDate = backupBook.lastOpenedDate;
-        }
-      }
-
-      // For other fields, use `updatedAt` as the source of truth. This means
-      // that if the backup's metadata is newer, it will overwrite the existing
-      // book's metadata (title, authors, description, etc.) but keep the
-      // existing reading progress.
-      if (backupBook.updatedAt > existingBook.updatedAt) {
-        backupBook.id = existingBook.id;
-        if (backupBook.coverPath == null && existingBook.coverPath != null) {
-          backupBook.coverPath = existingBook.coverPath;
-        }
-        await _shelfBookRepository.saveBook(backupBook);
+        await dir.create(recursive: true);
+      } catch (e) {
+        debugPrint('[RestoreLibrary] Failed to reset $dirName: $e');
       }
     }
   }
@@ -365,8 +383,8 @@ class ImportBackupService {
   // ---------------------------------------------------------------------------
 
   /// Deserialises a [ShelfGroup] from its JSON map.
-  /// The `id` field is intentionally omitted — Isar assigns it via the `name`
-  /// upsert index, preserving the existing row if the group already exists.
+  /// The `id` field is intentionally omitted — Isar assigns a fresh one when
+  /// the group is inserted into the just-cleared database.
   ShelfGroup _mapToShelfGroup(Map<String, dynamic> m) {
     return ShelfGroup()
       ..name = m['name'] as String

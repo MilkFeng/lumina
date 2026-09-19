@@ -227,11 +227,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           AppLocalizations.of(context)!.importFromFolder,
           () => _scanFolder(context, ref),
         ),
-        buildSpeedDialChild(
-          Icons.settings_backup_restore_outlined,
-          AppLocalizations.of(context)!.restoreFromBackup,
-          () => handleRestoreBackup(context, ref),
-        ),
       ],
     );
   }
