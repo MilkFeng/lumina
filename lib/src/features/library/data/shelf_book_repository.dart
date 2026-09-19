@@ -63,26 +63,23 @@ class ShelfBookRepository {
       case ShelfBookSortBy.titleDesc:
         return books..sort((a, b) => compareNatural(b.title, a.title));
       case ShelfBookSortBy.authorAsc:
-        return books
-          ..sort(
-            (a, b) => compareNatural(
-              a.authors.firstOrNull ?? '',
-              b.authors.firstOrNull ?? '',
-            ),
-          );
+        return books..sort(
+          (a, b) => compareNatural(
+            a.authors.firstOrNull ?? '',
+            b.authors.firstOrNull ?? '',
+          ),
+        );
       case ShelfBookSortBy.authorDesc:
-        return books
-          ..sort(
-            (a, b) => compareNatural(
-              b.authors.firstOrNull ?? '',
-              a.authors.firstOrNull ?? '',
-            ),
-          );
+        return books..sort(
+          (a, b) => compareNatural(
+            b.authors.firstOrNull ?? '',
+            a.authors.firstOrNull ?? '',
+          ),
+        );
       case ShelfBookSortBy.recentlyRead:
-        return books
-          ..sort(
-            (a, b) => (b.lastOpenedDate ?? 0).compareTo(a.lastOpenedDate ?? 0),
-          );
+        return books..sort(
+          (a, b) => (b.lastOpenedDate ?? 0).compareTo(a.lastOpenedDate ?? 0),
+        );
       case ShelfBookSortBy.recentlyAdded:
         return books..sort((a, b) => b.importDate.compareTo(a.importDate));
       case ShelfBookSortBy.progress:

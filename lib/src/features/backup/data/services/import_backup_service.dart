@@ -318,7 +318,8 @@ class ImportBackupService {
           final manifestString = await _pipeline.readText(
             pathsForBook.manifestPath,
           );
-          final manifestMap = jsonDecode(manifestString) as Map<String, dynamic>;
+          final manifestMap =
+              jsonDecode(manifestString) as Map<String, dynamic>;
           await _bookManifestRepository.saveManifest(
             _mapToBookManifest(manifestMap),
           );

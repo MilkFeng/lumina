@@ -33,9 +33,7 @@ void main() {
         'ShelfBookRepository.bookExists should be called correctly',
         () async {
           // Arrange
-          when(
-            mockShelfBookRepo.bookExists(any),
-          ).thenAnswer((_) async => true);
+          when(mockShelfBookRepo.bookExists(any)).thenAnswer((_) async => true);
 
           // Act
           final result = await mockShelfBookRepo.bookExists('test-hash');
@@ -79,22 +77,19 @@ void main() {
         },
       );
 
-      test(
-        'ShelfBookRepository.deleteBook should delete the book',
-        () async {
-          // Arrange
-          when(
-            mockShelfBookRepo.deleteBook(1),
-          ).thenAnswer((_) async => right(true));
+      test('ShelfBookRepository.deleteBook should delete the book', () async {
+        // Arrange
+        when(
+          mockShelfBookRepo.deleteBook(1),
+        ).thenAnswer((_) async => right(true));
 
-          // Act
-          final result = await mockShelfBookRepo.deleteBook(1);
+        // Act
+        final result = await mockShelfBookRepo.deleteBook(1);
 
-          // Assert
-          expect(result.isRight(), true);
-          verify(mockShelfBookRepo.deleteBook(1)).called(1);
-        },
-      );
+        // Assert
+        expect(result.isRight(), true);
+        verify(mockShelfBookRepo.deleteBook(1)).called(1);
+      });
 
       test(
         'BookManifestRepository.deleteManifestByHash should delete Manifest',
@@ -119,9 +114,7 @@ void main() {
     group('Business Logic Verification', () {
       test('Should return error when book already exists', () async {
         // Arrange
-        when(
-          mockShelfBookRepo.bookExists(any),
-        ).thenAnswer((_) async => true);
+        when(mockShelfBookRepo.bookExists(any)).thenAnswer((_) async => true);
 
         // Act & Assert
         final exists = await mockShelfBookRepo.bookExists('existing-hash');

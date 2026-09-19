@@ -296,9 +296,7 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
     );
 
     if (result != null && result.isNotEmpty && result != group.name) {
-      await ref
-          .read(bookshelfProvider.notifier)
-          .renameGroup(group.id, result);
+      await ref.read(bookshelfProvider.notifier).renameGroup(group.id, result);
     }
   }
 

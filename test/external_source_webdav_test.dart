@@ -128,6 +128,11 @@ void main() {
 </d:multistatus>
 ''';
 
+    // The `books` collection as the source root, which is what the hrefs below
+    // are absolute against — exactly the pairing a real `PROPFIND` produces.
+    final sourceUri = Uri.parse(
+      'https://dav.example.com/remote.php/dav/files/me/books/',
+    );
     final collectionUri = Uri.parse(
       'https://dav.example.com/remote.php/dav/files/me/books/',
     );
@@ -136,6 +141,7 @@ void main() {
       final items = WebDavClient.parseMultiStatus(
         body,
         collectionUri: collectionUri,
+        sourceUri: sourceUri,
       );
 
       expect(items.map((item) => item.path), [
@@ -149,6 +155,7 @@ void main() {
       final items = WebDavClient.parseMultiStatus(
         body,
         collectionUri: collectionUri,
+        sourceUri: sourceUri,
       );
 
       final file = items.firstWhere((item) => item.isEpub);
@@ -182,6 +189,7 @@ void main() {
       final items = WebDavClient.parseMultiStatus(
         plain,
         collectionUri: Uri.parse('https://dav.example.com/books/'),
+        sourceUri: Uri.parse('https://dav.example.com/books/'),
       );
 
       expect(items.single.path, 'plain.epub');
@@ -203,6 +211,7 @@ void main() {
       final items = WebDavClient.parseMultiStatus(
         sibling,
         collectionUri: Uri.parse('https://dav.example.com/books/'),
+        sourceUri: Uri.parse('https://dav.example.com/books/'),
       );
 
       expect(items, isEmpty);

@@ -36,9 +36,7 @@ mixin _LinkHandlingMixin on ConsumerState<ReaderScreen> {
         await loadCarousel(anchor: anchor, overrideSpineIndex: index);
       }
     } else {
-      final linkHandling = ref
-          .read(readerSettingsProvider)
-          .linkHandling;
+      final linkHandling = ref.read(readerSettingsProvider).linkHandling;
 
       final uri = Uri.tryParse(url);
 

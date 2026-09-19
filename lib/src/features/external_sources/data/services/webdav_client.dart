@@ -85,12 +85,20 @@ class WebDavClient {
     }
   }
 
-  /// Lists the direct children of [path] (`''` is the source root).
+  /// Lists the direct children of the collection at [path] (`''` is the source
+  /// root).
+  ///
+  /// [path] may be written either way — `books` or `books/` — and is
+  /// canonicalised to the trailing-slash form below. That is not cosmetic: a
+  /// `PROPFIND` without the trailing slash addresses the resource as a plain
+  /// member, which several servers answer with a redirect or a body that
+  /// describes no children at all, so nested folders would appear not to exist.
   ///
   /// The collection itself is never part of the result, and directories come
   /// first.
   Future<List<ExternalSourceItem>> list([String path = '']) async {
-    final uri = resolve(path);
+    final collectionPath = _asCollectionPath(path);
+    final uri = resolve(collectionPath);
     final response = await _send(
       'PROPFIND',
       uri,
@@ -107,15 +115,24 @@ class WebDavClient {
 
     final items = parseMultiStatus(
       utf8.decode(response.bodyBytes, allowMalformed: true),
-      // The absolute URL of the collection that was listed. Response hrefs are
-      // absolute too, so the two only line up once both are resolved.
+      // The absolute URLs of the collection that was listed and of the source
+      // root. Response hrefs are absolute too, so all three only line up once
+      // resolved.
       collectionUri: uri,
+      sourceUri: resolve(''),
     );
     items.sort((a, b) {
       if (a.isDirectory != b.isDirectory) return a.isDirectory ? -1 : 1;
       return a.name.toLowerCase().compareTo(b.name.toLowerCase());
     });
     return items;
+  }
+
+  /// The form of [path] that addresses a collection: exactly one trailing
+  /// slash, and none at all for the root.
+  static String _asCollectionPath(String path) {
+    final trimmed = path.replaceAll(RegExp(r'/+$'), '');
+    return trimmed.isEmpty ? '' : '$trimmed/';
   }
 
   /// Streams the file at [path] into [target].
@@ -260,10 +277,14 @@ class WebDavClient {
 
   /// Parses a `207 Multi-Status` body into [ExternalSourceItem]s.
   ///
-  /// [collectionUri] is the absolute URL that was listed. It is compared
-  /// against the absolute `href`s in the body, so the entry describing the
-  /// collection itself is filtered out and every returned [ExternalSourceItem]
-  /// is a genuine child with a path relative to the collection.
+  /// [sourceUri] is the source's base URL — the root of the `relativePath`s a
+  /// caller works with — and [collectionUri] is the absolute URL that was
+  /// listed.
+  ///
+  /// Every `href` is made relative to [sourceUri] first, because that is the
+  /// form callers navigate further with; the entry whose relative path equals
+  /// the collection's own is then dropped, since a collection always describes
+  /// itself first in the response.
   ///
   /// Namespace handling is intentionally lenient: elements are matched by local
   /// name across any namespace, because servers disagree about prefixes (`D:`,
@@ -271,6 +292,7 @@ class WebDavClient {
   static List<ExternalSourceItem> parseMultiStatus(
     String xml, {
     Uri? collectionUri,
+    Uri? sourceUri,
   }) {
     XmlDocument document;
     try {
@@ -279,7 +301,18 @@ class WebDavClient {
       throw const WebDavMalformedResponseException();
     }
 
-    final basePath = _split(_decode(collectionUri?.path ?? '')).toList();
+    final sourcePath = _split(_decode(sourceUri?.path ?? '')).toList();
+    // The collection is compared against entry paths *after* those have been
+    // made source-relative, so its own path must be made source-relative too.
+    // Without that step the two sides are only equal when the source has no
+    // base path — which is the case that decides whether the root listing keeps
+    // its entries or discards all of them.
+    final collectionPath =
+        _removePrefix(
+          _split(_decode(collectionUri?.path ?? '')).join('/'),
+          sourcePath,
+        ) ??
+        '';
     final items = <ExternalSourceItem>[];
 
     for (final response in document.findAllElements(
@@ -301,11 +334,20 @@ class WebDavClient {
             element.findAllElements('collection', namespaceUri: '*').isNotEmpty,
       );
 
-      // The listed collection describes itself first; it is not a child. A
-      // sibling that merely shares a name prefix (`books-old` next to `books`)
-      // is kept, because the comparison is segment-wise.
-      final relative = _stripPrefix(path, basePath);
-      if (relative.isEmpty) continue;
+      // Absolute server path → path relative to the source root. This is the
+      // only form the caller can navigate further with, so it is what the item
+      // carries. An entry that is not inside the source is not ours to show, so
+      // `null` (rather than "empty") is what filters it out.
+      final relative = _removePrefix(path, sourcePath);
+      if (relative == null || relative.isEmpty) continue;
+
+      // The listed collection describes itself first, and it is not a child of
+      // itself. Compared against the collection's own source-relative path,
+      // which is empty for the root — hence the `isDirectory` guard: without it
+      // a root listing would discard every entry, since the root *is* the
+      // collection. The comparison is exact, which keeps a sibling that merely
+      // shares a name prefix (`books-old` next to `books`).
+      if (isDirectory && relative == collectionPath) continue;
 
       final sizeText = _firstText(response, 'getcontentlength');
       final modifiedText = _firstText(response, 'getlastmodified');
@@ -360,21 +402,23 @@ class WebDavClient {
         .join('/');
   }
 
-  /// The part of [path] below [basePath], or an empty string.
+  /// [path] with [prefix] removed, or `null` when [path] is not inside
+  /// [prefix].
   ///
-  /// Compared segment-wise, so a sibling collection that merely shares a prefix
-  /// (`books-old` next to `books`) is not mistaken for a child, and an entry
-  /// above the collection (`/other/x.epub`) yields nothing at all.
-  static String _stripPrefix(String path, List<String> basePath) {
-    if (basePath.isEmpty) return path;
+  /// Both sides are `/`-separated, source-relative paths. The comparison is
+  /// segment-wise, so `books-old/x` is not treated as living inside `books`, and
+  /// [path] being equal to [prefix] yields an empty string rather than a
+  /// failure — which is how "this entry *is* the collection" is detected.
+  static String? _removePrefix(String path, List<String> prefix) {
+    if (prefix.isEmpty) return path;
 
     final segments = path.split('/');
-    if (segments.length <= basePath.length) return '';
+    if (segments.length < prefix.length) return null;
 
-    for (var index = 0; index < basePath.length; index++) {
-      if (segments[index] != basePath[index]) return '';
+    for (var index = 0; index < prefix.length; index++) {
+      if (segments[index] != prefix[index]) return null;
     }
-    return segments.sublist(basePath.length).join('/');
+    return segments.sublist(prefix.length).join('/');
   }
 
   /// Parses the two date formats servers actually send, or returns `null`.

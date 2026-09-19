@@ -36,8 +36,7 @@ class FilePickerService {
   ///
   /// Returns an empty list when the user cancels, on picker failure, or when
   /// the platform is unsupported.
-  Future<List<PlatformPath>> pickEpubFiles() =>
-      _pickPathList('pickEpubFiles');
+  Future<List<PlatformPath>> pickEpubFiles() => _pickPathList('pickEpubFiles');
 
   /// Picks a folder and returns every EPUB found inside it (recursive scan).
   Future<List<PlatformPath>> pickEpubFolder() =>

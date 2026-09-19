@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:lumina/src/features/external_sources/application/external_sources_notifier.dart';
@@ -156,17 +156,35 @@ class ExternalSourceBrowserNotifier extends _$ExternalSourceBrowserNotifier {
 
   /// The source being browsed, or `null` when it does not exist.
   ///
-  /// Waits for the list's first emission before giving up: the database opens
-  /// asynchronously, and the screen can be reached by route before it has, which
-  /// would otherwise look identical to a deleted source.
+  /// [externalSourcesProvider] is backed by an Isar watch — a stream that never
+  /// closes — so its `.future` never completes and awaiting it would hang the
+  /// first listing forever. Listening is the alternative, and the wait is
+  /// bounded: a source that has not appeared by then is reported as missing
+  /// rather than spinning.
+  static const Duration _sourceLookupTimeout = Duration(seconds: 5);
+
   Future<ExternalSource?> _resolveSource() async {
-    // Streams have no synchronous value before their first emission, and the
-    // database opens asynchronously — so a cold read has to wait for it, or a
-    // source that exists would look exactly like one that was deleted.
     if (ref.read(externalSourcesProvider).value case final sources?) {
       return sources.byId(sourceId);
     }
-    final sources = await ref.read(externalSourcesProvider.future);
-    return sources.byId(sourceId);
+
+    final completer = Completer<ExternalSource?>();
+    final subscription = ref.listen<AsyncValue<List<ExternalSource>>>(
+      externalSourcesProvider,
+      (_, next) {
+        final sources = next.value;
+        if (sources == null || completer.isCompleted) return;
+        completer.complete(sources.byId(sourceId));
+      },
+      fireImmediately: true,
+    );
+
+    try {
+      return await completer.future.timeout(_sourceLookupTimeout);
+    } on TimeoutException {
+      return null;
+    } finally {
+      subscription.close();
+    }
   }
 }

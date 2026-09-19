@@ -107,9 +107,7 @@ class _RestoreProgressDialogState extends State<RestoreProgressDialog> {
     final progressValue = hasProgress
         ? (isDone ? 1.0 : _currentCount / _totalCount)
         : null;
-    final remaining = isDone
-        ? 0
-        : _totalCount - _successCount - _failedCount;
+    final remaining = isDone ? 0 : _totalCount - _successCount - _failedCount;
 
     return PopScope(
       canPop: isDone,
