@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### English
 
+#### Added
+
+- **External Sources (WebDAV)**: Add a WebDAV server in Settings and browse its folders from the library to import EPUBs. The password is kept in the platform keychain, never in the library database.
+- **Download Progress**: An import from an external source shows how far the file being downloaded has come.
+
 #### Changed
 
 - **Restore Entry Point**: "Restore from Backup" moved from the library floating action menu to Settings → Library, next to "Backup Library".
@@ -22,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Font Import Naming**: Imported fonts no longer collapse into a single entry named "unknown". Font file names are now resolved by the platform (`getDisplayNames`) instead of being guessed from the picker's opaque handle, path separators and URL-breaking characters are stripped, and a font whose name cannot be resolved gets a unique generated name rather than a shared placeholder.
 
 ### Chinese
+
+#### 新增
+
+- **外部来源（WebDAV）**：可在设置中添加 WebDAV 服务器，并在书库中浏览其目录、导入 EPUB。密码保存在系统钥匙串，不写入书库数据库。
+- **下载进度**：从外部来源导入时会显示当前文件的下载进度。
 
 #### 变更与优化
 
