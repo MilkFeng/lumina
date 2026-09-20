@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/l10n/app_localizations.dart';
 import 'package:lumina/src/core/services/toast_service.dart';
@@ -48,8 +49,12 @@ class ExternalSourcesSection extends ConsumerWidget {
   }
 }
 
-/// One configured source: tapping the row opens the editor, and the two trailing
-/// buttons test the connection and delete the source.
+/// One configured source: tapping the row opens the editor, long pressing it
+/// tests the connection, and the single trailing button deletes the source.
+///
+/// The test sits behind a long press so the row keeps one trailing action; the
+/// gesture is a deliberate one, which suits a check that costs a network round
+/// trip.
 class _ExternalSourceTile extends ConsumerStatefulWidget {
   const _ExternalSourceTile({required this.source});
 
@@ -61,9 +66,9 @@ class _ExternalSourceTile extends ConsumerStatefulWidget {
 }
 
 class _ExternalSourceTileState extends ConsumerState<_ExternalSourceTile> {
-  /// A connection test is a network round trip, so the buttons are disabled
-  /// while one is in flight — and the trailing slot shows a spinner instead of
-  /// the test button, which is the only thing that explains the wait.
+  /// A connection test is a network round trip, so both gestures are disabled
+  /// while one is in flight — and the delete button becomes a spinner, which is
+  /// the only thing that explains the wait.
   bool _testing = false;
 
   ExternalSource get source => widget.source;
@@ -96,42 +101,41 @@ class _ExternalSourceTileState extends ConsumerState<_ExternalSourceTile> {
               context,
               EditExternalSource(source),
             ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_testing)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+      onLongPress: _testing ? null : _testConnection,
+      // The delete button is what the test replaces: while a test runs the
+      // source cannot be edited or deleted anyway, so the spinner takes the
+      // button's spot and the row keeps its shape.
+      trailing: _testing
+          ? const SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
               ),
             )
-          else
-            IconButton(
-              icon: const Icon(Icons.network_check_outlined),
-              color: theme.colorScheme.onSurfaceVariant,
-              tooltip: l10n.externalSourceTestConnection,
-              onPressed: _testConnection,
+          : IconButton(
+              icon: const Icon(Icons.delete_outline),
+              color: theme.colorScheme.error,
+              tooltip: l10n.delete,
+              onPressed: _confirmDelete,
             ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            color: theme.colorScheme.error,
-            tooltip: l10n.delete,
-            onPressed: _testing ? null : _confirmDelete,
-          ),
-        ],
-      ),
     );
   }
 
   /// Tests a stored source and reports the outcome.
   ///
+  /// Reached by long pressing the tile: the haptic click is what confirms the
+  /// gesture registered, since the row has no button to depress.
+  ///
   /// The result is always a toast, never a dialog: this is a check the user
   /// asked for, not a form they have to complete.
   Future<void> _testConnection() async {
     final l10n = AppLocalizations.of(context)!;
+    HapticFeedback.selectionClick();
     setState(() => _testing = true);
     ToastService.showInfo(l10n.externalSourceTesting);
 
