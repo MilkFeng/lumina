@@ -11,7 +11,6 @@ import 'mixins/library_actions_mixin.dart';
 import 'widgets/book_grid_item.dart';
 import 'widgets/library_app_bar.dart';
 import 'widgets/library_selection_bar.dart';
-import 'widgets/style_bottom_sheet.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Library Screen - Displays user's book collection with advanced bookshelf features
@@ -274,7 +273,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               LibraryAppBar(
                 state: state,
                 tabController: _tabController!,
-                onSortPressed: () => _showStyleBottomSheet(context, ref, state),
+                onSortSelected: (sortBy) => ref
+                    .read(bookshelfProvider.notifier)
+                    .changeSortOrder(sortBy),
+                onViewModeSelected: (mode) => ref
+                    .read(bookshelfProvider.notifier)
+                    .changeViewMode(mode),
                 onSelectionToggle: () =>
                     ref.read(bookshelfProvider.notifier).toggleSelectionMode(),
                 onSelectAll: () =>
@@ -363,34 +367,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           ],
         );
       },
-    );
-  }
-
-  void _showStyleBottomSheet(
-    BuildContext context,
-    WidgetRef ref,
-    BookshelfState state,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SizedBox(
-        width: double.infinity,
-        child: StyleBottomSheet(
-          currentSort: state.sortBy,
-          onSortSelected: (sortBy) {
-            ref.read(bookshelfProvider.notifier).changeSortOrder(sortBy);
-            Navigator.pop(context);
-          },
-          currentViewMode: state.viewMode,
-          onViewModeSelected: (mode) {
-            ref.read(bookshelfProvider.notifier).changeViewMode(mode);
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      scrollControlDisabledMaxHeightRatio: 0.75,
-      constraints: const BoxConstraints(maxWidth: double.infinity),
     );
   }
 

@@ -4,14 +4,17 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
+import '../../data/shelf_book_repository.dart';
 import '../../domain/shelf_group.dart';
+import 'style_menu_button.dart';
 
 /// AppBar widget for the Library screen with tabs and action buttons.
 class LibraryAppBar extends StatefulWidget {
   const LibraryAppBar({
     required this.state,
     required this.tabController,
-    required this.onSortPressed,
+    required this.onSortSelected,
+    required this.onViewModeSelected,
     required this.onSelectionToggle,
     required this.onSelectAll,
     required this.onClearSelection,
@@ -21,7 +24,8 @@ class LibraryAppBar extends StatefulWidget {
 
   final BookshelfState state;
   final TabController tabController;
-  final VoidCallback onSortPressed;
+  final ValueChanged<ShelfBookSortBy> onSortSelected;
+  final ValueChanged<ViewMode> onViewModeSelected;
   final VoidCallback onSelectionToggle;
   final VoidCallback onSelectAll;
   final VoidCallback onClearSelection;
@@ -152,9 +156,11 @@ class _LibraryAppBarState extends State<LibraryAppBar>
                   ),
                 )
               else ...[
-                IconButton(
-                  icon: const Icon(Icons.tune_outlined),
-                  onPressed: widget.onSortPressed,
+                StyleMenuButton(
+                  currentSort: widget.state.sortBy,
+                  currentViewMode: widget.state.viewMode,
+                  onSortSelected: widget.onSortSelected,
+                  onViewModeSelected: widget.onViewModeSelected,
                 ),
               ],
             ],
