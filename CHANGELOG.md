@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Restore Behaviour**: Restoring now clears the current library (books, groups, reading progress and their files) and then applies the backup, instead of merging the backup book by book. The restored library is therefore an exact copy of the backup, with no risk of record conflicts.
 - Restoring asks for confirmation before deleting anything and can no longer be interrupted halfway through.
 - **Backup Format Version**: Backup packages are written with format version 2, and a restore now refuses a package that declares no version at all or a version newer than the app supports — the current library is left untouched in that case.
+- **Library Sort & View Menu**: The sort and view options moved out of a bottom sheet into a menu hanging off the app bar's tune icon. The choice in effect is checked, and pressing the icon and dragging onto an entry chooses it without lifting the finger.
+- **Library Add Button**: The floating add button no longer flickers between "+" and "×" as the dial opens — the same glyph now rotates into the cross.
+- **Reader Table of Contents**: Tapping a chapter always jumps to it, including one that holds sections; expanding and collapsing moved to the chevron on its left.
+- **External Sources**: A saved source keeps a single delete button, and long pressing the row tests the connection. The button turns into a progress spinner while the test runs.
 
 #### Fixed
 
@@ -39,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **恢复行为**：恢复时会先清空当前书库（书籍、分组、阅读进度及对应文件），再应用备份中的书库，不再逐本合并导入，因此恢复结果与备份完全一致，也不会再出现记录冲突。
 - 恢复前会先弹出确认提示，且恢复过程中无法中断。
 - **备份格式版本**：备份包统一写入格式版本 2；恢复时若备份包未声明版本、或版本高于当前应用支持的版本，会在清空本地书库之前直接报错拒绝恢复。
+- **书库排序与视图菜单**：排序与视图选项由底部弹层改为挂在应用栏“调节”图标上的菜单，当前生效的选项带勾选标记，按住图标拖到某一项即可一次选定，无需抬手。
+- **书库添加按钮**：悬浮添加按钮展开时不再在“+”与“×”之间闪烁，改为同一个图标旋转成叉。
+- **阅读器目录**：点击章节任意位置都会直接跳转，含子章节的条目同样如此；展开与折叠改为点击条目左侧的箭头。
+- **外部来源**：每条来源只保留一个删除按钮，长按整行可测试连接；测试期间该按钮变为进度圈。
 
 #### 修复
 
