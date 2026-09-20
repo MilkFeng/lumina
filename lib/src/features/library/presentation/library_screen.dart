@@ -11,6 +11,7 @@ import 'mixins/library_actions_mixin.dart';
 import 'widgets/book_grid_item.dart';
 import 'widgets/library_app_bar.dart';
 import 'widgets/library_selection_bar.dart';
+import 'widgets/speed_dial_root_button.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Library Screen - Displays user's book collection with advanced bookshelf features
@@ -210,13 +211,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     }
 
     return SpeedDial(
-      icon: Icons.add_outlined,
-      activeIcon: Icons.close_outlined,
+      // The root button is rendered by us: the package's own icon cross fade
+      // flickers on the "+" / "x" morph. See SpeedDialRootButton.
+      dialRoot: (_, open, toggleChildren) => SpeedDialRootButton(
+        open: open,
+        onPressed: toggleChildren,
+      ),
       overlayColor: Theme.of(context).colorScheme.scrim,
       overlayOpacity: 0.5,
       spaceBetweenChildren: 12,
       renderOverlay: true,
-      useRotationAnimation: true,
       children: [
         buildSpeedDialChild(
           Icons.file_present_outlined,
