@@ -214,7 +214,9 @@ class _StyleMenuButtonState extends State<StyleMenuButton> {
         style: _draggedEntry == id
             ? ButtonStyle(
                 backgroundColor: WidgetStatePropertyAll<Color?>(
-                  Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+                  Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
               )
             : null,
@@ -249,9 +251,7 @@ class _StyleMenuButtonState extends State<StyleMenuButton> {
     // The glyph's top-right corner, in the coordinate space the menu's position
     // is measured in — the button's top-left.
     final Offset corner = icon.topRight - anchor.topLeft;
-    _menuController.open(
-      position: Offset(corner.dx - _kMenuWidth, corner.dy),
-    );
+    _menuController.open(position: Offset(corner.dx - _kMenuWidth, corner.dy));
   }
 
   /// Opens the menu on the press, so that the finger which opened it can carry
@@ -266,9 +266,6 @@ class _StyleMenuButtonState extends State<StyleMenuButton> {
     }
 
     _openMenu();
-    if (event.kind != PointerDeviceKind.mouse) {
-      HapticFeedback.selectionClick();
-    }
   }
 
   /// Walks the highlight to the entry the finger has reached.
@@ -283,9 +280,6 @@ class _StyleMenuButtonState extends State<StyleMenuButton> {
     }
     // A tick per entry the finger crosses: the panel is under the finger rather
     // than in front of the eyes, so the highlight has to be felt as well.
-    if (entry != null) {
-      HapticFeedback.selectionClick();
-    }
     _setDraggedEntry(entry);
   }
 
