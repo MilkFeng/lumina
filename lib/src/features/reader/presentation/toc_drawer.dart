@@ -234,35 +234,52 @@ class _TocDrawerState extends State<TocDrawer> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        // Tapping the row always navigates to the item, whether or not it has
+        // children. Expanding / collapsing is bound to the leading chevron
+        // icon only (see below).
         onTap: () {
-          if (row.hasChildren) {
-            _toggleExpansion(item);
-          } else {
-            widget.onTocItemSelected(item);
-            Navigator.of(context).pop();
-          }
+          widget.onTocItemSelected(item);
+          Navigator.of(context).pop();
         },
         child: Container(
           height: 56.0,
-          padding: EdgeInsets.only(left: paddingLeft, right: 16.0),
+          // The indentation is applied inside the toggle zone below instead of
+          // here, so that the gutter left of the icon can take taps too.
+          padding: const EdgeInsets.only(right: 16.0),
           alignment: Alignment.centerLeft,
           child: Row(
             children: [
               // Expansion Icon (Chevron)
+              // The whole gutter left of the label — the row indentation plus
+              // the chevron — toggles the children of a non-leaf item, while
+              // tapping anywhere else in the row navigates. The icon keeps its
+              // original offset (indentation + 8px gap) and the label still
+              // starts right after it, so the layout is unchanged.
               if (row.hasChildren)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Icon(
-                    row.isExpanded
-                        ? Icons.expand_more_outlined
-                        : Icons.chevron_right_outlined,
-                    size: 20,
-                    color: widget.themeData.colorScheme.onSurfaceVariant,
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _toggleExpansion(item),
+                  child: SizedBox(
+                    width: paddingLeft + 28.0,
+                    height: 56.0,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Icon(
+                          row.isExpanded
+                              ? Icons.expand_more_outlined
+                              : Icons.chevron_right_outlined,
+                          size: 20,
+                          color: widget.themeData.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
                   ),
                 )
               else
                 // Placeholder to align text if desired, or remove for compact look
-                const SizedBox(width: 28),
+                SizedBox(width: paddingLeft + 28.0),
 
               // Label
               Expanded(
