@@ -60,6 +60,21 @@ class ExternalSourceEditorDialog extends ConsumerStatefulWidget {
 
 class _ExternalSourceEditorDialogState
     extends ConsumerState<ExternalSourceEditorDialog> {
+  /// Side margin kept clear between the dialog and the screen edge.
+  ///
+  /// Half of what [AlertDialog] insets by default: the form is six full-width
+  /// inputs, so on a phone the default margin spends a fifth of the width on
+  /// empty space beside them.
+  static const double _screenMargin = 20;
+
+  /// Widest the input column grows.
+  ///
+  /// [AlertDialog] pads its content by 24 on each side, so this puts the frame a
+  /// little under 560 wide on a large window — about as wide as a single-column
+  /// form stays comfortable to read across, and a size the form could not reach
+  /// while it was pinned to a fixed 360-wide box.
+  static const double _maxFormWidth = 512;
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
@@ -276,55 +291,69 @@ class _ExternalSourceEditorDialogState
     final draft = _draft;
 
     return AlertDialog(
+      // Less side inset than the default, so the form gets the width a phone
+      // has to give; the cap below keeps it from stretching on a wide window.
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: _screenMargin,
+        vertical: 24,
+      ),
       title: Text(
         _editing == null ? l10n.addExternalSource : l10n.externalSourceEdit,
       ),
-      content: SizedBox(
-        width: 360,
-        child: switch ((draft, _loadFailed)) {
-          (_, true) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Text(
-              l10n.externalSourceConfigurationLoadFailed,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _maxFormWidth),
+        // `double.maxFinite` hands the width decision to the dialog rather than
+        // to the widest thing inside it, so the form fills the room the screen
+        // and the cap above leave, instead of the fixed phone-sized box it used
+        // to sit in. The same width for the spinner, the load failure and the
+        // form keeps the dialog from changing size while it loads.
+        child: SizedBox(
+          width: double.maxFinite,
+          child: switch ((draft, _loadFailed)) {
+            (_, true) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Text(
+                l10n.externalSourceConfigurationLoadFailed,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
               ),
             ),
-          ),
-          (null, false) => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
-          (final loaded?, false) => SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Every input is disabled while the connection test runs:
-                  // the values being tested are the ones on screen, so editing
-                  // them mid-test would make the result describe something the
-                  // user can no longer see.
-                  _buildNameField(l10n),
-                  const SizedBox(height: 12),
-                  _buildTypeField(l10n),
-                  const SizedBox(height: 20),
-                  Text(
-                    l10n.externalSourceConfiguration,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.primary,
+            (null, false) => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+            (final loaded?, false) => SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Every input is disabled while the connection test runs:
+                    // the values being tested are the ones on screen, so editing
+                    // them mid-test would make the result describe something the
+                    // user can no longer see.
+                    _buildNameField(l10n),
+                    const SizedBox(height: 12),
+                    _buildTypeField(l10n),
+                    const SizedBox(height: 20),
+                    Text(
+                      l10n.externalSourceConfiguration,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  ..._buildConfigFields(context, loaded, l10n),
-                ],
+                    const SizedBox(height: 8),
+                    ..._buildConfigFields(context, loaded, l10n),
+                  ],
+                ),
               ),
             ),
-          ),
-        },
+          },
+        ),
       ),
       actions: [
         TextButton(
