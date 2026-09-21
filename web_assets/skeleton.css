@@ -1,4 +1,12 @@
-/* Full viewport, no margins */
+/* Full viewport, no margins.
+ *
+ * The skeleton stays transparent on purpose: the colour comes from the reader
+ * behind the WebView (`ReaderWebView` paints the theme surface), and the chapter
+ * body is transparent too (`pagination.css`).  That is what lets scroll mode
+ * draw its loading page — the cover — *behind* the WebView instead of over it:
+ * with an opaque skeleton the cover would be hidden, and an opaque page painted
+ * above a hybrid-composition platform view is exactly what puts Flutter content
+ * into the engine's pooled overlay views. */
 html,
 body {
   margin: 0;
@@ -6,7 +14,7 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--lumina-surface-color, #FFFFFF) !important;
+  background-color: transparent !important;
 }
 
 /* Container for iframes */
@@ -16,7 +24,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--lumina-surface-color, #FFFFFF) !important;
+  background-color: transparent !important;
   overflow: hidden;
 }
 
@@ -28,7 +36,7 @@ iframe {
   width: 100%;
   height: 100%;
   border: none;
-  background-color: var(--lumina-surface-color, #FFFFFF) !important;
+  background-color: transparent !important;
   will-change: opacity;
   transition: none;
   pointer-events: none;
