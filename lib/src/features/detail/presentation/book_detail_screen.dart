@@ -304,14 +304,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   // --------------------------------------------------------------------------
 
   /// Shows a modal dialog asking the user what to do with unsaved changes.
-  ///
-  /// [isPop] indicates whether this was triggered by a system back gesture; if
-  /// the user chooses Discard in that case the method calls [context.pop()]
-  /// itself.
-  Future<bool> _handleCancelEdit({
-    required bool isPop,
-    required ShelfBook? book,
-  }) async {
+  Future<bool> _handleCancelEdit({required ShelfBook? book}) async {
     if (_isSaving || _isPickingCover) return false;
     // Skip the dialog if nothing has changed.
     final newAuthors = _authorsController.text
@@ -361,7 +354,6 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     switch (action) {
       case _DiscardAction.discard:
         _exitEditMode();
-        if (isPop && mounted) context.pop();
         return true;
 
       case _DiscardAction.save:
@@ -390,7 +382,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         if (_isEditing) {
-          await _handleCancelEdit(isPop: true, book: book);
+          await _handleCancelEdit(book: book);
         }
       },
       child: AnimatedBuilder(
@@ -411,7 +403,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
                       icon: const Icon(Icons.close_outlined),
                       onPressed: _isSaving || _isPickingCover
                           ? null
-                          : () => _handleCancelEdit(isPop: false, book: book),
+                          : () => _handleCancelEdit(book: book),
                     )
                   : IconButton(
                       icon: const Icon(Icons.arrow_back_outlined),
