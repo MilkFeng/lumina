@@ -92,16 +92,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   double chapterScrollRatio = 0;
 
-  /// Whether the reader is currently laid out as one continuous column.
   ///
   /// Right-to-left and vertical-writing books are always paginated; see
   /// [ReaderSettings.effectiveScrollMode].
+  ///
+  /// Kept in a plain field, refreshed on every build, rather than read from
+  /// `ref` on demand: `saveProgress` also runs from [dispose] — the last chance
+  /// to record where the reader stopped — and Riverpod refuses to read a
+  /// provider once a widget is being unmounted ("Using 'ref' when a widget is
+  /// about to or has been unmounted is unsafe").
+  bool _isScrollMode = false;
+
   @override
-  bool get isScrollMode =>
-      ref
-          .read(readerSettingsProvider)
-          .effectiveScrollMode(bookSession.direction) ==
-      ReaderScrollMode.scrolling;
+  bool get isScrollMode => _isScrollMode;
 
   // Theme state (used by _ThemeMixin)
   @override
@@ -330,6 +333,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     final scrollMode =
         settings.effectiveScrollMode(bookSession.direction) ==
         ReaderScrollMode.scrolling;
+    // Refresh the cached flag on every build: [dispose] cannot ask `ref`.
+    _isScrollMode = scrollMode;
 
     final epubTheme = getEpubTheme();
     final isDark = epubTheme.colorScheme.brightness == Brightness.dark;
