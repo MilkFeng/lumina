@@ -41,30 +41,27 @@ class ReaderWebViewController {
     String frame,
     String url,
     String anchors,
-    String properties,
-  ) async {
-    return await _webViewState?._loadFrame(frame, url, anchors, properties);
+    String properties, {
+    double? initialScrollRatio,
+  }) async {
+    return await _webViewState?._loadFrame(
+      frame,
+      url,
+      anchors,
+      properties,
+      initialScrollRatio: initialScrollRatio,
+    );
   }
 
   Future<void> jumpToPage(int pageIndex) async {
     await _webViewState?._jumpToPage(pageIndex);
   }
 
-  Future<void> restoreScrollPosition(double ratio) async {
-    await _webViewState?._restoreScrollPosition(ratio);
-  }
-
-  /// Pushes an absolute vertical scroll offset to the current frame.
+  /// Scrolls by roughly one screenful, in scroll mode.
   ///
-  /// Scroll mode only; called once per animation frame, so it must stay
-  /// fire-and-forget.
-  Future<void> scrollContentTo(double offset) async {
-    await _webViewState?._scrollContentTo(offset);
-  }
-
-  /// Asks the current frame to re-report its scroll extents.
-  Future<void> requestScrollMetrics() async {
-    await _webViewState?._requestScrollMetrics();
+  /// A one-shot command used by the volume keys; the page does the scrolling.
+  Future<void> scrollByViewport(bool isNext) async {
+    await _webViewState?._scrollByViewport(isNext);
   }
 
   Future<void> checkLongPressElementAt(double x, double y) async {
@@ -98,16 +95,21 @@ class ReaderWebViewController {
 
 /// Builds the reader WebView settings for a given layout mode.
 ///
-/// The only difference between the two modes is the Android platform-view
-/// composition: paginated mode must stay on the virtual display, because the
-/// Android page-turn animation screenshots the WebView through
+/// The two modes differ in two ways.
+///
+/// **Composition.**  Paginated mode must stay on the virtual display, because
+/// the Android page-turn animation screenshots the WebView through
 /// `RepaintBoundary.toImage()` and hybrid composition renders into a separate
 /// surface that the boundary cannot capture.  Scroll mode has no screenshot
-/// path and benefits from hybrid composition, which keeps up with the offsets
-/// Flutter pushes every animation frame.
+/// path and uses hybrid composition instead.
 ///
-/// Touch input stays disabled in both modes: Flutter owns every gesture and
-/// pushes the resulting scroll offset down through `scrollContentTo`.
+/// **Who scrolls.**  Paginated mode keeps native scrolling off: Flutter owns
+/// the page-turn gesture and drives every offset with `jumpToPage`.  Scroll
+/// mode does the opposite — the chapter scrolls itself with the browser's own
+/// scroller, because pushing an offset in from Flutter costs a platform-channel
+/// round-trip per frame and lags behind the finger.  Only the vertical axis is
+/// handed over; the horizontal one stays pinned, which is what
+/// `disableHorizontalScroll` does on both platforms.
 InAppWebViewSettings readerWebViewSettings({required bool scrollMode}) =>
     InAppWebViewSettings(
       disableContextMenu: true,
@@ -121,7 +123,7 @@ InAppWebViewSettings readerWebViewSettings({required bool scrollMode}) =>
       useShouldOverrideUrlLoading: true,
       javaScriptEnabled: true,
       disableHorizontalScroll: true,
-      disableVerticalScroll: true,
+      disableVerticalScroll: !scrollMode,
       supportZoom: false,
       useHybridComposition: scrollMode,
       resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
@@ -141,8 +143,14 @@ class ReaderWebViewCallbacks {
   final Function(int totalPages) onPageCountReady;
   final Function(int pageIndex) onPageChanged;
   final Function(List<String> anchors) onScrollAnchors;
-  final Function(double contentHeight, double viewportHeight, double offset)
-  onScrollMetrics;
+
+  /// Reports where the page scrolled itself to: the current offset and the
+  /// largest one the chapter allows, both in CSS pixels.
+  final Function(double offset, double maxOffset) onScrollProgress;
+
+  /// Reports that the page stopped scrolling, which is when reading progress is
+  /// worth persisting.
+  final Function() onScrollSettled;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
   final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
@@ -154,7 +162,8 @@ class ReaderWebViewCallbacks {
     required this.onPageCountReady,
     required this.onPageChanged,
     required this.onScrollAnchors,
-    required this.onScrollMetrics,
+    required this.onScrollProgress,
+    required this.onScrollSettled,
     required this.onImageLongPress,
     required this.onTap,
     required this.onFootnoteTap,
@@ -295,17 +304,19 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     String frame,
     String url,
     String anchors,
-    String properties,
-  ) => _api.loadFrame(frame, url, anchors, properties);
+    String properties, {
+    double? initialScrollRatio,
+  }) => _api.loadFrame(
+    frame,
+    url,
+    anchors,
+    properties,
+    initialScrollRatio: initialScrollRatio,
+  );
 
   Future<void> _jumpToPage(int pageIndex) => _api.jumpToPage(pageIndex);
 
-  Future<void> _restoreScrollPosition(double ratio) =>
-      _api.restoreScrollPosition(ratio);
-
-  Future<void> _scrollContentTo(double offset) => _api.scrollContentTo(offset);
-
-  Future<void> _requestScrollMetrics() => _api.requestScrollMetrics();
+  Future<void> _scrollByViewport(bool isNext) => _api.scrollByViewport(isNext);
 
   Future<void> _checkLongPressElementAt(double x, double y) =>
       _api.checkLongPressElementAt(x, y);
@@ -386,6 +397,13 @@ class _ReaderWebViewState extends State<ReaderWebView> {
             RepaintBoundary(
               key: _repaintKey,
               child: AbsorbPointer(
+                // While paginated the WebView must not be hit at all: Flutter
+                // claims every gesture.  In scroll mode it has to be reachable,
+                // because that is what lets the chapter scroll itself — the
+                // gesture arena hands a drag to the platform view as soon as
+                // Flutter does not claim it.  See `ReaderRenderer` for the
+                // gestures Flutter keeps.
+                absorbing: !widget.scrollMode,
                 child: widget.shouldShowWebView
                     ? InAppWebView(
                         key: ValueKey(widget.scrollMode),
@@ -477,14 +495,20 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     );
 
     controller.addJavaScriptHandler(
-      handlerName: 'onScrollMetrics',
+      handlerName: 'onScrollProgress',
       callback: (args) {
-        if (args.length < 3) return;
-        widget.callbacks.onScrollMetrics(
+        if (args.length < 2) return;
+        widget.callbacks.onScrollProgress(
           (args[0] as num).toDouble(),
           (args[1] as num).toDouble(),
-          (args[2] as num).toDouble(),
         );
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onScrollSettled',
+      callback: (args) {
+        widget.callbacks.onScrollSettled();
       },
     );
 

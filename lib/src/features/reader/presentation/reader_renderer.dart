@@ -14,10 +14,6 @@ import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import './reader_webview.dart';
 import 'page_turn/page_turn.dart';
-import 'scroll/webview_scroll_session.dart';
-
-/// Overlap kept between two screenfuls when scrolling by a whole viewport.
-const double _scrollViewportOverlap = 48;
 
 class ReaderRendererController {
   _ReaderRendererState? _rendererState;
@@ -47,22 +43,12 @@ class ReaderRendererController {
     await webViewController?.jumpToPage(pageIndex);
   }
 
-  Future<void> restoreScrollPosition(double ratio) async {
-    await webViewController?.restoreScrollPosition(ratio);
-    await webViewController?.requestScrollMetrics();
-  }
-
-  /// Fraction of the current chapter scrolled past, in scroll mode.
-  double get scrollRatio => _rendererState?._scrollSession.ratio ?? 0;
-
   /// Scrolls by roughly one screen, used by the volume keys in scroll mode.
   ///
-  /// A small overlap is kept so the line that was at the edge stays visible.
+  /// One-shot: the page scrolls and animates itself, keeping a small overlap so
+  /// the line that was at the edge stays visible.
   void scrollByViewport(bool isNext) {
-    final session = _rendererState?._scrollSession;
-    if (session == null) return;
-    final step = max(0.0, session.viewportHeight - _scrollViewportOverlap);
-    session.animateBy(isNext ? step : -step);
+    webViewController?.scrollByViewport(isNext);
   }
 
   Future<void> jumpToPreviousChapterLastPage() async {
@@ -86,11 +72,16 @@ class ReaderRendererController {
     await webViewController?.waitForEvents(tokens);
   }
 
+  /// Loads the current chapter, optionally starting it at [initialScrollRatio].
+  ///
+  /// The position travels with the load: the frame comes up already scrolled,
+  /// instead of being moved afterwards by a separate scroll call.
   Future<int?> preloadCurrentChapter(
     String url,
     List<String> anchors,
-    String? properties,
-  ) async {
+    String? properties, {
+    double? initialScrollRatio,
+  }) async {
     final anchorsParam = anchors.map((a) => '"$a"').join(',');
     final anchorsJson = '[$anchorsParam]';
     final propertiesList = List<String>.from(properties?.split(' ') ?? []);
@@ -104,6 +95,7 @@ class ReaderRendererController {
       url,
       anchorsJson,
       propertiesJson,
+      initialScrollRatio: initialScrollRatio,
     );
   }
 
@@ -237,7 +229,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
 
   late final AndroidPageTurnSession _androidPageTurnSession;
   late final IOSPageTurnSession _iosPageTurnSession;
-  late final WebViewScrollSession _scrollSession;
 
   late EpubTheme _currentTheme;
   late bool _needPageTurnAnimation;
@@ -276,12 +267,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
       ),
     );
     _iosPageTurnSession = IOSPageTurnSession();
-    _scrollSession = WebViewScrollSession(
-      vsync: this,
-      onPushOffset: _webViewController.scrollContentTo,
-      onOffsetChanged: () => widget.onScrollRatioChanged(_scrollSession.ratio),
-      onSettled: widget.onScrollSettled,
-    );
     _currentTheme = widget.initializeTheme;
     _needPageTurnAnimation =
         ref.read(readerSettingsProvider).pageAnimation !=
@@ -292,7 +277,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   void dispose() {
     widget.controller._attachState(null);
     _androidPageTurnSession.dispose();
-    _scrollSession.dispose();
     super.dispose();
   }
 
@@ -320,11 +304,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   }
 
   void _handleTap(TapUpDetails details) {
-    if (widget.scrollMode && _scrollSession.isAnimating) {
-      // A tap during a fling stops it, the way a scrollable does.
-      _scrollSession.stop();
-      return;
-    }
     if (widget.showControls) {
       widget.onToggleControls();
     } else if (_androidPageTurnSession.isAnimating ||
@@ -396,20 +375,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     }
   }
 
-  void _handleVerticalDragStart(DragStartDetails details) {
-    if (widget.showControls) return;
-    _scrollSession.beginDrag();
-  }
-
-  void _handleVerticalDragUpdate(DragUpdateDetails details) {
-    if (widget.showControls) return;
-    _scrollSession.updateDrag(details.primaryDelta ?? 0);
-  }
-
-  void _handleVerticalDragEnd(DragEndDetails details) {
-    _scrollSession.endDrag(details.primaryVelocity ?? 0);
-  }
-
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
     await _webViewController.checkLongPressElementAt(
       details.localPosition.dx,
@@ -428,9 +393,6 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
       }
     });
 
-    _scrollSession.devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-    final scrollable = widget.shouldShowWebView && widget.scrollMode;
-
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -438,9 +400,14 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
         onHorizontalDragEnd: (widget.shouldShowWebView && !widget.scrollMode)
             ? _handleHorizontalDragEnd
             : null,
-        onVerticalDragStart: scrollable ? _handleVerticalDragStart : null,
-        onVerticalDragUpdate: scrollable ? _handleVerticalDragUpdate : null,
-        onVerticalDragEnd: scrollable ? _handleVerticalDragEnd : null,
+        // Scroll mode deliberately claims no drag at all.  Flutter forwards a
+        // pointer sequence to the platform view exactly when no recognizer in
+        // the arena claims it, so leaving the vertical axis unclaimed is what
+        // hands the drag to the WebView — which then scrolls its own content
+        // natively, one compositor step per frame, instead of being pushed an
+        // offset over the platform channel for every one of them.  Taps and
+        // long presses are still claimed, so links, footnotes and the image
+        // viewer keep going through Flutter.
         onLongPressStart: widget.shouldShowWebView
             ? _handleLongPressStart
             : null,
@@ -562,13 +529,14 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
           },
           onPageChanged: widget.onPageChanged,
           onScrollAnchors: widget.onScrollAnchors,
-          onScrollMetrics: (contentHeight, viewportHeight, offset) {
-            _scrollSession.applyMetrics(
-              contentHeight: contentHeight,
-              viewportHeight: viewportHeight,
-              offset: offset,
+          onScrollProgress: (offset, maxOffset) {
+            // A chapter that fits on one screen has nothing left to read, so it
+            // counts as fully scrolled — same as the old offset/width ratio.
+            widget.onScrollRatioChanged(
+              maxOffset <= 0 ? 1 : (offset / maxOffset).clamp(0.0, 1.0),
             );
           },
+          onScrollSettled: widget.onScrollSettled,
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,
           onFootnoteTap: widget.onFootnoteTap,

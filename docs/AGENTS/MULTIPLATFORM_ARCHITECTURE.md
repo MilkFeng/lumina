@@ -328,6 +328,26 @@ Android 原生层直接绘制，Flutter 侧截出来是空白，翻页动画会�
 `_disposeWebView()` 释放 `HeadlessInAppWebView` 和 bridge），表现为一次短暂的重新加载闪烁，
 这是已知且接受的代价。
 
+##### 滚动模式下的触摸路由
+
+平台视图的触摸**先经过 Flutter 的手势竞技场**，再决定是否交给原生视图：
+`PlatformViewLink` / `UiKitView` 默认使用空 `gestureRecognizers`，按框架文档，
+"a pointer event sequence will only be dispatched to the platform view if no other member
+of the arena claimed it"。所以「谁来滚」这件事完全由 Flutter 侧声明了哪些手势决定：
+
+- 分页模式：`ReaderRenderer` 的 `GestureDetector` 声明了水平拖动、tap、长按，加上 WebView
+  外层的 `AbsorbPointer`，平台视图既不参与命中测试也拿不到指针序列——手势全部属于 Flutter，
+  这与 `disableVerticalScroll: true` 一起保证 WebView 不自行滚动。
+- 滚动模式：`ReaderRenderer` **不声明任何拖动识别器**，于是拖动整段被转发成原生 MotionEvent
+  交给 WebView，由浏览器自己的滚动器跟手滚动；tap 与长按仍由 Flutter 抢到，所以链接、脚注、
+  图片查看器、点击切换控制栏的行为完全不变。`AbsorbPointer` 在滚动模式下改为
+  `absorbing: false`，iframe 也要恢复 `pointer-events`（见
+  `WEB_ASSETS_ARCHITECTURE.md` 的"连续滚动模式"）。
+- `disableVerticalScroll` 在滚动模式为 `false`（Android 侧插件在 `OnTouchListener` 里会吃掉
+  `ACTION_MOVE`；iOS 侧它同时决定 `scrollView.isScrollEnabled`），水平方向仍然禁用。
+
+这样滚动不再需要 Flutter 每帧调用 JS 推偏移：被删除的 `WebViewScrollSession` 正是那条路径。
+
 ### iOS
 
 iOS 使用原生 `ReaderPageTurnPlugin`，原因是 `WKWebView` 与 Flutter 截图/组合层在 iOS 上更适合由 UIKit 直接处理。

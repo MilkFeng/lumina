@@ -1,4 +1,4 @@
-import type { ReaderState, FrameSlot, Direction } from '../common/types';
+import type { ReaderState, FrameSlot, Direction, ScrollPosition } from '../common/types';
 
 export class FrameManager {
   constructor(private state: ReaderState) { }
@@ -40,20 +40,18 @@ export class FrameManager {
     return this.isVertical() || this.isScrollMode();
   }
 
-  /// The scroll extents of the given iframe along the scrolling axis
-  getScrollMetrics(iframe: HTMLIFrameElement | null): {
-    contentHeight: number;
-    viewportHeight: number;
-    offset: number;
-  } {
+  /// Where the given iframe is scrolled to along the scrolling axis.
+  ///
+  /// `maxOffset` is the largest reachable offset — `0` when the chapter fits on
+  /// one screen.
+  getScrollPosition(iframe: HTMLIFrameElement | null): ScrollPosition {
     if (!iframe || !iframe.contentDocument || !iframe.contentDocument.body) {
-      return { contentHeight: 0, viewportHeight: 0, offset: 0 };
+      return { offset: 0, maxOffset: 0 };
     }
     const body = iframe.contentDocument.body;
     return {
-      contentHeight: body.scrollHeight,
-      viewportHeight: body.clientHeight,
       offset: body.scrollTop,
+      maxOffset: Math.max(0, body.scrollHeight - body.clientHeight),
     };
   }
 

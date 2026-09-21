@@ -70,6 +70,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       currUrl,
       getAnchorsForSpine(currentSpinePath),
       getSpineProperties(currIndex),
+      // The reading position travels with the load: the frame comes up already
+      // scrolled, instead of being moved afterwards by a separate scroll call.
+      initialScrollRatio: restoreScrollRatio,
     );
     if (currToken != null) tokensForWait.add(currToken);
 
@@ -96,10 +99,6 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     }
 
     await rendererController.waitForEvents(tokensForWait);
-
-    if (restoreScrollRatio != null) {
-      await rendererController.restoreScrollPosition(restoreScrollRatio);
-    }
 
     await Future.delayed(const Duration(milliseconds: 30));
     setState(() {

@@ -24,13 +24,21 @@ class LuminaApi {
 
   /// Loads [url] into the iframe identified by [slot].
   /// [anchors] should be a JSON-encoded list: `'["id1","id2"]'`.
+  ///
+  /// [initialScrollRatio] is where the frame should start, as a fraction of the
+  /// scrollable length in scroll mode and of the page count while paginated.
+  /// Restoring a reading position travels with the load instead of following it
+  /// as a separate scroll call.
   Future<int> loadFrame(
     String slot,
     String url,
     String anchors,
-    String properties,
-  ) => _bridge.call(
-    (t) => "window.api.loadFrame($t, '$slot', '$url', $anchors, $properties)",
+    String properties, {
+    double? initialScrollRatio,
+  }) => _bridge.call(
+    (t) =>
+        "window.api.loadFrame($t, '$slot', '$url', $anchors, $properties, "
+        "${initialScrollRatio ?? 'null'})",
   );
 
   /// Scrolls [slot]'s iframe to [pageIndex] without immediately awaiting.
@@ -50,12 +58,6 @@ class LuminaApi {
   /// Scrolls the current iframe to [pageIndex] and awaits completion.
   Future<void> jumpToPage(int pageIndex) =>
       _bridge.callAndWait((t) => 'window.api.jumpToPage($t, $pageIndex)', 1000);
-
-  /// Restores the scroll position using a fractional [ratio] in [0,1].
-  Future<void> restoreScrollPosition(double ratio) => _bridge.callAndWait(
-    (t) => 'window.api.restoreScrollPosition($t, $ratio)',
-    1000,
-  );
 
   /// Waits for the current frame to finish rendering.
   Future<void> waitForRender() =>
@@ -81,19 +83,14 @@ class LuminaApi {
 
   // ─── Fire-and-forget ───────────────────────────────────────────────
 
-  /// Scrolls the current frame to an absolute vertical [offset], in CSS
-  /// pixels.
+  /// Scrolls the current frame by roughly one screenful, in scroll mode.
   ///
-  /// Used only in scroll mode, where Flutter owns the gesture and the scroll
-  /// physics.  This is intentionally fire-and-forget: it is pushed once per
-  /// animation frame and must not wait for a token round-trip.
-  Future<void> scrollContentTo(double offset) =>
-      _bridge.evaluate('window.api.scrollContentTo($offset)');
-
-  /// Asks the current frame to re-report its scroll extents through the
-  /// `onScrollMetrics` handler.
-  Future<void> requestScrollMetrics() =>
-      _bridge.evaluate('window.api.requestScrollMetrics()');
+  /// A one-shot command for the volume keys.  The page animates its own scroll
+  /// and reports the result back through `onScrollProgress`; nothing is driven
+  /// from here frame by frame.
+  Future<void> scrollByViewport(bool isNext) => _bridge.evaluate(
+    "window.api.scrollByViewport('${isNext ? 'next' : 'prev'}')",
+  );
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y).
   Future<void> checkLongPressElementAt(double x, double y) =>

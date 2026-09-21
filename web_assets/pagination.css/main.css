@@ -24,7 +24,9 @@ html {
   padding-bottom: calc(100vh - var(--lumina-safe-height) - var(--lumina-padding-top)) !important;
 
   background-color: transparent;
-  touch-action: none !important;
+  /* Paginated layout keeps the vertical axis for Flutter's page-turn gesture;
+     scroll mode hands it to the browser so the chapter scrolls natively. */
+  touch-action: var(--lumina-reader-touch-action, none) !important;
 
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -67,6 +69,10 @@ html,
 body {
   overflow-x: var(--lumina-reader-overflow-x) !important;
   overflow-y: var(--lumina-reader-overflow-y) !important;
+  /* The chapter body is the scroll container, so the panning permission has to
+     be on it as well: the effective touch-action stops at the scroller and
+     never reaches `html`. */
+  touch-action: var(--lumina-reader-touch-action, none) !important;
 }
 
 body {

@@ -148,12 +148,15 @@ export interface ThemeUpdate {
   scrollMode: boolean;
 }
 
-/// Scroll extents of the current frame, reported to Flutter so that it can
-/// drive the scrolling itself (see `FlutterBridge.onScrollMetrics`).
-export interface ScrollMetrics {
-  contentHeight: number;
-  viewportHeight: number;
+/// Where the current frame is scrolled to, reported to Flutter as the page
+/// scrolls itself (see `FlutterBridge.onScrollProgress`).
+///
+/// `offset` is the current scroll position and `maxOffset` the largest one the
+/// chapter allows; both are CSS pixels.  Flutter only mirrors them — it never
+/// drives the scroll, so there is no counterpart command in `LuminaApi`.
+export interface ScrollPosition {
   offset: number;
+  maxOffset: number;
 }
 
 // ─── Internal Helpers ────────────────────────────────────────────────

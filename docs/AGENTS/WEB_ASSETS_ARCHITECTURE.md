@@ -19,6 +19,7 @@
 | `web_assets/controller.js/index.ts` | JS 入口，创建 `Renderer` 并挂到 `window.api`。 |
 | `web_assets/controller.js/api/lumina_api.ts` | Web 端对 Flutter 暴露的 `window.api` TypeScript 接口。 |
 | `web_assets/controller.js/api/flutter_bridge.ts` | Web 端回调 Flutter handler 的封装。 |
+| `web_assets/controller.js/renderer/scroll_observer.ts` | 观察章节自身的原生滚动，向 Flutter 上报位置、锚点与停止滚动。 |
 | `web_assets/controller.js/renderer/*` | 渲染、分页、主题、交互命中、CSS polyfill、资源等待等核心逻辑。 |
 | `web_assets/controller.js/typ/*` | 多看和 rendition 固定版式适配。 |
 | `web_assets/controller.js/common/*` | 公共类型、颜色解析、四叉树命中索引。 |
@@ -80,9 +81,26 @@ window.api = api;
 - `PaginationManager` 在滚动模式下短路：`calculatePageCount` 返回 `1`、
   `calculateCurrentPageIndex` 返回 `0`、`calculateScrollOffset` 返回 `0`，
   跳过所有 `+128` 的 column gap 运算；`detectActiveAnchor` 改用纵向轴。
-- 手势、惯性物理和当前偏移都由 Flutter 侧拥有（`WebViewScrollSession`），Web 端只负责
-  接收绝对偏移（`scrollContentTo`）并上报滚动范围（`onScrollMetrics`）。
-  Web 端不注册任何拖拽事件处理。
+- **滚动由页面自己完成，不走 JS 接口。** Flutter 在滚动模式下不声明任何拖动识别器，
+  框架的手势竞技场因此把拖动整段转发给平台视图（原生 WebView），由浏览器自身的滚动器
+  跟手滚动。Web 端不提供任何"把偏移推给我"的接口：早期实现由 Flutter 每帧调用
+  `scrollContentTo` 推绝对偏移，一次平台通道往返往往超过一帧，内容会明显落后于手指。
+- Web 端只做**观察**（`ScrollObserver`）：监听当前 frame 的 `scroll` 事件，按
+  `requestAnimationFrame` 合并成每帧一次 `onScrollProgress(offset, maxOffset)`，
+  active anchor 按 250ms 节流，停止滚动 150ms 后上报一次 `onScrollSettled`。
+  `scroll` 事件监听在 window 上以 **capture** 方式注册：章节的滚动容器是 `body` 元素，
+  元素滚动事件不会冒泡到 window。
+- 让原生滚动成立的四处前提：`InAppWebViewSettings.disableVerticalScroll` 在滚动模式下为
+  `false`；`pagination.css` 用 `--lumina-touch-action`（分页 `none` / 滚动 `pan-y`）放开
+  纵向平移，且必须写在 `body` 上（有效 `touch-action` 只算到滚动容器为止，写在 `html`
+  上不起作用）；`skeleton.css` 里 `body.lumina-scroll-mode iframe` 恢复
+  `pointer-events`；iframe 的 `scrolling` 属性在滚动模式下为 `auto`。
+- `skeleton.css` 中滚动模式给**三个** frame 都开 `pointer-events`（叠放顺序由 z-index
+  决定，只有最上层的 `frame-curr` 能被点到）。若只给 `#frame-curr` 开，`cycleFrames`
+  把 `next` 提升为 `curr` 的那一刻会翻转该 frame 的 `pointer-events`，而这一帧在合成器里
+  保留着过期的触摸命中信息，翻章后整个章节将完全无法拖动（已用无头 Chromium 验证）。
+- 同理，iframe 的 `scrolling="auto"` 也必须给三个 frame：`cycleFrames` 靠交换 id 复用
+  同一个 iframe 元素，被提升上来的那个可能是以 `next` 身份创建的。
 
 ### 主题与字体
 
@@ -126,7 +144,10 @@ window.api = api;
 
 ### 交互命中
 
-WebView iframe 本身设置 `pointer-events: none`，手势由 Flutter 捕获，再把坐标转给 Web 端 API。
+分页模式下 WebView iframe 设置 `pointer-events: none`，手势全部由 Flutter 捕获，再把坐标
+转给 Web 端 API。滚动模式下 iframe 接收指针事件（章节要自己滚动），但拖动之外的触摸仍由
+Flutter 赢得手势竞技场：tap 和长按照旧走 `checkTapElementAt` / `checkLongPressElementAt`，
+链接、脚注与图片查看器的行为与分页模式完全一致。
 
 `InteractionManager` 负责：
 
@@ -163,7 +184,7 @@ WebView iframe 本身设置 `pointer-events: none`，手势由 Flutter 捕获，
 - 向 skeleton document 写入 CSS 变量。
 - 注册 window resize 监听，尺寸变化后 120ms debounce 上报 `onViewportResize`。
 
-### `loadFrame(token, slot, url, anchors?, properties?): void`
+### `loadFrame(token, slot, url, anchors?, properties?, initialScrollRatio?): void`
 
 把 URL 加载到指定 iframe slot。
 
@@ -176,6 +197,7 @@ WebView iframe 本身设置 `pointer-events: none`，手势由 Flutter 捕获，
 | `url` | `string` | iframe 要加载的章节或资源 URL。 |
 | `anchors` | `string[]?` | 用于滚动位置追踪的元素 id 列表，`top` 有特殊含义。 |
 | `properties` | `string[]?` | spine properties，会转成 `lumina-spine-property-*` class。 |
+| `initialScrollRatio` | `number \| null?` | 起始位置：滚动模式下是滚动范围的比例，分页模式下是页数比例。 |
 
 加载完成后会：
 
@@ -184,11 +206,15 @@ WebView iframe 本身设置 `pointer-events: none`，手势由 Flutter 捕获，
 3. 应用主题 class、方向 class、spine property class。
 4. 应用特殊排版适配。
 5. 执行 CSS polyfill。
-6. 计算页数和 hash anchor 对应页码。
-7. 重建交互四叉树。
-8. 若是 `curr`，上报 `onPageCountReady(pageCount)` 和 `onPageChanged(pageIndex)`。
+6. 计算页数，并按 URL hash anchor 或 `initialScrollRatio` 定位（hash 优先）。
+7. 重建交互四叉树，并挂上滚动观察（滚动模式）。
+8. 若是 `curr`，上报 `onPageCountReady(pageCount)`、`onPageChanged(pageIndex)` 和一次
+   `onScrollProgress`。
 9. 若是 `prev`，跳到该 frame 最后一页；若是 `next`，跳到第一页。
 10. 上报 active anchors 和 `onEventFinished(token)`。
+
+恢复阅读位置走的是这里的 `initialScrollRatio`：章节带着位置一起加载，不再需要加载完再补
+一次滚动调用。
 
 ### `jumpToPage(token, pageIndex): void`
 
@@ -208,38 +234,14 @@ WebView iframe 本身设置 `pointer-events: none`，手势由 Flutter 捕获，
 
 计算指定 iframe 的页数，并跳到 `pageCount - 1`。内部复用 `jumpToPageFor`。
 
-### `restoreScrollPosition(token, ratio): void`
+### `scrollByViewport(direction): void`
 
-根据当前 iframe 的总页数和 `ratio` 恢复阅读位置：
+把当前 iframe 滚动约一屏（视口高度减去 48px 重叠），仅滚动模式使用，`direction` 为
+`'next' | 'prev'`。
 
-```ts
-pageIndex = Math.round(ratio * pageCount)
-```
-
-之后复用 `jumpToPage`。
-
-滚动模式下不走分页，改为把 `ratio` 映射成像素偏移：
-
-```ts
-offset = ratio * Math.max(0, contentHeight - viewportHeight)
-```
-
-应用偏移后重新检测 active anchor、上报 `onScrollMetrics`，再完成 token。
-
-### `scrollContentTo(offset): void`
-
-把当前 iframe 滚动到绝对垂直偏移 `offset`（CSS 像素），仅在滚动模式下使用。
-
-- fire-and-forget，不使用 token：滚动模式下手势与惯性物理都由 Flutter 侧的
-  `WebViewScrollSession` 拥有，每帧推一次偏移，token 往返开销无法接受。
-- 内部通过 `body.scrollTop` 实现，**不是** CSS transform。`interaction.ts` 的四叉树命中检测
-  用文档坐标（`docY = y + body.scrollTop`），换成 transform 会静默破坏脚注和链接点击。
-- active anchor 检测在内部按约 250ms 节流，避免每帧重算。
-
-### `requestScrollMetrics(): void`
-
-主动重新上报当前 iframe 的滚动范围（见 `onScrollMetrics`）。fire-and-forget，不使用 token。
-Flutter 侧在恢复阅读位置后调用，以便 Dart 端的滚动会话拿到正确的 `maxExtent`。
+这是**唯一**由 Flutter 发起的滚动命令，服务于音量键——它背后没有手势。它是一次性调用：
+页面用 `body.scrollBy({ behavior: 'smooth' })` 自己滚动（引擎不支持平滑滚动时回退为直接
+赋值），滚动结果照旧通过 `onScrollProgress` 回来。fire-and-forget，不使用 token。
 
 ### `cycleFrames(token, direction): void`
 
@@ -262,7 +264,7 @@ Flutter 侧在恢复阅读位置后调用，以便 Dart 端的滚动会话拿到
 - 更新 skeleton document 的 CSS 变量。
 - 对每个已加载 iframe 更新 CSS 变量。
 - 按 `newTheme.scrollMode` 切换分页模式与滚动模式的布局（`body.lumina-is-scroll`）。
-- 按当前页百分比重新分页和恢复位置；滚动模式下改为重新上报 `onScrollMetrics`。
+- 按当前位置百分比重新分页和恢复位置；滚动模式下重新上报一次 `onScrollProgress`。
 - 重建交互索引。
 - 当前 frame 重新上报页数和页码。
 - 完成后回调 `onEventFinished(token)`。
@@ -305,7 +307,8 @@ Flutter 侧在恢复阅读位置后调用，以便 Dart 端的滚动会话拿到
 | `onPageCountReady` | `pageCount: number` | 当前 frame 完成分页或主题更新后触发。 |
 | `onPageChanged` | `pageIndex: number` | 当前页码变化后触发。 |
 | `onScrollAnchors` | `anchors: string[]` | 当前 frame active anchors 变化检测后触发。 |
-| `onScrollMetrics` | `contentHeight: number, viewportHeight: number, offset: number` | 滚动模式下上报当前 frame 的滚动范围。frame 加载完成、主题更新、翻章（`cycleFrames`）、恢复位置以及 `requestScrollMetrics()` 后触发。Dart 侧据此计算 `maxExtent` 和章节进度百分比。 |
+| `onScrollProgress` | `offset: number, maxOffset: number` | 滚动模式下上报当前 frame 的滚动位置与可滚动范围（CSS 像素）。页面自己滚动，因此这是位置信息唯一的方向。frame 加载完成、主题更新、翻章（`cycleFrames`）后各上报一次，滚动过程中按 `requestAnimationFrame` 合并为每帧一次。Dart 侧据此计算章节进度百分比。 |
+| `onScrollSettled` | 无 | 页面停止滚动约 150ms 后触发一次，Dart 侧据此落盘阅读进度。 |
 | `onTap` | `x: number, y: number` | 点击未命中脚注或链接时触发。 |
 | `onLinkTap` | `href: string, x: number, y: number` | 点击链接时触发。Flutter 可决定处理链接或回退为普通 tap。 |
 | `onFootnoteTap` | `innerHtml: string, left: number, top: number, width: number, height: number, baseUrl: string` | 点击脚注引用时触发。 |
@@ -355,17 +358,18 @@ interface ThemeUpdate {
 }
 ```
 
-### `ScrollMetrics`
+### `ScrollPosition`
 
 ```ts
-interface ScrollMetrics {
-  contentHeight: number;
-  viewportHeight: number;
+interface ScrollPosition {
   offset: number;
+  maxOffset: number;
 }
 ```
 
-当前 frame 的滚动范围，通过 `onScrollMetrics` 上报给 Flutter。单位是 CSS 像素。
+当前 frame 的滚动位置和它可以滚到的最远处，由 `FrameManager.getScrollPosition` 从章节
+`body` 的 `scrollTop` / `scrollHeight` / `clientHeight` 算出，通过 `onScrollProgress`
+上报给 Flutter。单位是 CSS 像素。
 
 ### `ReaderTheme`
 
@@ -434,6 +438,8 @@ npm run typecheck
 
 - `window.api` 是 Flutter 调用 Web 端的唯一稳定入口；新增能力时应先更新 `LuminaApi` TypeScript 接口，再同步 Dart 侧 `LuminaApi` 封装。
 - 所有需要 Flutter 等待的 JS 方法都应接收 `token`，最终调用 `onEventFinished(token)`。
+- 滚动模式下的滚动位置由页面自己产生，只通过 `onScrollProgress` / `onScrollSettled` 上报；
+  除音量键的 `scrollByViewport` 外，不要再新增让 Flutter 推偏移的接口。
 - `checkTapElementAt` 和 `checkLongPressElementAt` 是手势命中查询，不走 token。
 - `cycleFrames` 隐含依赖 `frame-prev`、`frame-curr`、`frame-next` 三个 iframe 都存在。
 - `loadFrame` 的 `properties` 会直接拼成 class 名，传入值需要与 typ 模块和 CSS 约定保持一致。

@@ -8,7 +8,18 @@ export interface LuminaApi {
   /// `token`: A unique identifier for an event, when this event is finished, `onEventFinished(token)` will be called
   /// `anchors`: An optional list of element IDs to detect as anchors for page tracking
   /// `properties`: An optional list of properties to apply specifical typography (e.g. duokan-page-fitwidow)
-  loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[], properties?: string[]): void;
+  /// `initialScrollRatio`: An optional position to start the frame at, as a
+  /// fraction of the scrollable length (scroll mode) or of the page count.
+  /// It is applied while the frame loads, so restoring a reading position needs
+  /// no separate scroll call.
+  loadFrame(
+    token: number,
+    slot: FrameSlot,
+    url: string,
+    anchors?: string[],
+    properties?: string[],
+    initialScrollRatio?: number | null
+  ): void;
 
   /// Jumps to the specified page index in the current frame. The page index is 0-based
   jumpToPage(token: number, pageIndex: number): void;
@@ -19,18 +30,13 @@ export interface LuminaApi {
   /// Jumps to the last page in the current frame.
   jumpToLastPageOfFrame(token: number, slot: FrameSlot): void;
 
-  /// Restores the scroll position in the current frame. The ratio is a value between 0 and 1, representing the scroll position as a percentage of the total scrollable height
-  restoreScrollPosition(token: number, ratio: number): void;
-
-  /// Scrolls the current frame to an absolute vertical offset, in CSS pixels.
-  /// Only used in scroll mode, where Flutter owns the gesture and the scroll
-  /// physics and pushes the resulting offset here every frame — hence
-  /// fire-and-forget, with no token
-  scrollContentTo(offset: number): void;
-
-  /// Asks for the current frame's scroll extents to be re-reported through
-  /// `onScrollMetrics`
-  requestScrollMetrics(): void;
+  /// Scrolls the current frame by roughly one screenful in `direction`, in
+  /// scroll mode.
+  ///
+  /// This is a one-shot command for the volume keys.  It is deliberately not
+  /// part of the gesture path: the page scrolls itself with its own native
+  /// scrolling, and its progress comes back through `onScrollProgress`.
+  scrollByViewport(direction: Direction): void;
 
   /// Cycles to the next or previous page in the current frame, depending on the direction
   cycleFrames(token: number, direction: Direction): void;

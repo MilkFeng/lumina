@@ -33,3 +33,15 @@ iframe {
   transition: none;
   pointer-events: none;
 }
+
+/* Scroll mode is the one case where a frame handles input itself: the current
+   frame scrolls its own content, so it has to receive pointer events.  All
+   three frames keep them, and z-index decides that only the top one can be
+   touched.  Scoping this to `#frame-curr` instead would mean a frame flips
+   `pointer-events` at the moment `cycleFrames` promotes it from `next`, and a
+   promoted frame keeps the compositor's stale hit-testing: the new chapter
+   would not scroll at all.  While paginated every frame stays inert, because
+   Flutter owns every gesture there. */
+body.lumina-scroll-mode iframe {
+  pointer-events: auto;
+}

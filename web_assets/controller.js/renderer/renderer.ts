@@ -12,25 +12,42 @@ import { FlutterBridge } from '../api/flutter_bridge';
 import { applyTyp } from '../typ/typ';
 import { FrameManager } from './frame_manager';
 import { PaginationManager } from './pagination';
+import { ScrollObserver } from './scroll_observer';
 import { InteractionManager } from './interaction';
 import { ThemeManager } from './theme_manager';
 import { CssPolyfillManager } from './css_polyfill';
 import { ResourceManager } from './resource_manager';
 
 export class Renderer implements LuminaApi {
+  /// How much of the previous screenful stays visible when the volume keys
+  /// scroll by a whole viewport.
+  private static readonly viewportOverlap = 48;
+
   private state: ReaderState;
 
   private frameMgr: FrameManager;
   private paginationMgr: PaginationManager;
+  private scrollObserver: ScrollObserver;
   private interactionMgr: InteractionManager;
   private themeMgr: ThemeManager;
   private polyfillMgr: CssPolyfillManager;
   private resourceMgr: ResourceManager;
 
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
-  private anchorDetectionTimer: ReturnType<typeof setTimeout> | null = null;
   private onResize: (ev: UIEvent) => void;
   private currentSize: { width: number; height: number } = { width: 0, height: 0 };
+
+  /// Position each frame should start at, as handed over by `loadFrame` and
+  /// consumed by `onFrameLoad`.
+  private initialScrollRatios: Record<FrameSlot, number | null> = {
+    prev: null,
+    curr: null,
+    next: null,
+  };
+
+  /// Whether the engine can animate a programmatic scroll.  Checked once: the
+  /// volume keys fall back to an instant jump where it cannot.
+  private readonly supportsSmoothScroll: boolean;
 
   constructor() {
     this.state = {
@@ -64,11 +81,13 @@ export class Renderer implements LuminaApi {
 
     this.frameMgr = new FrameManager(this.state);
     this.paginationMgr = new PaginationManager(this.state, this.frameMgr);
+    this.scrollObserver = new ScrollObserver(this.frameMgr, this.paginationMgr);
     this.interactionMgr = new InteractionManager(this.state, this.frameMgr);
     this.themeMgr = new ThemeManager(this.state, this.frameMgr);
     this.polyfillMgr = new CssPolyfillManager(this.state, this.themeMgr, this.frameMgr);
     this.resourceMgr = new ResourceManager(this.state);
 
+    this.supportsSmoothScroll = 'scrollBehavior' in document.documentElement.style;
     this.resizeDebounceTimer = null;
     this.onResize = (ev: UIEvent) => {
       const newWidth = window.innerWidth;
@@ -94,16 +113,36 @@ export class Renderer implements LuminaApi {
     this.state.config.scrollMode = this.state.config.scrollMode === true;
 
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
+    this.syncSkeletonMode();
     window.removeEventListener('resize', this.onResize);
     window.addEventListener('resize', this.onResize, { passive: true });
   }
 
-  loadFrame(token: number, slot: FrameSlot, url: string, anchors?: string[], properties?: string[]): void {
+  /// Mirrors the layout mode onto the skeleton document.
+  ///
+  /// In scroll mode the current frame has to accept pointer events, because it
+  /// is the frame that scrolls itself; while paginated it stays inert and every
+  /// gesture is Flutter's.  See the `iframe` rules in `skeleton.css`.
+  private syncSkeletonMode(): void {
+    document.body.classList.toggle('lumina-scroll-mode', this.frameMgr.isScrollMode());
+  }
+
+  loadFrame(
+    token: number,
+    slot: FrameSlot,
+    url: string,
+    anchors?: string[],
+    properties?: string[],
+    initialScrollRatio?: number | null
+  ): void {
     const iframe = this.frameMgr.getFrame(slot);
     if (!iframe) return;
 
     this.state.anchors[slot] = anchors || [];
     this.state.properties[slot] = properties || [];
+    this.initialScrollRatios[slot] = (typeof initialScrollRatio === 'number' && isFinite(initialScrollRatio))
+      ? initialScrollRatio
+      : null;
     iframe.onload = null;
 
     if (iframe.src == null || iframe.src === '' || iframe.src === 'about:blank') {
@@ -164,38 +203,44 @@ export class Renderer implements LuminaApi {
     this.jumpToPageFor(token, slot, pageCount - 1);
   }
 
-  restoreScrollPosition(token: number, ratio: number): void {
+  /// Scrolls the current frame by roughly one screenful, in scroll mode.
+  ///
+  /// This is the one deliberate exception to "the page scrolls itself": the
+  /// volume keys have no gesture behind them.  It stays a single one-shot call
+  /// — the page animates its own scroll and reports the result through
+  /// `onScrollProgress`, so nothing is pushed per frame.
+  scrollByViewport(direction: Direction): void {
     const iframe = this.frameMgr.getFrame('curr');
-    if (!iframe || !iframe.contentWindow) return;
+    const body = iframe && iframe.contentDocument ? iframe.contentDocument.body : null;
+    if (!body) return;
 
-    if (this.frameMgr.isScrollMode()) {
-      const metrics = this.frameMgr.getScrollMetrics(iframe);
-      const maxOffset = Math.max(0, metrics.contentHeight - metrics.viewportHeight);
-      this.applyScrollOffset(iframe, ratio * maxOffset);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          this.paginationMgr.detectActiveAnchor(iframe);
-          this.reportScrollMetrics();
-          FlutterBridge.onEventFinished(token);
-        });
-      });
-      return;
+    // A small overlap keeps the line that was at the edge visible.
+    const step = Math.max(0, body.clientHeight - Renderer.viewportOverlap);
+    const delta = direction === 'next' ? step : -step;
+
+    if (this.supportsSmoothScroll) {
+      body.scrollBy({ top: delta, behavior: 'smooth' });
+    } else {
+      body.scrollTop = body.scrollTop + delta;
+    }
+  }
+
+  /// Applies [ratio] to [iframe] and returns the page index it lands on.
+  ///
+  /// [ratio] is a fraction of the scrollable length in scroll mode and of the
+  /// page count while paginated.  Only used while a frame loads or re-lays
+  /// out, never on a gesture.
+  private applyPositionRatio(iframe: HTMLIFrameElement, ratio: number): number {
+    if (!this.frameMgr.isScrollMode()) {
+      const pageCount = this.paginationMgr.calculatePageCount(iframe);
+      const pageIndex = Math.round(ratio * pageCount);
+      this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
+      return pageIndex;
     }
 
-    const pageCount = this.paginationMgr.calculatePageCount(iframe);
-    const pageIndex = Math.round(ratio * pageCount);
-    this.jumpToPage(token, pageIndex);
-  }
-
-  scrollContentTo(offset: number): void {
-    const iframe = this.frameMgr.getFrame('curr');
-    if (!iframe || !iframe.contentWindow) return;
-    this.applyScrollOffset(iframe, offset);
-    this.scheduleAnchorDetection(iframe);
-  }
-
-  requestScrollMetrics(): void {
-    this.reportScrollMetrics();
+    const position = this.frameMgr.getScrollPosition(iframe);
+    this.applyScrollOffset(iframe, ratio * position.maxOffset);
+    return 0;
   }
 
   /// Clamps [offset] into the scrollable range of [iframe] and applies it.
@@ -206,31 +251,22 @@ export class Renderer implements LuminaApi {
     body.scrollTop = Math.max(0, Math.min(maxOffset, offset));
   }
 
-  /// Reports the current frame's scroll extents so Flutter — which owns the
-  /// gesture and the physics in scroll mode — knows how far it may scroll.
-  private reportScrollMetrics(): void {
-    const iframe = this.frameMgr.getFrame('curr');
-    if (!iframe) return;
-    const metrics = this.frameMgr.getScrollMetrics(iframe);
-    FlutterBridge.onScrollMetrics(
-      metrics.contentHeight,
-      metrics.viewportHeight,
-      metrics.offset
-    );
-  }
-
-  /// Active-anchor detection walks every anchor in the chapter, so it is
-  /// throttled rather than run on every scroll frame pushed from Flutter.
-  private scheduleAnchorDetection(iframe: HTMLIFrameElement): void {
-    if (this.anchorDetectionTimer !== null) return;
-    this.anchorDetectionTimer = setTimeout(() => {
-      this.anchorDetectionTimer = null;
-      this.paginationMgr.detectActiveAnchor(iframe);
-    }, 250);
+  /// Takes the starting position `loadFrame` carried for [iframe], if any.
+  ///
+  /// Restoring a reading position travels with the frame load instead of
+  /// following it as a separate scroll call.
+  private takeInitialScrollRatio(iframe: HTMLIFrameElement): number | null {
+    const slot = this.frameMgr.getSlotFromElement(iframe);
+    const ratio = this.initialScrollRatios[slot];
+    this.initialScrollRatios[slot] = null;
+    return ratio;
   }
 
   cycleFrames(token: number, direction: Direction): void {
     const res = this.frameMgr.cycleFramesDOMAndState(direction);
+    // Timers scheduled by the frame that is leaving the screen would report its
+    // position as if it belonged to the chapter being turned to.
+    this.scrollObserver.reset();
     if (!res) {
       FlutterBridge.onEventFinished(token);
     }
@@ -244,7 +280,7 @@ export class Renderer implements LuminaApi {
         this.paginationMgr.detectActiveAnchor(res!.elCurr);
         this.paginationMgr.detectActiveAnchor(res!.elNext);
         this.interactionMgr.buildInteractionMap().then(() => {
-          this.reportScrollMetrics();
+          this.scrollObserver.report(this.frameMgr.getCurrFrame());
           FlutterBridge.onEventFinished(token);
         });
       });
@@ -261,6 +297,7 @@ export class Renderer implements LuminaApi {
   updateTheme(token: number, viewWidth: number, viewHeight: number, newTheme: ThemeUpdate): void {
     this.themeMgr.updateThemeState(viewWidth, viewHeight, newTheme);
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
+    this.syncSkeletonMode();
 
     // In scroll mode the position within the chapter is a scroll ratio rather
     // than a page index, and it is only meaningful for the current frame.
@@ -291,9 +328,8 @@ export class Renderer implements LuminaApi {
   private currentScrollRatio(): number {
     const iframe = this.frameMgr.getFrame('curr');
     if (!iframe) return 0;
-    const metrics = this.frameMgr.getScrollMetrics(iframe);
-    const maxOffset = Math.max(0, metrics.contentHeight - metrics.viewportHeight);
-    return maxOffset > 0 ? metrics.offset / maxOffset : 0;
+    const position = this.frameMgr.getScrollPosition(iframe);
+    return position.maxOffset > 0 ? position.offset / position.maxOffset : 0;
   }
 
   waitForRender(token: number): void {
@@ -309,6 +345,9 @@ export class Renderer implements LuminaApi {
 
     const doc = iframe.contentDocument;
     this.themeMgr.injectInitialStyles(doc, iframe);
+    // The window is recreated by every navigation, so the scroll listener has
+    // to be re-attached per load.
+    this.scrollObserver.observe(iframe);
 
     this.resourceMgr.waitForAllResources(doc).then(() => {
       if (!iframe.contentWindow) return;
@@ -343,6 +382,7 @@ export class Renderer implements LuminaApi {
 
               let pageIndex = 0;
               const url = iframe.src;
+              const initialRatio = this.takeInitialScrollRatio(iframe);
               if (url && url.includes('#')) {
                 const anchor = url.split('#')[1];
                 if (this.frameMgr.isScrollMode()) {
@@ -356,6 +396,10 @@ export class Renderer implements LuminaApi {
                   pageIndex = this.paginationMgr.calculatePageIndexOfAnchor(iframe, anchor);
                   this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
                 }
+              } else if (initialRatio !== null) {
+                // The reading position travelled with `loadFrame`, so the frame
+                // comes up already scrolled instead of being moved afterwards.
+                pageIndex = this.applyPositionRatio(iframe, initialRatio);
               }
 
               requestAnimationFrame(() => {
@@ -364,7 +408,7 @@ export class Renderer implements LuminaApi {
                     if (iframe.id === 'frame-curr') {
                       FlutterBridge.onPageCountReady(pageCount);
                       FlutterBridge.onPageChanged(pageIndex);
-                      this.reportScrollMetrics();
+                      this.scrollObserver.report(iframe);
                     } else if (iframe.id === 'frame-prev') {
                       this.jumpToLastPageOfFrame(-1, 'prev');
                     } else if (iframe.id === 'frame-next') {
@@ -390,6 +434,8 @@ export class Renderer implements LuminaApi {
   private reloadFrame(iframe: HTMLIFrameElement, positionRatio: number, token: number): void {
     if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
+    this.scrollObserver.observe(iframe);
+
     this.resourceMgr.waitForAllResources(iframe.contentDocument).then(() => {
       const doc = iframe.contentDocument!;
       this.polyfillMgr.polyfillCss(iframe);
@@ -399,16 +445,7 @@ export class Renderer implements LuminaApi {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const pageCount = this.paginationMgr.calculatePageCount(iframe);
-
-          let pageIndex = 0;
-          if (this.frameMgr.isScrollMode()) {
-            const body = iframe.contentDocument!.body;
-            const maxOffset = Math.max(0, body.scrollHeight - body.clientHeight);
-            this.applyScrollOffset(iframe, positionRatio * maxOffset);
-          } else {
-            pageIndex = Math.round(positionRatio * pageCount);
-            this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
-          }
+          const pageIndex = this.applyPositionRatio(iframe, positionRatio);
 
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -416,7 +453,7 @@ export class Renderer implements LuminaApi {
                 if (iframe.id === 'frame-curr') {
                   FlutterBridge.onPageCountReady(pageCount);
                   FlutterBridge.onPageChanged(pageIndex);
-                  this.reportScrollMetrics();
+                  this.scrollObserver.report(iframe);
                 } else if (iframe.id === 'frame-prev') {
                   this.jumpToLastPageOfFrame(-1, 'prev');
                 } else if (iframe.id === 'frame-next') {

@@ -23,6 +23,15 @@ export class ThemeManager {
       : { x: 'auto', y: 'hidden' };
   }
 
+  /// Which panning gestures the chapter is allowed to handle itself.
+  ///
+  /// While paginated the answer is none: Flutter owns the page-turn gesture.
+  /// In scroll mode the page scrolls itself, so the vertical axis stays
+  /// pannable and the browser's own scroller follows the finger.
+  private touchAction(): string {
+    return this.frameMgr.isScrollMode() ? 'pan-y' : 'none';
+  }
+
   haveBackground(iframe: HTMLIFrameElement): boolean {
     if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return false;
     try {
@@ -53,6 +62,7 @@ export class ThemeManager {
     const cfg = this.state.config;
     const t = cfg.theme;
     const overflow = this.overflow();
+    const touchAction = this.touchAction();
 
     const fontFaceBlock = t.fontFileName
       ? `@font-face { font-family: 'LuminaCustomFont'; src: url('epub://localhost/fonts/${t.fontFileName}'); }`
@@ -68,6 +78,7 @@ export class ThemeManager {
       + `--lumina-padding-left: ${cfg.padding.left}px;`
       + `--lumina-reader-overflow-x: ${overflow.x};`
       + `--lumina-reader-overflow-y: ${overflow.y};`
+      + `--lumina-reader-touch-action: ${touchAction};`
       + `--lumina-surface-color: ${colorToHex(t.surfaceColor)};`
       + `--lumina-surface-color-rgb: ${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b};`
       + `--lumina-on-surface-color: ${colorToHex(t.onSurfaceColor)};`
@@ -111,6 +122,7 @@ export class ThemeManager {
     root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
     root.style.setProperty('--lumina-reader-overflow-x', overflow.x);
     root.style.setProperty('--lumina-reader-overflow-y', overflow.y);
+    root.style.setProperty('--lumina-reader-touch-action', this.touchAction());
     root.style.setProperty('--lumina-surface-color', colorToHex(t.surfaceColor));
     root.style.setProperty('--lumina-surface-color-rgb', `${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b}`);
     root.style.setProperty('--lumina-on-surface-color', colorToHex(t.onSurfaceColor));
