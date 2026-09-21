@@ -59,12 +59,10 @@ mixin LibraryActionsMixin<T extends ConsumerStatefulWidget>
       builder: (ctx) => ImportProgressDialog(stream: stream, l10n: l10n),
     );
 
-    // Clean all temporary files after import is done
+    // Clean all temporary files after import is done. The shelf itself is
+    // reloaded by the pipeline, before the stream it is driving ends, so the
+    // new books are already in place by the time this dialog comes down.
     await ImportCacheManager().clearAll();
-
-    if (context.mounted) {
-      await ref.read(bookshelfProvider.notifier).refresh();
-    }
   }
 
   Future<void> importPaths(

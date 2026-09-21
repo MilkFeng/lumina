@@ -6,7 +6,7 @@
 
 Lumina 的业务主体在 Flutter。Android Kotlin 与 iOS Swift 代码只承接 Flutter 无法直接稳定完成的系统能力：
 
-- 文件和目录选择：EPUB、备份目录、字体文件。
+- 文件和目录选择：EPUB、备份目录、字体文件、书籍封面图片。
 - iOS 安全域文件按需复制。
 - Android 音量键翻页拦截。
 - iOS 原生 WKWebView 翻页快照动画。
@@ -56,6 +56,12 @@ flowchart LR
 | `lib/src/features/reader/presentation/page_turn/ios_page_turn_session.dart` | iOS 原生翻页动画 MethodChannel 封装。 |
 | `lib/src/features/reader/presentation/page_turn/android_page_turn_session.dart` | Android 翻页动画纯 Dart 实现，不走原生插件。 |
 | `lib/src/features/settings/presentation/settings_screen.dart` | Android 打开 DocumentsProvider 暴露的 Lumina Books 根目录。 |
+
+### 详情页封面编辑
+
+`FilePickerService.pickImageFile()` 通过同名 MethodChannel 方法单选图片：Android 使用 `ACTION_OPEN_DOCUMENT` 和 `image/*`，iOS 使用图片 UTType，返回零或一个平台文件句柄。取消返回空列表；读取结束后释放 iOS 安全域。
+
+`BookCoverEditService` 复用 `ImportWorkers.compressImage` 转换图片，与导入封面共用 JPEG 格式、质量 85 和 `minWidth/minHeight = 800` 的缩放参数，并以 JPG 草稿保存在 `import_cache`；转换失败时不使用原图回退。编辑页仅预览草稿；放弃或离开时删除草稿。确认保存后写入 `covers/{fileHash}.jpg`，数据库保存失败时恢复原文件和原路径，保留草稿用于重试。新草稿完成预解码后才替换当前预览；保存成功后沿用同一个内存图片显示详情，避免文件重新读取和淡入造成空白。书架文件图片缓存仍会刷新，并清理旧封面。
 
 ## 原生插件注册
 

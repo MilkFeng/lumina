@@ -15,11 +15,13 @@ import '../../../../../l10n/app_localizations.dart';
 class BookDetailViewBody extends ConsumerWidget {
   final ShelfBook book;
   final String bookId;
+  final ImageProvider? coverImage;
 
   const BookDetailViewBody({
     super.key,
     required this.book,
     required this.bookId,
+    this.coverImage,
   });
 
   @override
@@ -50,6 +52,7 @@ class BookDetailViewBody extends ConsumerWidget {
                     constraints: const BoxConstraints(maxHeight: 300),
                     child: BookCover(
                       relativePath: book.coverPath,
+                      imageProvider: coverImage,
                       radius: BorderRadius.circular(8),
                     ),
                   ),

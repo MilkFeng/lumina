@@ -9,6 +9,9 @@ import '../providers/cover_file_provider.dart';
 /// Parent should handle clipping with ClipRRect if rounded corners are needed.
 class BookCover extends ConsumerWidget {
   final String? relativePath;
+
+  /// An already resized and precached image for seamless cover editing.
+  final ImageProvider? imageProvider;
   final BorderRadius radius;
   final bool enableBorder;
   final int cacheHeight;
@@ -17,6 +20,7 @@ class BookCover extends ConsumerWidget {
   const BookCover({
     super.key,
     required this.relativePath,
+    this.imageProvider,
     this.radius = BorderRadius.zero,
     this.enableBorder = true,
     this.cacheHeight = globalCacheHeight,
@@ -32,6 +36,11 @@ class BookCover extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final preparedImage = imageProvider;
+    if (preparedImage != null) {
+      return _buildImage(context, preparedImage, prepared: true);
+    }
+
     // Watch the cover file provider (cached by Riverpod)
     final coverFileAsync = ref.watch(coverFileProvider(relativePath));
 
@@ -49,44 +58,58 @@ class BookCover extends ConsumerWidget {
           return _buildPlaceholder(context);
         }
 
-        return Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          ),
-          foregroundDecoration: BoxDecoration(
-            borderRadius: radius,
-            border: enableBorder
-                ? Border.all(color: Theme.of(context).dividerColor, width: 1)
-                : null,
-          ),
-          child: Image.file(
-            file,
-            fit: BoxFit.cover,
-            cacheHeight: cacheHeight,
-            // Prevent white flash during Hero transitions and rebuilds
-            gaplessPlayback: true,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (wasSynchronouslyLoaded) {
-                return child;
-              }
-
-              return AnimatedOpacity(
-                opacity: frame == null ? 0.0 : 1.0,
-                duration: const Duration(
-                  milliseconds: AppTheme.defaultLongAnimationDurationMs,
-                ),
-                curve: Curves.easeOut,
-                child: child,
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return _buildPlaceholder(context, showIcon: false);
-            },
-          ),
+        return _buildImage(
+          context,
+          ResizeImage.resizeIfNeeded(null, cacheHeight, FileImage(file)),
+          imageKey: ObjectKey(file),
         );
       },
+    );
+  }
+
+  Widget _buildImage(
+    BuildContext context,
+    ImageProvider image, {
+    Key? imageKey,
+    bool prepared = false,
+  }) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: radius,
+        border: enableBorder
+            ? Border.all(color: Theme.of(context).dividerColor, width: 1)
+            : null,
+      ),
+      child: Image(
+        image: image,
+        // A refreshed file lookup must reload an edited image at the same path.
+        key: imageKey,
+        fit: BoxFit.cover,
+        // Prevent white flash during Hero transitions and rebuilds
+        gaplessPlayback: true,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (prepared || wasSynchronouslyLoaded) {
+            return child;
+          }
+
+          return AnimatedOpacity(
+            opacity: frame == null ? 0.0 : 1.0,
+            duration: const Duration(
+              milliseconds: AppTheme.defaultLongAnimationDurationMs,
+            ),
+            curve: Curves.easeOut,
+            child: child,
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return _buildPlaceholder(context, showIcon: false);
+        },
+      ),
     );
   }
 

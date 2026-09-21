@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **External Sources (WebDAV)**: Add a WebDAV server in Settings and browse its folders from the library to import EPUBs. The password is kept in the platform keychain, never in the library database.
 - **Download Progress**: An import from an external source shows how far the file being downloaded has come.
+- **Cover Editing**: A book's cover can be replaced from the detail screen — tap the cover while editing and pick an image from the device. The chosen image is converted with the same JPEG settings as imported covers, previewed while you edit, and only written to the library when you save; leaving edit mode drops it. If saving fails, the previous cover is restored and the draft is kept so the edit can be retried.
 
 #### Changed
 
@@ -21,14 +22,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Restore Behaviour**: Restoring now clears the current library (books, groups, reading progress and their files) and then applies the backup, instead of merging the backup book by book. The restored library is therefore an exact copy of the backup, with no risk of record conflicts.
 - Restoring asks for confirmation before deleting anything and can no longer be interrupted halfway through.
 - **Backup Format Version**: Backup packages are written with format version 2, and a restore now refuses a package that declares no version at all or a version newer than the app supports — the current library is left untouched in that case.
-- **Library Sort & View Menu**: The sort and view options moved out of a bottom sheet into a menu hanging off the app bar's tune icon. The choice in effect is checked, and pressing the icon and dragging onto an entry chooses it without lifting the finger.
-- **Library Add Button**: The floating add button no longer flickers between "+" and "×" as the dial opens — the same glyph now rotates into the cross.
+- **Library Reload**: Sorting, filtering, entering a group, refreshing and restoring now reload the shelf in place instead of dropping it to its loading state, so the grid no longer tears down and flashes a spinner while the books are re-read. A background reload that fails keeps the books already on screen instead of replacing them with an error, and a finished import no longer reloads the shelf a second time.
+- **Library Sort & View Menu**: The sort and view options moved out of a bottom sheet into a menu hanging off the app bar's tune icon. The choice in effect is checked, and pressing the icon and dragging onto an entry chooses it without lifting the finger. A press off the panel only closes the menu — it is not passed on to the book, tab or shelf underneath.
+- **Library Add Button**: The floating add button no longer flickers between "+" and "×" as the dial opens — the same glyph now rotates into the cross and grows a little on the way, so the cross reads at the size of the plus it replaced.
+- **Library Selection**: Clearing the selection now leaves selection mode with it, instead of staying in selection mode with nothing selected.
+- **Book Detail Editing**: Discarding edits after a back gesture now returns to the book's view mode, the same as the close button, instead of leaving the screen as well.
+- **External Source Editor**: The editor is wider — it fills the width the screen has to give instead of a fixed phone-sized box — and the saved configuration is now read before the dialog opens, so a keychain that refuses to open is reported with a message rather than leaving the editor on its spinner.
 - **Reader Table of Contents**: Tapping a chapter always jumps to it, including one that holds sections; expanding and collapsing moved to the chevron on its left.
 - **External Sources**: A saved source keeps a single delete button, and long pressing the row tests the connection. The button turns into a progress spinner while the test runs.
 
 #### Fixed
 
 - **Font Import Naming**: Imported fonts no longer collapse into a single entry named "unknown". Font file names are now resolved by the platform (`getDisplayNames`) instead of being guessed from the picker's opaque handle, path separators and URL-breaking characters are stripped, and a font whose name cannot be resolved gets a unique generated name rather than a shared placeholder.
+- **Backup Export**: A book's cover is now exported under the file name its record points at, so a cover that does not follow the `{hash}.{ext}` naming convention is no longer left out of the backup.
 
 ### Chinese
 
@@ -36,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **外部来源（WebDAV）**：可在设置中添加 WebDAV 服务器，并在书库中浏览其目录、导入 EPUB。密码保存在系统钥匙串，不写入书库数据库。
 - **下载进度**：从外部来源导入时会显示当前文件的下载进度。
+- **封面更换**：可在书籍详情页更换封面——编辑状态下点击封面，从设备中选择图片。所选图片按与导入封面相同的 JPEG 参数转换，编辑期间仅作为草稿预览，保存时才写入书库，退出编辑即丢弃。若保存失败，会恢复原封面并保留草稿，以便重试。
 
 #### 变更与优化
 
@@ -43,14 +50,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **恢复行为**：恢复时会先清空当前书库（书籍、分组、阅读进度及对应文件），再应用备份中的书库，不再逐本合并导入，因此恢复结果与备份完全一致，也不会再出现记录冲突。
 - 恢复前会先弹出确认提示，且恢复过程中无法中断。
 - **备份格式版本**：备份包统一写入格式版本 2；恢复时若备份包未声明版本、或版本高于当前应用支持的版本，会在清空本地书库之前直接报错拒绝恢复。
-- **书库排序与视图菜单**：排序与视图选项由底部弹层改为挂在应用栏“调节”图标上的菜单，当前生效的选项带勾选标记，按住图标拖到某一项即可一次选定，无需抬手。
-- **书库添加按钮**：悬浮添加按钮展开时不再在“+”与“×”之间闪烁，改为同一个图标旋转成叉。
+- **书库刷新**：排序、按分组筛选、进入分组、刷新与恢复备份改为就地重新读取书库，不再先切回加载状态，因此书架不会整屏重建、也不会闪过加载圈；后台刷新失败时会保留屏幕上已有的书籍，而不是替换成错误页；导入结束后也不再重复刷新一次书库。
+- **书库排序与视图菜单**：排序与视图选项由底部弹层改为挂在应用栏“调节”图标上的菜单，当前生效的选项带勾选标记，按住图标拖到某一项即可一次选定，无需抬手；点击菜单面板以外的区域只会关闭菜单，不会连带触发下层的书籍、标签页或书架。
+- **书库添加按钮**：悬浮添加按钮展开时不再在“+”与“×”之间闪烁，改为同一个图标旋转成叉，并在旋转过程中略微放大，让叉看起来与加号一样大。
+- **书库多选**：清除选择后会一并退出多选模式，不再停留在没有任何选中项的多选状态。
+- **书籍详情编辑**：使用返回手势放弃编辑后，会回到详情查看状态（与关闭按钮一致），不再直接退出该页面。
+- **外部来源编辑弹窗**：弹窗加宽，占满屏幕可用宽度，不再是固定手机尺寸的窄框；已保存的配置改为在弹窗打开前读取，钥匙串读取失败时会给出提示，而不是让弹窗卡在加载圈上。
 - **阅读器目录**：点击章节任意位置都会直接跳转，含子章节的条目同样如此；展开与折叠改为点击条目左侧的箭头。
 - **外部来源**：每条来源只保留一个删除按钮，长按整行可测试连接；测试期间该按钮变为进度圈。
 
 #### 修复
 
 - **字体导入命名**：导入字体不再全部显示为 “unknown” 且互相覆盖。字体文件名改由平台查询得到（`getDisplayNames`），不再从 picker 返回的不透明句柄里猜测；文件名会剔除路径分隔符与破坏 URL 的字符，实在取不到名字时使用唯一的生成名，而不是共用的占位名。
+- **备份导出**：导出封面时优先使用书籍记录中保存的文件名，文件名不符合 `{hash}.{ext}` 约定的封面不再被漏掉。
 
 ## [v0.2.4] - 2026-09-19
 

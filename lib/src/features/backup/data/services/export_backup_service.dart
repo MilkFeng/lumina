@@ -136,18 +136,24 @@ class ExportBackupService {
         }
 
         // -- Copy cover image (zero-memory) ------------------------------------
-        // Try common extensions; the cover may have been saved as jpg or png.
+        // Prefer the persisted cover after edits, then try common extensions
+        // for older records; the cover may have been saved as jpg or png.
         bool coverCopied = false;
-        for (final ext in ['jpg', 'png', 'jpeg', 'webp']) {
+        final coverNames = <String>{
+          if (book.coverPath != null)
+            p.basename(Uri.decodeFull(book.coverPath!)),
+          for (final ext in ['jpg', 'png', 'jpeg', 'webp']) '$hash.$ext',
+        };
+        for (final coverName in coverNames) {
           final coverSrc = File(
             p.join(
               AppStorage.documentsPath,
               AppStorageConstants.coversDir,
-              '$hash.$ext',
+              coverName,
             ),
           );
           if (coverSrc.existsSync()) {
-            await coverSrc.copy(p.join(coversOutDir.path, '$hash.$ext'));
+            await coverSrc.copy(p.join(coversOutDir.path, coverName));
             coverCopied = true;
             break;
           }

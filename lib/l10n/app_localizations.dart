@@ -1861,6 +1861,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear selection'**
   String get externalSourceDeselectAll;
+
+  /// Button that opens the cover picker
+  ///
+  /// In en, this message translates to:
+  /// **'Change cover'**
+  String get changeCover;
+
+  /// Error message shown when the cover picker fails to load an image
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this image. Please choose another image file.'**
+  String get coverPickFailed;
 }
 
 class _AppLocalizationsDelegate

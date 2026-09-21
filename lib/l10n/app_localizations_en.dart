@@ -1012,4 +1012,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalSourceDeselectAll => 'Clear selection';
+
+  @override
+  String get changeCover => 'Change cover';
+
+  @override
+  String get coverPickFailed =>
+      'Could not load this image. Please choose another image file.';
 }

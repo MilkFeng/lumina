@@ -6,7 +6,7 @@ import '../../../../../l10n/app_localizations.dart';
 
 /// Inline-editing form for a [ShelfBook].
 ///
-/// Displays the cover (read-only) followed by editable fields for title,
+/// Displays a tappable cover preview followed by editable fields for title,
 /// authors, and description. All [TextEditingController]s are owned by the
 /// parent state; this widget is purely presentational.
 class BookDetailEditBody extends StatelessWidget {
@@ -14,6 +14,9 @@ class BookDetailEditBody extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController authorsController;
   final TextEditingController descriptionController;
+  final ImageProvider? coverImage;
+  final bool isPickingCover;
+  final VoidCallback onPickCover;
 
   /// Validation error message shown below the title field, or null when valid.
   final String? titleError;
@@ -30,6 +33,9 @@ class BookDetailEditBody extends StatelessWidget {
     required this.descriptionController,
     required this.titleError,
     required this.onTitleChanged,
+    required this.coverImage,
+    required this.isPickingCover,
+    required this.onPickCover,
   });
 
   @override
@@ -42,7 +48,7 @@ class BookDetailEditBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover image — read-only, keeps the Hero tag alive.
+            // Cover image keeps the Hero tag alive while previewing the draft.
             Align(
               alignment: Alignment.centerLeft,
               child: Hero(
@@ -50,9 +56,37 @@ class BookDetailEditBody extends StatelessWidget {
                 tag: 'book-cover-${book.id}',
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 300),
-                  child: BookCover(
-                    relativePath: book.coverPath,
-                    radius: BorderRadius.circular(8),
+                  child: InkWell(
+                    onTap: isPickingCover ? null : onPickCover,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Stack(
+                      children: [
+                        BookCover(
+                          relativePath: book.coverPath,
+                          imageProvider: coverImage,
+                          radius: BorderRadius.circular(8),
+                        ),
+                        Positioned(
+                          right: 8,
+                          bottom: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              shape: BoxShape.circle,
+                            ),
+                            child: isPickingCover
+                                ? const SizedBox.square(
+                                    dimension: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.edit_outlined, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

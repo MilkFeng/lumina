@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';
@@ -25,7 +24,12 @@ import '../../data/shelf_book_repository.dart';
 /// where a release lands already says what it means. Releasing over an entry
 /// chooses it and the menu goes with it; releasing on the panel — or on the icon,
 /// whose corner the panel's corner sits on — leaves the menu up for a second tap;
-/// and releasing anywhere else dismisses the menu, as does tapping off the panel.
+/// and releasing anywhere else dismisses the menu, as does pressing off the panel.
+///
+/// A press off the panel does that and nothing else: it takes the menu down, and
+/// whatever it landed on — a book, a tab, the shelf — is left alone. An open menu
+/// is the only thing on screen a press is talking to, so the first press after it
+/// is spent dismissing it rather than being spent on both at once.
 ///
 /// The gesture is tracked here rather than by the menu because the panel is
 /// drawn in an overlay above the icon: the listener keeps receiving the pointer
@@ -132,6 +136,13 @@ class _StyleMenuButtonState extends State<StyleMenuButton> {
       // while its entries fade in one after another, and it shrinks back the
       // same way when it closes.
       animated: true,
+      // The press that dismisses the menu stops at the menu: the shelf under the
+      // panel is left out of it, so tapping past an open menu closes the menu
+      // and opens nothing. This is what declares the press handled — the menu
+      // closes as the press arrives and the press goes no further — and it
+      // covers dragging as well as tapping, so a press that sets out to scroll
+      // the shelf first sends the menu away.
+      consumeOutsideTap: true,
       // Without this the panel is left free to shrink back to the width of its
       // own labels, and the fixed width the placement below is computed from
       // would not hold.

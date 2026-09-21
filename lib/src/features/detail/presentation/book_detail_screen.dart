@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +11,10 @@ import 'package:lumina/src/features/detail/presentation/book_detail_helpers.dart
 import 'package:lumina/src/features/detail/presentation/widgets/book_detail_edit_body.dart';
 import 'package:lumina/src/features/detail/presentation/widgets/book_detail_view_body.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/providers/cover_file_provider.dart';
+import '../../../core/storage/app_storage.dart';
+import '../../../core/widgets/book_cover.dart';
+import '../data/book_cover_edit_service.dart';
 import '../../library/domain/shelf_book.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -24,7 +31,7 @@ Future<ShelfBook?> bookDetail(Ref ref, String fileHash) async {
 }
 
 /// Book Detail Screen - Shows detailed information about a book, with support
-/// for inline editing of title, authors, and description.
+/// for inline editing of cover, title, authors, and description.
 class BookDetailScreen extends ConsumerStatefulWidget {
   final String bookId; // fileHash
   final ShelfBook? initialBook; // Optional initial data for instant display
@@ -42,6 +49,11 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   // --------------------------------------------------------------------------
   bool _isEditing = false;
   bool _isSaving = false;
+  bool _isPickingCover = false;
+  File? _coverDraft;
+  ImageProvider? _draftCoverImage;
+  ImageProvider? _savedCoverImage;
+  final _coverService = BookCoverEditService();
   String? _titleError;
 
   late final TextEditingController _titleController;
@@ -72,6 +84,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
 
   @override
   void dispose() {
+    if (!_isSaving) unawaited(_coverService.discard(_coverDraft));
     _titleController.dispose();
     _authorsController.dispose();
     _descriptionController.dispose();
@@ -95,8 +108,63 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
 
   /// Switches back to view mode without saving.
   void _exitEditMode() {
+    final draft = _coverDraft;
+    _coverDraft = null;
+    _draftCoverImage = null;
+    unawaited(_coverService.discard(draft));
     _colorController.reverse();
     setState(() => _isEditing = false);
+  }
+
+  Future<void> _pickCover() async {
+    if (_isSaving || _isPickingCover) return;
+    setState(() => _isPickingCover = true);
+    final result = await _coverService.pickCover();
+    final draft = result.getRight().toNullable();
+    if (!mounted || !_isEditing) {
+      await _coverService.discard(draft);
+      return;
+    }
+    try {
+      if (result.isLeft()) {
+        ToastService.showError(AppLocalizations.of(context)!.coverPickFailed);
+      } else if (draft != null) {
+        final image = ResizeImage.resizeIfNeeded(
+          null,
+          BookCover.globalCacheHeight,
+          MemoryImage(await draft.readAsBytes()),
+        );
+        if (!mounted) {
+          await _coverService.discard(draft);
+          return;
+        }
+        Object? imageError;
+        // Keep the current cover visible until the new preview has a decoded frame.
+        await precacheImage(
+          image,
+          context,
+          onError: (error, _) => imageError = error,
+        );
+        if (imageError != null) throw imageError!;
+        if (!mounted || !_isEditing) {
+          await _coverService.discard(draft);
+          return;
+        }
+        final previous = _coverDraft;
+        setState(() {
+          _coverDraft = draft;
+          _draftCoverImage = image;
+        });
+        unawaited(_coverService.discard(previous));
+      }
+    } catch (_) {
+      await _coverService.discard(draft);
+      if (mounted) {
+        ToastService.showError(AppLocalizations.of(context)!.coverPickFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _isPickingCover = false);
+    }
   }
 
   /// Updates [_titleError] based on whether [value] is blank.
@@ -110,7 +178,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
 
   /// Persists edits to the repository and refreshes relevant providers.
   Future<void> _save(ShelfBook book) async {
-    if (_isSaving) return;
+    if (_isSaving || _isPickingCover) return;
 
     // Validate required fields before hitting the repository.
     final newTitle = _titleController.text.trim();
@@ -134,6 +202,10 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     final originalAuthors = List<String>.from(book.authors);
     final originalDescription = book.description;
     final originalUpdatedAt = book.updatedAt;
+    final originalCoverPath = book.coverPath;
+    final repository = ref.read(shelfBookRepositoryProvider);
+    final draft = _coverDraft;
+    var committed = false;
 
     try {
       book.title = newTitle;
@@ -141,7 +213,38 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
       book.description = newDescription.isEmpty ? null : newDescription;
       book.updatedAt = DateTime.now().millisecondsSinceEpoch;
 
-      final result = await ref.read(shelfBookRepositoryProvider).saveBook(book);
+      final result = draft == null
+          ? await repository.saveBook(book)
+          : await _coverService.saveCover(
+              draft: draft,
+              fileHash: book.fileHash,
+              persist: (relativePath) {
+                book.coverPath = relativePath;
+                return repository.saveBook(book);
+              },
+            );
+
+      committed = result.isRight();
+      if (committed && draft != null) {
+        // The persisted file has the same bytes; reuse its decoded preview when
+        // leaving edit mode instead of waiting for another file lookup and decode.
+        _savedCoverImage = _draftCoverImage;
+        final cover = File('${AppStorage.documentsPath}${book.coverPath}');
+        await FileImage(cover).evict();
+        await ResizeImage.resizeIfNeeded(
+          null,
+          BookCover.globalCacheHeight,
+          FileImage(cover),
+        ).evict();
+        if (mounted) ref.invalidate(coverFileProvider(book.coverPath));
+        if (originalCoverPath != null && originalCoverPath != book.coverPath) {
+          await _coverService.discard(
+            File(
+              '${AppStorage.documentsPath}${Uri.decodeFull(originalCoverPath)}',
+            ),
+          );
+        }
+      }
 
       result.fold(
         (error) {
@@ -150,6 +253,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
           book.authors = originalAuthors;
           book.description = originalDescription;
           book.updatedAt = originalUpdatedAt;
+          book.coverPath = originalCoverPath;
           if (mounted) {
             ToastService.showError(
               AppLocalizations.of(context)!.bookSaveFailed(error),
@@ -157,28 +261,41 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
           }
         },
         (_) {
-          ref.invalidate(bookDetailProvider(widget.bookId));
-          ref.read(bookshelfProvider.notifier).refresh();
-
           if (mounted) {
+            ref.invalidate(bookDetailProvider(widget.bookId));
+            ref.read(bookshelfProvider.notifier).refresh();
             ToastService.showSuccess(AppLocalizations.of(context)!.bookSaved);
             _exitEditMode();
           }
         },
       );
     } catch (e) {
-      // Roll back the in-memory mutation so the object stays consistent with DB.
-      book.title = originalTitle;
-      book.authors = originalAuthors;
-      book.description = originalDescription;
-      book.updatedAt = originalUpdatedAt;
-      if (mounted) {
-        ToastService.showError(
-          AppLocalizations.of(context)!.bookSaveFailed(e.toString()),
-        );
+      if (!committed) {
+        // Roll back the in-memory mutation so the object stays consistent with DB.
+        book.title = originalTitle;
+        book.authors = originalAuthors;
+        book.description = originalDescription;
+        book.updatedAt = originalUpdatedAt;
+        book.coverPath = originalCoverPath;
+        if (mounted) {
+          ToastService.showError(
+            AppLocalizations.of(context)!.bookSaveFailed(e.toString()),
+          );
+        }
+      } else {
+        // Refresh failures must not undo metadata already committed to the database.
+        debugPrint('Could not refresh the saved book cover: $e');
+        if (mounted) {
+          ref.invalidate(coverFileProvider(book.coverPath));
+          ref.invalidate(bookDetailProvider(widget.bookId));
+          ref.read(bookshelfProvider.notifier).refresh();
+          ToastService.showSuccess(AppLocalizations.of(context)!.bookSaved);
+          _exitEditMode();
+        }
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+      if (!mounted) await _coverService.discard(draft);
     }
   }
 
@@ -187,14 +304,8 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
   // --------------------------------------------------------------------------
 
   /// Shows a modal dialog asking the user what to do with unsaved changes.
-  ///
-  /// [isPop] indicates whether this was triggered by a system back gesture; if
-  /// the user chooses Discard in that case the method calls [context.pop()]
-  /// itself.
-  Future<bool> _handleCancelEdit({
-    required bool isPop,
-    required ShelfBook? book,
-  }) async {
+  Future<bool> _handleCancelEdit({required ShelfBook? book}) async {
+    if (_isSaving || _isPickingCover) return false;
     // Skip the dialog if nothing has changed.
     final newAuthors = _authorsController.text
         .split(',')
@@ -202,6 +313,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         .where((s) => s.isNotEmpty)
         .toList();
     final hasChanges =
+        _coverDraft != null ||
         _titleController.text.trim() != (book?.title ?? '') ||
         newAuthors.join(', ') != (book?.authors.join(', ') ?? '') ||
         _descriptionController.text.trim() != (book?.description ?? '');
@@ -237,10 +349,11 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
       },
     );
 
+    if (!mounted) return false;
+
     switch (action) {
       case _DiscardAction.discard:
         _exitEditMode();
-        if (isPop && mounted) context.pop();
         return true;
 
       case _DiscardAction.save:
@@ -269,7 +382,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         if (_isEditing) {
-          await _handleCancelEdit(isPop: true, book: book);
+          await _handleCancelEdit(book: book);
         }
       },
       child: AnimatedBuilder(
@@ -288,9 +401,9 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
               leading: _isEditing
                   ? IconButton(
                       icon: const Icon(Icons.close_outlined),
-                      onPressed: _isSaving
+                      onPressed: _isSaving || _isPickingCover
                           ? null
-                          : () => _handleCancelEdit(isPop: false, book: book),
+                          : () => _handleCancelEdit(book: book),
                     )
                   : IconButton(
                       icon: const Icon(Icons.arrow_back_outlined),
@@ -305,7 +418,10 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
                       IconButton(
                         icon: const Icon(Icons.check_outlined),
                         tooltip: AppLocalizations.of(context)!.save,
-                        onPressed: book != null ? () => _save(book) : null,
+                        onPressed:
+                            book != null && !_isSaving && !_isPickingCover
+                            ? () => _save(book)
+                            : null,
                       ),
                     ]
                   : [
@@ -327,7 +443,10 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
               animation: routeAnimation ?? const AlwaysStoppedAnimation(0.0),
               builder: (context, child) {
                 final isTransitioning = (routeAnimation?.value ?? 1.0) < 1.0;
-                return AbsorbPointer(absorbing: isTransitioning, child: child);
+                return AbsorbPointer(
+                  absorbing: isTransitioning || _isSaving,
+                  child: child,
+                );
               },
               child: _buildBody(context),
             ),
@@ -369,9 +488,16 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         descriptionController: _descriptionController,
         titleError: _titleError,
         onTitleChanged: _checkTitleError,
+        coverImage: _draftCoverImage ?? _savedCoverImage,
+        isPickingCover: _isPickingCover,
+        onPickCover: _pickCover,
       );
     }
-    return BookDetailViewBody(book: book, bookId: widget.bookId);
+    return BookDetailViewBody(
+      book: book,
+      bookId: widget.bookId,
+      coverImage: _savedCoverImage,
+    );
   }
 
   Widget _buildErrorBody(BuildContext context, String message) {

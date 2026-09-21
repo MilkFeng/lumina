@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/shared_preferences_provider.dart';
@@ -182,8 +183,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   Future<void> changeSortOrder(ShelfBookSortBy sortBy) async {
     // Persist asynchronously – fire and forget, no need to await.
     _prefs?.setString(_sortOrderKey, sortBy.name);
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _loadBooks(sortBy: sortBy));
+    await _reload(sortBy: sortBy);
   }
 
   /// Change view mode and persist the selection.
@@ -196,18 +196,13 @@ class BookshelfNotifier extends _$BookshelfNotifier {
 
   /// Filter by group (null = show all books)
   Future<void> filterByGroup(int? groupId) async {
-    state = await AsyncValue.guard(
-      () => _loadBooks(filterGroupId: groupId, clearFilter: groupId == null),
-    );
+    await _reload(filterGroupId: groupId, clearFilter: groupId == null);
   }
 
   /// Enter a group (folder)
   Future<void> enterGroup(int groupId) async {
-    state = const AsyncValue.loading();
     // Clear filter when navigating into a group
-    state = await AsyncValue.guard(
-      () => _loadBooks(groupId: groupId, clearFilter: true),
-    );
+    await _reload(groupId: groupId, clearFilter: true);
   }
 
   /// Go back to root (simplified - no nesting)
@@ -217,11 +212,8 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       return;
     }
 
-    state = const AsyncValue.loading();
     // Clear group and filter when navigating back
-    state = await AsyncValue.guard(
-      () => _loadBooks(groupId: null, clearFilter: true),
-    );
+    await _reload(groupId: null, clearFilter: true);
   }
 
   /// Create a new group (flat structure, no nesting)
@@ -325,8 +317,13 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     final currentState = state.value;
     if (currentState == null) return;
 
+    // Exit selection mode when no items are selected
     state = AsyncValue.data(
-      currentState.copyWith(selectedBookIds: {}, selectedGroupIds: {}),
+      currentState.copyWith(
+        isSelectionMode: false,
+        selectedBookIds: {},
+        selectedGroupIds: {},
+      ),
     );
   }
 
@@ -354,7 +351,6 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       // Groups selected will simply be ignored
 
       // Reload items and clear selection
-      state = const AsyncValue.loading();
       final newState = await _loadBooks();
       state = AsyncValue.data(
         newState.copyWith(
@@ -390,7 +386,6 @@ class BookshelfNotifier extends _$BookshelfNotifier {
       }
 
       // Reload items and clear selection
-      state = const AsyncValue.loading();
       final newState = await _loadBooks();
       state = AsyncValue.data(
         newState.copyWith(
@@ -407,10 +402,13 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   }
 
   /// Refresh books
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _loadBooks());
-  }
+  ///
+  /// Reloads without going through [AsyncValue.loading]: the shelf is a grid the
+  /// user is looking at, and dropping to the loading state would tear the whole
+  /// view down and rebuild it, which shows up as a flash of the spinner. The
+  /// loading state is only entered for the very first load, when there is
+  /// nothing on screen to keep.
+  Future<void> refresh() => _reload();
 
   /// Reloads the shelf after the whole library has been replaced by a backup.
   ///
@@ -419,23 +417,53 @@ class BookshelfNotifier extends _$BookshelfNotifier {
   /// filtering on a group that no longer exists.
   Future<void> resetAfterRestore() async {
     _cacheOrder.clear();
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => _loadBooks(clearGroup: true, clearFilter: true),
-    );
+    await _reload(clearGroup: true, clearFilter: true);
   }
 
   Future<bool> reloadQuietly() async {
-    if (state.value == null) return true;
+    await _reload();
+    return true;
+  }
+
+  /// Re-reads the shelf and publishes the result in one step.
+  ///
+  /// Every shelf mutation goes through here so that the reload logic — and the
+  /// decision not to interrupt the view with a loading state — lives in one
+  /// place. Only the first load, or one following an error, has nothing to show
+  /// and is allowed to report [AsyncValue.loading].
+  ///
+  /// A failure is reported only when there is no data to fall back on. When the
+  /// shelf is already on screen, a failed background reload leaves the previous
+  /// books where they are instead of replacing them with an error screen.
+  Future<void> _reload({
+    ShelfBookSortBy? sortBy,
+    ViewMode? viewMode,
+    int? groupId,
+    int? filterGroupId,
+    bool clearGroup = false,
+    bool clearFilter = false,
+  }) async {
+    final hasData = state.value != null;
+    if (!hasData) {
+      state = const AsyncValue.loading();
+    }
+
     try {
-      // Re-use _loadBooks so the filter/sort/cache logic is in one place.
-      // Unlike refresh(), we do NOT emit AsyncLoading first, so the UI keeps
-      // showing the existing books during the background reload.
-      final newState = await _loadBooks();
+      final newState = await _loadBooks(
+        sortBy: sortBy,
+        viewMode: viewMode,
+        groupId: groupId,
+        filterGroupId: filterGroupId,
+        clearGroup: clearGroup,
+        clearFilter: clearFilter,
+      );
       state = AsyncValue.data(newState);
-      return true;
-    } catch (e) {
-      return false;
+    } catch (error, stackTrace) {
+      if (!hasData) {
+        state = AsyncValue.error(error, stackTrace);
+      } else {
+        debugPrint('Bookshelf reload failed: $error');
+      }
     }
   }
 
@@ -447,7 +475,7 @@ class BookshelfNotifier extends _$BookshelfNotifier {
         name: name.trim(),
       );
       if (result.isRight()) {
-        state = await AsyncValue.guard(() => _loadBooks());
+        await _reload();
       }
       return result.isRight();
     } catch (e) {

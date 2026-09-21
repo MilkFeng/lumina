@@ -1417,5 +1417,13 @@
   "externalSourceDeselectAll": "Clear selection",
   "@externalSourceDeselectAll": {
     "description": "Tooltip of the button that clears the whole import selection"
+  },
+  "changeCover": "Change cover",
+  "@changeCover": {
+    "description": "Button that opens the cover picker"
+  },
+  "coverPickFailed": "Could not load this image. Please choose another image file.",
+  "@coverPickFailed": {
+    "description": "Error message shown when the cover picker fails to load an image"
   }
 }
