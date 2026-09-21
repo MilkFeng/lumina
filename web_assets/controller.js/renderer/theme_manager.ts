@@ -12,6 +12,15 @@ export class ThemeManager {
     this.state.config.safeHeight = Math.floor(viewHeight);
     this.state.config.padding = newTheme.padding;
     this.state.config.theme = newTheme.theme;
+    this.state.config.scrollMode = newTheme.scrollMode === true;
+  }
+
+  /// The overflow pair for the scrolling axis.  Scroll mode always scrolls
+  /// vertically, whatever the book's own page progression says.
+  private overflow(): { x: string; y: string } {
+    return this.frameMgr.isVerticalAxis()
+      ? { x: 'hidden', y: 'auto' }
+      : { x: 'auto', y: 'hidden' };
   }
 
   haveBackground(iframe: HTMLIFrameElement): boolean {
@@ -43,7 +52,7 @@ export class ThemeManager {
   generateVariableStyle(): string {
     const cfg = this.state.config;
     const t = cfg.theme;
-    const isV = this.frameMgr.isVertical();
+    const overflow = this.overflow();
 
     const fontFaceBlock = t.fontFileName
       ? `@font-face { font-family: 'LuminaCustomFont'; src: url('epub://localhost/fonts/${t.fontFileName}'); }`
@@ -57,8 +66,8 @@ export class ThemeManager {
       + `--lumina-safe-height: ${cfg.safeHeight}px;`
       + `--lumina-padding-top: ${cfg.padding.top}px;`
       + `--lumina-padding-left: ${cfg.padding.left}px;`
-      + `--lumina-reader-overflow-x: ${isV ? 'hidden' : 'auto'};`
-      + `--lumina-reader-overflow-y: ${isV ? 'auto' : 'hidden'};`
+      + `--lumina-reader-overflow-x: ${overflow.x};`
+      + `--lumina-reader-overflow-y: ${overflow.y};`
       + `--lumina-surface-color: ${colorToHex(t.surfaceColor)};`
       + `--lumina-surface-color-rgb: ${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b};`
       + `--lumina-on-surface-color: ${colorToHex(t.onSurfaceColor)};`
@@ -88,7 +97,7 @@ export class ThemeManager {
     const body = doc.body;
     const cfg = this.state.config;
     const t = cfg.theme;
-    const isV = this.frameMgr.isVertical();
+    const overflow = this.overflow();
 
     root.style.setProperty('--lumina-zoom', String(t.zoom));
     if (t.lineHeight === null) {
@@ -100,8 +109,8 @@ export class ThemeManager {
     root.style.setProperty('--lumina-safe-height', cfg.safeHeight + 'px');
     root.style.setProperty('--lumina-padding-top', cfg.padding.top + 'px');
     root.style.setProperty('--lumina-padding-left', cfg.padding.left + 'px');
-    root.style.setProperty('--lumina-reader-overflow-x', isV ? 'hidden' : 'auto');
-    root.style.setProperty('--lumina-reader-overflow-y', isV ? 'auto' : 'hidden');
+    root.style.setProperty('--lumina-reader-overflow-x', overflow.x);
+    root.style.setProperty('--lumina-reader-overflow-y', overflow.y);
     root.style.setProperty('--lumina-surface-color', colorToHex(t.surfaceColor));
     root.style.setProperty('--lumina-surface-color-rgb', `${t.surfaceColor.r}, ${t.surfaceColor.g}, ${t.surfaceColor.b}`);
     root.style.setProperty('--lumina-on-surface-color', colorToHex(t.onSurfaceColor));
@@ -127,6 +136,7 @@ export class ThemeManager {
     body.classList.toggle('lumina-override-color', overrideColor);
     body.classList.toggle('lumina-force-override-font', !!(t.overrideFontFamily && t.fontFileName));
     body.classList.toggle('lumina-override-font', !!(t.fontFileName));
+    body.classList.toggle('lumina-is-scroll', this.frameMgr.isScrollMode());
 
     const existingStyle = doc.getElementById(styleId);
     if (existingStyle) {

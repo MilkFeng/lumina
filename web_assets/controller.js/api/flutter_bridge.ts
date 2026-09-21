@@ -12,6 +12,16 @@ export class FlutterBridge {
     window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
   }
 
+  /// Reports the current frame's scroll extents so that Flutter can drive
+  /// scrolling itself in scroll mode
+  static onScrollMetrics(
+    contentHeight: number,
+    viewportHeight: number,
+    offset: number
+  ): void {
+    window.flutter_inappwebview.callHandler('onScrollMetrics', contentHeight, viewportHeight, offset);
+  }
+
   static onScrollAnchors(anchors: string[]): void {
     window.flutter_inappwebview.callHandler('onScrollAnchors', anchors);
   }

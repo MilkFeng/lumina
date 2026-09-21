@@ -1400,6 +1400,30 @@ abstract class AppLocalizations {
   /// **'Follow in-book links'**
   String get readerHandleIntraLink;
 
+  /// Reader style sheet section title for the chapter layout mode
+  ///
+  /// In en, this message translates to:
+  /// **'Reading Layout'**
+  String get readerScrollModeSection;
+
+  /// Reading layout option: discrete pages turned horizontally
+  ///
+  /// In en, this message translates to:
+  /// **'Paged'**
+  String get readerScrollModePaginated;
+
+  /// Reading layout option: continuous vertical scrolling
+  ///
+  /// In en, this message translates to:
+  /// **'Scrolling'**
+  String get readerScrollModeScrolling;
+
+  /// Explanation shown when the scrolling layout is disabled because the book's page progression is not left-to-right
+  ///
+  /// In en, this message translates to:
+  /// **'Scrolling is unavailable for vertical or right-to-left books.'**
+  String get readerScrollModeUnsupported;
+
   /// Reader style sheet section title for page-turning animation
   ///
   /// In en, this message translates to:

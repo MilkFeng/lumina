@@ -64,18 +64,36 @@ class LuminaApi {
   /// Updates the reader theme/layout and awaits completion.
   ///
   /// [theme] must be a JSON-serialisable map produced by `EpubTheme.toMap()`.
+  /// [scrollMode] mirrors `InitConfig.scrollMode` on the TypeScript side and
+  /// must be re-sent with every theme update, because a layout change and a
+  /// mode change both go through the same re-layout path.
   Future<void> updateTheme(
     double viewWidth,
     double viewHeight,
-    Map<String, dynamic> theme,
-  ) {
-    final themeJson = jsonEncode(theme);
+    Map<String, dynamic> theme, {
+    required bool scrollMode,
+  }) {
+    final themeJson = jsonEncode({...theme, 'scrollMode': scrollMode});
     return _bridge.callAndWait(
       (t) => 'window.api.updateTheme($t, $viewWidth, $viewHeight, $themeJson)',
     );
   }
 
   // ─── Fire-and-forget ───────────────────────────────────────────────
+
+  /// Scrolls the current frame to an absolute vertical [offset], in CSS
+  /// pixels.
+  ///
+  /// Used only in scroll mode, where Flutter owns the gesture and the scroll
+  /// physics.  This is intentionally fire-and-forget: it is pushed once per
+  /// animation frame and must not wait for a token round-trip.
+  Future<void> scrollContentTo(double offset) =>
+      _bridge.evaluate('window.api.scrollContentTo($offset)');
+
+  /// Asks the current frame to re-report its scroll extents through the
+  /// `onScrollMetrics` handler.
+  Future<void> requestScrollMetrics() =>
+      _bridge.evaluate('window.api.requestScrollMetrics()');
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y).
   Future<void> checkLongPressElementAt(double x, double y) =>

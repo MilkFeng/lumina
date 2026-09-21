@@ -23,8 +23,9 @@ String generateSkeletonHtml(
   double viewWidth,
   double viewHeight,
   EpubTheme theme,
-  int direction,
-) {
+  int direction, {
+  required bool scrollMode,
+}) {
   final safeWidth = viewWidth.floor();
   final safeHeight = viewHeight.floor();
 
@@ -32,6 +33,7 @@ String generateSkeletonHtml(
   initialConfigMap['safeWidth'] = safeWidth;
   initialConfigMap['safeHeight'] = safeHeight;
   initialConfigMap['direction'] = direction;
+  initialConfigMap['scrollMode'] = scrollMode;
   initialConfigMap['paginationCss'] = kPaginationCss;
 
   final initialConfigJson = jsonEncode(initialConfigMap);

@@ -109,6 +109,13 @@ export interface InitConfig {
   safeWidth: number;
   safeHeight: number;
   direction: number;
+
+  /// When true the chapter is laid out as a single continuous column that is
+  /// scrolled vertically instead of being split into pages.  This is
+  /// independent of `direction`, which keeps describing the book's own page
+  /// progression; scroll mode is only ever enabled for `direction === 0`.
+  scrollMode: boolean;
+
   padding: ReaderPadding;
   theme: ReaderTheme;
 
@@ -136,6 +143,17 @@ export interface ReaderState {
 export interface ThemeUpdate {
   padding: ReaderPadding;
   theme: ReaderTheme;
+
+  /// See `InitConfig.scrollMode`.
+  scrollMode: boolean;
+}
+
+/// Scroll extents of the current frame, reported to Flutter so that it can
+/// drive the scrolling itself (see `FlutterBridge.onScrollMetrics`).
+export interface ScrollMetrics {
+  contentHeight: number;
+  viewportHeight: number;
+  offset: number;
 }
 
 // ─── Internal Helpers ────────────────────────────────────────────────

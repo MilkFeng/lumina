@@ -129,10 +129,15 @@ class BookSession {
   }
 
   /// Save reading progress to database
+  ///
+  /// [scrollRatio] overrides the page-based position and is what scroll mode
+  /// passes in: there the chapter is a single page, so the page counters carry
+  /// no position information at all.
   void saveProgress({
     required int currentChapterIndex,
     required int currentPageInChapter,
     required int totalPagesInChapter,
+    double? scrollRatio,
   }) {
     if (_book == null || _manifest == null) return;
 
@@ -141,8 +146,8 @@ class BookSession {
     }
 
     _debounceTimer = Timer(const Duration(milliseconds: 10), () async {
-      double? scrollPosition;
-      if (totalPagesInChapter > 0) {
+      double? scrollPosition = scrollRatio;
+      if (scrollPosition == null && totalPagesInChapter > 0) {
         scrollPosition = currentPageInChapter / totalPagesInChapter;
       }
 
@@ -150,7 +155,10 @@ class BookSession {
       if (_spine.isNotEmpty) {
         final delta = 1.0 / _spine.length;
         progress = (currentChapterIndex + 1) / _spine.length;
-        if (totalPagesInChapter > 0) {
+        if (scrollRatio != null) {
+          progress -= delta;
+          progress += delta * scrollRatio;
+        } else if (totalPagesInChapter > 0) {
           progress -= delta;
           progress +=
               delta * ((currentPageInChapter + 1) / totalPagesInChapter);

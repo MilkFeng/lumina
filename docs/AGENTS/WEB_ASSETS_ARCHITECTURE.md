@@ -69,6 +69,21 @@ window.api = api;
 - 隐藏滚动条、禁用选择、禁用 WebView 内原生点击高亮。
 - 限制图片、SVG、视频不越过安全阅读区域。
 
+### 连续滚动模式
+
+`InitConfig.scrollMode` 为 `true` 时，`curr` iframe 内部改为一整列连续内容，垂直滚动阅读，
+章节之间**不**连续（章节切换仍走底部工具栏的左右箭头与 `cycleFrames`）。三帧结构本身不变。
+
+- `body` 上加 `lumina-is-scroll` class，`pagination.css/main.css` 中的
+  `body.lumina-is-scroll` 规则把 `column-width` / `column-count` 还原成 `initial`，
+  并强制 `overflow-y: auto` / `overflow-x: hidden`。
+- `PaginationManager` 在滚动模式下短路：`calculatePageCount` 返回 `1`、
+  `calculateCurrentPageIndex` 返回 `0`、`calculateScrollOffset` 返回 `0`，
+  跳过所有 `+128` 的 column gap 运算；`detectActiveAnchor` 改用纵向轴。
+- 手势、惯性物理和当前偏移都由 Flutter 侧拥有（`WebViewScrollSession`），Web 端只负责
+  接收绝对偏移（`scrollContentTo`）并上报滚动范围（`onScrollMetrics`）。
+  Web 端不注册任何拖拽事件处理。
+
 ### 主题与字体
 
 `ThemeManager` 负责维护 CSS 变量和主题类：
@@ -144,7 +159,7 @@ WebView iframe 本身设置 `pointer-events: none`，手势由 Flutter 捕获，
 
 初始化 Web 端状态：
 
-- 保存 `safeWidth`、`safeHeight`、`direction`、`padding`、`theme`、`paginationCss`。
+- 保存 `safeWidth`、`safeHeight`、`direction`、`scrollMode`、`padding`、`theme`、`paginationCss`。
 - 向 skeleton document 写入 CSS 变量。
 - 注册 window resize 监听，尺寸变化后 120ms debounce 上报 `onViewportResize`。
 
@@ -203,6 +218,29 @@ pageIndex = Math.round(ratio * pageCount)
 
 之后复用 `jumpToPage`。
 
+滚动模式下不走分页，改为把 `ratio` 映射成像素偏移：
+
+```ts
+offset = ratio * Math.max(0, contentHeight - viewportHeight)
+```
+
+应用偏移后重新检测 active anchor、上报 `onScrollMetrics`，再完成 token。
+
+### `scrollContentTo(offset): void`
+
+把当前 iframe 滚动到绝对垂直偏移 `offset`（CSS 像素），仅在滚动模式下使用。
+
+- fire-and-forget，不使用 token：滚动模式下手势与惯性物理都由 Flutter 侧的
+  `WebViewScrollSession` 拥有，每帧推一次偏移，token 往返开销无法接受。
+- 内部通过 `body.scrollTop` 实现，**不是** CSS transform。`interaction.ts` 的四叉树命中检测
+  用文档坐标（`docY = y + body.scrollTop`），换成 transform 会静默破坏脚注和链接点击。
+- active anchor 检测在内部按约 250ms 节流，避免每帧重算。
+
+### `requestScrollMetrics(): void`
+
+主动重新上报当前 iframe 的滚动范围（见 `onScrollMetrics`）。fire-and-forget，不使用 token。
+Flutter 侧在恢复阅读位置后调用，以便 Dart 端的滚动会话拿到正确的 `maxExtent`。
+
 ### `cycleFrames(token, direction): void`
 
 翻到上一章或下一章。
@@ -223,7 +261,8 @@ pageIndex = Math.round(ratio * pageCount)
 
 - 更新 skeleton document 的 CSS 变量。
 - 对每个已加载 iframe 更新 CSS 变量。
-- 按当前页百分比重新分页和恢复位置。
+- 按 `newTheme.scrollMode` 切换分页模式与滚动模式的布局（`body.lumina-is-scroll`）。
+- 按当前页百分比重新分页和恢复位置；滚动模式下改为重新上报 `onScrollMetrics`。
 - 重建交互索引。
 - 当前 frame 重新上报页数和页码。
 - 完成后回调 `onEventFinished(token)`。
@@ -266,6 +305,7 @@ pageIndex = Math.round(ratio * pageCount)
 | `onPageCountReady` | `pageCount: number` | 当前 frame 完成分页或主题更新后触发。 |
 | `onPageChanged` | `pageIndex: number` | 当前页码变化后触发。 |
 | `onScrollAnchors` | `anchors: string[]` | 当前 frame active anchors 变化检测后触发。 |
+| `onScrollMetrics` | `contentHeight: number, viewportHeight: number, offset: number` | 滚动模式下上报当前 frame 的滚动范围。frame 加载完成、主题更新、翻章（`cycleFrames`）、恢复位置以及 `requestScrollMetrics()` 后触发。Dart 侧据此计算 `maxExtent` 和章节进度百分比。 |
 | `onTap` | `x: number, y: number` | 点击未命中脚注或链接时触发。 |
 | `onLinkTap` | `href: string, x: number, y: number` | 点击链接时触发。Flutter 可决定处理链接或回退为普通 tap。 |
 | `onFootnoteTap` | `innerHtml: string, left: number, top: number, width: number, height: number, baseUrl: string` | 点击脚注引用时触发。 |
@@ -293,11 +333,39 @@ interface InitConfig {
   safeWidth: number;
   safeHeight: number;
   direction: number;
+  scrollMode: boolean;
   padding: { top: number; left: number };
   theme: ReaderTheme;
   paginationCss: string;
 }
 ```
+
+`scrollMode` 为 `true` 时，章节不再用 CSS multicol 切分成页，而是渲染成一整列并垂直滚动。
+它与 `direction` 相互独立：`direction` 始终表示书籍自身的翻页方向，而滚动模式只对
+`direction === 0` 的书籍开放（RTL / 竖排书籍强制分页，见
+`ReaderSettings.supportsScrollMode`）。
+
+### `ThemeUpdate`
+
+```ts
+interface ThemeUpdate {
+  padding: ReaderPadding;
+  theme: ReaderTheme;
+  scrollMode: boolean;
+}
+```
+
+### `ScrollMetrics`
+
+```ts
+interface ScrollMetrics {
+  contentHeight: number;
+  viewportHeight: number;
+  offset: number;
+}
+```
+
+当前 frame 的滚动范围，通过 `onScrollMetrics` 上报给 Flutter。单位是 CSS 像素。
 
 ### `ReaderTheme`
 

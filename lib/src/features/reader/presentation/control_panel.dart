@@ -15,6 +15,9 @@ class ControlPanel extends ConsumerStatefulWidget {
   final int currentPageInChapter;
   final int totalPagesInChapter;
   final int direction;
+
+  /// Whether the chapter scrolls continuously; the arrows then switch chapters.
+  final bool scrollMode;
   final VoidCallback onBack;
   final VoidCallback onOpenDrawer;
   final VoidCallback onPreviousPage;
@@ -34,6 +37,7 @@ class ControlPanel extends ConsumerStatefulWidget {
     required this.currentPageInChapter,
     required this.totalPagesInChapter,
     required this.direction,
+    required this.scrollMode,
     required this.onBack,
     required this.onOpenDrawer,
     required this.onPreviousPage,
@@ -154,6 +158,12 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
   }
 
   void _handleTapLeft() {
+    // Scroll mode has no pages within a chapter, so the arrows are the only
+    // way to change chapter.
+    if (widget.scrollMode) {
+      _handlePreviousChapter();
+      return;
+    }
     if (widget.isVertical) {
       widget.onNextPage();
     } else {
@@ -162,6 +172,10 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
   }
 
   void _handleTapRight() {
+    if (widget.scrollMode) {
+      _handleNextChapter();
+      return;
+    }
     if (widget.isVertical) {
       widget.onPreviousPage();
     } else {
@@ -440,8 +454,10 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                               ),
                                             ),
                                           ),
-                                          const Flexible(
-                                            child: ReaderStyleBottomSheet(),
+                                          Flexible(
+                                            child: ReaderStyleBottomSheet(
+                                              direction: widget.direction,
+                                            ),
                                           ),
                                         ],
                                       ),

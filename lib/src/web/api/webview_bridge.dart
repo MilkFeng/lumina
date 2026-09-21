@@ -31,12 +31,22 @@ class WebViewBridge {
     _controller = controller;
   }
 
-  /// Detaches the controller and cancels all pending completers.
+  /// Detaches the controller and releases all pending completers.
+  ///
+  /// Pending calls are completed rather than failed, mirroring what
+  /// [waitForEvent] does on timeout: the WebView they targeted is gone, so no
+  /// `onEventFinished` will ever arrive, and callers await these futures
+  /// without a `catch`.
   void detach() {
     _controller = null;
+    if (_completers.isNotEmpty) {
+      debugPrint(
+        'WebViewBridge: detached with ${_completers.length} pending event(s)',
+      );
+    }
     for (final completer in _completers.values) {
       if (!completer.isCompleted) {
-        completer.completeError(StateError('WebViewBridge detached'));
+        completer.complete();
       }
     }
     _completers.clear();

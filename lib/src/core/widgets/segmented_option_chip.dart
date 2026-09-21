@@ -17,6 +17,7 @@ class SegmentedOptionChip extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.enabled = true,
     this.selectedBackgroundColor,
     this.onSelectedColor,
     this.selectedBorderColor,
@@ -27,6 +28,13 @@ class SegmentedOptionChip extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+
+  /// Whether the chip can be selected.
+  ///
+  /// A disabled chip is dimmed and ignores taps, which is how an option that
+  /// the current book cannot support is presented — it stays visible, with an
+  /// explanation next to the row, rather than disappearing.
+  final bool enabled;
 
   /// Background colour when selected.
   /// Defaults to [ColorScheme.primaryContainer].
@@ -74,37 +82,40 @@ class SegmentedOptionChip extends StatelessWidget {
         )!;
 
         return Expanded(
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: border, width: 1.5),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 20, color: fg),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: fg,
-                      fontWeight: FontWeight.lerp(
-                        FontWeight.normal,
-                        FontWeight.w600,
-                        t,
+          child: Opacity(
+            opacity: enabled ? 1.0 : 0.38,
+            child: InkWell(
+              onTap: enabled ? onTap : null,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: border, width: 1.5),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 20, color: fg),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: fg,
+                        fontWeight: FontWeight.lerp(
+                          FontWeight.normal,
+                          FontWeight.w600,
+                          t,
+                        ),
                       ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

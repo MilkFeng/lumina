@@ -309,6 +309,25 @@ Android 没有原生翻页插件。`AndroidPageTurnSession` 在 Flutter 内完�
 - 用 Flutter `AnimationController` 和 `SlideTransition` 滑动截图或 WebView。
 - 页面切换和动画并行执行。
 
+#### 平台视图组合模式与滚动模式
+
+`takeScreenshot()` 走的是 Flutter 的 `RepaintBoundary.toImage()`，它只能捕获**虚拟显示
+（virtual display）**模式下的平台视图；混合组合（hybrid composition）模式下 WebView 由
+Android 原生层直接绘制，Flutter 侧截出来是空白，翻页动画会失效。
+
+因此 `readerWebViewSettings({required bool scrollMode})`
+（`lib/src/features/reader/presentation/reader_webview.dart`）按阅读模式选择组合方式：
+
+| 模式 | `useHybridComposition` | 原因 |
+| --- | --- | --- |
+| 分页模式 | `false`（虚拟显示） | 翻页动画需要 `RepaintBoundary.toImage()` 截图。 |
+| 连续滚动模式 | `true`（混合组合） | 滚动模式没有截图翻页动画，混合组合下高频滚动的合成质量更好。 |
+
+由于组合模式是 `InAppWebViewSettings` 的创建期参数，`InAppWebView` 带有
+`key: ValueKey(scrollMode)`，切换模式会重建 WebView（`didUpdateWidget` 里先
+`_disposeWebView()` 释放 `HeadlessInAppWebView` 和 bridge），表现为一次短暂的重新加载闪烁，
+这是已知且接受的代价。
+
 ### iOS
 
 iOS 使用原生 `ReaderPageTurnPlugin`，原因是 `WKWebView` 与 Flutter 截图/组合层在 iOS 上更适合由 UIKit 直接处理。

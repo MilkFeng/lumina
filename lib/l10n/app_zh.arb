@@ -1043,6 +1043,22 @@
   "@readerHandleIntraLink": {
     "description": "是否跟随书内（epub://）链接跳转的开关标签"
   },
+  "readerScrollModeSection": "阅读版式",
+  "@readerScrollModeSection": {
+    "description": "阅读器样式面板章节版式区块标题"
+  },
+  "readerScrollModePaginated": "分页",
+  "@readerScrollModePaginated": {
+    "description": "阅读版式选项：横向分页翻页"
+  },
+  "readerScrollModeScrolling": "滚动",
+  "@readerScrollModeScrolling": {
+    "description": "阅读版式选项：连续纵向滚动"
+  },
+  "readerScrollModeUnsupported": "竖排或从右向左排版的书籍不支持滚动版式。",
+  "@readerScrollModeUnsupported": {
+    "description": "当书籍翻页方向不是从左向右、滚动版式被禁用时显示的说明"
+  },
   "readerPageAnimationSection": "翻页",
   "@readerPageAnimationSection": {
     "description": "阅读器样式面板翻页动画区块标题"

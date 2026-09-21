@@ -746,6 +746,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerHandleIntraLink => 'Follow in-book links';
 
   @override
+  String get readerScrollModeSection => 'Reading Layout';
+
+  @override
+  String get readerScrollModePaginated => 'Paged';
+
+  @override
+  String get readerScrollModeScrolling => 'Scrolling';
+
+  @override
+  String get readerScrollModeUnsupported =>
+      'Scrolling is unavailable for vertical or right-to-left books.';
+
+  @override
   String get readerPageAnimationSection => 'Pagination';
 
   @override

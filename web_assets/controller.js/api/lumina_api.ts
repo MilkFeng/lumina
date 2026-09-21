@@ -22,6 +22,16 @@ export interface LuminaApi {
   /// Restores the scroll position in the current frame. The ratio is a value between 0 and 1, representing the scroll position as a percentage of the total scrollable height
   restoreScrollPosition(token: number, ratio: number): void;
 
+  /// Scrolls the current frame to an absolute vertical offset, in CSS pixels.
+  /// Only used in scroll mode, where Flutter owns the gesture and the scroll
+  /// physics and pushes the resulting offset here every frame — hence
+  /// fire-and-forget, with no token
+  scrollContentTo(offset: number): void;
+
+  /// Asks for the current frame's scroll extents to be re-reported through
+  /// `onScrollMetrics`
+  requestScrollMetrics(): void;
+
   /// Cycles to the next or previous page in the current frame, depending on the direction
   cycleFrames(token: number, direction: Direction): void;
 

@@ -89,6 +89,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   String displayProgress = '';
   @override
   Timer? progressDebouncer;
+  @override
+  double chapterScrollRatio = 0;
+
+  /// Whether the reader is currently laid out as one continuous column.
+  ///
+  /// Right-to-left and vertical-writing books are always paginated; see
+  /// [ReaderSettings.effectiveScrollMode].
+  @override
+  bool get isScrollMode =>
+      ref
+          .read(readerSettingsProvider)
+          .effectiveScrollMode(bookSession.direction) ==
+      ReaderScrollMode.scrolling;
 
   // Theme state (used by _ThemeMixin)
   @override
@@ -202,10 +215,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             removeFootnoteOverlay();
             return;
           }
+          // Scroll mode has no pages, so the keys move by roughly a screen.
           if (event == 'up') {
-            rendererController.performPreviousPageTurn();
+            if (isScrollMode) {
+              rendererController.scrollByViewport(false);
+            } else {
+              rendererController.performPreviousPageTurn();
+            }
           } else if (event == 'down') {
-            rendererController.performNextPageTurn();
+            if (isScrollMode) {
+              rendererController.scrollByViewport(true);
+            } else {
+              rendererController.performNextPageTurn();
+            }
           }
         }
       });
@@ -300,6 +322,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         body: const SizedBox.shrink(),
       );
     }
+
+    final scrollMode =
+        settings.effectiveScrollMode(bookSession.direction) ==
+        ReaderScrollMode.scrolling;
 
     final epubTheme = getEpubTheme();
     final isDark = epubTheme.colorScheme.brightness == Brightness.dark;
@@ -415,6 +441,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       initializeTheme: settings.toEpubTheme(context),
                       statusBarLeftContent: activateTocTitle,
                       statusBarRightContent: displayProgress,
+                      scrollMode: scrollMode,
+                      onScrollRatioChanged: (ratio) {
+                        chapterScrollRatio = ratio;
+                        updateProgressDebounced();
+                      },
+                      onScrollSettled: saveProgress,
                     ),
 
                     ControlPanel(
@@ -427,6 +459,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       currentPageInChapter: currentPageInChapter,
                       totalPagesInChapter: totalPagesInChapter,
                       direction: bookSession.book!.direction,
+                      scrollMode: scrollMode,
                       onBack: () {
                         saveProgress();
                         context.pop();

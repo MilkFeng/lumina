@@ -1035,6 +1035,22 @@
   "@readerHandleIntraLink": {
     "description": "Switch label to enable/disable following intra-book (epub://) links"
   },
+  "readerScrollModeSection": "Reading Layout",
+  "@readerScrollModeSection": {
+    "description": "Reader style sheet section title for the chapter layout mode"
+  },
+  "readerScrollModePaginated": "Paged",
+  "@readerScrollModePaginated": {
+    "description": "Reading layout option: discrete pages turned horizontally"
+  },
+  "readerScrollModeScrolling": "Scrolling",
+  "@readerScrollModeScrolling": {
+    "description": "Reading layout option: continuous vertical scrolling"
+  },
+  "readerScrollModeUnsupported": "Scrolling is unavailable for vertical or right-to-left books.",
+  "@readerScrollModeUnsupported": {
+    "description": "Explanation shown when the scrolling layout is disabled because the book's page progression is not left-to-right"
+  },
   "readerPageAnimationSection": "Pagination",
   "@readerPageAnimationSection": {
     "description": "Reader style sheet section title for page-turning animation"

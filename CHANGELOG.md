@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Added
 
+- **Continuous Scrolling**: The reader has a second layout, chosen under Reading Layout in the style sheet: instead of discrete pages, a chapter becomes one continuously scrolling column that follows the finger and keeps its momentum after a fling, like a web page. Scrolling stops at the chapter's own boundaries — the bottom bar's arrows move between chapters — and the status bar shows how far through the chapter you are as a percentage. Volume keys move by roughly one screen. Right-to-left and vertical-writing books always paginate, and the option is shown disabled with an explanation for them.
 - **External Sources (WebDAV)**: Add a WebDAV server in Settings and browse its folders from the library to import EPUBs. The password is kept in the platform keychain, never in the library database.
 - **Download Progress**: An import from an external source shows how far the file being downloaded has come.
 - **Cover Editing**: A book's cover can be replaced from the detail screen — tap the cover while editing and pick an image from the device. The chosen image is converted with the same JPEG settings as imported covers, previewed while you edit, and only written to the library when you save; leaving edit mode drops it. If saving fails, the previous cover is restored and the draft is kept so the edit can be retried.
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### 新增
 
+- **连续滚动阅读**：阅读器新增一种版式，可在样式面板的“阅读版式”中选择：章节不再切分为独立页面，而是渲染成一整列连续内容，像网页一样跟手拖动、松手后保留惯性滑动。滚动到章节首尾即停止——章节切换仍使用底部工具栏的左右箭头——状态栏右下角改为显示当前章节的阅读百分比。音量键每次滚动约一屏。从右到左和竖排书籍仍强制分页，该选项对这类书籍显示为禁用并附说明。
 - **外部来源（WebDAV）**：可在设置中添加 WebDAV 服务器，并在书库中浏览其目录、导入 EPUB。密码保存在系统钥匙串，不写入书库数据库。
 - **下载进度**：从外部来源导入时会显示当前文件的下载进度。
 - **封面更换**：可在书籍详情页更换封面——编辑状态下点击封面，从设备中选择图片。所选图片按与导入封面相同的 JPEG 参数转换，编辑期间仅作为草稿预览，保存时才写入书库，退出编辑即丢弃。若保存失败，会恢复原封面并保留草稿，以便重试。

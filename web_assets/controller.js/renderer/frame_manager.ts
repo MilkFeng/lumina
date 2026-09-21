@@ -29,6 +29,34 @@ export class FrameManager {
     return this.state.config.direction === 1;
   }
 
+  /// Check if the chapter is laid out as one continuous vertical column
+  isScrollMode(): boolean {
+    return this.state.config.scrollMode === true;
+  }
+
+  /// Whether content advances along the vertical axis — either because the
+  /// book itself is vertically paginated, or because scroll mode is on
+  isVerticalAxis(): boolean {
+    return this.isVertical() || this.isScrollMode();
+  }
+
+  /// The scroll extents of the given iframe along the scrolling axis
+  getScrollMetrics(iframe: HTMLIFrameElement | null): {
+    contentHeight: number;
+    viewportHeight: number;
+    offset: number;
+  } {
+    if (!iframe || !iframe.contentDocument || !iframe.contentDocument.body) {
+      return { contentHeight: 0, viewportHeight: 0, offset: 0 };
+    }
+    const body = iframe.contentDocument.body;
+    return {
+      contentHeight: body.scrollHeight,
+      viewportHeight: body.clientHeight,
+      offset: body.scrollTop,
+    };
+  }
+
   /// Get the safe width for the iframes based on the configuration
   getWidth(): number {
     return this.state.config.safeWidth;
@@ -43,7 +71,7 @@ export class FrameManager {
   scrollTo(iframe: HTMLIFrameElement, offset: number): void {
     if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
 
-    const scrollOptions: ScrollToOptions = this.isVertical()
+    const scrollOptions: ScrollToOptions = this.isVerticalAxis()
       ? { top: offset, left: 0, behavior: 'auto' }
       : { top: 0, left: offset, behavior: 'auto' };
 

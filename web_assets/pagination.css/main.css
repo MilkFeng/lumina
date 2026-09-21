@@ -76,6 +76,14 @@ body {
   height: var(--lumina-safe-height) !important;
 }
 
+/* Continuous scrolling mode: drop the multicol layout so the chapter flows as
+   a single column inside the fixed-height, vertically scrollable body. */
+body.lumina-is-scroll {
+  column-width: auto !important;
+  column-count: auto !important;
+  column-gap: normal !important;
+}
+
 body * {
   orphans: 1;
   widows: 1;

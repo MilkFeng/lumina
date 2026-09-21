@@ -28,6 +28,7 @@ export class Renderer implements LuminaApi {
   private resourceMgr: ResourceManager;
 
   private resizeDebounceTimer: ReturnType<typeof setTimeout> | null;
+  private anchorDetectionTimer: ReturnType<typeof setTimeout> | null = null;
   private onResize: (ev: UIEvent) => void;
   private currentSize: { width: number; height: number } = { width: 0, height: 0 };
 
@@ -40,6 +41,7 @@ export class Renderer implements LuminaApi {
         safeWidth: 0,
         safeHeight: 0,
         direction: 0,
+        scrollMode: false,
         padding: { top: 0, left: 0 },
         theme: {
           zoom: 1.0,
@@ -89,6 +91,7 @@ export class Renderer implements LuminaApi {
     this.state.config = config;
     this.state.config.safeHeight = Math.floor(this.state.config.safeHeight);
     this.state.config.safeWidth = Math.floor(this.state.config.safeWidth);
+    this.state.config.scrollMode = this.state.config.scrollMode === true;
 
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
     window.removeEventListener('resize', this.onResize);
@@ -164,9 +167,66 @@ export class Renderer implements LuminaApi {
   restoreScrollPosition(token: number, ratio: number): void {
     const iframe = this.frameMgr.getFrame('curr');
     if (!iframe || !iframe.contentWindow) return;
+
+    if (this.frameMgr.isScrollMode()) {
+      const metrics = this.frameMgr.getScrollMetrics(iframe);
+      const maxOffset = Math.max(0, metrics.contentHeight - metrics.viewportHeight);
+      this.applyScrollOffset(iframe, ratio * maxOffset);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.paginationMgr.detectActiveAnchor(iframe);
+          this.reportScrollMetrics();
+          FlutterBridge.onEventFinished(token);
+        });
+      });
+      return;
+    }
+
     const pageCount = this.paginationMgr.calculatePageCount(iframe);
     const pageIndex = Math.round(ratio * pageCount);
     this.jumpToPage(token, pageIndex);
+  }
+
+  scrollContentTo(offset: number): void {
+    const iframe = this.frameMgr.getFrame('curr');
+    if (!iframe || !iframe.contentWindow) return;
+    this.applyScrollOffset(iframe, offset);
+    this.scheduleAnchorDetection(iframe);
+  }
+
+  requestScrollMetrics(): void {
+    this.reportScrollMetrics();
+  }
+
+  /// Clamps [offset] into the scrollable range of [iframe] and applies it.
+  private applyScrollOffset(iframe: HTMLIFrameElement, offset: number): void {
+    const body = iframe.contentDocument && iframe.contentDocument.body;
+    if (!body) return;
+    const maxOffset = Math.max(0, body.scrollHeight - body.clientHeight);
+    body.scrollTop = Math.max(0, Math.min(maxOffset, offset));
+  }
+
+  /// Reports the current frame's scroll extents so Flutter — which owns the
+  /// gesture and the physics in scroll mode — knows how far it may scroll.
+  private reportScrollMetrics(): void {
+    const iframe = this.frameMgr.getFrame('curr');
+    if (!iframe) return;
+    const metrics = this.frameMgr.getScrollMetrics(iframe);
+    FlutterBridge.onScrollMetrics(
+      metrics.contentHeight,
+      metrics.viewportHeight,
+      metrics.offset
+    );
+  }
+
+  /// Active-anchor detection walks every anchor in the chapter, so it is
+  /// throttled rather than run on every scroll frame pushed from Flutter.
+  private scheduleAnchorDetection(iframe: HTMLIFrameElement): void {
+    if (this.anchorDetectionTimer !== null) return;
+    this.anchorDetectionTimer = setTimeout(() => {
+      this.anchorDetectionTimer = null;
+      this.paginationMgr.detectActiveAnchor(iframe);
+    }, 250);
   }
 
   cycleFrames(token: number, direction: Direction): void {
@@ -184,6 +244,7 @@ export class Renderer implements LuminaApi {
         this.paginationMgr.detectActiveAnchor(res!.elCurr);
         this.paginationMgr.detectActiveAnchor(res!.elNext);
         this.interactionMgr.buildInteractionMap().then(() => {
+          this.reportScrollMetrics();
           FlutterBridge.onEventFinished(token);
         });
       });
@@ -201,20 +262,38 @@ export class Renderer implements LuminaApi {
     this.themeMgr.updateThemeState(viewWidth, viewHeight, newTheme);
     this.themeMgr.updateCSSVariables(document, 'skeleton-variable-style');
 
+    // In scroll mode the position within the chapter is a scroll ratio rather
+    // than a page index, and it is only meaningful for the current frame.
+    const scrollRatio = this.currentScrollRatio();
+
     const iframes = document.getElementsByTagName('iframe');
     for (let i = 0; i < iframes.length; i++) {
       const iframe = iframes[i];
       if (iframe && iframe.contentDocument) {
         const doc = iframe.contentDocument;
-        const pageIndex = this.paginationMgr.calculateCurrentPageIndex();
-        const pageCount = this.paginationMgr.calculatePageCount(iframe);
-        const pageIndexPercentage = pageCount > 0 ? pageIndex / pageCount : 0;
+        let positionRatio: number;
+        if (this.frameMgr.isScrollMode()) {
+          positionRatio = iframe.id === 'frame-curr' ? scrollRatio : 0;
+        } else {
+          const pageIndex = this.paginationMgr.calculateCurrentPageIndex();
+          const pageCount = this.paginationMgr.calculatePageCount(iframe);
+          positionRatio = pageCount > 0 ? pageIndex / pageCount : 0;
+        }
         this.themeMgr.updateCSSVariables(doc, 'injected-variable-style', iframe);
         requestAnimationFrame(() => {
-          this.reloadFrame(iframe, pageIndexPercentage, token);
+          this.reloadFrame(iframe, positionRatio, token);
         });
       }
     }
+  }
+
+  /// How far the current frame is scrolled through its chapter, in [0,1].
+  private currentScrollRatio(): number {
+    const iframe = this.frameMgr.getFrame('curr');
+    if (!iframe) return 0;
+    const metrics = this.frameMgr.getScrollMetrics(iframe);
+    const maxOffset = Math.max(0, metrics.contentHeight - metrics.viewportHeight);
+    return maxOffset > 0 ? metrics.offset / maxOffset : 0;
   }
 
   waitForRender(token: number): void {
@@ -244,6 +323,7 @@ export class Renderer implements LuminaApi {
         );
         doc.body.classList.toggle('lumina-override-font', !!(this.state.config.theme.fontFileName));
         doc.body.classList.toggle('lumina-is-vertical', this.frameMgr.isVertical());
+        doc.body.classList.toggle('lumina-is-scroll', this.frameMgr.isScrollMode());
 
         const properties = this.state.properties[this.frameMgr.getSlotFromElement(iframe)] || [];
         for (const prop of properties) {
@@ -265,8 +345,17 @@ export class Renderer implements LuminaApi {
               const url = iframe.src;
               if (url && url.includes('#')) {
                 const anchor = url.split('#')[1];
-                pageIndex = this.paginationMgr.calculatePageIndexOfAnchor(iframe, anchor);
-                this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
+                if (this.frameMgr.isScrollMode()) {
+                  // There are no pages to index into: scroll straight to the
+                  // anchor's pixel offset instead.
+                  this.applyScrollOffset(
+                    iframe,
+                    this.paginationMgr.calculateAnchorOffset(iframe, anchor)
+                  );
+                } else {
+                  pageIndex = this.paginationMgr.calculatePageIndexOfAnchor(iframe, anchor);
+                  this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
+                }
               }
 
               requestAnimationFrame(() => {
@@ -275,6 +364,7 @@ export class Renderer implements LuminaApi {
                     if (iframe.id === 'frame-curr') {
                       FlutterBridge.onPageCountReady(pageCount);
                       FlutterBridge.onPageChanged(pageIndex);
+                      this.reportScrollMetrics();
                     } else if (iframe.id === 'frame-prev') {
                       this.jumpToLastPageOfFrame(-1, 'prev');
                     } else if (iframe.id === 'frame-next') {
@@ -294,7 +384,10 @@ export class Renderer implements LuminaApi {
     });
   }
 
-  private reloadFrame(iframe: HTMLIFrameElement, pageIndexPercentage: number, token: number): void {
+  /// Re-lays-out [iframe] after a theme change and restores its position.
+  /// [positionRatio] is a page-index ratio when paginated and a scroll ratio
+  /// in scroll mode.
+  private reloadFrame(iframe: HTMLIFrameElement, positionRatio: number, token: number): void {
     if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
     this.resourceMgr.waitForAllResources(iframe.contentDocument).then(() => {
@@ -307,8 +400,15 @@ export class Renderer implements LuminaApi {
         requestAnimationFrame(() => {
           const pageCount = this.paginationMgr.calculatePageCount(iframe);
 
-          const pageIndex = Math.round(pageIndexPercentage * pageCount);
-          this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
+          let pageIndex = 0;
+          if (this.frameMgr.isScrollMode()) {
+            const body = iframe.contentDocument!.body;
+            const maxOffset = Math.max(0, body.scrollHeight - body.clientHeight);
+            this.applyScrollOffset(iframe, positionRatio * maxOffset);
+          } else {
+            pageIndex = Math.round(positionRatio * pageCount);
+            this.frameMgr.scrollTo(iframe, this.paginationMgr.calculateScrollOffset(pageIndex));
+          }
 
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -316,6 +416,7 @@ export class Renderer implements LuminaApi {
                 if (iframe.id === 'frame-curr') {
                   FlutterBridge.onPageCountReady(pageCount);
                   FlutterBridge.onPageChanged(pageIndex);
+                  this.reportScrollMetrics();
                 } else if (iframe.id === 'frame-prev') {
                   this.jumpToLastPageOfFrame(-1, 'prev');
                 } else if (iframe.id === 'frame-next') {

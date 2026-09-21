@@ -10,6 +10,9 @@ export class PaginationManager {
 
   calculatePageCount(iframe: HTMLIFrameElement | null): number {
     if (!iframe || !iframe.contentDocument) return 0;
+    // Scroll mode is one continuous column: the whole chapter is a single
+    // "page" and progress is reported as a scroll ratio instead.
+    if (this.frameMgr.isScrollMode()) return 1;
     if (this.frameMgr.isVertical()) {
       const scrollHeight = iframe.contentDocument.body.scrollHeight;
       return Math.round((scrollHeight + 128) / (this.frameMgr.getHeight() + 128));
@@ -20,6 +23,7 @@ export class PaginationManager {
   }
 
   calculateScrollOffset(pageIndex: number): number {
+    if (this.frameMgr.isScrollMode()) return 0;
     if (this.frameMgr.isVertical()) {
       return pageIndex * this.frameMgr.getHeight() + pageIndex * 128;
     } else {
@@ -30,6 +34,7 @@ export class PaginationManager {
   calculateCurrentPageIndex(): number {
     const iframe = this.frameMgr.getCurrFrame();
     if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return 0;
+    if (this.frameMgr.isScrollMode()) return 0;
 
     if (this.frameMgr.isVertical()) {
       const scrollTop = iframe.contentDocument.body.scrollTop || 0;
@@ -40,8 +45,28 @@ export class PaginationManager {
     }
   }
 
+  /// The vertical scroll offset, in pixels, that brings [anchorId] to the top
+  /// of the viewport.  Only meaningful in scroll mode, where there are no
+  /// pages to index into.
+  calculateAnchorOffset(iframe: HTMLIFrameElement | null, anchorId: string): number {
+    if (!iframe || !iframe.contentDocument) return 0;
+    const doc = iframe.contentDocument;
+    const element = doc.getElementById(anchorId);
+    if (!element) return 0;
+
+    const body = doc.body;
+    const bodyRect = body.getBoundingClientRect();
+    const rects = element.getClientRects();
+    const elementRect = rects.length > 0 ? rects[0] : element.getBoundingClientRect();
+
+    const absoluteTop = elementRect.top + body.scrollTop - bodyRect.top;
+    const maxOffset = Math.max(0, body.scrollHeight - body.clientHeight);
+    return Math.max(0, Math.min(maxOffset, absoluteTop));
+  }
+
   calculatePageIndexOfAnchor(iframe: HTMLIFrameElement | null, anchorId: string): number {
     if (!iframe || !iframe.contentDocument) return 0;
+    if (this.frameMgr.isScrollMode()) return 0;
     const doc = iframe.contentDocument;
     const element = doc.getElementById(anchorId);
     if (!element) return 0;
@@ -70,7 +95,9 @@ export class PaginationManager {
       FlutterBridge.onPageCountReady(pageCount);
       FlutterBridge.onPageChanged(this.calculateCurrentPageIndex());
     } else if (iframeId === 'frame-prev') {
-      const targetIndex = Math.max(0, pageCount - 1);
+      // In scroll mode a chapter is entered from its top, so the previous
+      // frame is parked at offset 0 rather than at its last page.
+      const targetIndex = this.frameMgr.isScrollMode() ? 0 : Math.max(0, pageCount - 1);
       const offset = this.calculateScrollOffset(targetIndex);
       this.frameMgr.scrollTo(iframe, offset);
     } else if (iframeId === 'frame-next') {
@@ -90,7 +117,7 @@ export class PaginationManager {
     const activeAnchors: string[] = [];
     let lastPassedAnchor = 'top';
     const threshold = 50;
-    const isVertical = this.frameMgr.isVertical();
+    const isVertical = this.frameMgr.isVerticalAxis();
 
     for (let i = 0; i < anchors.length; i++) {
       const anchorId = anchors[i];

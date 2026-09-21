@@ -726,6 +726,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerHandleIntraLink => '跟随书内链接';
 
   @override
+  String get readerScrollModeSection => '阅读版式';
+
+  @override
+  String get readerScrollModePaginated => '分页';
+
+  @override
+  String get readerScrollModeScrolling => '滚动';
+
+  @override
+  String get readerScrollModeUnsupported => '竖排或从右向左排版的书籍不支持滚动版式。';
+
+  @override
   String get readerPageAnimationSection => '翻页';
 
   @override
