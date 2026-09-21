@@ -52,6 +52,13 @@ class FilePickerService {
   /// Picks multiple font files (`.ttf` / `.otf`).
   Future<List<PlatformPath>> pickFontFiles() => _pickPathList('pickFontFiles');
 
+  /// Picks one image file. An empty list indicates cancellation.
+  Future<List<PlatformPath>> pickImageFile() async {
+    if (!Platform.isAndroid && !Platform.isIOS) return const [];
+    final result = await _channel.invokeMethod<List<Object?>>('pickImageFile');
+    return result?.whereType<String>().map(_wrap).toList() ?? const [];
+  }
+
   /// Resolves the display name (the name the system shows for the file) of
   /// every entry in [paths].
   ///

@@ -37,6 +37,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     case epubFolder
     case backupFolder
     case fontFiles
+    case imageFile
   }
 
   // -------------------------------------------------------------------------
@@ -70,6 +71,9 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
 
     case "pickFontFiles":
       pickFontFiles(result: result)
+
+    case "pickImageFile":
+      pickImageFile(result: result)
 
     case "getDisplayNames":
       getDisplayNames(call: call, result: result)
@@ -249,6 +253,30 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     result(paths.map { URL(fileURLWithPath: $0).lastPathComponent })
   }
 
+  /// Opens one image while retaining its security scope until Dart caches it.
+  private func pickImageFile(result: @escaping FlutterResult) {
+    guard pendingPickerResult == nil else {
+      result(FlutterError(code: "ALREADY_ACTIVE", message: "File picker is already active", details: nil))
+      return
+    }
+    releaseActiveFileUrls()
+    pendingPickerResult = result
+    pendingPickerMode = .imageFile
+
+    DispatchQueue.main.async {
+      let picker: UIDocumentPickerViewController
+      if #available(iOS 14.0, *) {
+        picker = UIDocumentPickerViewController(forOpeningContentTypes: [.image], asCopy: false)
+      } else {
+        picker = UIDocumentPickerViewController(documentTypes: ["public.image"], in: .open)
+      }
+      picker.allowsMultipleSelection = false
+      picker.delegate = self
+      picker.modalPresentationStyle = .formSheet
+      self.presentPicker(picker)
+    }
+  }
+
   // -------------------------------------------------------------------------
   // MARK: - fetchIosFile  (on-demand single-file copier)
   // -------------------------------------------------------------------------
@@ -343,7 +371,7 @@ class NativePickerPlugin: NSObject, FlutterPlugin, UIDocumentPickerDelegate, Flu
     switch mode {
 
     // -- Multiple EPUB files ------------------------------------------------
-    case .epubFiles:
+    case .epubFiles, .imageFile:
       var paths: [String] = []
       for url in urls {
         // startAccessingSecurityScopedResource may return false for paths

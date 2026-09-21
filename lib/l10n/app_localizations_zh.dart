@@ -985,4 +985,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get externalSourceDeselectAll => '取消全选';
+
+  @override
+  String get changeCover => '更换封面';
+
+  @override
+  String get coverPickFailed => '无法读取此图片，请选择其他图片文件。';
 }

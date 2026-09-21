@@ -1425,5 +1425,13 @@
   "externalSourceDeselectAll": "取消全选",
   "@externalSourceDeselectAll": {
     "description": "清空整个导入选择的按钮提示"
+  },
+  "changeCover": "更换封面",
+  "@changeCover": {
+    "description": "更换书籍封面的按钮提示"
+  },
+  "coverPickFailed": "无法读取此图片，请选择其他图片文件。",
+  "@coverPickFailed": {
+    "description": "更换封面失败时的提示"
   }
 }

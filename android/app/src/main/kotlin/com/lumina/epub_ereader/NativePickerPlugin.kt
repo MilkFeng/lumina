@@ -39,6 +39,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private var pickFolderLauncher: ActivityResultLauncher<Intent>? = null
     private var pickBackupFolderLauncher: ActivityResultLauncher<Intent>? = null
     private var pickFontFilesLauncher: ActivityResultLauncher<Intent>? = null
+    private var pickImageFileLauncher: ActivityResultLauncher<Intent>? = null
 
     // -------------------------------------------------------------------------
     // FlutterPlugin
@@ -87,6 +88,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "pickEpubFolder" -> pickEpubFolder(result)
             "pickBackupFolder" -> pickBackupFolder(result)
             "pickFontFiles" -> pickFontFiles(result)
+            "pickImageFile" -> pickImageFile(result)
             "getDisplayNames" -> getDisplayNames(call, result)
             else -> result.notImplemented()
         }
@@ -144,6 +146,17 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
         }
 
+        pickImageFileLauncher = registry.register(
+            "NativePickerPlugin_pickImageFile",
+            lifecycleOwner,
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            val pendingResult = this.pendingResult ?: return@register
+            this.pendingResult = null
+            val uri = if (result.resultCode == Activity.RESULT_OK) result.data?.data else null
+            pendingResult.success(listOfNotNull(uri?.toString()))
+        }
+
         pickFontFilesLauncher = registry.register(
             "NativePickerPlugin_pickFontFiles",
             lifecycleOwner,
@@ -164,6 +177,7 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         pickFolderLauncher = null
         pickBackupFolderLauncher = null
         pickFontFilesLauncher = null
+        pickImageFileLauncher = null
     }
 
     // -------------------------------------------------------------------------
@@ -349,6 +363,29 @@ class NativePickerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     // -------------------------------------------------------------------------
     // Activity result handlers
     // -------------------------------------------------------------------------
+
+    /** Launches the system document picker for a single image. */
+    private fun pickImageFile(result: Result) {
+        if (pendingResult != null) {
+            result.error("ALREADY_ACTIVE", "File picker is already active", null)
+            return
+        }
+        pendingResult = result
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "image/*"
+            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+        }
+        try {
+            pickImageFileLauncher?.launch(intent) ?: run {
+                pendingResult = null
+                result.error("NO_ACTIVITY", "Plugin not attached to an activity", null)
+            }
+        } catch (e: Exception) {
+            pendingResult = null
+            result.error("PICKER_ERROR", "Failed to launch image picker: ${e.message}", null)
+        }
+    }
 
     /**
      * Handles the result of the file picker.
