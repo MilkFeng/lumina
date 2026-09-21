@@ -38,18 +38,45 @@ class EditExternalSource extends ExternalSourceEditorRequest {
 /// [ExternalSourceConfig.fields]: the dialog renders whatever a source type
 /// declares, so adding a type never touches this file.
 class ExternalSourceEditorDialog extends ConsumerStatefulWidget {
-  const ExternalSourceEditorDialog({super.key, required this.request});
+  const ExternalSourceEditorDialog._({
+    required this.request,
+    required this.initialDraft,
+  });
 
   final ExternalSourceEditorRequest request;
+  final ExternalSourceConfigDraft initialDraft;
 
-  /// Opens the dialog and returns the saved source, or `null` when cancelled.
+  /// Loads the configuration before opening the dialog and returns the saved
+  /// source, or `null` when cancelled or the configuration could not be loaded.
   static Future<ExternalSource?> show(
     BuildContext context,
     ExternalSourceEditorRequest request,
-  ) {
+  ) async {
+    final notifier = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(externalSourcesProvider.notifier);
+    final ExternalSourceConfigDraft draft;
+    try {
+      draft = switch (request) {
+        NewExternalSource(:final type) => notifier.emptyDraft(type),
+        EditExternalSource(:final source) => await notifier.draftFor(source),
+      };
+    } catch (_) {
+      // Reading the keychain can fail on a device with a locked or reset
+      // keystore. Report the failure before opening an unusable editor.
+      if (!context.mounted) return null;
+      ToastService.showError(
+        AppLocalizations.of(context)!.externalSourceConfigurationLoadFailed,
+      );
+      return null;
+    }
+    if (!context.mounted) return null;
+
     return showDialog<ExternalSource>(
       context: context,
-      builder: (context) => ExternalSourceEditorDialog(request: request),
+      builder: (context) =>
+          ExternalSourceEditorDialog._(request: request, initialDraft: draft),
     );
   }
 
@@ -82,14 +109,10 @@ class _ExternalSourceEditorDialogState
   final Map<String, TextEditingController> _controllers = {};
 
   late ExternalSourceType _type;
-  ExternalSourceConfigDraft? _draft;
+  late ExternalSourceConfigDraft _draft;
 
   bool _busy = false;
   bool _nameTaken = false;
-
-  /// Set when the initial configuration could not be loaded — an unreadable
-  /// row, or a keychain the platform refused to open.
-  bool _loadFailed = false;
 
   /// Guards against an out-of-order duplicate-name answer overwriting a newer
   /// one while the user is still typing.
@@ -118,7 +141,8 @@ class _ExternalSourceEditorDialogState
         _nameController.text = source.name;
     }
     _nameController.addListener(_onNameChanged);
-    _loadDraft();
+    _draft = widget.initialDraft;
+    _rebuildControllers(_draft);
   }
 
   @override
@@ -129,32 +153,6 @@ class _ExternalSourceEditorDialogState
       controller.dispose();
     }
     super.dispose();
-  }
-
-  /// Loads the initial configuration: the stored one when editing, an empty one
-  /// of [_type] when creating.
-  ///
-  /// A failure here is reported in the dialog rather than thrown: reading the
-  /// keychain can fail on a device (a locked or reset keystore), and a dialog
-  /// that never leaves its spinner would be worse than one that says so.
-  Future<void> _loadDraft() async {
-    final notifier = ref.read(externalSourcesProvider.notifier);
-    final source = _editing;
-
-    try {
-      final draft = source == null
-          ? notifier.emptyDraft(_type)
-          : await notifier.draftFor(source);
-      if (!mounted) return;
-      setState(() {
-        _draft = draft;
-        _loadFailed = false;
-        _rebuildControllers(draft);
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadFailed = true);
-    }
   }
 
   void _onNameChanged() {
@@ -204,7 +202,7 @@ class _ExternalSourceEditorDialogState
 
   /// Turns the controllers back into a draft.
   ExternalSourceConfigDraft _currentDraft() {
-    var draft = _draft!;
+    var draft = _draft;
     for (final entry in _controllers.entries) {
       draft = draft.copyWithField(entry.key, entry.value.text);
     }
@@ -305,54 +303,37 @@ class _ExternalSourceEditorDialogState
         // `double.maxFinite` hands the width decision to the dialog rather than
         // to the widest thing inside it, so the form fills the room the screen
         // and the cap above leave, instead of the fixed phone-sized box it used
-        // to sit in. The same width for the spinner, the load failure and the
-        // form keeps the dialog from changing size while it loads.
+        // to sit in.
         child: SizedBox(
           width: double.maxFinite,
-          child: switch ((draft, _loadFailed)) {
-            (_, true) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32),
-              child: Text(
-                l10n.externalSourceConfigurationLoadFailed,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ),
-            (null, false) => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            ),
-            (final loaded?, false) => SingleChildScrollView(
-              child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Every input is disabled while the connection test runs:
-                    // the values being tested are the ones on screen, so editing
-                    // them mid-test would make the result describe something the
-                    // user can no longer see.
-                    _buildNameField(l10n),
-                    const SizedBox(height: 12),
-                    _buildTypeField(l10n),
-                    const SizedBox(height: 20),
-                    Text(
-                      l10n.externalSourceConfiguration,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Every input is disabled while the connection test runs:
+                  // the values being tested are the ones on screen, so editing
+                  // them mid-test would make the result describe something the
+                  // user can no longer see.
+                  _buildNameField(l10n),
+                  const SizedBox(height: 12),
+                  _buildTypeField(l10n),
+                  const SizedBox(height: 20),
+                  Text(
+                    l10n.externalSourceConfiguration,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(height: 8),
-                    ..._buildConfigFields(context, loaded, l10n),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._buildConfigFields(context, draft, l10n),
+                ],
               ),
             ),
-          },
+          ),
         ),
       ),
       actions: [

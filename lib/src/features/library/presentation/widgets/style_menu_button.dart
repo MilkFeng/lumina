@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../application/bookshelf_notifier.dart';

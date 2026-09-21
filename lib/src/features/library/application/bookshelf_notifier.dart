@@ -325,8 +325,13 @@ class BookshelfNotifier extends _$BookshelfNotifier {
     final currentState = state.value;
     if (currentState == null) return;
 
+    // Exit selection mode when no items are selected
     state = AsyncValue.data(
-      currentState.copyWith(selectedBookIds: {}, selectedGroupIds: {}),
+      currentState.copyWith(
+        isSelectionMode: false,
+        selectedBookIds: {},
+        selectedGroupIds: {},
+      ),
     );
   }
 
