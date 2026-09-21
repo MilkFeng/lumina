@@ -25,6 +25,12 @@ class BookSession {
 
   Timer? _debounceTimer;
 
+  /// The progress write the debounce timer is currently holding.
+  ///
+  /// Kept so that [dispose] can flush it: a position recorded moments before
+  /// the reader closed is the last chance to remember where the reader stopped.
+  _PendingProgress? _pendingProgress;
+
   BookSession({
     required this.fileHash,
     required ShelfBookRepository shelfBookRepository,
@@ -35,6 +41,12 @@ class BookSession {
   void dispose() {
     _debounceTimer?.cancel();
     _debounceTimer = null;
+
+    final pending = _pendingProgress;
+    _pendingProgress = null;
+    if (pending != null) {
+      unawaited(_writeProgress(pending));
+    }
   }
 
   // Getters
@@ -141,37 +153,55 @@ class BookSession {
   }) {
     if (_book == null || _manifest == null) return;
 
-    if (_debounceTimer?.isActive ?? false) {
-      _debounceTimer!.cancel();
+    _debounceTimer?.cancel();
+
+    final pending = _PendingProgress(
+      currentChapterIndex: currentChapterIndex,
+      currentPageInChapter: currentPageInChapter,
+      totalPagesInChapter: totalPagesInChapter,
+      scrollRatio: scrollRatio,
+    );
+    _pendingProgress = pending;
+
+    _debounceTimer = Timer(const Duration(milliseconds: 10), () {
+      if (_pendingProgress == pending) {
+        _pendingProgress = null;
+      }
+      unawaited(_writeProgress(pending));
+    });
+  }
+
+  Future<void> _writeProgress(_PendingProgress pending) async {
+    if (_book == null) return;
+
+    final scrollRatio = pending.scrollRatio;
+    double? scrollPosition = scrollRatio;
+    if (scrollPosition == null && pending.totalPagesInChapter > 0) {
+      scrollPosition =
+          pending.currentPageInChapter / pending.totalPagesInChapter;
     }
 
-    _debounceTimer = Timer(const Duration(milliseconds: 10), () async {
-      double? scrollPosition = scrollRatio;
-      if (scrollPosition == null && totalPagesInChapter > 0) {
-        scrollPosition = currentPageInChapter / totalPagesInChapter;
+    var progress = 0.0;
+    if (_spine.isNotEmpty) {
+      final delta = 1.0 / _spine.length;
+      progress = (pending.currentChapterIndex + 1) / _spine.length;
+      if (scrollRatio != null) {
+        progress -= delta;
+        progress += delta * scrollRatio;
+      } else if (pending.totalPagesInChapter > 0) {
+        progress -= delta;
+        progress +=
+            delta *
+            ((pending.currentPageInChapter + 1) / pending.totalPagesInChapter);
       }
+    }
 
-      var progress = 0.0;
-      if (_spine.isNotEmpty) {
-        final delta = 1.0 / _spine.length;
-        progress = (currentChapterIndex + 1) / _spine.length;
-        if (scrollRatio != null) {
-          progress -= delta;
-          progress += delta * scrollRatio;
-        } else if (totalPagesInChapter > 0) {
-          progress -= delta;
-          progress +=
-              delta * ((currentPageInChapter + 1) / totalPagesInChapter);
-        }
-      }
-
-      await _shelfBookRepo.updateProgress(
-        bookId: _book!.id,
-        currentChapterIndex: currentChapterIndex,
-        progress: progress,
-        scrollPosition: scrollPosition,
-      );
-    });
+    await _shelfBookRepo.updateProgress(
+      bookId: _book!.id,
+      currentChapterIndex: pending.currentChapterIndex,
+      progress: progress,
+      scrollPosition: scrollPosition,
+    );
   }
 
   /// Get anchors for a spine path as JSON array string
@@ -294,4 +324,19 @@ class BookSession {
   /// Get initial reading position
   int get initialChapterIndex => _book?.currentChapterIndex ?? 0;
   double? get initialScrollPosition => _book?.chapterScrollPosition;
+}
+
+/// A progress write waiting for the debounce timer.
+class _PendingProgress {
+  const _PendingProgress({
+    required this.currentChapterIndex,
+    required this.currentPageInChapter,
+    required this.totalPagesInChapter,
+    required this.scrollRatio,
+  });
+
+  final int currentChapterIndex;
+  final int currentPageInChapter;
+  final int totalPagesInChapter;
+  final double? scrollRatio;
 }

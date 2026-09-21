@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lumina/src/core/theme/app_theme.dart';
@@ -13,6 +14,7 @@ import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import './reader_webview.dart';
+import 'gestures/eager_tap_gesture_recognizer.dart';
 import 'page_turn/page_turn.dart';
 
 class ReaderRendererController {
@@ -394,12 +396,8 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     });
 
     return Positioned.fill(
-      child: GestureDetector(
+      child: RawGestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTapUp: widget.shouldShowWebView ? _handleTap : null,
-        onHorizontalDragEnd: (widget.shouldShowWebView && !widget.scrollMode)
-            ? _handleHorizontalDragEnd
-            : null,
         // Scroll mode deliberately claims no drag at all.  Flutter forwards a
         // pointer sequence to the platform view exactly when no recognizer in
         // the arena claims it, so leaving the vertical axis unclaimed is what
@@ -408,9 +406,39 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
         // offset over the platform channel for every one of them.  Taps and
         // long presses are still claimed, so links, footnotes and the image
         // viewer keep going through Flutter.
-        onLongPressStart: widget.shouldShowWebView
-            ? _handleLongPressStart
-            : null,
+        gestures: <Type, GestureRecognizerFactory>{
+          // Not a plain TapGestureRecognizer: a tap is decided by the arena
+          // sweep, and the WebView's team captain takes that sweep.  See
+          // `EagerTapGestureRecognizer`.
+          EagerTapGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<EagerTapGestureRecognizer>(
+                () => EagerTapGestureRecognizer(debugOwner: this),
+                (instance) {
+                  instance.onTapUp = widget.shouldShowWebView
+                      ? _handleTap
+                      : null;
+                },
+              ),
+          LongPressGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+                () => LongPressGestureRecognizer(debugOwner: this),
+                (instance) {
+                  instance.onLongPressStart = widget.shouldShowWebView
+                      ? _handleLongPressStart
+                      : null;
+                },
+              ),
+          if (widget.shouldShowWebView && !widget.scrollMode)
+            HorizontalDragGestureRecognizer:
+                GestureRecognizerFactoryWithHandlers<
+                  HorizontalDragGestureRecognizer
+                >(
+                  () => HorizontalDragGestureRecognizer(debugOwner: this),
+                  (instance) {
+                    instance.onEnd = _handleHorizontalDragEnd;
+                  },
+                ),
+        },
         child: Stack(
           fit: StackFit.expand,
           children: [_buildBody(), _buildBottomStatusBarOverlay()],

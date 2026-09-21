@@ -206,7 +206,9 @@ Flutter 赢得手势竞技场：tap 和长按照旧走 `checkTapElementAt` / `ch
 3. 应用主题 class、方向 class、spine property class。
 4. 应用特殊排版适配。
 5. 执行 CSS polyfill。
-6. 计算页数，并按 URL hash anchor 或 `initialScrollRatio` 定位（hash 优先）。
+6. 计算页数，并按 URL hash anchor 或 `initialScrollRatio` 定位；**只有真实 anchor 才算 anchor**
+   （`top` 是阅读器自己的默认 anchor，`EpubWebViewHandler.getFileUrl` 会给每个 frame URL
+   追加它），带 `#top` 加载时仍然应用 `initialScrollRatio`。
 7. 重建交互四叉树，并挂上滚动观察（滚动模式）。
 8. 若是 `curr`，上报 `onPageCountReady(pageCount)`、`onPageChanged(pageIndex)` 和一次
    `onScrollProgress`。
@@ -443,5 +445,7 @@ npm run typecheck
 - `checkTapElementAt` 和 `checkLongPressElementAt` 是手势命中查询，不走 token。
 - `cycleFrames` 隐含依赖 `frame-prev`、`frame-curr`、`frame-next` 三个 iframe 都存在。
 - `loadFrame` 的 `properties` 会直接拼成 class 名，传入值需要与 typ 模块和 CSS 约定保持一致。
+- 每个 frame URL 都带 `#anchor`（默认 `#top`），判断"URL 里有没有 anchor"时必须排除 `top`；
+  否则 `initialScrollRatio` 会被静默丢弃，表现为"阅读进度没被记住"。
 - 页面坐标基于当前 iframe 的 viewport；涉及特殊排版时，Web 端会按 `TypConfig.havePadding()` 补偿或扣除阅读 padding。
 - 资源等待有超时兜底，图片加载慢或字体加载慢不会永久阻塞 token 完成。

@@ -383,8 +383,13 @@ export class Renderer implements LuminaApi {
               let pageIndex = 0;
               const url = iframe.src;
               const initialRatio = this.takeInitialScrollRatio(iframe);
-              if (url && url.includes('#')) {
-                const anchor = url.split('#')[1];
+              // `top` is the reader's own default anchor, not a position inside
+              // the chapter — every frame URL carries it.  Treating it as a real
+              // anchor would scroll the frame to its beginning and quietly throw
+              // away the reading position that came with the load.
+              const fragment = url && url.includes('#') ? url.split('#')[1] : '';
+              const anchor = fragment && fragment !== 'top' ? fragment : '';
+              if (anchor) {
                 if (this.frameMgr.isScrollMode()) {
                   // There are no pages to index into: scroll straight to the
                   // anchor's pixel offset instead.

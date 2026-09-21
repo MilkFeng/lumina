@@ -346,6 +346,27 @@ of the arena claimed it"。所以「谁来滚」这件事完全由 Flutter 侧�
 - `disableVerticalScroll` 在滚动模式为 `false`（Android 侧插件在 `OnTouchListener` 里会吃掉
   `ACTION_MOVE`；iOS 侧它同时决定 `scrollView.isScrollEnabled`），水平方向仍然禁用。
 
+##### 竞技场是按 sweep 决定 tap 的
+
+让平台视图进入命中测试会连带改变 **tap 的归属**，这一点必须显式处理：
+
+- 一次点击既没有识别器「主动声明胜利」，平台视图的 team 也不会自己认输，于是 Flutter 在
+  PointerUp 之后 **sweep** 竞技场，把胜利交给成员列表里的**第一个**成员。
+- 平台视图的识别器（`_PlatformViewGestureRecognizer`）在命中路径上比外层 Flutter 组件更深，
+  所以它永远是第一个成员；它的 team 有 captain，而
+  [GestureArenaTeam](https://api.flutter.dev/flutter/gestures/GestureArenaTeam-class.html)
+  的语义是：**只要队里有人获胜、或竞技场里没有别的竞争者，captain 就代表全队获胜**。
+  结果就是普通 `TapGestureRecognizer` 永远拿不到 tap —— 点击被转发进页面，
+  `onTapUp` 不再触发（长按不受影响，因为 `LongPressGestureRecognizer` 到点会自己声明胜利）。
+- 因此 `ReaderRenderer` 用 `EagerTapGestureRecognizer`
+  （`presentation/gestures/eager_tap_gesture_recognizer.dart`）替代普通 tap 识别器：
+  它在 PointerUp 时主动 `resolve(accepted)`，赶在 sweep 之前拿下竞技场。
+- 拖动仍然归 WebView：`PrimaryPointerGestureRecognizer` 在位移超过 `preAcceptSlopTolerance`
+  时会自我否定，于是拖动照旧落到平台视图手里。
+
+`test/eager_tap_gesture_recognizer_test.dart` 把这两半都钉住了：普通 `GestureDetector` 会把
+tap 输给平台视图，`EagerTapGestureRecognizer` 拿得到，而超过 slop 的拖动仍然归平台视图。
+
 这样滚动不再需要 Flutter 每帧调用 JS 推偏移：被删除的 `WebViewScrollSession` 正是那条路径。
 
 ### iOS

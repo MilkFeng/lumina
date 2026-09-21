@@ -178,6 +178,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     volumeSubscription?.cancel();
     VolumeControlService.disableInterception();
     WakelockPlus.disable();
+    // Record where the reader actually stopped — including a fling that never
+    // came to rest — before the session that can persist it goes away.  The
+    // session flushes this write on dispose instead of dropping it.
+    if (bookSession.isLoaded) saveProgress();
     bookSession.dispose();
     super.dispose();
   }
