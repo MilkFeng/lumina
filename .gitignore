@@ -52,3 +52,5 @@ app.*.map.json
 libisar.dylib
 
 /.cursor
+
+/.claude/*.local.*
