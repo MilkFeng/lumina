@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -214,109 +213,108 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                       ),
                     ),
                     child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                        child: HtmlWidget(
-                          widget.rawHtml,
-                          baseUrl: widget.baseUrl,
-                          textStyle: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: widget.epubTheme.colorScheme.onSurface,
-                                height: 1.6,
-                              ),
-                          onTapUrl: (url) async {
-                            return true;
-                          },
-                          renderMode: RenderMode.column,
-                          onErrorBuilder: (context, element, error) {
-                            return Text(
-                              'Error loading content',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color:
-                                        widget.epubTheme.colorScheme.onSurface,
-                                  ),
-                            );
-                          },
-                          customWidgetBuilder: (element) {
-                            if (element.localName == 'img') {
-                              final src = element.attributes['src'];
-                              if (src != null) {
-                                return FutureBuilder<Uint8List>(
-                                  future: _fetchEpubImageBytes(src),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return SizedBox(
-                                        width: 50,
-                                        height: 50,
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: widget
-                                                .epubTheme
-                                                .colorScheme
-                                                .primary,
-                                          ),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                      child: HtmlWidget(
+                        widget.rawHtml,
+                        baseUrl: widget.baseUrl,
+                        textStyle: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(
+                              color: widget.epubTheme.colorScheme.onSurface,
+                              height: 1.6,
+                            ),
+                        onTapUrl: (url) async {
+                          return true;
+                        },
+                        renderMode: RenderMode.column,
+                        onErrorBuilder: (context, element, error) {
+                          return Text(
+                            'Error loading content',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: widget.epubTheme.colorScheme.onSurface,
+                                ),
+                          );
+                        },
+                        customWidgetBuilder: (element) {
+                          if (element.localName == 'img') {
+                            final src = element.attributes['src'];
+                            if (src != null) {
+                              return FutureBuilder<Uint8List>(
+                                future: _fetchEpubImageBytes(src),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return SizedBox(
+                                      width: 50,
+                                      height: 50,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: widget
+                                              .epubTheme
+                                              .colorScheme
+                                              .primary,
                                         ),
-                                      );
-                                    }
-                                    if (snapshot.hasData &&
-                                        snapshot.data!.isNotEmpty) {
-                                      return GestureDetector(
-                                        onTap: () {
-                                          // TODO: Implement image tap to view full size
-                                        },
-                                        child: Image.memory(
-                                          snapshot.data!,
-                                          fit: BoxFit.contain,
-                                        ),
-                                      );
-                                    }
-                                    return Icon(
-                                      Icons.broken_image_outlined,
-                                      color: widget
-                                          .epubTheme
-                                          .colorScheme
-                                          .onSurfaceVariant,
+                                      ),
                                     );
-                                  },
-                                );
-                              }
-                            }
-                            return null;
-                          },
-                          customStylesBuilder: (element) {
-                            Map<String, String> styles = {};
-                            final fontSize =
-                                _getDefaultFontSizeWithoutScale(
-                                  element.localName ?? '',
-                                ) *
-                                widget.epubTheme.zoom;
-                            styles['font-size'] = '${fontSize}px';
-                            if (widget.epubTheme.shouldOverrideTextColor) {
-                              styles['color'] = colorToHex(
-                                widget.epubTheme.colorScheme.onSurface,
+                                  }
+                                  if (snapshot.hasData &&
+                                      snapshot.data!.isNotEmpty) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        // TODO: Implement image tap to view full size
+                                      },
+                                      child: Image.memory(
+                                        snapshot.data!,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    );
+                                  }
+                                  return Icon(
+                                    Icons.broken_image_outlined,
+                                    color: widget
+                                        .epubTheme
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  );
+                                },
                               );
                             }
-                            if (element.localName == 'a') {
-                              final color =
-                                  widget.epubTheme.overridePrimaryColor ??
-                                  widget.epubTheme.colorScheme.primary;
-                              styles['color'] = colorToHex(color);
-                              styles['text-decoration'] = 'none';
-                            }
-                            if (element.localName == 'ol' ||
-                                element.localName == 'ul') {
-                              return {'padding-left': '20px', 'margin': '0'};
-                            }
-                            if (element.localName == 'p') {
-                              return {'margin': '0 0 8px 0'};
-                            }
-                            return styles;
-                          },
-                        ),
+                          }
+                          return null;
+                        },
+                        customStylesBuilder: (element) {
+                          Map<String, String> styles = {};
+                          final fontSize =
+                              _getDefaultFontSizeWithoutScale(
+                                element.localName ?? '',
+                              ) *
+                              widget.epubTheme.zoom;
+                          styles['font-size'] = '${fontSize}px';
+                          if (widget.epubTheme.shouldOverrideTextColor) {
+                            styles['color'] = colorToHex(
+                              widget.epubTheme.colorScheme.onSurface,
+                            );
+                          }
+                          if (element.localName == 'a') {
+                            final color =
+                                widget.epubTheme.overridePrimaryColor ??
+                                widget.epubTheme.colorScheme.primary;
+                            styles['color'] = colorToHex(color);
+                            styles['text-decoration'] = 'none';
+                          }
+                          if (element.localName == 'ol' ||
+                              element.localName == 'ul') {
+                            return {'padding-left': '20px', 'margin': '0'};
+                          }
+                          if (element.localName == 'p') {
+                            return {'margin': '0 0 8px 0'};
+                          }
+                          return styles;
+                        },
                       ),
                     ),
+                  ),
                 ),
               ),
             ),

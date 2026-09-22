@@ -91,6 +91,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   Timer? progressDebouncer;
   @override
   double chapterScrollRatio = 0;
+  @override
+  _PendingModeSwitch? pendingModeSwitch;
 
   ///
   /// Right-to-left and vertical-writing books are always paginated; see
@@ -354,6 +356,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     ref.listen(readerSettingsProvider, (previous, next) {
       if (previous != null && previous != next) {
+        // A layout-mode switch replaces the whole WebView, and the frame load
+        // that follows it restores a position.  Capture where the reader is now
+        // before the engine reporting it goes away, or that load would come
+        // back to the position the book was opened at.  Compared on the
+        // *effective* mode: a book that cannot scroll stays paginated either
+        // way, and is not reloaded at all.
+        final wasScrolling =
+            previous.effectiveScrollMode(bookSession.direction) ==
+            ReaderScrollMode.scrolling;
+        final willScroll =
+            next.effectiveScrollMode(bookSession.direction) ==
+            ReaderScrollMode.scrolling;
+        if (wasScrolling != willScroll) {
+          capturePositionForModeSwitch(
+            fromScrollMode: wasScrolling,
+            toPaginated: !willScroll,
+          );
+        }
+
         // If zoom/line_height changed, use debounce to avoid excessive WebView reloads while dragging the slider
         if (previous.fontFileName != next.fontFileName ||
             previous.overrideFontFamily != next.overrideFontFamily) {
@@ -422,8 +443,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onPerformPageTurn: handlePageTurn,
                       onToggleControls: toggleControls,
                       onInitialized: () async {
-                        final ratio = bookSession.initialScrollPosition;
-                        await loadCarousel(restoreScrollRatio: ratio);
+                        // The load that follows a layout-mode switch comes back
+                        // to the position captured when the mode changed; the
+                        // reader's own first load has none to come back to and
+                        // restores the stored position instead.
+                        final switched = takePendingModeSwitch();
+                        await loadCarousel(
+                          restoreScrollRatio:
+                              switched?.ratio ??
+                              bookSession.initialScrollPosition,
+                        );
+                        if (switched != null) {
+                          await settleModeSwitch(switched);
+                        }
                       },
                       onPageCountReady: (totalPages) async {
                         setState(() {
