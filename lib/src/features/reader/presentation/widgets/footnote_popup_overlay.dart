@@ -182,41 +182,38 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                 ),
                 child: ClipRRect(
                   borderRadius: borderRadius,
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxHeight: maxBookmarkHeight,
-                        maxWidth: maxBookmarkWidth,
-                        minWidth: minBookmarkWidth,
-                      ),
-                      decoration: BoxDecoration(
-                        color: widget.epubTheme.colorScheme.surfaceContainerHigh
-                            .withValues(alpha: 0.75),
-                        border: Border(
-                          left: !_slideFromLeft
-                              ? BorderSide(
-                                  color: widget.epubTheme.colorScheme.primary,
-                                  width: 4,
-                                )
-                              : BorderSide.none,
-                          right: _slideFromLeft
-                              ? BorderSide(
-                                  color: widget.epubTheme.colorScheme.primary,
-                                  width: 4,
-                                )
-                              : BorderSide.none,
-                          top: BorderSide(
-                            color: widget.epubTheme.colorScheme.outlineVariant,
-                            width: 1,
-                          ),
-                          bottom: BorderSide(
-                            color: widget.epubTheme.colorScheme.outlineVariant,
-                            width: 1,
-                          ),
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: maxBookmarkHeight,
+                      maxWidth: maxBookmarkWidth,
+                      minWidth: minBookmarkWidth,
+                    ),
+                    decoration: BoxDecoration(
+                      color: widget.epubTheme.colorScheme.surfaceContainerHigh,
+                      border: Border(
+                        left: !_slideFromLeft
+                            ? BorderSide(
+                                color: widget.epubTheme.colorScheme.primary,
+                                width: 4,
+                              )
+                            : BorderSide.none,
+                        right: _slideFromLeft
+                            ? BorderSide(
+                                color: widget.epubTheme.colorScheme.primary,
+                                width: 4,
+                              )
+                            : BorderSide.none,
+                        top: BorderSide(
+                          color: widget.epubTheme.colorScheme.outlineVariant,
+                          width: 1,
+                        ),
+                        bottom: BorderSide(
+                          color: widget.epubTheme.colorScheme.outlineVariant,
+                          width: 1,
                         ),
                       ),
-                      child: SingleChildScrollView(
+                    ),
+                    child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         child: HtmlWidget(
                           widget.rawHtml,
@@ -320,7 +317,6 @@ class FootnotePopupOverlayState extends State<FootnotePopupOverlay>
                         ),
                       ),
                     ),
-                  ),
                 ),
               ),
             ),
