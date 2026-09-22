@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Font Import Naming**: Imported fonts no longer collapse into a single entry named "unknown". Font file names are now resolved by the platform (`getDisplayNames`) instead of being guessed from the picker's opaque handle, path separators and URL-breaking characters are stripped, and a font whose name cannot be resolved gets a unique generated name rather than a shared placeholder.
 - **Backup Export**: A book's cover is now exported under the file name its record points at, so a cover that does not follow the `{hash}.{ext}` naming convention is no longer left out of the backup.
+- **Scrolling Mode: Switching Layout Keeps the Chapter**: Switching between paginated and scrolling layout no longer leaves the reading area blank. The replacement WebView had been created in the same frame its predecessor was torn down and before the engine it attaches to had started, which left it unpainted: its chapter loaded and every event arrived, but nothing was ever drawn. The reader now recreates it the way its first open does — dispose, start the pre-warm, then build the new view — so the chapter is on screen as soon as the switch is over.
 
 ### Chinese
 
@@ -65,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **字体导入命名**：导入字体不再全部显示为 “unknown” 且互相覆盖。字体文件名改由平台查询得到（`getDisplayNames`），不再从 picker 返回的不透明句柄里猜测；文件名会剔除路径分隔符与破坏 URL 的字符，实在取不到名字时使用唯一的生成名，而不是共用的占位名。
 - **备份导出**：导出封面时优先使用书籍记录中保存的文件名，文件名不符合 `{hash}.{ext}` 约定的封面不再被漏掉。
+- **滚动模式：切换版式不再白屏**：在分页与滚动之间切换版式后，阅读区域不再空白。此前替换用的 WebView 与被拆掉的旧视图在同一帧创建，且创建时它要接管的预热引擎还没起来，结果新视图始终不上屏：章节照常加载、事件照常到达，但屏幕上一片空白。现在改为按阅读器“首次打开”的时序重建——先拆、再启动预热、最后才建可见视图——切换结束后章节即已显示。
 
 ## [v0.2.4] - 2026-09-19
 

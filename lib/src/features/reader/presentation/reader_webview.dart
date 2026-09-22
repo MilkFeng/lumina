@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -219,6 +220,17 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   HeadlessInAppWebView? _headlessWebView;
   bool _isHeadlessInitialized = false;
 
+  /// Whether the visible platform view still has to wait for the pre-warm of the
+  /// current layout mode to start before it can be created.
+  ///
+  /// The visible WebView attaches the pre-warmed engine, and it can only do that
+  /// once that engine is running: a platform view created before then builds a
+  /// WebView of its own instead — which, right after a layout-mode change, is a
+  /// WebView created in the same frame its predecessor is torn down, and one
+  /// that never gets painted.  See [_ReaderWebViewState.build] and
+  /// [_startHeadlessWebView].
+  bool _isWaitingForHeadless = true;
+
   bool _isSubsequentLoad = false;
 
   late EpubTheme _currentTheme;
@@ -237,7 +249,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   void didUpdateWidget(covariant ReaderWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.scrollMode != widget.scrollMode) {
-      _disposeWebView();
+      _recreateWebView();
     }
     if (!oldWidget.isLoading && widget.isLoading) {
       setState(() {
@@ -266,6 +278,23 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     _isHeadlessInitialized = false;
   }
 
+  /// Recreates the WebView for the layout mode that was just switched to.
+  ///
+  /// The replacement cannot be created in this frame: a platform view built in
+  /// the same frame as its predecessor's teardown is never painted — the page
+  /// loads, runs and reports its chapters, but stays invisible — and the fresh
+  /// pre-warm it would have to attach to has not started yet in that frame
+  /// either.  Holding the visible view back until that pre-warm is running
+  /// reproduces the sequence of the reader's first open, which is the one that
+  /// paints.  The empty frame in between shows the theme surface, exactly like
+  /// the loading layer that follows it.
+  void _recreateWebView() {
+    _disposeWebView();
+    _isWaitingForHeadless = true;
+    // No `setState`: this runs from `didUpdateWidget`, in the build that is
+    // already on its way.
+  }
+
   void _initHeadlessWebViewIfNeeded(double width, double height) {
     if (_isHeadlessInitialized) return;
 
@@ -279,8 +308,36 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       onLoadStop: _onLoadStop,
     );
 
-    _headlessWebView?.run();
     _isHeadlessInitialized = true;
+    _isWaitingForHeadless = true;
+    unawaited(_startHeadlessWebView());
+  }
+
+  /// Starts the pre-warm and releases the visible WebView once it runs.
+  ///
+  /// The timeout is a safety net: an engine that cannot be started must not
+  /// leave the reader on an empty page, and the visible WebView still works
+  /// without a pre-warm to attach to.
+  Future<void> _startHeadlessWebView() async {
+    final headless = _headlessWebView;
+    if (headless == null) return;
+
+    try {
+      await headless.run().timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('ReaderWebView: WebView pre-warm failed: $e');
+    }
+
+    if (!mounted || !identical(headless, _headlessWebView)) {
+      // Torn down or replaced while it was starting: the `dispose()` of that
+      // moment could do nothing, because the engine was not running yet.
+      await headless.dispose();
+      return;
+    }
+
+    setState(() {
+      _isWaitingForHeadless = false;
+    });
   }
 
   Future<void> _waitForWebviewRender() async {
@@ -404,7 +461,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
                 // Flutter does not claim it.  See `ReaderRenderer` for the
                 // gestures Flutter keeps.
                 absorbing: !widget.scrollMode,
-                child: widget.shouldShowWebView
+                // The platform view cannot be built before the pre-warm it
+                // attaches to is running; see [_isWaitingForHeadless].
+                child: widget.shouldShowWebView && !_isWaitingForHeadless
                     ? InAppWebView(
                         key: ValueKey(widget.scrollMode),
                         headlessWebView: _headlessWebView,

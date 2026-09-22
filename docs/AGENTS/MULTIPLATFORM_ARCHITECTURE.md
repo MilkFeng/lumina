@@ -324,9 +324,30 @@ Android 原生层直接绘制，Flutter 侧截出来是空白，翻页动画会�
 | 连续滚动模式 | `true`（混合组合） | 滚动模式没有截图翻页动画，混合组合下高频滚动的合成质量更好。 |
 
 由于组合模式是 `InAppWebViewSettings` 的创建期参数，`InAppWebView` 带有
-`key: ValueKey(scrollMode)`，切换模式会重建 WebView（`didUpdateWidget` 里先
-`_disposeWebView()` 释放 `HeadlessInAppWebView` 和 bridge），表现为一次短暂的重新加载闪烁，
-这是已知且接受的代价。
+`key: ValueKey(scrollMode)`，切换模式会重建 WebView：`didUpdateWidget` 里先
+`_disposeWebView()` 释放 `HeadlessInAppWebView` 和 bridge，随后重建。
+
+###### 重建必须等预热 WebView 起来
+
+重建不能和拆旧发生在同一帧，也不能在预热还没起来时就创建可见视图，否则新平台视图**永远
+不上屏**：页面会正常加载、运行 JS、上报章节（Dart 侧日志一切正常），但屏幕上什么都没有
+（黑屏/白屏）。原因是 `InAppWebView` 的 `headlessWebView` 参数只是「复用预热引擎」的
+意图，插件在两端各判断一次：
+
+- `AndroidInAppWebViewWidget.build` 里若 `headlessWebView.isRunning()` 为真，就把
+  `headlessWebViewId` 交给平台侧，平台侧 `FlutterWebViewFactory` 把预热 WebView
+  转交给这个平台视图（`disposeAndGetFlutterWebView`），可见视图即预热视图。
+- `_onPlatformViewCreated` 里再判断一次：running 时控制器绑定的是**预热的 view id**。
+
+`HeadlessInAppWebView.run()` 是异步的（一次 MethodChannel 往返 + 原生建 WebView），
+同一帧里刚创建的预热一定还是 `isRunning() == false`：此时平台视图会自己新建一个 WebView，
+而控制器随后又绑到预热 id 上——两者错位，且这个「同一帧内拆旧建新」的新平台视图不上屏。
+
+因此 `_ReaderWebViewState` 用 `_isWaitingForHeadless` 把可见视图压到预热 `run()` 完成之后
+再建：先 `_disposeWebView()`，`_initHeadlessWebViewIfNeeded()` 建新预热并 `await run()`，
+`setState` 之后才构建 `InAppWebView`。这与阅读器**首次打开**的时序完全一致（首次打开本来
+就晚一帧，所以一直是对的），中间那一帧显示主题底色，和随后出现的加载层同色，视觉上就是一次
+普通的重载。超时（5s）是兜底：预热起不来也必须放出可见视图。
 
 ##### 滚动模式下的触摸路由
 
