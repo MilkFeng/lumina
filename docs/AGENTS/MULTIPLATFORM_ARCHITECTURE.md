@@ -517,7 +517,17 @@ iOS 声明：
 
 `android/app/build.gradle.kts` 中：
 
-- namespace/applicationId：`com.lumina.ereader`
+- namespace：`com.lumina.ereader`
+- applicationId：release 为 `com.lumina.ereader`，debug 与 profile 各自用 `applicationIdSuffix` 区分，因此三种构建可以同时安装在同一台设备上，且数据目录互相隔离：
+
+| build type | applicationIdSuffix | applicationId | 签名 | debuggable |
+| --- | --- | --- | --- | --- |
+| debug | `.debug` | `com.lumina.ereader.debug` | debug keystore | 是 |
+| profile | `.profile` | `com.lumina.ereader.profile` | debug keystore | 是 |
+| release | 无 | `com.lumina.ereader` | `key.properties` 的 release keystore | 否 |
+
+- `profile` build type 由 Flutter Gradle 插件用 `initWith(debug)` 创建，所以它继承 debug 的签名与 `debuggable`；它在 Kotlin DSL 里没有生成的 accessor，只能写成 `getByName("profile") { ... }`，不能写成 `profile { ... }`。
+- DocumentsProvider 的 authority 是 `${applicationId}.documents`，随 build type 自动变化；Dart 侧设置页的“打开存储位置”用 `PackageInfo.packageName` 推导同一个 authority，不需要按变体额外配置。
 - compile/target SDK：36
 - Java/Kotlin target：17
 - release 开启 minify 和 resource shrink。
