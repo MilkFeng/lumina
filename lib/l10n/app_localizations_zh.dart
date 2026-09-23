@@ -749,6 +749,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerVolumeKeyTurnsPage => '用音量键翻页';
 
   @override
+  String get readerStatusBar => '状态栏';
+
+  @override
+  String get readerHideStatusBar => '阅读时隐藏';
+
+  @override
   String get readerFontSection => '自定义字体';
 
   @override

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a continuous scrolling reading layout
 - Added external sources: add a WebDAV server in Settings, browse its folders and import books
 - Added the ability to edit a book's cover
+- Added an option to hide the system status bar while reading
 
 #### Changed
 
@@ -36,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 新增连续滚动阅读功能
 - 新增外部源功能，可在设置中添加 WebDAV 服务器，并可以浏览其目录和导入书籍
 - 新增编辑书籍封面的功能
+- 新增阅读时隐藏系统状态栏的选项
 
 #### 变更与优化
 

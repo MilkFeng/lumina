@@ -769,6 +769,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerVolumeKeyTurnsPage => 'Volume Keys Turn Pages';
 
   @override
+  String get readerStatusBar => 'Status Bar';
+
+  @override
+  String get readerHideStatusBar => 'Hide While Reading';
+
+  @override
   String get readerFontSection => 'Custom Font';
 
   @override

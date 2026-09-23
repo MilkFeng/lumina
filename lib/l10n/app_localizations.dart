@@ -1448,6 +1448,18 @@ abstract class AppLocalizations {
   /// **'Volume Keys Turn Pages'**
   String get readerVolumeKeyTurnsPage;
 
+  /// Reader style sheet subsection label grouping the system status bar options
+  ///
+  /// In en, this message translates to:
+  /// **'Status Bar'**
+  String get readerStatusBar;
+
+  /// Switch label to hide the system status bar while reading; the control panel shows it back
+  ///
+  /// In en, this message translates to:
+  /// **'Hide While Reading'**
+  String get readerHideStatusBar;
+
   /// Reader style sheet subsection label for custom font settings
   ///
   /// In en, this message translates to:

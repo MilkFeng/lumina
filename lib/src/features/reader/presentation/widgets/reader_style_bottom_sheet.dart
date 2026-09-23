@@ -52,6 +52,7 @@ class _ReaderStyleBottomSheetState
   late String? _fontFileName;
   late bool _overrideFontFamily;
   late bool _volumeKeyTurnsPage;
+  late bool _hideStatusBar;
 
   static const int _marginMin = 0;
   static const int _marginMax = 64;
@@ -77,6 +78,7 @@ class _ReaderStyleBottomSheetState
     _fontFileName = s.fontFileName;
     _overrideFontFamily = s.overrideFontFamily;
     _volumeKeyTurnsPage = s.volumeKeyTurnsPage;
+    _hideStatusBar = s.hideStatusBar;
   }
 
   @override
@@ -455,6 +457,22 @@ class _ReaderStyleBottomSheetState
                       _notifier.setVolumeKeyTurnsPage(v);
                     },
                   ),
+
+                // Status bar subsection – the switch only concerns the reading
+                // state, so it reads as part of the layout rather than of the
+                // chrome: the control panel always brings the bar back.
+                const SizedBox(height: 20),
+                SettingsSubLabel(label: l10n.readerStatusBar),
+                const SizedBox(height: 8),
+                LabeledSwitchTile(
+                  label: l10n.readerHideStatusBar,
+                  value: _hideStatusBar,
+                  icon: Icons.fullscreen_outlined,
+                  onChanged: (v) {
+                    setState(() => _hideStatusBar = v);
+                    _notifier.setHideStatusBar(v);
+                  },
+                ),
               ],
             ),
           ),

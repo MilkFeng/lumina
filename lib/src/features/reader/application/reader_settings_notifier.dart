@@ -25,6 +25,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   static const _kFontFileName = 'reader_font_file_name';
   static const _kOverrideFontFamily = 'reader_override_font_family';
   static const _kVolumeKeyTurnsPage = 'reader_volume_key_turns_page';
+  static const _kHideStatusBar = 'reader_hide_status_bar';
 
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
@@ -72,6 +73,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
       fontFileName: fontFileName,
       overrideFontFamily: overrideFontFamily,
       volumeKeyTurnsPage: prefs.getBool(_kVolumeKeyTurnsPage),
+      hideStatusBar: prefs.getBool(_kHideStatusBar),
     );
   }
 
@@ -166,5 +168,10 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setVolumeKeyTurnsPage(bool value) async {
     await _prefs.setBool(_kVolumeKeyTurnsPage, value);
     state = state.copyWith(volumeKeyTurnsPage: value);
+  }
+
+  Future<void> setHideStatusBar(bool value) async {
+    await _prefs.setBool(_kHideStatusBar, value);
+    state = state.copyWith(hideStatusBar: value);
   }
 }
