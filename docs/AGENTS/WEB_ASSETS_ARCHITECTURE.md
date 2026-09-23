@@ -83,6 +83,9 @@ window.api = api;
 - 该方向还有内容可滚 → 调 `scrollByViewport` 滚一屏，不振动。
 - 已经滚到该方向尽头（章节底部再往后 / 顶部再往前）→ 换成 `cycleFrames` 翻章；章节本身
   不足一屏（`maxOffset == 0`）时两端同时成立，所以一次按键就是翻章。
+- 往回翻章落在**上一章的末尾**（`jumpToLastPageOfFrame` 在滚动模式下就是这一列的底部），
+  往前翻章落在下一章的开头：倒着读是从上一章读完的地方接上的，工具栏箭头的长按同理
+  （`onPreviousChapter` 在滚动模式下走 `previousSpineItem`）。
 - 连续两次请求串行执行：后一次到来时先让前一次**立即落到目标位置**
   （`finishScrollByViewport`），隔 40ms 再开始自己的这一次。
 
@@ -280,7 +283,15 @@ window.api = api;
 
 ### `jumpToLastPageOfFrame(token, slot): void`
 
-计算指定 iframe 的页数，并跳到 `pageCount - 1`。内部复用 `jumpToPageFor`。
+把指定 iframe 送到它这一章的末尾。
+
+- 分页模式：计算页数，跳到 `pageCount - 1`，内部复用 `jumpToPageFor`。
+- 滚动模式：一章就是一整列连续内容，它的"最后一页"就是这一列的底部（`maxOffset`），
+  直接 `applyScrollOffset`，再走两帧 rAF 上报锚点并完成 token。
+
+`prev` frame 一加载完就会被送到这里（见 `onFrameLoad` / `reloadFrame`），所以往回翻章时它
+**已经停在上一章的末尾**，读者接上的正是上次读到的位置；`previousSpineItem()` 也会显式再调
+一次，覆盖预加载之后位置被改动的可能。
 
 ### `scrollByViewport(token, direction): void`
 

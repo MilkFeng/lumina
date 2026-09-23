@@ -297,9 +297,9 @@ Flutter 侧 `VolumeControlService` 只在 Android 工作，其他平台直接 no
    - 返回 `true` 消费事件，系统音量不变化。
 5. Flutter 监听事件：
    - `"up"` 触发上一页；`"down"` 触发下一页。
-   - 滚动模式下改为触发 `handleScrollTurn`：滚一屏，已经在章节该方向的尽头时换成翻章；
-     与工具栏箭头单击、页面左右区域点击走同一条路径（见 `WEB_ASSETS_ARCHITECTURE.md`
-     的"连续滚动模式"）。
+   - 滚动模式下改为触发 `handleScrollTurn`：滚一屏，已经在章节该方向的尽头时换成翻章
+     （往回翻落在上一章末尾，往前翻落在下一章开头）；与工具栏箭头单击、页面左右区域点击
+     走同一条路径（见 `WEB_ASSETS_ARCHITECTURE.md` 的"连续滚动模式"）。
    - 如果脚注浮层打开，则先关闭脚注浮层。
 6. 离开阅读页或条件不满足时调用 `disableInterception`。
 

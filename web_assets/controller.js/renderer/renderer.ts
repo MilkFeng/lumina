@@ -220,9 +220,30 @@ export class Renderer implements LuminaApi {
     });
   }
 
+  /// Sends [slot]'s frame to the end of its chapter.
+  ///
+  /// In scroll mode the chapter is one continuous column, so its "last page" is
+  /// the bottom of that column — and that is where reading backwards picks a
+  /// chapter up.  A `prev` frame is parked there as soon as it loads (see
+  /// `onFrameLoad`), which is what makes turning back land on the end of the
+  /// previous chapter instead of on its beginning.
   jumpToLastPageOfFrame(token: number, slot: FrameSlot): void {
     const iframe = this.frameMgr.getFrame(slot);
     if (!iframe || !iframe.contentWindow) return;
+
+    if (this.frameMgr.isScrollMode()) {
+      const position = this.frameMgr.getScrollPosition(iframe);
+      this.applyScrollOffset(iframe, position.maxOffset);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.paginationMgr.detectActiveAnchor(iframe);
+          FlutterBridge.onEventFinished(token);
+        });
+      });
+      return;
+    }
+
     const pageCount = this.paginationMgr.calculatePageCount(iframe);
     this.jumpToPageFor(token, slot, pageCount - 1);
   }

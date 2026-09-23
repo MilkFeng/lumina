@@ -518,7 +518,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                           rendererController.performNextPageTurn(),
                       onLastPage: () => goToPage(totalPagesInChapter - 1),
                       onScrollTurn: handleScrollTurn,
-                      onPreviousChapter: previousSpineItemFirstPage,
+                      // A chapter jump backwards lands where reading backwards
+                      // continues from it, so in scroll mode it is the same
+                      // landing as the backward turn: the bottom of the chapter
+                      // before this one, not its top.
+                      onPreviousChapter: scrollMode
+                          ? previousSpineItem
+                          : previousSpineItemFirstPage,
                       onNextChapter: nextSpineItem,
                       onToggleStyleDrawer: (show) {
                         tocDrawerOpen = show;

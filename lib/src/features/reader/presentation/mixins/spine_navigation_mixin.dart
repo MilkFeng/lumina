@@ -152,6 +152,10 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     saveProgress();
   }
 
+  /// Turns back to the previous chapter, landing where reading backwards
+  /// continues from it: its last page while paginated, its bottom while
+  /// scrolling — a scroll-mode chapter has no pages, and its "last page" is the
+  /// end of the column (see `jumpToLastPageOfFrame`).
   Future<void> previousSpineItem() async {
     if (currentSpineItemIndex <= 0) {
       ToastService.showError(
