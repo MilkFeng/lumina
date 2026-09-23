@@ -404,10 +404,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get experimentalFeature => '实验性功能';
 
   @override
-  String get experimentalFeatureWarning =>
-      'WebDAV同步功能目前处于实验阶段，可能存在一些问题或不稳定的情况。\n\n使用前请确保：\n• 已备份重要数据\n• 了解WebDAV服务器的配置\n• 网络连接稳定\n\n如遇到问题，请及时反馈。';
-
-  @override
   String get iKnow => '我知道了';
 
   @override
@@ -663,7 +659,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unsavedChangesTitle => '未保存的修改';
 
   @override
-  String get unsavedChangesMessage => '您有未保存的修改，请选择操作。';
+  String get unsavedChangesMessage => '您有未保存的修改，请选择操作';
 
   @override
   String get discard => '放弃修改';
@@ -738,7 +734,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerScrollModeScrolling => '滚动';
 
   @override
-  String get readerScrollModeUnsupported => '竖排或从右向左排版的书籍不支持滚动版式。';
+  String get readerScrollModeUnsupported => '竖排或从右向左排版的书籍不支持滚动版式';
 
   @override
   String get readerPageTurn => '翻页';
@@ -863,7 +859,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get externalSourceConfiguration => '配置';
 
   @override
-  String get externalSourceConfigurationLoadFailed => '无法读取该外部源的配置。';
+  String get externalSourceConfigurationLoadFailed => '无法读取该外部源的配置';
 
   @override
   String get externalSourceWebdavUrl => '服务器地址';
@@ -917,7 +913,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String externalSourceDeleteConfirmText(String name) {
-    return '确定要删除“$name”及其配置吗？已导入的书籍不受影响。';
+    return '确定要删除“$name”及其配置吗？已导入的书籍不受影响';
   }
 
   @override
@@ -1005,5 +1001,5 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changeCover => '更换封面';
 
   @override
-  String get coverPickFailed => '无法读取此图片，请选择其他图片文件。';
+  String get coverPickFailed => '无法读取此图片，请选择其他图片文件';
 }

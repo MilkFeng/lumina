@@ -404,15 +404,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get experimentalFeature => 'Experimental Feature';
 
   @override
-  String get experimentalFeatureWarning =>
-      'WebDAV sync is currently in experimental stage and may have some issues or instability.\n\nPlease ensure before using:\n• Important data is backed up\n• Understand WebDAV server configuration\n• Network connection is stable\n\nPlease provide feedback if you encounter any issues.';
-
-  @override
   String get iKnow => 'I Know';
 
   @override
-  String get invalidFileType =>
-      'Invalid file type. Please select an EPUB file.';
+  String get invalidFileType => 'Invalid file type. Please select an EPUB file';
 
   @override
   String get fileAccessError => 'Unable to access file';
@@ -437,7 +432,7 @@ class AppLocalizationsEn extends AppLocalizations {
       other: 'files',
       one: 'file',
     );
-    return 'Cache cleaned. Removed $count unused $_temp0.';
+    return 'Cache cleaned. Removed $count unused $_temp0';
   }
 
   @override
@@ -606,7 +601,7 @@ class AppLocalizationsEn extends AppLocalizations {
       other: 'books',
       one: 'book',
     );
-    return 'Successfully restored $count $_temp0.';
+    return 'Successfully restored $count $_temp0';
   }
 
   @override
@@ -676,7 +671,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openStorageLocationIOSMessage =>
-      'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.';
+      'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data';
 
   @override
   String get unsavedChangesTitle => 'Unsaved Changes';
@@ -759,7 +754,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get readerScrollModeUnsupported =>
-      'Scrolling is unavailable for vertical or right-to-left books.';
+      'Scrolling is unavailable for vertical or right-to-left books';
 
   @override
   String get readerPageTurn => 'Page Turn';
@@ -789,7 +784,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerManageFonts => 'Manage Fonts';
 
   @override
-  String get readerFontManageTip => 'Manage custom fonts in Settings.';
+  String get readerFontManageTip => 'Manage custom fonts in Settings';
 
   @override
   String get fontManagement => 'Font Management';
@@ -886,7 +881,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get externalSourceConfigurationLoadFailed =>
-      'Could not read this source\'s configuration.';
+      'Could not read this source\'s configuration';
 
   @override
   String get externalSourceWebdavUrl => 'Server URL';
@@ -940,7 +935,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String externalSourceDeleteConfirmText(String name) {
-    return 'Delete “$name” and its configuration? Imported books are not affected.';
+    return 'Delete “$name” and its configuration? Imported books are not affected';
   }
 
   @override
@@ -1034,5 +1029,5 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get coverPickFailed =>
-      'Could not load this image. Please choose another image file.';
+      'Could not load this image. Please choose another image file';
 }

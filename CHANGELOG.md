@@ -12,69 +12,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Added
 
-- **Continuous Scrolling**: The reader has a second layout, chosen under Reading Layout in the style sheet: instead of discrete pages, a chapter becomes one continuously scrolling column that follows the finger and keeps its momentum after a fling, like a web page. Scrolling stops at the chapter's own boundaries — the bottom bar's arrows move between chapters — and the status bar shows how far through the chapter you are as a percentage. Volume keys move by roughly one screen. Right-to-left and vertical-writing books always paginate, and the option is shown disabled with an explanation for them.
-- **External Sources (WebDAV)**: Add a WebDAV server in Settings and browse its folders from the library to import EPUBs. The password is kept in the platform keychain, never in the library database.
-- **Download Progress**: An import from an external source shows how far the file being downloaded has come.
-- **Cover Editing**: A book's cover can be replaced from the detail screen — tap the cover while editing and pick an image from the device. The chosen image is converted with the same JPEG settings as imported covers, previewed while you edit, and only written to the library when you save; leaving edit mode drops it. If saving fails, the previous cover is restored and the draft is kept so the edit can be retried.
+- Added a continuous scrolling reading layout
+- Added external sources: add a WebDAV server in Settings, browse its folders and import books
+- Added the ability to edit a book's cover
 
 #### Changed
 
-- **Restore Entry Point**: "Restore from Backup" moved from the library floating action menu to Settings → Library, next to "Backup Library".
-- **Restore Behaviour**: Restoring now clears the current library (books, groups, reading progress and their files) and then applies the backup, instead of merging the backup book by book. The restored library is therefore an exact copy of the backup, with no risk of record conflicts.
-- Restoring asks for confirmation before deleting anything and can no longer be interrupted halfway through.
-- **Backup Format Version**: Backup packages are written with format version 2, and a restore now refuses a package that declares no version at all or a version newer than the app supports — the current library is left untouched in that case.
-- **Library Reload**: Sorting, filtering, entering a group, refreshing and restoring now reload the shelf in place instead of dropping it to its loading state, so the grid no longer tears down and flashes a spinner while the books are re-read. A background reload that fails keeps the books already on screen instead of replacing them with an error, and a finished import no longer reloads the shelf a second time.
-- **Library Sort & View Menu**: The sort and view options moved out of a bottom sheet into a menu hanging off the app bar's tune icon. The choice in effect is checked, and pressing the icon and dragging onto an entry chooses it without lifting the finger. A press off the panel only closes the menu — it is not passed on to the book, tab or shelf underneath.
-- **Library Add Button**: The floating add button no longer flickers between "+" and "×" as the dial opens — the same glyph now rotates into the cross and grows a little on the way, so the cross reads at the size of the plus it replaced.
-- **Library Selection**: Clearing the selection now leaves selection mode with it, instead of staying in selection mode with nothing selected.
-- **Book Detail Editing**: Discarding edits after a back gesture now returns to the book's view mode, the same as the close button, instead of leaving the screen as well.
-- **External Source Editor**: The editor is wider — it fills the width the screen has to give instead of a fixed phone-sized box — and the saved configuration is now read before the dialog opens, so a keychain that refuses to open is reported with a message rather than leaving the editor on its spinner.
-- **Reader Table of Contents**: Tapping a chapter always jumps to it, including one that holds sections; expanding and collapsing moved to the chevron on its left.
-- **External Sources**: A saved source keeps a single delete button, and long pressing the row tests the connection. The button turns into a progress spinner while the test runs.
-- **Reader Style Sheet — Reading Layout**: The page-turning section is gone. "Reading Layout" now groups its options under two subsections: "Pagination Mode" (Paged / Scrolling) and "Page Turn" (None / Cover, renamed from "Slide", the Android volume-key switch). The page-turn subsection — its label and the animation options — is shown only while the layout is paged, and expands and collapses with the same animation as the rest of the sheet.
+- The restore entry point moved to Settings, and restoring now clears the current library
+- Reworked the library sort and view menu: moved into the top-right menu and follows Material Design's drag-to-select design
+- Reworked the library screen's interaction logic
+- Reworked the reader's table of contents logic
+- Improved the scrolling experience
 
 #### Fixed
 
-- **Font Import Naming**: Imported fonts no longer collapse into a single entry named "unknown". Font file names are now resolved by the platform (`getDisplayNames`) instead of being guessed from the picker's opaque handle, path separators and URL-breaking characters are stripped, and a font whose name cannot be resolved gets a unique generated name rather than a shared placeholder.
-- **Backup Export**: A book's cover is now exported under the file name its record points at, so a cover that does not follow the `{hash}.{ext}` naming convention is no longer left out of the backup.
-- **Scrolling Mode: Switching Layout Keeps the Chapter**: Switching between paginated and scrolling layout no longer leaves the reading area blank. The replacement WebView had been created in the same frame its predecessor was torn down and before the engine it attaches to had started, which left it unpainted: its chapter loaded and every event arrived, but nothing was ever drawn. The reader now recreates it the way its first open does — dispose, start the pre-warm, then build the new view — so the chapter is on screen as soon as the switch is over.
-- **Reader Overscroll**: Dragging past the start or end of a chapter no longer draws Android's native overscroll glow / stretch, and the leftover drag is no longer handed to the document behind the chapter. The WebView's over-scroll mode is a property of the view and does not cover a scroller inside the frame document, so the chapter's own scroller — and the skeleton holding the three frames — now declare `overscroll-behavior: none`.
-- **Scrolling Mode: Progress After a Chapter Change**: Changing chapter no longer leaves the reading percentage and the chapter name frozen for the rest of the chapter, and where you stopped inside a chapter is saved again. The scroll listener was attached once per frame and never re-attached: a frame keeps the same `contentWindow` when it navigates to another chapter, so the check that asked "have I already observed this window?" said yes forever, and the new chapter's document came up without a listener — it still scrolled, but its position, anchors and "came to rest" reports never reached the reader. The check is now keyed on the document, the same way the page's gesture observers are. A chapter's own position report, which arrives while it is still loading, is also published once the load is over instead of being dropped, so the status bar switches to the new chapter's percentage as soon as the chapter appears.
-- **Scrolling Mode: Arrow Vibration**: The bottom bar's arrows no longer vibrate while the reading layout is scrolling. There they turn whole chapters rather than pages, which is not what the tick belongs to; paged layout keeps it.
+- Fixed issues with font import
+- Fixed covers not being exported correctly during a backup export
 
 ### Chinese
 
 #### 新增
 
-- **连续滚动阅读**：阅读器新增一种版式，可在样式面板的“阅读版式”中选择：章节不再切分为独立页面，而是渲染成一整列连续内容，像网页一样跟手拖动、松手后保留惯性滑动。滚动到章节首尾即停止——章节切换仍使用底部工具栏的左右箭头——状态栏右下角改为显示当前章节的阅读百分比。音量键每次滚动约一屏。从右到左和竖排书籍仍强制分页，该选项对这类书籍显示为禁用并附说明。
-- **外部来源（WebDAV）**：可在设置中添加 WebDAV 服务器，并在书库中浏览其目录、导入 EPUB。密码保存在系统钥匙串，不写入书库数据库。
-- **下载进度**：从外部来源导入时会显示当前文件的下载进度。
-- **封面更换**：可在书籍详情页更换封面——编辑状态下点击封面，从设备中选择图片。所选图片按与导入封面相同的 JPEG 参数转换，编辑期间仅作为草稿预览，保存时才写入书库，退出编辑即丢弃。若保存失败，会恢复原封面并保留草稿，以便重试。
+- 新增连续滚动阅读功能
+- 新增外部源功能，可在设置中添加 WebDAV 服务器，并可以浏览其目录和导入书籍
+- 新增编辑书籍封面的功能
 
 #### 变更与优化
 
-- **恢复入口**：将“从备份恢复”从书库悬浮菜单移到设置 → 书库，与“备份书库”放在一起。
-- **恢复行为**：恢复时会先清空当前书库（书籍、分组、阅读进度及对应文件），再应用备份中的书库，不再逐本合并导入，因此恢复结果与备份完全一致，也不会再出现记录冲突。
-- 恢复前会先弹出确认提示，且恢复过程中无法中断。
-- **备份格式版本**：备份包统一写入格式版本 2；恢复时若备份包未声明版本、或版本高于当前应用支持的版本，会在清空本地书库之前直接报错拒绝恢复。
-- **书库刷新**：排序、按分组筛选、进入分组、刷新与恢复备份改为就地重新读取书库，不再先切回加载状态，因此书架不会整屏重建、也不会闪过加载圈；后台刷新失败时会保留屏幕上已有的书籍，而不是替换成错误页；导入结束后也不再重复刷新一次书库。
-- **书库排序与视图菜单**：排序与视图选项由底部弹层改为挂在应用栏“调节”图标上的菜单，当前生效的选项带勾选标记，按住图标拖到某一项即可一次选定，无需抬手；点击菜单面板以外的区域只会关闭菜单，不会连带触发下层的书籍、标签页或书架。
-- **书库添加按钮**：悬浮添加按钮展开时不再在“+”与“×”之间闪烁，改为同一个图标旋转成叉，并在旋转过程中略微放大，让叉看起来与加号一样大。
-- **书库多选**：清除选择后会一并退出多选模式，不再停留在没有任何选中项的多选状态。
-- **书籍详情编辑**：使用返回手势放弃编辑后，会回到详情查看状态（与关闭按钮一致），不再直接退出该页面。
-- **外部来源编辑弹窗**：弹窗加宽，占满屏幕可用宽度，不再是固定手机尺寸的窄框；已保存的配置改为在弹窗打开前读取，钥匙串读取失败时会给出提示，而不是让弹窗卡在加载圈上。
-- **阅读器目录**：点击章节任意位置都会直接跳转，含子章节的条目同样如此；展开与折叠改为点击条目左侧的箭头。
-- **外部来源**：每条来源只保留一个删除按钮，长按整行可测试连接；测试期间该按钮变为进度圈。
-- **阅读器样式面板 · 阅读版式**：移除“翻页”区块，“阅读版式”下改为两个小节：“分页方式”（分页 / 滚动）与“翻页”（无动画 / 覆盖，原“滑动翻页”、Android 的“用音量键翻页”）。翻页小节的标题与动画选项只在分页方式为“分页”时显示，并与其他条件区块一样带展开与收起动画。
+- 恢复入口移到设置界面，且恢复时会清空当前书库
+- 优化书库排序与视图菜单，移入右上角菜单且遵循 Material Design 的拖动选定设计
+- 优化书库界面逻辑
+- 优化阅读器目录相关逻辑
+- 优化滚动体验
 
 #### 修复
 
-- **字体导入命名**：导入字体不再全部显示为 “unknown” 且互相覆盖。字体文件名改由平台查询得到（`getDisplayNames`），不再从 picker 返回的不透明句柄里猜测；文件名会剔除路径分隔符与破坏 URL 的字符，实在取不到名字时使用唯一的生成名，而不是共用的占位名。
-- **备份导出**：导出封面时优先使用书籍记录中保存的文件名，文件名不符合 `{hash}.{ext}` 约定的封面不再被漏掉。
-- **滚动模式：切换版式不再白屏**：在分页与滚动之间切换版式后，阅读区域不再空白。此前替换用的 WebView 与被拆掉的旧视图在同一帧创建，且创建时它要接管的预热引擎还没起来，结果新视图始终不上屏：章节照常加载、事件照常到达，但屏幕上一片空白。现在改为按阅读器“首次打开”的时序重建——先拆、再启动预热、最后才建可见视图——切换结束后章节即已显示。
-- **阅读器 overscroll**：在章节首尾继续拖动时不再出现 Android 原生的 overscroll 辉光/拉伸，多出来的拖动也不会再传给章节背后的文档。WebView 的 over-scroll 模式只是视图自身的属性，管不到 frame 文档内部的滚动容器，因此章节自身的滚动容器与承载三个 frame 的 skeleton 现在都声明 `overscroll-behavior: none`。
-- **滚动模式：切换章节后进度不再更新**：切换章节后，阅读百分比与章节名不再从此刻起一直停住不动，章节内部的阅读位置也会重新落盘。此前滚动监听是「每个 frame 只挂一次」：frame 导航到新章节时 `contentWindow` 返回的还是同一个 window proxy，于是「这个 window 我挂过了吗」的判断永远为真，新章节的文档再也不会挂上监听——页面照常滚动，但位置、锚点与「停止滚动」三类上报全部到不了阅读器。现在改为按**文档**判断，与页面内手势监听的判据一致。另外，章节在加载过程中上报的那次位置信息，会在加载结束后补发一次，而不是被直接丢弃，因此状态栏会在章节出现的瞬间切到新章节的百分比。
-- **滚动模式：箭头按钮振动**：阅读版式为滚动时，底部工具栏的左右箭头不再振动。此时它们翻的是整章而不是一页，那一下振动反馈并不属于这种操作；分页模式下保持原样。
+- 修复字体导入相关的问题
+- 修复备份导出时封面无法正常导出的问题
 
 ## [v0.2.4] - 2026-09-19
 

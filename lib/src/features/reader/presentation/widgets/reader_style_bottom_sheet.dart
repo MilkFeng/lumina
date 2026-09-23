@@ -399,7 +399,17 @@ class _ReaderStyleBottomSheetState
                 ),
                 if (!ReaderSettings.supportsScrollMode(widget.direction)) ...[
                   const SizedBox(height: 8),
-                  SettingsSubLabel(label: l10n.readerScrollModeUnsupported),
+                  // Styled like the custom-font tip at the end of the
+                  // typography section, so both hints read as captions.
+                  Text(
+                    l10n.readerScrollModeUnsupported,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    ),
+                  ),
                 ],
 
                 // Page-turn subsection – the animation only exists while the
