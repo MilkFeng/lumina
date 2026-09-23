@@ -133,6 +133,21 @@ body::-webkit-scrollbar:vertical {
   width: 0 !important;
 }
 
+/* Scroll mode hands the platform view every pointer sequence, so a chapter's
+   own media elements would take the touch before the reader sees it: the native
+   player controls swallow it and open a player or go fullscreen.  The elements
+   keep rendering, but they no longer receive pointer events, so a tap on one
+   behaves like a tap on the text around it — which is the reader's own tap.
+   Paginated mode needs no such rule: the frames are inert there and every
+   gesture is Flutter's. */
+body.lumina-is-scroll {
+
+  video,
+  audio {
+    pointer-events: none !important;
+  }
+}
+
 body.lumina-is-vertical {
 
   img,
