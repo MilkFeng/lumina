@@ -52,6 +52,7 @@ dependencies:
   flutter_inappwebview: ^6.2.0-beta.3
   flutter_widget_from_html_core: ^0.17.4
   wakelock_plus: ^1.8.0
+  battery_plus: ^7.1.1
 
   # File Picking & Permissions
   path: ^1.9.1

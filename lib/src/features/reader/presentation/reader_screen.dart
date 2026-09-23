@@ -508,6 +508,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       initializeTheme: settings.toEpubTheme(context),
                       statusBarLeftContent: activateTocTitle,
                       statusBarRightContent: displayProgress,
+                      hideStatusBar: settings.hideStatusBar,
                       scrollMode: scrollMode,
                       onScrollProgress: handleScrollProgress,
                       onScrollTurn: handleScrollTurn,

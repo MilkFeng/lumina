@@ -16,6 +16,7 @@ import '../data/epub_webview_handler.dart';
 import './reader_webview.dart';
 import 'gestures/eager_tap_gesture_recognizer.dart';
 import 'page_turn/page_turn.dart';
+import 'widgets/reader_status_bar.dart';
 
 class ReaderRendererController {
   _ReaderRendererState? _rendererState;
@@ -190,6 +191,12 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   final String statusBarLeftContent;
   final String statusBarRightContent;
 
+  /// Whether the reader hides the system status bar, in which case the page
+  /// draws a status bar of its own along the top edge — clock and battery, in
+  /// the strip the system one would have occupied.  See
+  /// [ReaderStatusBarReadout].
+  final bool hideStatusBar;
+
   /// Whether the chapter scrolls continuously instead of paginating.
   final bool scrollMode;
 
@@ -232,6 +239,7 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.initializeTheme,
     required this.statusBarLeftContent,
     required this.statusBarRightContent,
+    required this.hideStatusBar,
     required this.scrollMode,
     required this.onScrollProgress,
     required this.onScrollTurn,
@@ -260,9 +268,17 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   EdgeInsets _addSafeAreaToPadding(EdgeInsets basePadding) {
     final safePaddings = MediaQuery.paddingOf(context);
     final safeBottomPadding = max(safePaddings.bottom, 32);
+    // With the system status bar hidden its inset is usually gone with it —
+    // what a cutout still needs is all `padding` reports — so the strip the
+    // reader's own status bar occupies is held open here, exactly as the bottom
+    // badges hold theirs open below.  Without it the clock and the battery
+    // would land on the first line of the page.
+    final safeTopPadding = widget.hideStatusBar
+        ? max(safePaddings.top, 32)
+        : safePaddings.top;
     return EdgeInsets.fromLTRB(
       basePadding.left + safePaddings.left,
-      basePadding.top + safePaddings.top,
+      basePadding.top + safeTopPadding,
       basePadding.right + safePaddings.right,
       basePadding.bottom + safeBottomPadding,
     );
@@ -489,41 +505,53 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
         gestures: _gestures,
         child: Stack(
           fit: StackFit.expand,
-          children: [_buildBody(), _buildBottomStatusBarOverlay()],
+          children: [
+            _buildBody(),
+            // The reader's stand-in for the system status bar, up exactly while
+            // that bar is down: raising the control panel brings the system bar
+            // back over the same edge, and the panel's own top bar with it.
+            if (widget.hideStatusBar && !widget.showControls)
+              _buildTopStatusBarOverlay(),
+            _buildBottomStatusBarOverlay(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The clock and battery strip, opposite the reading-progress one.
+  ///
+  /// Same geometry as [_buildBottomStatusBarOverlay], mirrored: 32 px of strip
+  /// against the edge, badges inset 32 px from the sides.
+  Widget _buildTopStatusBarOverlay() {
+    return Positioned(
+      left: 0,
+      right: 0,
+      top: 0,
+      // Decoration only, like the bottom badges: the strip lies above the
+      // WebView and must not swallow a touch meant for the page underneath.
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.only(left: 32, right: 32, top: 8),
+          constraints: const BoxConstraints(minHeight: 32, maxHeight: 32),
+          child: AnimatedOpacity(
+            duration: (widget.isLoading || !widget.shouldShowWebView)
+                ? Duration.zero
+                : const Duration(
+                    milliseconds: AppTheme.defaultAnimationDurationMs,
+                  ),
+            curve: Curves.easeOut,
+            opacity: (widget.isLoading || !widget.shouldShowWebView)
+                ? 0.0
+                : 1.0,
+            child: const ReaderStatusBarReadout(),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildBottomStatusBarOverlay() {
-    Widget buildBadge(
-      String content,
-      bool tabular, {
-      TextOverflow overflow = TextOverflow.clip,
-    }) {
-      return Text(
-        content,
-        overflow: overflow,
-        style: TextStyle(
-          color: Theme.of(
-            context,
-          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
-          shadows: [
-            Shadow(
-              color: Theme.of(
-                context,
-              ).colorScheme.surface.withValues(alpha: 0.5),
-              blurRadius: 1.0,
-              offset: Offset.zero,
-            ),
-          ],
-        ),
-      );
-    }
-
     return Positioned(
       left: 0,
       right: 0,
@@ -552,14 +580,16 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(
-                  child: buildBadge(
-                    widget.statusBarLeftContent,
-                    false,
+                  child: ReaderStatusBadge(
+                    content: widget.statusBarLeftContent,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 8),
-                buildBadge(widget.statusBarRightContent, true),
+                ReaderStatusBadge(
+                  content: widget.statusBarRightContent,
+                  tabular: true,
+                ),
               ],
             ),
           ),
