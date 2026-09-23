@@ -1067,6 +1067,14 @@
   "@readerVolumeKeyTurnsPage": {
     "description": "Toggle label to use hardware volume keys for page turning"
   },
+  "readerStatusBar": "Status Bar",
+  "@readerStatusBar": {
+    "description": "Reader style sheet subsection label grouping the system status bar options"
+  },
+  "readerHideStatusBar": "Hide While Reading",
+  "@readerHideStatusBar": {
+    "description": "Switch label to hide the system status bar while reading; the control panel shows it back"
+  },
   "readerFontSection": "Custom Font",
   "@readerFontSection": {
     "description": "Reader style sheet subsection label for custom font settings"

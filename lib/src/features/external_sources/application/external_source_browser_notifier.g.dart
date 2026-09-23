@@ -88,7 +88,7 @@ final class ExternalSourceBrowserNotifierProvider
 }
 
 String _$externalSourceBrowserNotifierHash() =>
-    r'14c1c90d7f01bdb476755a93b589346904cfdb42';
+    r'343d5cb0b5b31a10d49f1edccd0d32fc2aabeff9';
 
 /// Folder navigation for one external source.
 ///

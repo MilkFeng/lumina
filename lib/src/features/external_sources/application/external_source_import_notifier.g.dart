@@ -81,7 +81,7 @@ final class ExternalSourceImportNotifierProvider
 }
 
 String _$externalSourceImportNotifierHash() =>
-    r'9a94abb57cc2680e9dfdfb23b8c362f40e70e3ec';
+    r'02e3ce06a895d5217ff40ed12bcf4dc093721aec';
 
 /// Downloads books from an external source and feeds them into the library.
 ///

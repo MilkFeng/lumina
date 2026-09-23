@@ -1075,6 +1075,14 @@
   "@readerVolumeKeyTurnsPage": {
     "description": "开关标签：使用硬件音量键翻页"
   },
+  "readerStatusBar": "状态栏",
+  "@readerStatusBar": {
+    "description": "阅读器样式面板小节标题：系统状态栏选项"
+  },
+  "readerHideStatusBar": "阅读时隐藏",
+  "@readerHideStatusBar": {
+    "description": "开关标签：阅读时隐藏系统状态栏，打开控件面板时恢复显示"
+  },
   "readerFontSection": "自定义字体",
   "@readerFontSection": {
     "description": "阅读器样式面板自定义字体子区块标签"

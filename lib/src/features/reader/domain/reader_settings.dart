@@ -49,14 +49,25 @@ class ReaderSettings {
   /// When true, volume up/down keys turn pages in the reader.
   final bool volumeKeyTurnsPage;
 
+  /// When true the system status bar is hidden while reading, so the page owns
+  /// the top edge too.
+  ///
+  /// It only applies to the reading state: bringing the control panel up shows
+  /// the status bar back, exactly as it does for the navigation bar, because
+  /// the panel's own bars sit at the very top and bottom of the screen.
+  ///
+  /// On by default, and the reader then draws the clock and the battery in the
+  /// strip the status bar would have occupied.
+  final bool hideStatusBar;
+
   const ReaderSettings({
     this.zoom = 1.0,
     this.lineHeight = 1.6,
     this.changeLineHeight = false,
     this.followAppTheme = true,
     this.themeIndex = 0,
-    this.marginTop = 16.0,
-    this.marginBottom = 16.0,
+    this.marginTop = 8.0,
+    this.marginBottom = 8.0,
     this.marginLeft = 16.0,
     this.marginRight = 16.0,
     this.linkHandling = ReaderLinkHandling.ask,
@@ -66,6 +77,7 @@ class ReaderSettings {
     this.fontFileName,
     this.overrideFontFamily = false,
     this.volumeKeyTurnsPage = false,
+    this.hideStatusBar = true,
   });
 
   // Sentinel: lets copyWith(fontFileName: null) mean "set to null" rather than
@@ -89,6 +101,7 @@ class ReaderSettings {
     Object? fontFileName = _kUnset,
     bool? overrideFontFamily,
     bool? volumeKeyTurnsPage,
+    bool? hideStatusBar,
   }) {
     return ReaderSettings(
       zoom: zoom ?? this.zoom,
@@ -109,6 +122,7 @@ class ReaderSettings {
           : fontFileName as String?,
       overrideFontFamily: overrideFontFamily ?? this.overrideFontFamily,
       volumeKeyTurnsPage: volumeKeyTurnsPage ?? this.volumeKeyTurnsPage,
+      hideStatusBar: hideStatusBar ?? this.hideStatusBar,
     );
   }
 

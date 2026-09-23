@@ -170,7 +170,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
         shouldShowWebView = true;
       }
     });
-    hideBottomNavigationBar();
+    applySystemUiMode();
     setupVolumeControl();
     WakelockPlus.enable();
   }
@@ -257,8 +257,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     );
   }
 
+  /// Hides the status bar as well, for readers who want the page to own the
+  /// whole screen.
+  void hideAllSystemBars() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: const [],
+    );
+  }
+
   void restoreSystemUI() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  /// Puts the system bars in the state the reader is in right now.
+  ///
+  /// Reading hides the navigation bar, and with [ReaderSettings.hideStatusBar]
+  /// the status bar goes with it.  The control panel is the exception: it draws
+  /// bars of its own along both edges, so both system bars are shown while it
+  /// is up, whether or not the reader asked for the status bar to be hidden.
+  void applySystemUiMode() {
+    if (showControls) {
+      restoreSystemUI();
+    } else if (ref.read(readerSettingsProvider).hideStatusBar) {
+      hideAllSystemBars();
+    } else {
+      hideBottomNavigationBar();
+    }
   }
 
   @override
@@ -312,14 +337,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   }
 
   void toggleControls() {
-    if (showControls) {
-      hideBottomNavigationBar();
-    } else {
-      restoreSystemUI();
-    }
     setState(() {
       showControls = !showControls;
     });
+    applySystemUiMode();
   }
 
   void openDrawer() {
@@ -487,6 +508,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       initializeTheme: settings.toEpubTheme(context),
                       statusBarLeftContent: activateTocTitle,
                       statusBarRightContent: displayProgress,
+                      hideStatusBar: settings.hideStatusBar,
                       scrollMode: scrollMode,
                       onScrollProgress: handleScrollProgress,
                       onScrollTurn: handleScrollTurn,

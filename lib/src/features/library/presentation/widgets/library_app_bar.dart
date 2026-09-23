@@ -77,6 +77,10 @@ class _LibraryAppBarState extends State<LibraryAppBar>
   Widget build(BuildContext context) {
     final isSelectionMode = widget.state.isSelectionMode;
     final logoSvgPath = 'assets/logos/logo.svg';
+    // The select-all action flips to its opposite once every book on the
+    // current tab is already selected, so the tooltip has to follow the icon.
+    final allSelected =
+        widget.state.selectedCount == widget.state.books.length;
 
     // Rebuild the SliverAppBar on every animation tick so that
     // bottom.preferredSize.height shrinks/grows smoothly.
@@ -100,6 +104,7 @@ class _LibraryAppBarState extends State<LibraryAppBar>
             leading: isSelectionMode
                 ? IconButton(
                     icon: const Icon(Icons.close_outlined),
+                    tooltip: AppLocalizations.of(context)!.cancel,
                     onPressed: widget.onSelectionToggle,
                   )
                 : null,
@@ -141,16 +146,18 @@ class _LibraryAppBarState extends State<LibraryAppBar>
             actions: [
               if (isSelectionMode)
                 IconButton(
+                  tooltip: allSelected
+                      ? AppLocalizations.of(context)!.deselectAll
+                      : AppLocalizations.of(context)!.selectAll,
                   onPressed: () {
-                    if (widget.state.selectedCount ==
-                        widget.state.books.length) {
+                    if (allSelected) {
                       widget.onClearSelection();
                     } else {
                       widget.onSelectAll();
                     }
                   },
                   icon: Icon(
-                    widget.state.selectedCount == widget.state.books.length
+                    allSelected
                         ? Icons.deselect_outlined
                         : Icons.select_all_outlined,
                   ),
