@@ -31,12 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **External Source Editor**: The editor is wider — it fills the width the screen has to give instead of a fixed phone-sized box — and the saved configuration is now read before the dialog opens, so a keychain that refuses to open is reported with a message rather than leaving the editor on its spinner.
 - **Reader Table of Contents**: Tapping a chapter always jumps to it, including one that holds sections; expanding and collapsing moved to the chevron on its left.
 - **External Sources**: A saved source keeps a single delete button, and long pressing the row tests the connection. The button turns into a progress spinner while the test runs.
+- **Reader Style Sheet — Reading Layout**: The page-turning section is gone. "Reading Layout" now groups its options under two subsections: "Pagination Mode" (Paged / Scrolling) and "Page Turn" (None / Cover, renamed from "Slide", the Android volume-key switch). The page-turn subsection — its label and the animation options — is shown only while the layout is paged, and expands and collapses with the same animation as the rest of the sheet.
 
 #### Fixed
 
 - **Font Import Naming**: Imported fonts no longer collapse into a single entry named "unknown". Font file names are now resolved by the platform (`getDisplayNames`) instead of being guessed from the picker's opaque handle, path separators and URL-breaking characters are stripped, and a font whose name cannot be resolved gets a unique generated name rather than a shared placeholder.
 - **Backup Export**: A book's cover is now exported under the file name its record points at, so a cover that does not follow the `{hash}.{ext}` naming convention is no longer left out of the backup.
 - **Scrolling Mode: Switching Layout Keeps the Chapter**: Switching between paginated and scrolling layout no longer leaves the reading area blank. The replacement WebView had been created in the same frame its predecessor was torn down and before the engine it attaches to had started, which left it unpainted: its chapter loaded and every event arrived, but nothing was ever drawn. The reader now recreates it the way its first open does — dispose, start the pre-warm, then build the new view — so the chapter is on screen as soon as the switch is over.
+- **Reader Overscroll**: Dragging past the start or end of a chapter no longer draws Android's native overscroll glow / stretch, and the leftover drag is no longer handed to the document behind the chapter. The WebView's over-scroll mode is a property of the view and does not cover a scroller inside the frame document, so the chapter's own scroller — and the skeleton holding the three frames — now declare `overscroll-behavior: none`.
 
 ### Chinese
 
@@ -61,12 +63,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **外部来源编辑弹窗**：弹窗加宽，占满屏幕可用宽度，不再是固定手机尺寸的窄框；已保存的配置改为在弹窗打开前读取，钥匙串读取失败时会给出提示，而不是让弹窗卡在加载圈上。
 - **阅读器目录**：点击章节任意位置都会直接跳转，含子章节的条目同样如此；展开与折叠改为点击条目左侧的箭头。
 - **外部来源**：每条来源只保留一个删除按钮，长按整行可测试连接；测试期间该按钮变为进度圈。
+- **阅读器样式面板 · 阅读版式**：移除“翻页”区块，“阅读版式”下改为两个小节：“分页方式”（分页 / 滚动）与“翻页”（无动画 / 覆盖，原“滑动翻页”、Android 的“用音量键翻页”）。翻页小节的标题与动画选项只在分页方式为“分页”时显示，并与其他条件区块一样带展开与收起动画。
 
 #### 修复
 
 - **字体导入命名**：导入字体不再全部显示为 “unknown” 且互相覆盖。字体文件名改由平台查询得到（`getDisplayNames`），不再从 picker 返回的不透明句柄里猜测；文件名会剔除路径分隔符与破坏 URL 的字符，实在取不到名字时使用唯一的生成名，而不是共用的占位名。
 - **备份导出**：导出封面时优先使用书籍记录中保存的文件名，文件名不符合 `{hash}.{ext}` 约定的封面不再被漏掉。
 - **滚动模式：切换版式不再白屏**：在分页与滚动之间切换版式后，阅读区域不再空白。此前替换用的 WebView 与被拆掉的旧视图在同一帧创建，且创建时它要接管的预热引擎还没起来，结果新视图始终不上屏：章节照常加载、事件照常到达，但屏幕上一片空白。现在改为按阅读器“首次打开”的时序重建——先拆、再启动预热、最后才建可见视图——切换结束后章节即已显示。
+- **阅读器 overscroll**：在章节首尾继续拖动时不再出现 Android 原生的 overscroll 辉光/拉伸，多出来的拖动也不会再传给章节背后的文档。WebView 的 over-scroll 模式只是视图自身的属性，管不到 frame 文档内部的滚动容器，因此章节自身的滚动容器与承载三个 frame 的 skeleton 现在都声明 `overscroll-behavior: none`。
 
 ## [v0.2.4] - 2026-09-19
 

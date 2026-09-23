@@ -73,6 +73,13 @@ body {
      be on it as well: the effective touch-action stops at the scroller and
      never reaches `html`. */
   touch-action: var(--lumina-reader-touch-action, none) !important;
+  /* Dragging past either end of the chapter has to stay invisible.  The
+     WebView-level `overScrollMode: NEVER` is a property of the view and does
+     not cover a scroller living inside the frame document, so Chromium would
+     draw Android's native overscroll glow / stretch here, then hand whatever
+     drag is left to the skeleton document behind it.  `none` drops both the
+     effect and the chaining. */
+  overscroll-behavior: none !important;
 }
 
 body {

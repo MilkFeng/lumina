@@ -4,7 +4,7 @@ import 'package:lumina/src/features/reader/domain/reader_settings.dart';
 
 /// A segmented chip-row for choosing the page-turning animation style.
 ///
-/// Currently supports two options: None and Slide.  The selected chip is
+/// Currently supports two options: None and Cover.  The selected chip is
 /// highlighted with `primaryContainer` colours.
 class ReaderPageAnimationSelector extends StatelessWidget {
   const ReaderPageAnimationSelector({
@@ -12,13 +12,13 @@ class ReaderPageAnimationSelector extends StatelessWidget {
     required this.value,
     required this.onChanged,
     required this.noneLabel,
-    required this.slideLabel,
+    required this.coverLabel,
   });
 
   final ReaderPageAnimation value;
   final ValueChanged<ReaderPageAnimation> onChanged;
   final String noneLabel;
-  final String slideLabel;
+  final String coverLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +32,10 @@ class ReaderPageAnimationSelector extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         SegmentedOptionChip(
-          icon: Icons.swipe_outlined,
-          label: slideLabel,
-          isSelected: value == ReaderPageAnimation.slide,
-          onTap: () => onChanged(ReaderPageAnimation.slide),
+          icon: Icons.amp_stories_outlined,
+          label: coverLabel,
+          isSelected: value == ReaderPageAnimation.cover,
+          onTap: () => onChanged(ReaderPageAnimation.cover),
         ),
       ],
     );

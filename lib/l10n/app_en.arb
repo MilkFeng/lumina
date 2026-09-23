@@ -1039,6 +1039,10 @@
   "@readerScrollModeSection": {
     "description": "Reader style sheet section title for the chapter layout mode"
   },
+  "readerPaginationMode": "Pagination Mode",
+  "@readerPaginationMode": {
+    "description": "Reader style sheet subsection label grouping the layout options (paged or scrolling)"
+  },
   "readerScrollModePaginated": "Paged",
   "@readerScrollModePaginated": {
     "description": "Reading layout option: discrete pages turned horizontally"
@@ -1051,17 +1055,17 @@
   "@readerScrollModeUnsupported": {
     "description": "Explanation shown when the scrolling layout is disabled because the book's page progression is not left-to-right"
   },
-  "readerPageAnimationSection": "Pagination",
-  "@readerPageAnimationSection": {
-    "description": "Reader style sheet section title for page-turning animation"
+  "readerPageTurn": "Page Turn",
+  "@readerPageTurn": {
+    "description": "Reader style sheet subsection label for the page-turning animation, shown only while the layout is paged"
   },
   "readerPageAnimationNone": "None",
   "@readerPageAnimationNone": {
     "description": "Page animation option: no animation"
   },
-  "readerPageAnimationSlide": "Slide",
-  "@readerPageAnimationSlide": {
-    "description": "Page animation option: slide/swipe transition"
+  "readerPageAnimationCover": "Cover",
+  "@readerPageAnimationCover": {
+    "description": "Page animation option: the incoming page covers the current one"
   },
   "readerVolumeKeyTurnsPage": "Volume Keys Turn Pages",
   "@readerVolumeKeyTurnsPage": {

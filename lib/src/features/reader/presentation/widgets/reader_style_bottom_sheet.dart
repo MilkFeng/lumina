@@ -383,6 +383,10 @@ class _ReaderStyleBottomSheetState
                 // ── Section 4: Reading Layout ─────────────────────────────────
                 SettingsSectionTitle(label: l10n.readerScrollModeSection),
                 const SizedBox(height: 12),
+
+                // Pagination mode subsection
+                SettingsSubLabel(label: l10n.readerPaginationMode),
+                const SizedBox(height: 8),
                 ReaderScrollModeSelector(
                   value: _scrollMode,
                   enabled: ReaderSettings.supportsScrollMode(widget.direction),
@@ -398,20 +402,38 @@ class _ReaderStyleBottomSheetState
                   SettingsSubLabel(label: l10n.readerScrollModeUnsupported),
                 ],
 
-                const SizedBox(height: 24),
+                // Page-turn subsection – the animation only exists while the
+                // chapter is paginated, so it collapses away in scroll mode with
+                // the same AnimatedSize transition the rest of the sheet uses.
+                // The volume-key switch below stays in both layouts: in scroll
+                // mode the keys move by a screen instead of turning a page.
+                const SizedBox(height: 20),
+                SettingsSubLabel(label: l10n.readerPageTurn),
 
-                // ── Section 5: Page Animation ─────────────────────────────────
-                SettingsSectionTitle(label: l10n.readerPageAnimationSection),
-                const SizedBox(height: 12),
-                ReaderPageAnimationSelector(
-                  value: _pageAnimation,
-                  onChanged: (v) {
-                    setState(() => _pageAnimation = v);
-                    _notifier.setPageAnimation(v);
-                  },
-                  noneLabel: l10n.readerPageAnimationNone,
-                  slideLabel: l10n.readerPageAnimationSlide,
+                AnimatedSize(
+                  duration: const Duration(
+                    milliseconds: AppTheme.defaultAnimationDurationMs,
+                  ),
+                  curve: Curves.easeInOut,
+                  child: _scrollMode == ReaderScrollMode.paginated
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            ReaderPageAnimationSelector(
+                              value: _pageAnimation,
+                              onChanged: (v) {
+                                setState(() => _pageAnimation = v);
+                                _notifier.setPageAnimation(v);
+                              },
+                              noneLabel: l10n.readerPageAnimationNone,
+                              coverLabel: l10n.readerPageAnimationCover,
+                            ),
+                          ],
+                        )
+                      : const SizedBox(height: 0, width: double.infinity),
                 ),
+
                 const SizedBox(height: 12),
                 if (Platform.isAndroid)
                   LabeledSwitchTile(

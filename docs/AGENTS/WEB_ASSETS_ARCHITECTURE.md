@@ -95,6 +95,12 @@ window.api = api;
   纵向平移，且必须写在 `body` 上（有效 `touch-action` 只算到滚动容器为止，写在 `html`
   上不起作用）；`skeleton.css` 里 `body.lumina-scroll-mode iframe` 恢复
   `pointer-events`；iframe 的 `scrolling` 属性在滚动模式下为 `auto`。
+- **章节两端不得露出系统 overscroll 效果。** `pagination.css` 与 `skeleton.css` 的
+  `html, body` 都带 `overscroll-behavior: none`。`InAppWebViewSettings.overScrollMode =
+  NEVER` 只是 WebView 这个 View 自身的属性，管不到 iframe 文档内部的滚动容器：章节滚到
+  两端之后 Chromium 仍会画 Android 原生的辉光/拉伸效果，并把多出来的拖动链式传给后面的
+  skeleton 文档。`none` 同时关掉本容器的溢出效果和向父级的传递；滚动模式下 `body` 就是
+  滚动容器，这条规则必须跟着 `overflow` 一起写在它身上。
 - `skeleton.css` 中滚动模式给**三个** frame 都开 `pointer-events`（叠放顺序由 z-index
   决定，只有最上层的 `frame-curr` 能被点到）。若只给 `#frame-curr` 开，`cycleFrames`
   把 `next` 提升为 `curr` 的那一刻会翻转该 frame 的 `pointer-events`，而这一帧在合成器里

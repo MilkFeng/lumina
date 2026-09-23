@@ -1406,6 +1406,12 @@ abstract class AppLocalizations {
   /// **'Reading Layout'**
   String get readerScrollModeSection;
 
+  /// Reader style sheet subsection label grouping the layout options (paged or scrolling)
+  ///
+  /// In en, this message translates to:
+  /// **'Pagination Mode'**
+  String get readerPaginationMode;
+
   /// Reading layout option: discrete pages turned horizontally
   ///
   /// In en, this message translates to:
@@ -1424,11 +1430,11 @@ abstract class AppLocalizations {
   /// **'Scrolling is unavailable for vertical or right-to-left books.'**
   String get readerScrollModeUnsupported;
 
-  /// Reader style sheet section title for page-turning animation
+  /// Reader style sheet subsection label for the page-turning animation, shown only while the layout is paged
   ///
   /// In en, this message translates to:
-  /// **'Pagination'**
-  String get readerPageAnimationSection;
+  /// **'Page Turn'**
+  String get readerPageTurn;
 
   /// Page animation option: no animation
   ///
@@ -1436,11 +1442,11 @@ abstract class AppLocalizations {
   /// **'None'**
   String get readerPageAnimationNone;
 
-  /// Page animation option: slide/swipe transition
+  /// Page animation option: the incoming page covers the current one
   ///
   /// In en, this message translates to:
-  /// **'Slide'**
-  String get readerPageAnimationSlide;
+  /// **'Cover'**
+  String get readerPageAnimationCover;
 
   /// Toggle label to use hardware volume keys for page turning
   ///

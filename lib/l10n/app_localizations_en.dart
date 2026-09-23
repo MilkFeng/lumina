@@ -749,6 +749,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerScrollModeSection => 'Reading Layout';
 
   @override
+  String get readerPaginationMode => 'Pagination Mode';
+
+  @override
   String get readerScrollModePaginated => 'Paged';
 
   @override
@@ -759,13 +762,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Scrolling is unavailable for vertical or right-to-left books.';
 
   @override
-  String get readerPageAnimationSection => 'Pagination';
+  String get readerPageTurn => 'Page Turn';
 
   @override
   String get readerPageAnimationNone => 'None';
 
   @override
-  String get readerPageAnimationSlide => 'Slide';
+  String get readerPageAnimationCover => 'Cover';
 
   @override
   String get readerVolumeKeyTurnsPage => 'Volume Keys Turn Pages';

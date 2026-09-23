@@ -729,6 +729,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerScrollModeSection => '阅读版式';
 
   @override
+  String get readerPaginationMode => '分页方式';
+
+  @override
   String get readerScrollModePaginated => '分页';
 
   @override
@@ -738,13 +741,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerScrollModeUnsupported => '竖排或从右向左排版的书籍不支持滚动版式。';
 
   @override
-  String get readerPageAnimationSection => '翻页';
+  String get readerPageTurn => '翻页';
 
   @override
   String get readerPageAnimationNone => '无动画';
 
   @override
-  String get readerPageAnimationSlide => '滑动翻页';
+  String get readerPageAnimationCover => '覆盖';
 
   @override
   String get readerVolumeKeyTurnsPage => '用音量键翻页';

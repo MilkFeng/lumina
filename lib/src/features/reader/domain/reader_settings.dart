@@ -6,7 +6,10 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 enum ReaderLinkHandling { ask, always, never }
 
 /// Controls the page-turning animation style.
-enum ReaderPageAnimation { none, slide }
+///
+/// [cover] slides the page horizontally so the incoming page ends up covering
+/// the current one.
+enum ReaderPageAnimation { none, cover }
 
 /// Controls how a chapter is laid out and advanced.
 ///
@@ -58,7 +61,7 @@ class ReaderSettings {
     this.marginRight = 16.0,
     this.linkHandling = ReaderLinkHandling.ask,
     this.handleIntraLink = true,
-    this.pageAnimation = ReaderPageAnimation.slide,
+    this.pageAnimation = ReaderPageAnimation.cover,
     this.scrollMode = ReaderScrollMode.paginated,
     this.fontFileName,
     this.overrideFontFamily = false,

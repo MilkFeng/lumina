@@ -1047,6 +1047,10 @@
   "@readerScrollModeSection": {
     "description": "阅读器样式面板章节版式区块标题"
   },
+  "readerPaginationMode": "分页方式",
+  "@readerPaginationMode": {
+    "description": "阅读器样式面板小节标题：版式选项（分页或滚动）"
+  },
   "readerScrollModePaginated": "分页",
   "@readerScrollModePaginated": {
     "description": "阅读版式选项：横向分页翻页"
@@ -1059,17 +1063,17 @@
   "@readerScrollModeUnsupported": {
     "description": "当书籍翻页方向不是从左向右、滚动版式被禁用时显示的说明"
   },
-  "readerPageAnimationSection": "翻页",
-  "@readerPageAnimationSection": {
-    "description": "阅读器样式面板翻页动画区块标题"
+  "readerPageTurn": "翻页",
+  "@readerPageTurn": {
+    "description": "阅读器样式面板小节标题：翻页动画，仅在分页方式为分页时显示"
   },
   "readerPageAnimationNone": "无动画",
   "@readerPageAnimationNone": {
     "description": "翻页动画选项：无动画"
   },
-  "readerPageAnimationSlide": "滑动翻页",
-  "@readerPageAnimationSlide": {
-    "description": "翻页动画选项：滑动过渡"
+  "readerPageAnimationCover": "覆盖",
+  "@readerPageAnimationCover": {
+    "description": "翻页动画选项：新页面覆盖当前页面"
   },
   "readerVolumeKeyTurnsPage": "用音量键翻页",
   "@readerVolumeKeyTurnsPage": {

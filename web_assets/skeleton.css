@@ -15,6 +15,12 @@ body {
   height: 100vh;
   overflow: hidden;
   background-color: transparent !important;
+  /* Nothing in this document scrolls, and a frame's leftover drag must not
+     reach this root scroller either — anything that overscrolls here is drawn
+     with Android's native glow / stretch effect across the whole reading
+     surface.  The frames suppress their own overscroll in `pagination.css`;
+     this is the second line of defence. */
+  overscroll-behavior: none !important;
 }
 
 /* Container for iframes */
