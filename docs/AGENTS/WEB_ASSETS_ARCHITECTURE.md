@@ -170,7 +170,9 @@ window.api = api;
   模式完全一致，区别只是 Flutter 不再需要把屏幕坐标传进来，命中用的滚动位置也不再滞后。
 - 图片长按由页面自己的 500ms 定时器检测（位移超过 10px 或抬手即取消），命中后走
   `checkImageAt` 上报 `onImageLongPress`；紧随其后的那次抬手产生的 `click` 会被吞掉，
-  不再重复算作 tap。
+  不再重复算作 tap。页面只负责**识别与上报**，不负责振动：WebView 自身的长按振动已在
+  Android 侧被关掉，振不振动、振多重由 Flutter 决定（见
+  `MULTIPLATFORM_ARCHITECTURE.md` 的"长按振动归 Flutter"）。
 
 `InteractionManager` 负责：
 

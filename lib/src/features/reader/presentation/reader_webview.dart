@@ -12,6 +12,7 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
+import '../data/services/reader_haptics_service.dart';
 import 'package:lumina/src/web/api/webview_bridge.dart';
 import 'package:lumina/src/web/api/lumina_api.dart';
 
@@ -434,6 +435,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     _controller = controller;
     _bridge.attach(controller);
     _setupJavaScriptHandlers(controller);
+    // The platform view exists now; whether it is in the window yet decides how
+    // many attempts this needs — see `ReaderHapticsService`.
+    unawaited(ReaderHapticsService.muteWebViewHaptics());
     widget.onWebViewCreated?.call();
   }
 

@@ -53,6 +53,7 @@ flowchart LR
 | `lib/src/features/library/data/services/import_file_pipeline.dart` | 组合 picker 与 cache：读取文本/字节、缓存文件、计算 SHA-256。 |
 | `lib/src/features/library/data/services/backup_folder_resolver.dart` | 解析备份包目录结构（`shelf.json`/`books`/`manifests`/`covers`），是唯一理解备份布局的地方。 |
 | `lib/src/features/reader/data/services/volume_control_service.dart` | Android 音量键 MethodChannel/EventChannel 封装。 |
+| `lib/src/features/reader/data/services/reader_haptics_service.dart` | Android 关闭 WebView 自身长按振动的 MethodChannel 封装（带有限重试）。 |
 | `lib/src/features/reader/presentation/page_turn/ios_page_turn_session.dart` | iOS 原生翻页动画 MethodChannel 封装。 |
 | `lib/src/features/reader/presentation/page_turn/android_page_turn_session.dart` | Android 翻页动画纯 Dart 实现，不走原生插件。 |
 | `lib/src/features/settings/presentation/settings_screen.dart` | Android 打开 DocumentsProvider 暴露的 Lumina Books 根目录。 |
@@ -122,6 +123,7 @@ iOS 在 implicit Flutter engine 初始化后注册：
 | `lumina/volume_events` | EventChannel | Android | `"up"` / `"down"` | 音量键事件流。 |
 | `lumina/reader_page_turn` | MethodChannel | iOS | `preparePageTurn` | 截取当前 WKWebView 快照。 |
 | `lumina/reader_page_turn` | MethodChannel | iOS | `animatePageTurn` | 用快照执行翻页滑动动画。 |
+| `lumina/reader_haptics` | MethodChannel | Android | `muteWebViewHaptics` | 关掉 WebView 自身的振动反馈，返回找到的 WebView 个数（供 Dart 重试）。 |
 
 ## 文件导入与选择
 
@@ -399,6 +401,27 @@ down/move/up 全部缓存，赢了才转发给原生视图，输了则 `stopTrac
 
 副作用是好的那一面：落在惯性上的一次点击会同时做两件事——touch-down 打断惯性（原生行为），
 紧接着的 `click` 切换控制栏。
+
+##### 长按振动归 Flutter
+
+把长按移进页面带来一个副作用：**WebView 自己的长按振动开始生效**。以前滚动模式下 Flutter 的
+长按识别器拿下竞技场，WebView 收不到触摸，Android/Chromium 的长按根本不会运行；现在平台视图
+必赢，它就会为"已处理"的长按播放 `HapticFeedbackConstants.LONG_PRESS`——哪怕这一下什么都没
+命中。
+
+- 振动不是插件发的：`flutter_inappwebview_android` 的原生代码里没有任何
+  `performHapticFeedback` / `LONG_PRESS`，它的 `setOnLongClickListener` 只上报
+  `onLongPressHitTestResult` 并 `return false`。
+- `InAppWebViewSettings` 也没有对应开关，`disableContextMenu: true` 只是不构建插件自己的浮动
+  菜单（`InAppWebView.java`），长按是否"已处理"在此之前就已判定；Dart 侧只能拿到
+  `getViewId()`，拿不到 View。
+- 所以由 `ReaderHapticsPlugin`（channel `lumina/reader_haptics`）在 decorView 里递归找到
+  WebView 及其子树，设 `isHapticFeedbackEnabled = false`；`ReaderHapticsService` 在
+  `ReaderWebView` 创建平台视图时调用，并按返回的 WebView 个数有限重试——阅读器显示的是**预热
+  那个 WebView**，它只有在被交给可见平台视图、真正挂进窗口之后才找得到。
+- 结果：长按命中图片 → 图片查看器打开 → Flutter 的 `HapticFeedback.lightImpact()`
+  （`image_viewer.dart`）振一次；长按落在文字上 → 不发生任何事，也不振。iOS 不需要处理，
+  WKWebView 的网页长按本身不振动。
 
 ##### 分页模式下 tap 的归属与 sweep
 
