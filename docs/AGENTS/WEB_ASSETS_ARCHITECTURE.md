@@ -91,7 +91,7 @@ window.api = api;
   `scroll` 事件监听在 window 上以 **capture** 方式注册：章节的滚动容器是 `body` 元素，
   元素滚动事件不会冒泡到 window。
 - 让原生滚动成立的四处前提：`InAppWebViewSettings.disableVerticalScroll` 在滚动模式下为
-  `false`；`pagination.css` 用 `--lumina-touch-action`（分页 `none` / 滚动 `pan-y`）放开
+  `false`；`pagination.css` 用 `--lumina-reader-touch-action`（分页 `none` / 滚动 `pan-y`）放开
   纵向平移，且必须写在 `body` 上（有效 `touch-action` 只算到滚动容器为止，写在 `html`
   上不起作用）；`skeleton.css` 里 `body.lumina-scroll-mode iframe` 恢复
   `pointer-events`；iframe 的 `scrolling` 属性在滚动模式下为 `auto`。

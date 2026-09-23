@@ -311,21 +311,29 @@ Android 没有原生翻页插件。`AndroidPageTurnSession` 在 Flutter 内完�
 
 #### 平台视图组合模式与滚动模式
 
-`takeScreenshot()` 走的是 Flutter 的 `RepaintBoundary.toImage()`，它只能捕获**虚拟显示
-（virtual display）**模式下的平台视图；混合组合（hybrid composition）模式下 WebView 由
-Android 原生层直接绘制，Flutter 侧截出来是空白，翻页动画会失效。
+两种阅读模式都使用**虚拟显示（virtual display）**，不使用混合组合（hybrid composition）：
+`readerWebViewSettings`（`lib/src/features/reader/presentation/reader_webview.dart`）无条件
+写 `useHybridComposition: false`，该参数与 `scrollMode` 无关。
 
-因此 `readerWebViewSettings({required bool scrollMode})`
-（`lib/src/features/reader/presentation/reader_webview.dart`）按阅读模式选择组合方式：
+这个显式的 `false` 是必需的：`InAppWebViewSettings.useHybridComposition` 在插件里默认为
+`true`（`flutter_inappwebview_platform_interface`），删掉该参数平台视图就会切到混合组合。
+混合组合下 WebView 由 Android 原生层直接绘制，`takeScreenshot()` 走的
+`RepaintBoundary.toImage()` 截出来是空白，翻页动画会失效。滚动模式虽然不需要截图，也没有理由
+为它单独换一套合成路径——两种模式共用虚拟显示，命中测试与触摸路由的差异只来自
+`AbsorbPointer` 与 `disableVerticalScroll`（见下节）。
 
-| 模式 | `useHybridComposition` | 原因 |
+`scrollMode` 因此只影响一项设置：
+
+| 模式 | `useHybridComposition` | `disableVerticalScroll` |
 | --- | --- | --- |
-| 分页模式 | `false`（虚拟显示） | 翻页动画需要 `RepaintBoundary.toImage()` 截图。 |
-| 连续滚动模式 | `true`（混合组合） | 滚动模式没有截图翻页动画，混合组合下高频滚动的合成质量更好。 |
+| 分页模式 | `false`（虚拟显示） | `true`：纵向手势归 Flutter，WebView 不自行滚动。 |
+| 连续滚动模式 | `false`（虚拟显示） | `false`：纵向拖动交给章节自己的滚动器。 |
 
-由于组合模式是 `InAppWebViewSettings` 的创建期参数，`InAppWebView` 带有
-`key: ValueKey(scrollMode)`，切换模式会重建 WebView：`didUpdateWidget` 里先
-`_disposeWebView()` 释放 `HeadlessInAppWebView` 和 bridge，随后重建。
+`InAppWebView` 仍带 `key: ValueKey(scrollMode)`，切换模式照旧重建 WebView：
+`didUpdateWidget` 里先 `_disposeWebView()` 释放 `HeadlessInAppWebView` 和 bridge，随后重建。
+重建的理由不是组合模式，而是 `initialSettings`（`disableVerticalScroll`）与 `initialData`
+（骨架 HTML，内含 `InitConfig.scrollMode` 与 iframe 的 `scrolling` 属性）都是**创建期输入**：
+插件只把它们放进平台视图的 `creationParams` 交给 `create()`，创建之后不会再应用。
 
 ###### 重建必须等预热 WebView 起来
 
