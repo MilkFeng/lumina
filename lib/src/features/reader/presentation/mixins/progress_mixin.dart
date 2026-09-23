@@ -1,5 +1,15 @@
 part of '../reader_screen.dart';
 
+/// How close to an end of the chapter still counts as being at it, in CSS
+/// pixels.
+///
+/// The page reports the offset it scrolled to, so a screenful that lands on the
+/// bottom lands exactly on it; the slack is for the sub-pixel a device pixel
+/// ratio leaves behind and for a chapter that grew while it was being read.  It
+/// is far below a line of text: one that is still on screen keeps the turn a
+/// scroll instead of a chapter change.
+const double _kScrollBoundaryTolerance = 1.5;
+
 mixin _ProgressMixin on ConsumerState<ReaderScreen> {
   // === Borrowed state (provided by _ReaderScreenState fields) ===
   int get totalPagesInChapter;
@@ -21,12 +31,46 @@ mixin _ProgressMixin on ConsumerState<ReaderScreen> {
   bool get isScrollMode;
 
   double get chapterScrollRatio;
+  set chapterScrollRatio(double v);
+
+  bool get atChapterScrollStart;
+  set atChapterScrollStart(bool v);
+
+  bool get atChapterScrollEnd;
+  set atChapterScrollEnd(bool v);
 
   _PendingModeSwitch? get pendingModeSwitch;
   set pendingModeSwitch(_PendingModeSwitch? v);
 
   // === Cross-mixin: _PageNavigationMixin ===
   Future<void> goToPage(int pageIndex);
+
+  /// Records where the chapter scrolled itself to.
+  ///
+  /// The position arrives as CSS pixels rather than as a fraction, because the
+  /// reader needs both: a fraction for the progress badge, and the two ends for
+  /// deciding whether a turn still has anywhere to scroll.  A chapter that fits
+  /// on one screen has nothing to scroll and counts as scrolled to both ends —
+  /// which is what sends the turn on to the next chapter instead of nowhere.
+  void handleScrollProgress(double offset, double maxOffset) {
+    chapterScrollRatio = maxOffset <= 0
+        ? 1
+        : (offset / maxOffset).clamp(0.0, 1.0);
+
+    final atStart = offset <= _kScrollBoundaryTolerance;
+    final atEnd = maxOffset - offset <= _kScrollBoundaryTolerance;
+
+    // Only the transitions rebuild: the report arrives on every scrolled frame,
+    // and the arrows' enabled state is the only thing that depends on this.
+    if (atStart != atChapterScrollStart || atEnd != atChapterScrollEnd) {
+      setState(() {
+        atChapterScrollStart = atStart;
+        atChapterScrollEnd = atEnd;
+      });
+    }
+
+    updateProgressDebounced();
+  }
 
   void updateProgressDebounced() {
     progressDebouncer?.cancel();

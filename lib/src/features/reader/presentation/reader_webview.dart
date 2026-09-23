@@ -61,9 +61,19 @@ class ReaderWebViewController {
 
   /// Scrolls by roughly one screenful, in scroll mode.
   ///
-  /// A one-shot command used by the volume keys; the page does the scrolling.
+  /// A one-shot command for a turn the reader started: the page does the
+  /// scrolling.  The future completes when the screenful has landed, so a
+  /// caller can keep one turn running at a time.
   Future<void> scrollByViewport(bool isNext) async {
     await _webViewState?._scrollByViewport(isNext);
+  }
+
+  /// Lands the viewport scroll that is animating, if any, on its target now.
+  ///
+  /// Fire-and-forget: the turn it settles is the one whose
+  /// [scrollByViewport] future is already being awaited.
+  Future<void> finishScrollByViewport() async {
+    await _webViewState?._finishScrollByViewport();
   }
 
   Future<void> checkLongPressElementAt(double x, double y) async {
@@ -375,6 +385,8 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   Future<void> _jumpToPage(int pageIndex) => _api.jumpToPage(pageIndex);
 
   Future<void> _scrollByViewport(bool isNext) => _api.scrollByViewport(isNext);
+
+  Future<void> _finishScrollByViewport() => _api.finishScrollByViewport();
 
   Future<void> _checkLongPressElementAt(double x, double y) =>
       _api.checkLongPressElementAt(x, y);

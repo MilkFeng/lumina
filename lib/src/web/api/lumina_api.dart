@@ -59,6 +59,18 @@ class LuminaApi {
   Future<void> jumpToPage(int pageIndex) =>
       _bridge.callAndWait((t) => 'window.api.jumpToPage($t, $pageIndex)', 1000);
 
+  /// Scrolls the current frame by roughly one screenful, in scroll mode.
+  ///
+  /// Awaiting the returned future means the screenful has landed: the page
+  /// animates the scroll itself and keeps reporting its position through
+  /// `onScrollProgress`.  [timeoutMs] is a safety net, not a duration — the
+  /// page's own animation is what decides when a turn is over.
+  Future<void> scrollByViewport(bool isNext, [int timeoutMs = 5000]) =>
+      _bridge.callAndWait(
+        (t) => "window.api.scrollByViewport($t, '${isNext ? 'next' : 'prev'}')",
+        timeoutMs,
+      );
+
   /// Waits for the current frame to finish rendering.
   Future<void> waitForRender() =>
       _bridge.callAndWait((t) => 'window.api.waitForRender($t)', 1000);
@@ -83,14 +95,13 @@ class LuminaApi {
 
   // ─── Fire-and-forget ───────────────────────────────────────────────
 
-  /// Scrolls the current frame by roughly one screenful, in scroll mode.
+  /// Lands the viewport scroll that is animating, if any, on its target now.
   ///
-  /// A one-shot command for the volume keys.  The page animates its own scroll
-  /// and reports the result back through `onScrollProgress`; nothing is driven
-  /// from here frame by frame.
-  Future<void> scrollByViewport(bool isNext) => _bridge.evaluate(
-    "window.api.scrollByViewport('${isNext ? 'next' : 'prev'}')",
-  );
+  /// Fire-and-forget on purpose: the scroll it settles is the one whose
+  /// [scrollByViewport] future is already being awaited, and that future is
+  /// what says the turn is over.
+  Future<void> finishScrollByViewport() =>
+      _bridge.evaluate('window.api.finishScrollByViewport()');
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y).
   Future<void> checkLongPressElementAt(double x, double y) =>

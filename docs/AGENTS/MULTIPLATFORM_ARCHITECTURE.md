@@ -296,8 +296,10 @@ Flutter 侧 `VolumeControlService` 只在 Android 工作，其他平台直接 no
    - `KEYCODE_VOLUME_DOWN` 发送 `"down"`。
    - 返回 `true` 消费事件，系统音量不变化。
 5. Flutter 监听事件：
-   - `"up"` 触发上一页。
-   - `"down"` 触发下一页。
+   - `"up"` 触发上一页；`"down"` 触发下一页。
+   - 滚动模式下改为触发 `handleScrollTurn`：滚一屏，已经在章节该方向的尽头时换成翻章；
+     与工具栏箭头单击、页面左右区域点击走同一条路径（见 `WEB_ASSETS_ARCHITECTURE.md`
+     的"连续滚动模式"）。
    - 如果脚注浮层打开，则先关闭脚注浮层。
 6. 离开阅读页或条件不满足时调用 `disableInterception`。
 
@@ -385,8 +387,9 @@ down/move/up 全部缓存，赢了才转发给原生视图，输了则 `stopTrac
 
 - **惯性滚动只能被真正的 touch-down 打断。** Chromium 的 fling 由浏览器自己的滚动器/合成器
   驱动，JS 侧 `scrollTop` / `scrollTo` 无法可靠中止它；本工程 web 端也没有任何 touch 监听，
-  唯一的滚动命令 `scrollByViewport` 只服务于音量键。所以只要 Flutter 抢下一次点击，WebView
-  一个事件都收不到，惯性会一直滚下去——这正是"滑动结束后点击停不下来"的成因。
+  唯一的滚动命令 `scrollByViewport` 只服务于没有自带手势的翻屏请求（音量键、工具栏箭头、
+  页面左右区域点击），并且只在按下时推一个目标位置，不逐帧推偏移。所以只要 Flutter 抢下一次
+  点击，WebView 一个事件都收不到，惯性会一直滚下去——这正是"滑动结束后点击停不下来"的成因。
 - **抢一次点击 = 让出一次滚动能力。** 长按识别器到 500ms 会 `resolve(accepted)` 拿下竞技场，
   而 `LongPressGestureRecognizer` 的 `postAcceptSlopTolerance` 为 `null`：赢下之后手指怎么
   移动都不会退出，整个 pointer 序列既不给 WebView 也不给别的识别器。"按住半秒再滑"因此完全
@@ -398,9 +401,11 @@ down/move/up 全部缓存，赢了才转发给原生视图，输了则 `stopTrac
 `preventDefault()`（链接与脚注都在页面里判完再回报 Flutter，绝不能让 `<a>` 原生导航）；
 图片长按由页面自己的定时器检测。Dart 侧照旧消费 `onTap` / `onLinkTap` / `onFootnoteTap` /
 `onImageLongPress`，而 `checkTapElementAt` 与 `checkLongPressElementAt` 从此只服务分页模式。
+滚动模式下的 `onTap` 落到 `ReaderRenderer._handleTapZone`：左右各 30% 的区域翻一屏（与音量键
+同一条路径），中间区域切换控制栏。
 
 副作用是好的那一面：落在惯性上的一次点击会同时做两件事——touch-down 打断惯性（原生行为），
-紧接着的 `click` 切换控制栏。
+紧接着的 `click` 翻一屏或切换控制栏。
 
 ##### 长按振动归 Flutter
 

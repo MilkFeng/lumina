@@ -19,10 +19,33 @@ import { ThemeManager } from './theme_manager';
 import { CssPolyfillManager } from './css_polyfill';
 import { ResourceManager } from './resource_manager';
 
+/// A viewport scroll that is still animating.
+///
+/// One at a time: `scrollByViewport` lands whatever it finds before it starts
+/// its own, so the reader never has two screenfuls moving at once.
+interface ViewportScroll {
+  token: number;
+  iframe: HTMLIFrameElement;
+  doc: Document;
+  body: HTMLElement;
+  from: number;
+  to: number;
+  startedAt: number;
+  frameId: number;
+  /// Detaches the guard that lets a finger take the scroll back.
+  onTouchStart: () => void;
+}
+
 export class Renderer implements LuminaApi {
   /// How much of the previous screenful stays visible when the volume keys
   /// scroll by a whole viewport.
   private static readonly viewportOverlap = 48;
+
+  /// How long a viewport scroll takes.
+  ///
+  /// Long enough for the eye to follow the text, short enough that a second
+  /// press does not feel like waiting for the first one.
+  private static readonly scrollTurnDurationMs = 300;
 
   private state: ReaderState;
 
@@ -47,9 +70,8 @@ export class Renderer implements LuminaApi {
     next: null,
   };
 
-  /// Whether the engine can animate a programmatic scroll.  Checked once: the
-  /// volume keys fall back to an instant jump where it cannot.
-  private readonly supportsSmoothScroll: boolean;
+  /// The viewport scroll in flight, if any.  See `scrollByViewport`.
+  private viewportScroll: ViewportScroll | null = null;
 
   constructor() {
     this.state = {
@@ -90,7 +112,6 @@ export class Renderer implements LuminaApi {
     this.polyfillMgr = new CssPolyfillManager(this.state, this.themeMgr, this.frameMgr);
     this.resourceMgr = new ResourceManager(this.state);
 
-    this.supportsSmoothScroll = 'scrollBehavior' in document.documentElement.style;
     this.resizeDebounceTimer = null;
     this.onResize = (ev: UIEvent) => {
       const newWidth = window.innerWidth;
@@ -208,24 +229,119 @@ export class Renderer implements LuminaApi {
 
   /// Scrolls the current frame by roughly one screenful, in scroll mode.
   ///
-  /// This is the one deliberate exception to "the page scrolls itself": the
-  /// volume keys have no gesture behind them.  It stays a single one-shot call
-  /// — the page animates its own scroll and reports the result through
-  /// `onScrollProgress`, so nothing is pushed per frame.
-  scrollByViewport(direction: Direction): void {
-    const iframe = this.frameMgr.getFrame('curr');
-    const body = iframe && iframe.contentDocument ? iframe.contentDocument.body : null;
-    if (!body) return;
+  /// This is the one deliberate exception to "the page scrolls itself": a turn
+  /// started from Flutter — the volume keys, the control panel arrows, a tap in
+  /// the outer third of the page — has no gesture of its own behind it.  It
+  /// stays a single call per turn: nothing is pushed from Flutter per frame.
+  ///
+  /// The screenful is animated here rather than by
+  /// `scrollBy({ behavior: 'smooth' })` because Flutter drives turns by press:
+  /// it has to know when a turn has *landed*, and a turn that the next press
+  /// interrupts has to be landable on its target.  `token` resolves at that
+  /// point, and the position the frame landed on is reported just before it.
+  scrollByViewport(token: number, direction: Direction): void {
+    // One screenful at a time: a turn that is still animating is landed on its
+    // target before this one starts, so a press never races the press before
+    // it.
+    this.finishScrollByViewport();
 
+    const iframe = this.frameMgr.getFrame('curr');
+    const doc = iframe && iframe.contentDocument ? iframe.contentDocument : null;
+    const body = doc ? doc.body : null;
+    if (!iframe || !doc || !body) {
+      FlutterBridge.onEventFinished(token);
+      return;
+    }
+
+    const position = this.frameMgr.getScrollPosition(iframe);
     // A small overlap keeps the line that was at the edge visible.
     const step = Math.max(0, body.clientHeight - Renderer.viewportOverlap);
     const delta = direction === 'next' ? step : -step;
+    const to = Math.max(0, Math.min(position.maxOffset, position.offset + delta));
 
-    if (this.supportsSmoothScroll) {
-      body.scrollBy({ top: delta, behavior: 'smooth' });
-    } else {
-      body.scrollTop = body.scrollTop + delta;
+    // The chapter has nothing left to scroll that way.  What the turn means
+    // then — the chapter beyond this one — is Flutter's to decide, so the turn
+    // simply reports the position it is already at.
+    if (to === position.offset) {
+      this.scrollObserver.report(iframe);
+      FlutterBridge.onEventFinished(token);
+      return;
     }
+
+    const animation: ViewportScroll = {
+      token,
+      iframe,
+      doc,
+      body,
+      from: position.offset,
+      to,
+      startedAt: performance.now(),
+      frameId: 0,
+      onTouchStart: () => this.abortViewportScroll(),
+    };
+
+    // A finger on the page takes the scroll back, the same way a touch cancels
+    // the browser's own smooth scrolling.  Without this the animation would
+    // keep writing `scrollTop` over the reader's drag.
+    doc.addEventListener('touchstart', animation.onTouchStart, { passive: true });
+
+    this.viewportScroll = animation;
+    animation.frameId = requestAnimationFrame(() => this.stepViewportScroll());
+  }
+
+  /// Lands the viewport scroll that is animating, if any, on its target.
+  ///
+  /// This is what the turn after an interrupted one does first: the reader has
+  /// asked to move on, so the screenful in flight finishes instead of being
+  /// abandoned halfway, and the token it was started with resolves.
+  finishScrollByViewport(): void {
+    const animation = this.viewportScroll;
+    if (!animation) return;
+    this.endViewportScroll(animation, animation.to);
+  }
+
+  /// Advances the viewport scroll that is animating.
+  private stepViewportScroll(): void {
+    const animation = this.viewportScroll;
+    if (!animation) return;
+
+    const elapsed = performance.now() - animation.startedAt;
+    const progress = Math.min(1, elapsed / Renderer.scrollTurnDurationMs);
+    if (progress >= 1) {
+      this.endViewportScroll(animation, animation.to);
+      return;
+    }
+
+    // Ease-out cubic: the screenful sets off at speed and settles onto its
+    // target, which is what makes it read as a page turn rather than a jump.
+    const eased = 1 - Math.pow(1 - progress, 3);
+    animation.body.scrollTop = animation.from + (animation.to - animation.from) * eased;
+    animation.frameId = requestAnimationFrame(() => this.stepViewportScroll());
+  }
+
+  /// Gives the scroll back to the finger that just touched the page.
+  private abortViewportScroll(): void {
+    const animation = this.viewportScroll;
+    if (!animation) return;
+    this.endViewportScroll(animation, null);
+  }
+
+  /// Ends [animation], optionally at [offset], and releases what it holds.
+  ///
+  /// The position is reported *before* the token: the `scroll` event a
+  /// programmatic move produces only reaches `ScrollObserver` on a later frame,
+  /// and Flutter decides what the next turn means — a screenful on, or the
+  /// chapter beyond this one — the moment this turn's token resolves.
+  private endViewportScroll(animation: ViewportScroll, offset: number | null): void {
+    if (this.viewportScroll === animation) this.viewportScroll = null;
+
+    cancelAnimationFrame(animation.frameId);
+    animation.doc.removeEventListener('touchstart', animation.onTouchStart);
+
+    if (offset !== null) animation.body.scrollTop = offset;
+
+    this.scrollObserver.report(animation.iframe);
+    FlutterBridge.onEventFinished(animation.token);
   }
 
   /// Applies [ratio] to [iframe] and returns the page index it lands on.
@@ -266,6 +382,11 @@ export class Renderer implements LuminaApi {
   }
 
   cycleFrames(token: number, direction: Direction): void {
+    // The screenful that is scrolling on screen belongs to the chapter that is
+    // about to leave it: it is dropped where it is, and its turn is resolved so
+    // that whoever started it is not left waiting.
+    this.abortViewportScroll();
+
     const res = this.frameMgr.cycleFramesDOMAndState(direction);
     // Timers scheduled by the frame that is leaving the screen would report its
     // position as if it belonged to the chapter being turned to.

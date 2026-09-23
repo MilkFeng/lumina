@@ -33,10 +33,23 @@ export interface LuminaApi {
   /// Scrolls the current frame by roughly one screenful in `direction`, in
   /// scroll mode.
   ///
-  /// This is a one-shot command for the volume keys.  It is deliberately not
-  /// part of the gesture path: the page scrolls itself with its own native
-  /// scrolling, and its progress comes back through `onScrollProgress`.
-  scrollByViewport(direction: Direction): void;
+  /// This is a one-shot command for a turn that has no gesture of its own
+  /// behind it — the volume keys, the control panel arrows, a tap in the outer
+  /// third of the page.  It is deliberately not part of the gesture path: the
+  /// page scrolls itself with its own scrolling, and its progress comes back
+  /// through `onScrollProgress`.
+  ///
+  /// `onEventFinished(token)` fires once the screenful has landed, with the
+  /// position it landed on reported just before it — Flutter drives turns one
+  /// at a time and needs both to decide what the next turn means.
+  scrollByViewport(token: number, direction: Direction): void;
+
+  /// Lands the viewport scroll that is animating, if any, on its target now.
+  ///
+  /// Called when a turn arrives while an earlier one is still scrolling: the
+  /// reader has asked to move on, so that screenful is completed rather than
+  /// abandoned halfway.  Resolves the token the scroll was started with.
+  finishScrollByViewport(): void;
 
   /// Cycles to the next or previous page in the current frame, depending on the direction
   cycleFrames(token: number, direction: Direction): void;

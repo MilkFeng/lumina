@@ -92,6 +92,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   @override
   double chapterScrollRatio = 0;
   @override
+  bool atChapterScrollStart = false;
+  @override
+  bool atChapterScrollEnd = false;
+  @override
   _PendingModeSwitch? pendingModeSwitch;
 
   ///
@@ -224,16 +228,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             removeFootnoteOverlay();
             return;
           }
-          // Scroll mode has no pages, so the keys move by roughly a screen.
+          // Scroll mode has no pages, so the keys move by roughly a screen —
+          // and turn the chapter once the chapter has no screenful left.
           if (event == 'up') {
             if (isScrollMode) {
-              rendererController.scrollByViewport(false);
+              handleScrollTurn(false);
             } else {
               rendererController.performPreviousPageTurn();
             }
           } else if (event == 'down') {
             if (isScrollMode) {
-              rendererController.scrollByViewport(true);
+              handleScrollTurn(true);
             } else {
               rendererController.performNextPageTurn();
             }
@@ -483,10 +488,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       statusBarLeftContent: activateTocTitle,
                       statusBarRightContent: displayProgress,
                       scrollMode: scrollMode,
-                      onScrollRatioChanged: (ratio) {
-                        chapterScrollRatio = ratio;
-                        updateProgressDebounced();
-                      },
+                      onScrollProgress: handleScrollProgress,
+                      onScrollTurn: handleScrollTurn,
                       onScrollSettled: saveProgress,
                     ),
 
@@ -501,6 +504,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       totalPagesInChapter: totalPagesInChapter,
                       direction: bookSession.book!.direction,
                       scrollMode: scrollMode,
+                      atScrollStart: atChapterScrollStart,
+                      atScrollEnd: atChapterScrollEnd,
                       onBack: () {
                         saveProgress();
                         context.pop();
@@ -512,6 +517,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onNextPage: () =>
                           rendererController.performNextPageTurn(),
                       onLastPage: () => goToPage(totalPagesInChapter - 1),
+                      onScrollTurn: handleScrollTurn,
                       onPreviousChapter: previousSpineItemFirstPage,
                       onNextChapter: nextSpineItem,
                       onToggleStyleDrawer: (show) {

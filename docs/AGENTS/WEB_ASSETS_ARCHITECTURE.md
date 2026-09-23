@@ -74,9 +74,20 @@ window.api = api;
 ### 连续滚动模式
 
 `InitConfig.scrollMode` 为 `true` 时，`curr` iframe 内部改为一整列连续内容，垂直滚动阅读，
-章节之间**不**连续（章节切换仍走底部工具栏的左右箭头与 `cycleFrames`）。三帧结构本身不变。
-箭头在这里翻的是整章而不是一页，因此 `ControlPanel` 在滚动模式下不发那一下振动反馈：
-`HapticFeedback.selectionClick()` 的语义是"翻了一页"，只在分页模式成立。
+章节之间**不**连续（章节切换走 `cycleFrames`）。三帧结构本身不变。
+
+滚动模式下"翻一屏"只有一条路径：Dart 侧 `handleScrollTurn`
+（`presentation/mixins/page_navigation_mixin.dart`）。音量键、底部工具栏箭头的单击、以及页面
+左右各 30% 区域的点击都调用它，因此三者行为完全一致：
+
+- 该方向还有内容可滚 → 调 `scrollByViewport` 滚一屏，不振动。
+- 已经滚到该方向尽头（章节底部再往后 / 顶部再往前）→ 换成 `cycleFrames` 翻章；章节本身
+  不足一屏（`maxOffset == 0`）时两端同时成立，所以一次按键就是翻章。
+- 连续两次请求串行执行：后一次到来时先让前一次**立即落到目标位置**
+  （`finishScrollByViewport`），隔 40ms 再开始自己的这一次。
+
+长按箭头仍然直接翻章并保留 `HapticFeedback.selectionClick()`：那一下振动标记的是"落到另一
+章"，与分页模式一致；翻一屏和分页模式里的翻一页一样不振动。
 
 - `body` 上加 `lumina-is-scroll` class，`pagination.css/main.css` 中的
   `body.lumina-is-scroll` 规则把 `column-width` / `column-count` 还原成 `initial`，
@@ -89,8 +100,10 @@ window.api = api;
   跟手滚动。这一点不可放宽：任何 Flutter 识别器抢下指针，框架就会把这次序列缓存后丢弃，
   页面连 touch-down 都收不到，惯性滚动便无法被打断（详见
   `MULTIPLATFORM_ARCHITECTURE.md` 的"为什么滚动模式下 Flutter 不能声明任何手势"）。
-  Web 端不提供任何"把偏移推给我"的接口：早期实现由 Flutter 每帧调用
+  Web 端几乎不提供"把偏移推给我"的接口：早期实现由 Flutter 每帧调用
   `scrollContentTo` 推绝对偏移，一次平台通道往返往往超过一帧，内容会明显落后于手指。
+  唯一的例外是翻屏命令 `scrollByViewport`：它一次只推一个目标位置，由页面自己分帧走完
+  （见下节），因此不在这条红线之内。
   手势因此也归页面：见"交互命中"里的 `GestureObserver`。
 - Web 端只做**观察**（`ScrollObserver`）：监听当前 frame 的 `scroll` 事件，按
   `requestAnimationFrame` 合并成每帧一次 `onScrollProgress(offset, maxOffset)`，
@@ -269,14 +282,32 @@ window.api = api;
 
 计算指定 iframe 的页数，并跳到 `pageCount - 1`。内部复用 `jumpToPageFor`。
 
-### `scrollByViewport(direction): void`
+### `scrollByViewport(token, direction): void`
 
 把当前 iframe 滚动约一屏（视口高度减去 48px 重叠），仅滚动模式使用，`direction` 为
 `'next' | 'prev'`。
 
-这是**唯一**由 Flutter 发起的滚动命令，服务于音量键——它背后没有手势。它是一次性调用：
-页面用 `body.scrollBy({ behavior: 'smooth' })` 自己滚动（引擎不支持平滑滚动时回退为直接
-赋值），滚动结果照旧通过 `onScrollProgress` 回来。fire-and-forget，不使用 token。
+这是**唯一**由 Flutter 发起的滚动命令，服务于没有自带手势的翻屏请求（音量键、工具栏箭头、
+页面左右区域点击）。动画由页面自己做：`requestAnimationFrame` 逐帧把 `body.scrollTop` 从
+当前位置推到目标位置（ease-out cubic，300ms）。没有沿用
+`scrollBy({ behavior: 'smooth' })`，因为 Flutter 既要一屏**何时落定**，也要能把它**立即落到
+目标位置**：
+
+- 落定（自然结束，或被 `finishScrollByViewport` 提前结束）时先同步上报一次
+  `onScrollProgress`，再 `onEventFinished(token)`。顺序不能反：Flutter 收到 token 后会立刻
+  用这个位置判断"下一次请求还算不算滚动"，而程序化滚动产生的 `scroll` 事件要到下一帧才到
+  `ScrollObserver`。
+- 目标位置与当前位置相同（该方向已无可滚内容）时不启动动画，直接上报位置并完成 token；
+  该翻哪一章由 Flutter 决定。
+- 启动前先把上一个仍在动画中的翻屏落定：同一时刻只有一个 `ViewportScroll`。
+- 手指按下页面时动画停在当前位置（token 照常完成）——JS 动画不能盖住读者的拖动；
+  `cycleFrames` 同样会中止它，那一屏属于正在离场的章节。
+
+### `finishScrollByViewport(): void`
+
+把正在动画中的滚动立即落到目标位置，并完成它的 token。后一次翻屏请求到来时 Flutter 会先调
+它，隔 40ms 再发起自己的请求，因此连续按键是"每一屏都完整走完"，而不是几次动画互相打断。
+没有动画时是 no-op；fire-and-forget，不使用 token。
 
 ### `cycleFrames(token, direction): void`
 
@@ -344,7 +375,7 @@ Flutter 手势，由 `GestureObserver` 在自己的 `click` 处理里调用同�
 | `onPageCountReady` | `pageCount: number` | 当前 frame 完成分页或主题更新后触发。 |
 | `onPageChanged` | `pageIndex: number` | 当前页码变化后触发。 |
 | `onScrollAnchors` | `anchors: string[]` | 当前 frame active anchors 变化检测后触发。 |
-| `onScrollProgress` | `offset: number, maxOffset: number` | 滚动模式下上报当前 frame 的滚动位置与可滚动范围（CSS 像素）。页面自己滚动，因此这是位置信息唯一的方向。frame 加载完成、主题更新、翻章（`cycleFrames`）后各上报一次，滚动过程中按 `requestAnimationFrame` 合并为每帧一次。Dart 侧据此计算章节进度百分比。 |
+| `onScrollProgress` | `offset: number, maxOffset: number` | 滚动模式下上报当前 frame 的滚动位置与可滚动范围（CSS 像素）。页面自己滚动，因此这是位置信息唯一的方向。frame 加载完成、主题更新、翻章（`cycleFrames`）后各上报一次，滚动过程中按 `requestAnimationFrame` 合并为每帧一次；一次翻屏落定（含被提前落定）时还会同步再上报一次，见 `scrollByViewport`。Dart 侧据此计算章节进度百分比，并判断是否已到章节两端。 |
 | `onScrollSettled` | 无 | 页面停止滚动约 150ms 后触发一次，Dart 侧据此落盘阅读进度。 |
 | `onTap` | `x: number, y: number` | 点击未命中脚注或链接时触发。 |
 | `onLinkTap` | `href: string, x: number, y: number` | 点击链接时触发。Flutter 可决定处理链接或回退为普通 tap。 |
@@ -476,7 +507,11 @@ npm run typecheck
 - `window.api` 是 Flutter 调用 Web 端的唯一稳定入口；新增能力时应先更新 `LuminaApi` TypeScript 接口，再同步 Dart 侧 `LuminaApi` 封装。
 - 所有需要 Flutter 等待的 JS 方法都应接收 `token`，最终调用 `onEventFinished(token)`。
 - 滚动模式下的滚动位置由页面自己产生，只通过 `onScrollProgress` / `onScrollSettled` 上报；
-  除音量键的 `scrollByViewport` 外，不要再新增让 Flutter 推偏移的接口。
+  除 `scrollByViewport` 外，不要再新增让 Flutter 推偏移的接口。它是唯一的例外，而且每次翻屏
+  只推一个目标位置，绝不逐帧推偏移。
+- `onScrollProgress` 上报的是 CSS 像素的 `(offset, maxOffset)`：Dart 侧同时用它算进度百分比和
+  判断章节两端（`_ProgressMixin.handleScrollProgress`）。"滚到底后再按一次就翻章"依赖翻屏
+  落定时那次同步上报。
 - `checkTapElementAt` 和 `checkLongPressElementAt` 是手势命中查询，不走 token：分页模式由
   Flutter 调用，滚动模式由页面内的 `GestureObserver` 调用（`checkImageAt` 亦同）。
 - `cycleFrames` 隐含依赖 `frame-prev`、`frame-curr`、`frame-next` 三个 iframe 都存在。

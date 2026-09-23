@@ -16,8 +16,14 @@ class ControlPanel extends ConsumerStatefulWidget {
   final int totalPagesInChapter;
   final int direction;
 
-  /// Whether the chapter scrolls continuously; the arrows then switch chapters.
+  /// Whether the chapter scrolls continuously; the arrows then scroll it by a
+  /// screenful and switch chapters on a long press.
   final bool scrollMode;
+
+  /// Whether the chapter is scrolled to its top / bottom.  In scroll mode an
+  /// arrow leads into the chapter on that side once it is.
+  final bool atScrollStart;
+  final bool atScrollEnd;
   final VoidCallback onBack;
   final VoidCallback onOpenDrawer;
   final VoidCallback onPreviousPage;
@@ -26,6 +32,9 @@ class ControlPanel extends ConsumerStatefulWidget {
   final VoidCallback onLastPage;
   final VoidCallback onPreviousChapter;
   final VoidCallback onNextChapter;
+
+  /// Scrolls the chapter by one screenful, the way the volume keys do.
+  final void Function(bool isNext) onScrollTurn;
   final Function(bool show) onToggleStyleDrawer;
 
   const ControlPanel({
@@ -38,6 +47,8 @@ class ControlPanel extends ConsumerStatefulWidget {
     required this.totalPagesInChapter,
     required this.direction,
     required this.scrollMode,
+    required this.atScrollStart,
+    required this.atScrollEnd,
     required this.onBack,
     required this.onOpenDrawer,
     required this.onPreviousPage,
@@ -46,6 +57,7 @@ class ControlPanel extends ConsumerStatefulWidget {
     required this.onLastPage,
     required this.onPreviousChapter,
     required this.onNextChapter,
+    required this.onScrollTurn,
     required this.onToggleStyleDrawer,
   });
 
@@ -104,29 +116,33 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
         widget.currentPageInChapter < widget.totalPagesInChapter - 1;
   }
 
+  /// Whether an arrow press can do anything in scroll mode: scroll the chapter
+  /// by a screenful, or — once there is none left that way — turn it.
+  bool get _canScrollUp =>
+      !widget.atScrollStart || widget.currentSpineItemIndex > 0;
+
+  bool get _canScrollDown =>
+      !widget.atScrollEnd ||
+      widget.currentSpineItemIndex < widget.totalSpineItems - 1;
+
   bool get _shouldHandleOnPressLeft {
-    if (widget.isVertical) {
-      return _shouldHandleOnNextPage;
-    } else {
-      return _shouldHandleOnPreviousPage;
-    }
+    if (widget.scrollMode) return _canScrollUp;
+    if (widget.isVertical) return _shouldHandleOnNextPage;
+    return _shouldHandleOnPreviousPage;
   }
 
   bool get _shouldHandleOnPressRight {
-    if (widget.isVertical) {
-      return _shouldHandleOnPreviousPage;
-    } else {
-      return _shouldHandleOnNextPage;
-    }
+    if (widget.scrollMode) return _canScrollDown;
+    if (widget.isVertical) return _shouldHandleOnPreviousPage;
+    return _shouldHandleOnNextPage;
   }
 
-  /// Fires the tick that goes with an arrow press, except in scroll mode.
+  /// Fires the tick that goes with a chapter turn.
   ///
-  /// The tick belongs to a page turn, which is what the arrows do while
-  /// paginated.  In scroll mode they turn whole chapters — the only way through
-  /// the book — and that reads better silent.
+  /// The tick marks landing in another chapter, which is what an arrow long
+  /// press does in either layout mode.  Turning *within* the chapter is silent:
+  /// a page turn while paginated, and a screenful while scrolling.
   void _selectionClick() {
-    if (widget.scrollMode) return;
     HapticFeedback.selectionClick();
   }
 
@@ -168,10 +184,11 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
   }
 
   void _handleTapLeft() {
-    // Scroll mode has no pages within a chapter, so the arrows are the only
-    // way to change chapter.
+    // Scroll mode has no pages within a chapter, so an arrow press scrolls it
+    // by a screenful — the volume keys by another name — and switching chapters
+    // is what the long press does.
     if (widget.scrollMode) {
-      _handlePreviousChapter();
+      widget.onScrollTurn(false);
       return;
     }
     if (widget.isVertical) {
@@ -183,7 +200,7 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
 
   void _handleTapRight() {
     if (widget.scrollMode) {
-      _handleNextChapter();
+      widget.onScrollTurn(true);
       return;
     }
     if (widget.isVertical) {

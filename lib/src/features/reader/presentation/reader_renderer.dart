@@ -45,12 +45,23 @@ class ReaderRendererController {
     await webViewController?.jumpToPage(pageIndex);
   }
 
-  /// Scrolls by roughly one screen, used by the volume keys in scroll mode.
+  /// Scrolls by roughly one screen, used by every scroll-mode turn — the volume
+  /// keys, the control panel arrows and the page's outer tap zones.
   ///
   /// One-shot: the page scrolls and animates itself, keeping a small overlap so
-  /// the line that was at the edge stays visible.
-  void scrollByViewport(bool isNext) {
-    webViewController?.scrollByViewport(isNext);
+  /// the line that was at the edge stays visible.  The future completes when
+  /// the screenful has landed, which is what lets the caller keep a single turn
+  /// in flight and land it early when another one arrives.
+  Future<void> scrollByViewport(bool isNext) async {
+    await webViewController?.scrollByViewport(isNext);
+  }
+
+  /// Lands the viewport scroll that is animating, if any, on its target now.
+  ///
+  /// Fire-and-forget: the turn that is being landed is the one the caller is
+  /// already awaiting through [scrollByViewport].
+  void finishScrollByViewport() {
+    unawaited(webViewController?.finishScrollByViewport());
   }
 
   Future<void> jumpToPreviousChapterLastPage() async {
@@ -182,8 +193,18 @@ class ReaderRenderer extends ConsumerStatefulWidget {
   /// Whether the chapter scrolls continuously instead of paginating.
   final bool scrollMode;
 
-  /// Reports the chapter scroll fraction on every scrolled frame.
-  final ValueChanged<double> onScrollRatioChanged;
+  /// Reports where the chapter scrolled itself to, on every scrolled frame.
+  ///
+  /// In CSS pixels: the current offset and the largest one the chapter allows.
+  /// Scroll mode has no pages, so the screen derives both its progress badge
+  /// and whether a turn can still scroll from these two numbers.
+  final void Function(double offset, double maxOffset) onScrollProgress;
+
+  /// Performs a scroll-mode turn: one screenful in [isNext]'s direction.
+  ///
+  /// The screen decides what a turn that has nowhere left to scroll means, so
+  /// the tap zones hand it the request rather than scrolling themselves.
+  final void Function(bool isNext) onScrollTurn;
 
   /// Reports that the scroll has come to rest, so progress can be persisted.
   final VoidCallback onScrollSettled;
@@ -212,7 +233,8 @@ class ReaderRenderer extends ConsumerStatefulWidget {
     required this.statusBarLeftContent,
     required this.statusBarRightContent,
     required this.scrollMode,
-    required this.onScrollRatioChanged,
+    required this.onScrollProgress,
+    required this.onScrollTurn,
     required this.onScrollSettled,
   });
 
@@ -325,9 +347,9 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
   }
 
   void _handleTapZone(double x, double y) {
-    // Scroll mode has no page-turn zones: scrolling is the only way through a
-    // chapter, so any tap on the content just toggles the controls.
-    if (widget.scrollMode) {
+    // With the controls up, a tap anywhere puts them away again — the reading
+    // zones are only live while the page is bare.
+    if (widget.showControls) {
       widget.onToggleControls();
       return;
     }
@@ -335,23 +357,21 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     final width = MediaQuery.of(context).size.width;
     if (width <= 0) return;
 
+    // Scroll mode has no pages to turn, but its outer thirds are the same keys
+    // by another name: they scroll one screenful, exactly like the volume keys.
     final ratio = x / width;
     if (ratio < 0.3) {
-      if (widget.showControls) {
-        widget.onToggleControls();
-        return;
-      }
-      if (widget.isVertical) {
+      if (widget.scrollMode) {
+        widget.onScrollTurn(false);
+      } else if (widget.isVertical) {
         _performPageTurn(true);
       } else {
         _performPageTurn(false);
       }
     } else if (ratio > 0.7) {
-      if (widget.showControls) {
-        widget.onToggleControls();
-        return;
-      }
-      if (widget.isVertical) {
+      if (widget.scrollMode) {
+        widget.onScrollTurn(true);
+      } else if (widget.isVertical) {
         _performPageTurn(false);
       } else {
         _performPageTurn(true);
@@ -595,13 +615,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
           },
           onPageChanged: widget.onPageChanged,
           onScrollAnchors: widget.onScrollAnchors,
-          onScrollProgress: (offset, maxOffset) {
-            // A chapter that fits on one screen has nothing left to read, so it
-            // counts as fully scrolled — same as the old offset/width ratio.
-            widget.onScrollRatioChanged(
-              maxOffset <= 0 ? 1 : (offset / maxOffset).clamp(0.0, 1.0),
-            );
-          },
+          onScrollProgress: widget.onScrollProgress,
           onScrollSettled: widget.onScrollSettled,
           onImageLongPress: widget.onImageLongPress,
           onTap: _handleTapZone,
