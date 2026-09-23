@@ -24,13 +24,21 @@ class LuminaApi {
 
   /// Loads [url] into the iframe identified by [slot].
   /// [anchors] should be a JSON-encoded list: `'["id1","id2"]'`.
+  ///
+  /// [initialScrollRatio] is where the frame should start, as a fraction of the
+  /// scrollable length in scroll mode and of the page count while paginated.
+  /// Restoring a reading position travels with the load instead of following it
+  /// as a separate scroll call.
   Future<int> loadFrame(
     String slot,
     String url,
     String anchors,
-    String properties,
-  ) => _bridge.call(
-    (t) => "window.api.loadFrame($t, '$slot', '$url', $anchors, $properties)",
+    String properties, {
+    double? initialScrollRatio,
+  }) => _bridge.call(
+    (t) =>
+        "window.api.loadFrame($t, '$slot', '$url', $anchors, $properties, "
+        "${initialScrollRatio ?? 'null'})",
   );
 
   /// Scrolls [slot]'s iframe to [pageIndex] without immediately awaiting.
@@ -51,11 +59,17 @@ class LuminaApi {
   Future<void> jumpToPage(int pageIndex) =>
       _bridge.callAndWait((t) => 'window.api.jumpToPage($t, $pageIndex)', 1000);
 
-  /// Restores the scroll position using a fractional [ratio] in [0,1].
-  Future<void> restoreScrollPosition(double ratio) => _bridge.callAndWait(
-    (t) => 'window.api.restoreScrollPosition($t, $ratio)',
-    1000,
-  );
+  /// Scrolls the current frame by roughly one screenful, in scroll mode.
+  ///
+  /// Awaiting the returned future means the screenful has landed: the page
+  /// animates the scroll itself and keeps reporting its position through
+  /// `onScrollProgress`.  [timeoutMs] is a safety net, not a duration — the
+  /// page's own animation is what decides when a turn is over.
+  Future<void> scrollByViewport(bool isNext, [int timeoutMs = 5000]) =>
+      _bridge.callAndWait(
+        (t) => "window.api.scrollByViewport($t, '${isNext ? 'next' : 'prev'}')",
+        timeoutMs,
+      );
 
   /// Waits for the current frame to finish rendering.
   Future<void> waitForRender() =>
@@ -64,18 +78,30 @@ class LuminaApi {
   /// Updates the reader theme/layout and awaits completion.
   ///
   /// [theme] must be a JSON-serialisable map produced by `EpubTheme.toMap()`.
+  /// [scrollMode] mirrors `InitConfig.scrollMode` on the TypeScript side and
+  /// must be re-sent with every theme update, because a layout change and a
+  /// mode change both go through the same re-layout path.
   Future<void> updateTheme(
     double viewWidth,
     double viewHeight,
-    Map<String, dynamic> theme,
-  ) {
-    final themeJson = jsonEncode(theme);
+    Map<String, dynamic> theme, {
+    required bool scrollMode,
+  }) {
+    final themeJson = jsonEncode({...theme, 'scrollMode': scrollMode});
     return _bridge.callAndWait(
       (t) => 'window.api.updateTheme($t, $viewWidth, $viewHeight, $themeJson)',
     );
   }
 
   // ─── Fire-and-forget ───────────────────────────────────────────────
+
+  /// Lands the viewport scroll that is animating, if any, on its target now.
+  ///
+  /// Fire-and-forget on purpose: the scroll it settles is the one whose
+  /// [scrollByViewport] future is already being awaited, and that future is
+  /// what says the turn is over.
+  Future<void> finishScrollByViewport() =>
+      _bridge.evaluate('window.api.finishScrollByViewport()');
 
   /// Checks whether there is an interactive element (image, etc.) at (x, y).
   Future<void> checkLongPressElementAt(double x, double y) =>

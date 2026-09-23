@@ -89,6 +89,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
   String displayProgress = '';
   @override
   Timer? progressDebouncer;
+  @override
+  double chapterScrollRatio = 0;
+  @override
+  bool atChapterScrollStart = false;
+  @override
+  bool atChapterScrollEnd = false;
+  @override
+  _PendingModeSwitch? pendingModeSwitch;
+
+  ///
+  /// Right-to-left and vertical-writing books are always paginated; see
+  /// [ReaderSettings.effectiveScrollMode].
+  ///
+  /// Kept in a plain field, refreshed on every build, rather than read from
+  /// `ref` on demand: `saveProgress` also runs from [dispose] — the last chance
+  /// to record where the reader stopped — and Riverpod refuses to read a
+  /// provider once a widget is being unmounted ("Using 'ref' when a widget is
+  /// about to or has been unmounted is unsafe").
+  bool _isScrollMode = false;
+
+  @override
+  bool get isScrollMode => _isScrollMode;
 
   // Theme state (used by _ThemeMixin)
   @override
@@ -165,6 +187,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
     volumeSubscription?.cancel();
     VolumeControlService.disableInterception();
     WakelockPlus.disable();
+    // Record where the reader actually stopped — including a fling that never
+    // came to rest — before the session that can persist it goes away.  The
+    // session flushes this write on dispose instead of dropping it.
+    if (bookSession.isLoaded) saveProgress();
     bookSession.dispose();
     super.dispose();
   }
@@ -202,10 +228,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
             removeFootnoteOverlay();
             return;
           }
+          // Scroll mode has no pages, so the keys move by roughly a screen —
+          // and turn the chapter once the chapter has no screenful left.
           if (event == 'up') {
-            rendererController.performPreviousPageTurn();
+            if (isScrollMode) {
+              handleScrollTurn(false);
+            } else {
+              rendererController.performPreviousPageTurn();
+            }
           } else if (event == 'down') {
-            rendererController.performNextPageTurn();
+            if (isScrollMode) {
+              handleScrollTurn(true);
+            } else {
+              rendererController.performNextPageTurn();
+            }
           }
         }
       });
@@ -301,6 +337,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
       );
     }
 
+    final scrollMode =
+        settings.effectiveScrollMode(bookSession.direction) ==
+        ReaderScrollMode.scrolling;
+    // Refresh the cached flag on every build: [dispose] cannot ask `ref`.
+    _isScrollMode = scrollMode;
+
     final epubTheme = getEpubTheme();
     final isDark = epubTheme.colorScheme.brightness == Brightness.dark;
     final themeData = epubTheme.themeData;
@@ -319,6 +361,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
 
     ref.listen(readerSettingsProvider, (previous, next) {
       if (previous != null && previous != next) {
+        // A layout-mode switch replaces the whole WebView, and the frame load
+        // that follows it restores a position.  Capture where the reader is now
+        // before the engine reporting it goes away, or that load would come
+        // back to the position the book was opened at.  Compared on the
+        // *effective* mode: a book that cannot scroll stays paginated either
+        // way, and is not reloaded at all.
+        final wasScrolling =
+            previous.effectiveScrollMode(bookSession.direction) ==
+            ReaderScrollMode.scrolling;
+        final willScroll =
+            next.effectiveScrollMode(bookSession.direction) ==
+            ReaderScrollMode.scrolling;
+        if (wasScrolling != willScroll) {
+          capturePositionForModeSwitch(
+            fromScrollMode: wasScrolling,
+            toPaginated: !willScroll,
+          );
+        }
+
         // If zoom/line_height changed, use debounce to avoid excessive WebView reloads while dragging the slider
         if (previous.fontFileName != next.fontFileName ||
             previous.overrideFontFamily != next.overrideFontFamily) {
@@ -387,8 +448,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onPerformPageTurn: handlePageTurn,
                       onToggleControls: toggleControls,
                       onInitialized: () async {
-                        final ratio = bookSession.initialScrollPosition;
-                        await loadCarousel(restoreScrollRatio: ratio);
+                        // The load that follows a layout-mode switch comes back
+                        // to the position captured when the mode changed; the
+                        // reader's own first load has none to come back to and
+                        // restores the stored position instead.
+                        final switched = takePendingModeSwitch();
+                        await loadCarousel(
+                          restoreScrollRatio:
+                              switched?.ratio ??
+                              bookSession.initialScrollPosition,
+                        );
+                        if (switched != null) {
+                          await settleModeSwitch(switched);
+                        }
                       },
                       onPageCountReady: (totalPages) async {
                         setState(() {
@@ -415,6 +487,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       initializeTheme: settings.toEpubTheme(context),
                       statusBarLeftContent: activateTocTitle,
                       statusBarRightContent: displayProgress,
+                      scrollMode: scrollMode,
+                      onScrollProgress: handleScrollProgress,
+                      onScrollTurn: handleScrollTurn,
+                      onScrollSettled: saveProgress,
                     ),
 
                     ControlPanel(
@@ -427,6 +503,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       currentPageInChapter: currentPageInChapter,
                       totalPagesInChapter: totalPagesInChapter,
                       direction: bookSession.book!.direction,
+                      scrollMode: scrollMode,
+                      atScrollStart: atChapterScrollStart,
+                      atScrollEnd: atChapterScrollEnd,
+                      scrollProgress: displayProgress,
                       onBack: () {
                         saveProgress();
                         context.pop();
@@ -438,7 +518,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       onNextPage: () =>
                           rendererController.performNextPageTurn(),
                       onLastPage: () => goToPage(totalPagesInChapter - 1),
-                      onPreviousChapter: previousSpineItemFirstPage,
+                      onScrollTurn: handleScrollTurn,
+                      // A chapter jump backwards lands where reading backwards
+                      // continues from it, so in scroll mode it is the same
+                      // landing as the backward turn: the bottom of the chapter
+                      // before this one, not its top.
+                      onPreviousChapter: scrollMode
+                          ? previousSpineItem
+                          : previousSpineItemFirstPage,
                       onNextChapter: nextSpineItem,
                       onToggleStyleDrawer: (show) {
                         tocDrawerOpen = show;

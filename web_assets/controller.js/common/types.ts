@@ -109,6 +109,13 @@ export interface InitConfig {
   safeWidth: number;
   safeHeight: number;
   direction: number;
+
+  /// When true the chapter is laid out as a single continuous column that is
+  /// scrolled vertically instead of being split into pages.  This is
+  /// independent of `direction`, which keeps describing the book's own page
+  /// progression; scroll mode is only ever enabled for `direction === 0`.
+  scrollMode: boolean;
+
   padding: ReaderPadding;
   theme: ReaderTheme;
 
@@ -136,6 +143,20 @@ export interface ReaderState {
 export interface ThemeUpdate {
   padding: ReaderPadding;
   theme: ReaderTheme;
+
+  /// See `InitConfig.scrollMode`.
+  scrollMode: boolean;
+}
+
+/// Where the current frame is scrolled to, reported to Flutter as the page
+/// scrolls itself (see `FlutterBridge.onScrollProgress`).
+///
+/// `offset` is the current scroll position and `maxOffset` the largest one the
+/// chapter allows; both are CSS pixels.  Flutter only mirrors them — it never
+/// drives the scroll, so there is no counterpart command in `LuminaApi`.
+export interface ScrollPosition {
+  offset: number;
+  maxOffset: number;
 }
 
 // ─── Internal Helpers ────────────────────────────────────────────────

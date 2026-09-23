@@ -24,7 +24,9 @@ html {
   padding-bottom: calc(100vh - var(--lumina-safe-height) - var(--lumina-padding-top)) !important;
 
   background-color: transparent;
-  touch-action: none !important;
+  /* Paginated layout keeps the vertical axis for Flutter's page-turn gesture;
+     scroll mode hands it to the browser so the chapter scrolls natively. */
+  touch-action: var(--lumina-reader-touch-action, none) !important;
 
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -67,6 +69,17 @@ html,
 body {
   overflow-x: var(--lumina-reader-overflow-x) !important;
   overflow-y: var(--lumina-reader-overflow-y) !important;
+  /* The chapter body is the scroll container, so the panning permission has to
+     be on it as well: the effective touch-action stops at the scroller and
+     never reaches `html`. */
+  touch-action: var(--lumina-reader-touch-action, none) !important;
+  /* Dragging past either end of the chapter has to stay invisible.  The
+     WebView-level `overScrollMode: NEVER` is a property of the view and does
+     not cover a scroller living inside the frame document, so Chromium would
+     draw Android's native overscroll glow / stretch here, then hand whatever
+     drag is left to the skeleton document behind it.  `none` drops both the
+     effect and the chaining. */
+  overscroll-behavior: none !important;
 }
 
 body {
@@ -74,6 +87,14 @@ body {
   column-gap: 128px !important;
   column-fill: auto !important;
   height: var(--lumina-safe-height) !important;
+}
+
+/* Continuous scrolling mode: drop the multicol layout so the chapter flows as
+   a single column inside the fixed-height, vertically scrollable body. */
+body.lumina-is-scroll {
+  column-width: auto !important;
+  column-count: auto !important;
+  column-gap: normal !important;
 }
 
 body * {

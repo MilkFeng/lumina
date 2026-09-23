@@ -57,6 +57,16 @@ android {
         debug {
             applicationIdSuffix = ".debug"
         }
+
+        // Give profile builds their own application ID so that a profile build can be
+        // installed next to both the debug and the release build on the same device.
+        // Without this, profile inherits the plain release application ID and the two
+        // cannot be installed side by side.
+        // The build type is created by the Flutter Gradle plugin, so no Kotlin DSL
+        // accessor exists for it; it has to be looked up by name.
+        getByName("profile") {
+            applicationIdSuffix = ".profile"
+        }
     }
 }
 

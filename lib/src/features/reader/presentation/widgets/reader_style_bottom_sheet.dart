@@ -17,10 +17,17 @@ import 'reader_font_selector.dart';
 import 'reader_link_handling_selector.dart';
 import 'reader_page_animation_selector.dart';
 import 'reader_scale_slider.dart';
+import 'reader_scroll_mode_selector.dart';
 
 /// Bottom sheet for configuring reader typography, layout, and appearance.
 class ReaderStyleBottomSheet extends ConsumerStatefulWidget {
-  const ReaderStyleBottomSheet({super.key});
+  const ReaderStyleBottomSheet({super.key, required this.direction});
+
+  /// Page progression of the book being read, as stored on `ShelfBook`.
+  ///
+  /// Only left-to-right books can scroll continuously; see
+  /// [ReaderSettings.supportsScrollMode].
+  final int direction;
 
   @override
   ConsumerState<ReaderStyleBottomSheet> createState() =>
@@ -41,6 +48,7 @@ class _ReaderStyleBottomSheetState
   late ReaderLinkHandling _linkHandling;
   late bool _handleIntraLink;
   late ReaderPageAnimation _pageAnimation;
+  late ReaderScrollMode _scrollMode;
   late String? _fontFileName;
   late bool _overrideFontFamily;
   late bool _volumeKeyTurnsPage;
@@ -65,6 +73,7 @@ class _ReaderStyleBottomSheetState
     _linkHandling = s.linkHandling;
     _handleIntraLink = s.handleIntraLink;
     _pageAnimation = s.pageAnimation;
+    _scrollMode = s.effectiveScrollMode(widget.direction);
     _fontFileName = s.fontFileName;
     _overrideFontFamily = s.overrideFontFamily;
     _volumeKeyTurnsPage = s.volumeKeyTurnsPage;
@@ -371,18 +380,70 @@ class _ReaderStyleBottomSheetState
 
                 const SizedBox(height: 24),
 
-                // ── Section 4: Page Animation ─────────────────────────────────
-                SettingsSectionTitle(label: l10n.readerPageAnimationSection),
+                // ── Section 4: Reading Layout ─────────────────────────────────
+                SettingsSectionTitle(label: l10n.readerScrollModeSection),
                 const SizedBox(height: 12),
-                ReaderPageAnimationSelector(
-                  value: _pageAnimation,
+
+                // Pagination mode subsection
+                SettingsSubLabel(label: l10n.readerPaginationMode),
+                const SizedBox(height: 8),
+                ReaderScrollModeSelector(
+                  value: _scrollMode,
+                  enabled: ReaderSettings.supportsScrollMode(widget.direction),
                   onChanged: (v) {
-                    setState(() => _pageAnimation = v);
-                    _notifier.setPageAnimation(v);
+                    setState(() => _scrollMode = v);
+                    _notifier.setScrollMode(v);
                   },
-                  noneLabel: l10n.readerPageAnimationNone,
-                  slideLabel: l10n.readerPageAnimationSlide,
+                  paginatedLabel: l10n.readerScrollModePaginated,
+                  scrollingLabel: l10n.readerScrollModeScrolling,
                 ),
+                if (!ReaderSettings.supportsScrollMode(widget.direction)) ...[
+                  const SizedBox(height: 8),
+                  // Styled like the custom-font tip at the end of the
+                  // typography section, so both hints read as captions.
+                  Text(
+                    l10n.readerScrollModeUnsupported,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+
+                // Page-turn subsection – the animation only exists while the
+                // chapter is paginated, so it collapses away in scroll mode with
+                // the same AnimatedSize transition the rest of the sheet uses.
+                // The volume-key switch below stays in both layouts: in scroll
+                // mode the keys move by a screen instead of turning a page.
+                const SizedBox(height: 20),
+                SettingsSubLabel(label: l10n.readerPageTurn),
+
+                AnimatedSize(
+                  duration: const Duration(
+                    milliseconds: AppTheme.defaultAnimationDurationMs,
+                  ),
+                  curve: Curves.easeInOut,
+                  child: _scrollMode == ReaderScrollMode.paginated
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            ReaderPageAnimationSelector(
+                              value: _pageAnimation,
+                              onChanged: (v) {
+                                setState(() => _pageAnimation = v);
+                                _notifier.setPageAnimation(v);
+                              },
+                              noneLabel: l10n.readerPageAnimationNone,
+                              coverLabel: l10n.readerPageAnimationCover,
+                            ),
+                          ],
+                        )
+                      : const SizedBox(height: 0, width: double.infinity),
+                ),
+
                 const SizedBox(height: 12),
                 if (Platform.isAndroid)
                   LabeledSwitchTile(

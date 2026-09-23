@@ -6,7 +6,18 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 enum ReaderLinkHandling { ask, always, never }
 
 /// Controls the page-turning animation style.
-enum ReaderPageAnimation { none, slide }
+///
+/// [cover] slides the page horizontally so the incoming page ends up covering
+/// the current one.
+enum ReaderPageAnimation { none, cover }
+
+/// Controls how a chapter is laid out and advanced.
+///
+/// [paginated] is the classic discrete mode: the chapter is split into columns
+/// and a page turn moves by exactly one column.  [scrolling] lays the chapter
+/// out as a single continuous column that is scrolled vertically, with
+/// chapter switching handled by the control panel arrows.
+enum ReaderScrollMode { paginated, scrolling }
 
 class ReaderSettings {
   final double zoom;
@@ -23,6 +34,10 @@ class ReaderSettings {
   final ReaderLinkHandling linkHandling;
   final bool handleIntraLink;
   final ReaderPageAnimation pageAnimation;
+
+  /// Chapter layout mode.  Only honoured for left-to-right books; see
+  /// [supportsScrollMode].
+  final ReaderScrollMode scrollMode;
 
   /// File name (with extension) of the user-imported font to use, or null to
   /// use the epub's own fonts.
@@ -46,7 +61,8 @@ class ReaderSettings {
     this.marginRight = 16.0,
     this.linkHandling = ReaderLinkHandling.ask,
     this.handleIntraLink = true,
-    this.pageAnimation = ReaderPageAnimation.slide,
+    this.pageAnimation = ReaderPageAnimation.cover,
+    this.scrollMode = ReaderScrollMode.paginated,
     this.fontFileName,
     this.overrideFontFamily = false,
     this.volumeKeyTurnsPage = false,
@@ -69,6 +85,7 @@ class ReaderSettings {
     ReaderLinkHandling? linkHandling,
     bool? handleIntraLink,
     ReaderPageAnimation? pageAnimation,
+    ReaderScrollMode? scrollMode,
     Object? fontFileName = _kUnset,
     bool? overrideFontFamily,
     bool? volumeKeyTurnsPage,
@@ -86,6 +103,7 @@ class ReaderSettings {
       linkHandling: linkHandling ?? this.linkHandling,
       handleIntraLink: handleIntraLink ?? this.handleIntraLink,
       pageAnimation: pageAnimation ?? this.pageAnimation,
+      scrollMode: scrollMode ?? this.scrollMode,
       fontFileName: identical(fontFileName, _kUnset)
           ? this.fontFileName
           : fontFileName as String?,
@@ -128,6 +146,20 @@ class ReaderSettings {
       overrideFontFamily: overrideFontFamily,
     );
   }
+
+  /// Whether continuous scrolling is available for a book whose page
+  /// progression is [direction].
+  ///
+  /// Scrolling relies on a single vertically flowing column, which is
+  /// incompatible with the vertical-writing / right-to-left layout used when
+  /// `direction == 1`, so those books are always paginated.
+  static bool supportsScrollMode(int direction) => direction == 0;
+
+  /// The effective layout mode for a book whose page progression is
+  /// [direction] — the stored [scrollMode], forced back to
+  /// [ReaderScrollMode.paginated] when the book cannot scroll.
+  ReaderScrollMode effectiveScrollMode(int direction) =>
+      supportsScrollMode(direction) ? scrollMode : ReaderScrollMode.paginated;
 
   /// The [LuminaThemePreset] currently selected by [themeIndex].
   LuminaThemePreset get currentPreset =>

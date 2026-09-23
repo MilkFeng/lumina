@@ -70,6 +70,9 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
       currUrl,
       getAnchorsForSpine(currentSpinePath),
       getSpineProperties(currIndex),
+      // The reading position travels with the load: the frame comes up already
+      // scrolled, instead of being moved afterwards by a separate scroll call.
+      initialScrollRatio: restoreScrollRatio,
     );
     if (currToken != null) tokensForWait.add(currToken);
 
@@ -97,14 +100,17 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
 
     await rendererController.waitForEvents(tokensForWait);
 
-    if (restoreScrollRatio != null) {
-      await rendererController.restoreScrollPosition(restoreScrollRatio);
-    }
-
     await Future.delayed(const Duration(milliseconds: 30));
     setState(() {
       isWebViewLoading = false;
     });
+
+    // The chapter reported its position while it was still loading, and
+    // [updateProgressDebounced] drops those reports — that is the point of the
+    // flag.  Without this the badge keeps the chapter that was left behind on
+    // screen until the reader happens to scroll, which reads as the progress
+    // never catching up with a chapter change.
+    updateProgressDebounced();
   }
 
   Future<void> preloadNextOf(int currentIndex) async {
@@ -146,6 +152,10 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     saveProgress();
   }
 
+  /// Turns back to the previous chapter, landing where reading backwards
+  /// continues from it: its last page while paginated, its bottom while
+  /// scrolling — a scroll-mode chapter has no pages, and its "last page" is the
+  /// end of the column (see `jumpToLastPageOfFrame`).
   Future<void> previousSpineItem() async {
     if (currentSpineItemIndex <= 0) {
       ToastService.showError(

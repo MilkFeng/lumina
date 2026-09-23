@@ -151,6 +151,7 @@ flutter build ios --release
 - [x] Reading settings (font size, background color, etc.)
 - [x] Footnote support
 - [x] Link handling
+- [x] Continuous vertical scrolling mode (within a chapter)
 - [ ] Better color rendering
 - [ ] Cloud sync (WebDAV)
 - [ ] Search functionality

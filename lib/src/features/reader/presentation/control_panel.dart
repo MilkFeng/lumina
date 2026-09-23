@@ -15,6 +15,19 @@ class ControlPanel extends ConsumerStatefulWidget {
   final int currentPageInChapter;
   final int totalPagesInChapter;
   final int direction;
+
+  /// Whether the chapter scrolls continuously; the arrows then scroll it by a
+  /// screenful and switch chapters on a long press.
+  final bool scrollMode;
+
+  /// Whether the chapter is scrolled to its top / bottom.  In scroll mode an
+  /// arrow leads into the chapter on that side once it is.
+  final bool atScrollStart;
+  final bool atScrollEnd;
+
+  /// How far through the chapter the reader is, as the page reported it — the
+  /// panel's second line while scrolling, where paginated shows a page number.
+  final String scrollProgress;
   final VoidCallback onBack;
   final VoidCallback onOpenDrawer;
   final VoidCallback onPreviousPage;
@@ -23,6 +36,9 @@ class ControlPanel extends ConsumerStatefulWidget {
   final VoidCallback onLastPage;
   final VoidCallback onPreviousChapter;
   final VoidCallback onNextChapter;
+
+  /// Scrolls the chapter by one screenful, the way the volume keys do.
+  final void Function(bool isNext) onScrollTurn;
   final Function(bool show) onToggleStyleDrawer;
 
   const ControlPanel({
@@ -34,6 +50,10 @@ class ControlPanel extends ConsumerStatefulWidget {
     required this.currentPageInChapter,
     required this.totalPagesInChapter,
     required this.direction,
+    required this.scrollMode,
+    required this.atScrollStart,
+    required this.atScrollEnd,
+    required this.scrollProgress,
     required this.onBack,
     required this.onOpenDrawer,
     required this.onPreviousPage,
@@ -42,6 +62,7 @@ class ControlPanel extends ConsumerStatefulWidget {
     required this.onLastPage,
     required this.onPreviousChapter,
     required this.onNextChapter,
+    required this.onScrollTurn,
     required this.onToggleStyleDrawer,
   });
 
@@ -100,39 +121,53 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
         widget.currentPageInChapter < widget.totalPagesInChapter - 1;
   }
 
+  /// Whether an arrow press can do anything in scroll mode: scroll the chapter
+  /// by a screenful, or — once there is none left that way — turn it.
+  bool get _canScrollUp =>
+      !widget.atScrollStart || widget.currentSpineItemIndex > 0;
+
+  bool get _canScrollDown =>
+      !widget.atScrollEnd ||
+      widget.currentSpineItemIndex < widget.totalSpineItems - 1;
+
   bool get _shouldHandleOnPressLeft {
-    if (widget.isVertical) {
-      return _shouldHandleOnNextPage;
-    } else {
-      return _shouldHandleOnPreviousPage;
-    }
+    if (widget.scrollMode) return _canScrollUp;
+    if (widget.isVertical) return _shouldHandleOnNextPage;
+    return _shouldHandleOnPreviousPage;
   }
 
   bool get _shouldHandleOnPressRight {
-    if (widget.isVertical) {
-      return _shouldHandleOnPreviousPage;
-    } else {
-      return _shouldHandleOnNextPage;
-    }
+    if (widget.scrollMode) return _canScrollDown;
+    if (widget.isVertical) return _shouldHandleOnPreviousPage;
+    return _shouldHandleOnNextPage;
+  }
+
+  /// Fires the tick that goes with a chapter turn.
+  ///
+  /// The tick marks landing in another chapter, which is what an arrow long
+  /// press does in either layout mode.  Turning *within* the chapter is silent:
+  /// a page turn while paginated, and a screenful while scrolling.
+  void _selectionClick() {
+    HapticFeedback.selectionClick();
   }
 
   void _handlePreviousChapter() {
     if (widget.currentPageInChapter == 0 && widget.currentSpineItemIndex > 0) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onPreviousChapter();
     } else if (widget.currentPageInChapter > 0) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onFirstPage();
     }
   }
 
   void _handleNextChapter() {
     if (widget.currentSpineItemIndex < widget.totalSpineItems - 1) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onNextChapter();
     } else if (widget.currentSpineItemIndex == widget.totalSpineItems - 1 &&
         widget.currentPageInChapter < widget.totalPagesInChapter - 1) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onLastPage();
     }
   }
@@ -154,6 +189,13 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
   }
 
   void _handleTapLeft() {
+    // Scroll mode has no pages within a chapter, so an arrow press scrolls it
+    // by a screenful — the volume keys by another name — and switching chapters
+    // is what the long press does.
+    if (widget.scrollMode) {
+      widget.onScrollTurn(false);
+      return;
+    }
     if (widget.isVertical) {
       widget.onNextPage();
     } else {
@@ -162,6 +204,10 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
   }
 
   void _handleTapRight() {
+    if (widget.scrollMode) {
+      widget.onScrollTurn(true);
+      return;
+    }
     if (widget.isVertical) {
       widget.onPreviousPage();
     } else {
@@ -177,6 +223,27 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     final totalStr = total.toString();
     final currentStr = current.toString();
     return '$currentStr/$totalStr';
+  }
+
+  /// The panel's second line: where in the chapter the reader is.
+  ///
+  /// The two layout modes measure that differently.  Paginated counts the pages
+  /// it laid out, so a chapter of one page has nothing to show.  Scrolling has
+  /// no pages at all, and shows the reading progress the page reported instead —
+  /// the same percentage the always-visible status bar carries.
+  String? get _positionInChapterLabel {
+    if (widget.scrollMode) {
+      // Empty until the page reports its first position, which is a frame or
+      // two after it loads.
+      return widget.scrollProgress.isEmpty ? null : widget.scrollProgress;
+    }
+
+    if (widget.totalPagesInChapter <= 1) return null;
+
+    return _formatPageIndicator(
+      widget.currentPageInChapter + 1,
+      widget.totalPagesInChapter,
+    );
   }
 
   @override
@@ -339,12 +406,11 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                 ),
                               ],
                             ),
-                            if (widget.totalPagesInChapter > 1)
+                            // The second line is the position *within* the
+                            // chapter; see [_positionInChapterLabel].
+                            if (_positionInChapterLabel != null)
                               Text(
-                                _formatPageIndicator(
-                                  widget.currentPageInChapter + 1,
-                                  widget.totalPagesInChapter,
-                                ),
+                                _positionInChapterLabel!,
                                 style: themeData.textTheme.bodyMedium?.copyWith(
                                   fontSize: 10,
                                   fontFeatures: const [
@@ -440,8 +506,10 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                               ),
                                             ),
                                           ),
-                                          const Flexible(
-                                            child: ReaderStyleBottomSheet(),
+                                          Flexible(
+                                            child: ReaderStyleBottomSheet(
+                                              direction: widget.direction,
+                                            ),
                                           ),
                                         ],
                                       ),

@@ -53,6 +53,7 @@ flowchart LR
 | `lib/src/features/library/data/services/import_file_pipeline.dart` | 组合 picker 与 cache：读取文本/字节、缓存文件、计算 SHA-256。 |
 | `lib/src/features/library/data/services/backup_folder_resolver.dart` | 解析备份包目录结构（`shelf.json`/`books`/`manifests`/`covers`），是唯一理解备份布局的地方。 |
 | `lib/src/features/reader/data/services/volume_control_service.dart` | Android 音量键 MethodChannel/EventChannel 封装。 |
+| `lib/src/features/reader/data/services/reader_haptics_service.dart` | Android 关闭 WebView 自身长按振动的 MethodChannel 封装（带有限重试）。 |
 | `lib/src/features/reader/presentation/page_turn/ios_page_turn_session.dart` | iOS 原生翻页动画 MethodChannel 封装。 |
 | `lib/src/features/reader/presentation/page_turn/android_page_turn_session.dart` | Android 翻页动画纯 Dart 实现，不走原生插件。 |
 | `lib/src/features/settings/presentation/settings_screen.dart` | Android 打开 DocumentsProvider 暴露的 Lumina Books 根目录。 |
@@ -122,6 +123,7 @@ iOS 在 implicit Flutter engine 初始化后注册：
 | `lumina/volume_events` | EventChannel | Android | `"up"` / `"down"` | 音量键事件流。 |
 | `lumina/reader_page_turn` | MethodChannel | iOS | `preparePageTurn` | 截取当前 WKWebView 快照。 |
 | `lumina/reader_page_turn` | MethodChannel | iOS | `animatePageTurn` | 用快照执行翻页滑动动画。 |
+| `lumina/reader_haptics` | MethodChannel | Android | `muteWebViewHaptics` | 关掉 WebView 自身的振动反馈，返回找到的 WebView 个数（供 Dart 重试）。 |
 
 ## 文件导入与选择
 
@@ -294,8 +296,10 @@ Flutter 侧 `VolumeControlService` 只在 Android 工作，其他平台直接 no
    - `KEYCODE_VOLUME_DOWN` 发送 `"down"`。
    - 返回 `true` 消费事件，系统音量不变化。
 5. Flutter 监听事件：
-   - `"up"` 触发上一页。
-   - `"down"` 触发下一页。
+   - `"up"` 触发上一页；`"down"` 触发下一页。
+   - 滚动模式下改为触发 `handleScrollTurn`：滚一屏，已经在章节该方向的尽头时换成翻章
+     （往回翻落在上一章末尾，往前翻落在下一章开头）；与工具栏箭头单击、页面左右区域点击
+     走同一条路径（见 `WEB_ASSETS_ARCHITECTURE.md` 的"连续滚动模式"）。
    - 如果脚注浮层打开，则先关闭脚注浮层。
 6. 离开阅读页或条件不满足时调用 `disableInterception`。
 
@@ -308,6 +312,142 @@ Android 没有原生翻页插件。`AndroidPageTurnSession` 在 Flutter 内完�
 - 调用 `ReaderWebViewController.takeScreenshot()` 获取 WebView 截图。
 - 用 Flutter `AnimationController` 和 `SlideTransition` 滑动截图或 WebView。
 - 页面切换和动画并行执行。
+
+#### 平台视图组合模式与滚动模式
+
+两种阅读模式都使用**虚拟显示（virtual display）**，不使用混合组合（hybrid composition）：
+`readerWebViewSettings`（`lib/src/features/reader/presentation/reader_webview.dart`）无条件
+写 `useHybridComposition: false`，该参数与 `scrollMode` 无关。
+
+这个显式的 `false` 是必需的：`InAppWebViewSettings.useHybridComposition` 在插件里默认为
+`true`（`flutter_inappwebview_platform_interface`），删掉该参数平台视图就会切到混合组合。
+混合组合下 WebView 由 Android 原生层直接绘制，`takeScreenshot()` 走的
+`RepaintBoundary.toImage()` 截出来是空白，翻页动画会失效。滚动模式虽然不需要截图，也没有理由
+为它单独换一套合成路径——两种模式共用虚拟显示，命中测试与触摸路由的差异只来自
+`AbsorbPointer` 与 `disableVerticalScroll`（见下节）。
+
+`scrollMode` 因此只影响一项设置：
+
+| 模式 | `useHybridComposition` | `disableVerticalScroll` |
+| --- | --- | --- |
+| 分页模式 | `false`（虚拟显示） | `true`：纵向手势归 Flutter，WebView 不自行滚动。 |
+| 连续滚动模式 | `false`（虚拟显示） | `false`：纵向拖动交给章节自己的滚动器。 |
+
+`InAppWebView` 仍带 `key: ValueKey(scrollMode)`，切换模式照旧重建 WebView：
+`didUpdateWidget` 里先 `_disposeWebView()` 释放 `HeadlessInAppWebView` 和 bridge，随后重建。
+重建的理由不是组合模式，而是 `initialSettings`（`disableVerticalScroll`）与 `initialData`
+（骨架 HTML，内含 `InitConfig.scrollMode` 与 iframe 的 `scrolling` 属性）都是**创建期输入**：
+插件只把它们放进平台视图的 `creationParams` 交给 `create()`，创建之后不会再应用。
+
+###### 重建必须等预热 WebView 起来
+
+重建不能和拆旧发生在同一帧，也不能在预热还没起来时就创建可见视图，否则新平台视图**永远
+不上屏**：页面会正常加载、运行 JS、上报章节（Dart 侧日志一切正常），但屏幕上什么都没有
+（黑屏/白屏）。原因是 `InAppWebView` 的 `headlessWebView` 参数只是「复用预热引擎」的
+意图，插件在两端各判断一次：
+
+- `AndroidInAppWebViewWidget.build` 里若 `headlessWebView.isRunning()` 为真，就把
+  `headlessWebViewId` 交给平台侧，平台侧 `FlutterWebViewFactory` 把预热 WebView
+  转交给这个平台视图（`disposeAndGetFlutterWebView`），可见视图即预热视图。
+- `_onPlatformViewCreated` 里再判断一次：running 时控制器绑定的是**预热的 view id**。
+
+`HeadlessInAppWebView.run()` 是异步的（一次 MethodChannel 往返 + 原生建 WebView），
+同一帧里刚创建的预热一定还是 `isRunning() == false`：此时平台视图会自己新建一个 WebView，
+而控制器随后又绑到预热 id 上——两者错位，且这个「同一帧内拆旧建新」的新平台视图不上屏。
+
+因此 `_ReaderWebViewState` 用 `_isWaitingForHeadless` 把可见视图压到预热 `run()` 完成之后
+再建：先 `_disposeWebView()`，`_initHeadlessWebViewIfNeeded()` 建新预热并 `await run()`，
+`setState` 之后才构建 `InAppWebView`。这与阅读器**首次打开**的时序完全一致（首次打开本来
+就晚一帧，所以一直是对的），中间那一帧显示主题底色，和随后出现的加载层同色，视觉上就是一次
+普通的重载。超时（5s）是兜底：预热起不来也必须放出可见视图。
+
+##### 滚动模式下的触摸路由
+
+平台视图的触摸**先经过 Flutter 的手势竞技场**，再决定是否交给原生视图：
+`PlatformViewLink` / `UiKitView` 默认使用空 `gestureRecognizers`，按框架文档，
+"a pointer event sequence will only be dispatched to the platform view if no other member
+of the arena claimed it"。所以「谁来滚」这件事完全由 Flutter 侧声明了哪些手势决定：
+
+- 分页模式：`ReaderRenderer` 声明 tap、长按、水平拖动，加上 WebView 外层的
+  `AbsorbPointer`，平台视图既不参与命中测试也拿不到指针序列——手势全部属于 Flutter，
+  这与 `disableVerticalScroll: true` 一起保证 WebView 不自行滚动。
+- 滚动模式：`ReaderRenderer` **一个识别器都不声明**（gesture map 为空），整段指针序列因此
+  交给 WebView，由浏览器自己的滚动器跟手滚动。`AbsorbPointer` 在滚动模式下改为
+  `absorbing: false`，iframe 也要恢复 `pointer-events`（见
+  `WEB_ASSETS_ARCHITECTURE.md` 的"连续滚动模式"）。
+- `disableVerticalScroll` 在滚动模式为 `false`（Android 侧插件在 `OnTouchListener` 里会吃掉
+  `ACTION_MOVE`；iOS 侧它同时决定 `scrollView.isScrollEnabled`），水平方向仍然禁用。
+
+##### 为什么滚动模式下 Flutter 不能声明任何手势
+
+框架对平台视图的指针序列是「**先缓存、等竞技场裁决**」：
+`_PlatformViewGestureRecognizer`（`rendering/platform_view.dart`）在竞技场裁决之前把
+down/move/up 全部缓存，赢了才转发给原生视图，输了则 `stopTrackingPointer` 并
+`cachedEvents.remove(pointer)` 直接丢弃。由此有两条不能碰的红线：
+
+- **惯性滚动只能被真正的 touch-down 打断。** Chromium 的 fling 由浏览器自己的滚动器/合成器
+  驱动，JS 侧 `scrollTop` / `scrollTo` 无法可靠中止它；本工程 web 端也没有任何 touch 监听，
+  唯一的滚动命令 `scrollByViewport` 只服务于没有自带手势的翻屏请求（音量键、工具栏箭头、
+  页面左右区域点击），并且只在按下时推一个目标位置，不逐帧推偏移。所以只要 Flutter 抢下一次
+  点击，WebView 一个事件都收不到，惯性会一直滚下去——这正是"滑动结束后点击停不下来"的成因。
+- **抢一次点击 = 让出一次滚动能力。** 长按识别器到 500ms 会 `resolve(accepted)` 拿下竞技场，
+  而 `LongPressGestureRecognizer` 的 `postAcceptSlopTolerance` 为 `null`：赢下之后手指怎么
+  移动都不会退出，整个 pointer 序列既不给 WebView 也不给别的识别器。"按住半秒再滑"因此完全
+  滚不动，慢点击也什么都不发生（长按回调只处理图片）。
+
+所以滚动模式下的 tap、链接、脚注、图片长按全部移进页面：`GestureObserver`
+（`web_assets/controller.js/renderer/gesture_observer.ts`）用 `click` 判 tap——Chromium 在
+触摸变成滚动之后不会派发 `click`，不需要自己写位移/时长阈值——并且每次 `click` 都
+`preventDefault()`（链接与脚注都在页面里判完再回报 Flutter，绝不能让 `<a>` 原生导航）；
+图片长按由页面自己的定时器检测。Dart 侧照旧消费 `onTap` / `onLinkTap` / `onFootnoteTap` /
+`onImageLongPress`，而 `checkTapElementAt` 与 `checkLongPressElementAt` 从此只服务分页模式。
+滚动模式下的 `onTap` 落到 `ReaderRenderer._handleTapZone`：左右各 30% 的区域翻一屏（与音量键
+同一条路径），中间区域切换控制栏。
+
+副作用是好的那一面：落在惯性上的一次点击会同时做两件事——touch-down 打断惯性（原生行为），
+紧接着的 `click` 翻一屏或切换控制栏。
+
+##### 长按振动归 Flutter
+
+把长按移进页面带来一个副作用：**WebView 自己的长按振动开始生效**。以前滚动模式下 Flutter 的
+长按识别器拿下竞技场，WebView 收不到触摸，Android/Chromium 的长按根本不会运行；现在平台视图
+必赢，它就会为"已处理"的长按播放 `HapticFeedbackConstants.LONG_PRESS`——哪怕这一下什么都没
+命中。
+
+- 振动不是插件发的：`flutter_inappwebview_android` 的原生代码里没有任何
+  `performHapticFeedback` / `LONG_PRESS`，它的 `setOnLongClickListener` 只上报
+  `onLongPressHitTestResult` 并 `return false`。
+- `InAppWebViewSettings` 也没有对应开关，`disableContextMenu: true` 只是不构建插件自己的浮动
+  菜单（`InAppWebView.java`），长按是否"已处理"在此之前就已判定；Dart 侧只能拿到
+  `getViewId()`，拿不到 View。
+- 所以由 `ReaderHapticsPlugin`（channel `lumina/reader_haptics`）在 decorView 里递归找到
+  WebView 及其子树，设 `isHapticFeedbackEnabled = false`；`ReaderHapticsService` 在
+  `ReaderWebView` 创建平台视图时调用，并按返回的 WebView 个数有限重试——阅读器显示的是**预热
+  那个 WebView**，它只有在被交给可见平台视图、真正挂进窗口之后才找得到。
+- 结果：长按命中图片 → 图片查看器打开 → Flutter 的 `HapticFeedback.lightImpact()`
+  （`image_viewer.dart`）振一次；长按落在文字上 → 不发生任何事，也不振。iOS 不需要处理，
+  WKWebView 的网页长按本身不振动。
+
+##### 分页模式下 tap 的归属与 sweep
+
+分页模式下 tap 由 **sweep** 决定：一次点击若没有识别器主动声明胜利，Flutter 会在 PointerUp
+之后 sweep 竞技场，把胜利交给成员列表里的**第一个**成员，也就是命中路径上最深的那个。这个
+顺序不总是 reader 的——reader 活在 `Scaffold` 里，抽屉关闭时 `DrawerController` 会在 body
+的起始边留一条 `_kEdgeDragWidth` 宽、全高的 `HitTestBehavior.translucent` 拖动带，而
+`scaffold.dart` 把抽屉槽位加在 body **之后**（Stack 里后加者在上、命中测试在前），
+translucent 即使没命中子节点也会把自己记进结果：落在这一条带子里的 tap，抽屉的水平拖动
+识别器比 reader 的 tap 更早进竞技场，sweep 会把这次点击判给抽屉，reader 最左侧的翻页区会
+静默失效。
+
+`EagerTapGestureRecognizer`（`presentation/gestures/eager_tap_gesture_recognizer.dart`）在
+PointerUp 时主动 `resolve(accepted)`，赶在 sweep 之前拿下竞技场，因此与成员顺序无关。拖动
+不受影响：`PrimaryPointerGestureRecognizer` 在位移超过 `preAcceptSlopTolerance` 时会自我
+否定，拖动照旧落到水平拖动识别器手里（滚动模式下则直接落到平台视图手里）。
+
+> 原 `test/eager_tap_gesture_recognizer_test.dart` 已随方案 B 删除，这个识别器目前没有测试
+> 覆盖；它守着的是上面那条起始边拖动带里的点击。
+
+这样滚动不再需要 Flutter 每帧调用 JS 推偏移：被删除的 `WebViewScrollSession` 正是那条路径。
 
 ### iOS
 
@@ -436,7 +576,17 @@ iOS 声明：
 
 `android/app/build.gradle.kts` 中：
 
-- namespace/applicationId：`com.lumina.ereader`
+- namespace：`com.lumina.ereader`
+- applicationId：release 为 `com.lumina.ereader`，debug 与 profile 各自用 `applicationIdSuffix` 区分，因此三种构建可以同时安装在同一台设备上，且数据目录互相隔离：
+
+| build type | applicationIdSuffix | applicationId | 签名 | debuggable |
+| --- | --- | --- | --- | --- |
+| debug | `.debug` | `com.lumina.ereader.debug` | debug keystore | 是 |
+| profile | `.profile` | `com.lumina.ereader.profile` | debug keystore | 是 |
+| release | 无 | `com.lumina.ereader` | `key.properties` 的 release keystore | 否 |
+
+- `profile` build type 由 Flutter Gradle 插件用 `initWith(debug)` 创建，所以它继承 debug 的签名与 `debuggable`；它在 Kotlin DSL 里没有生成的 accessor，只能写成 `getByName("profile") { ... }`，不能写成 `profile { ... }`。
+- DocumentsProvider 的 authority 是 `${applicationId}.documents`，随 build type 自动变化；Dart 侧设置页的“打开存储位置”用 `PackageInfo.packageName` 推导同一个 authority，不需要按变体额外配置。
 - compile/target SDK：36
 - Java/Kotlin target：17
 - release 开启 minify 和 resource shrink。

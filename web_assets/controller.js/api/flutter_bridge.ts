@@ -12,6 +12,18 @@ export class FlutterBridge {
     window.flutter_inappwebview.callHandler('onPageChanged', pageIndex);
   }
 
+  /// Reports where the current frame is scrolled to.  The page scrolls itself
+  /// in scroll mode, so this is the only direction that information travels:
+  /// Flutter mirrors the position, it never pushes one back.
+  static onScrollProgress(offset: number, maxOffset: number): void {
+    window.flutter_inappwebview.callHandler('onScrollProgress', offset, maxOffset);
+  }
+
+  /// Reports that the scroll came to rest, so Flutter can persist progress.
+  static onScrollSettled(): void {
+    window.flutter_inappwebview.callHandler('onScrollSettled');
+  }
+
   static onScrollAnchors(anchors: string[]): void {
     window.flutter_inappwebview.callHandler('onScrollAnchors', anchors);
   }

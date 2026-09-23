@@ -23,8 +23,9 @@ String generateSkeletonHtml(
   double viewWidth,
   double viewHeight,
   EpubTheme theme,
-  int direction,
-) {
+  int direction, {
+  required bool scrollMode,
+}) {
   final safeWidth = viewWidth.floor();
   final safeHeight = viewHeight.floor();
 
@@ -32,9 +33,19 @@ String generateSkeletonHtml(
   initialConfigMap['safeWidth'] = safeWidth;
   initialConfigMap['safeHeight'] = safeHeight;
   initialConfigMap['direction'] = direction;
+  initialConfigMap['scrollMode'] = scrollMode;
   initialConfigMap['paginationCss'] = kPaginationCss;
 
   final initialConfigJson = jsonEncode(initialConfigMap);
+
+  // Scroll mode scrolls the frame the reader is looking at with the browser's
+  // own scroller, so every frame has to allow it: `cycleFrames` turns a chapter
+  // by swapping the frames' ids, and the frame promoted to `curr` may well be
+  // one that started life as `next`.  Which frame is reachable is decided by
+  // `pointer-events` instead (see `skeleton.css`), not by the scrolling mode.
+  // The paginated layout drives every offset from script and keeps user
+  // scrolling off.
+  final frameScrolling = scrollMode ? 'auto' : 'no';
 
   return '''
 <!DOCTYPE html>
@@ -57,9 +68,9 @@ String generateSkeletonHtml(
 </head>
 <body>
   <div id="frame-container">
-    <iframe id="frame-prev" sandbox="allow-same-origin" scrolling="no" style="z-index: 1; opacity: 0;"></iframe>
-    <iframe id="frame-curr" sandbox="allow-same-origin" scrolling="no" style="z-index: 2; opacity: 1;"></iframe>
-    <iframe id="frame-next" sandbox="allow-same-origin" scrolling="no" style="z-index: 1; opacity: 0;"></iframe>
+    <iframe id="frame-prev" sandbox="allow-same-origin" scrolling="$frameScrolling" style="z-index: 1; opacity: 0;"></iframe>
+    <iframe id="frame-curr" sandbox="allow-same-origin" scrolling="$frameScrolling" style="z-index: 2; opacity: 1;"></iframe>
+    <iframe id="frame-next" sandbox="allow-same-origin" scrolling="$frameScrolling" style="z-index: 1; opacity: 0;"></iframe>
   </div>
 </body>
 </html>

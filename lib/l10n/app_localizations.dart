@@ -806,12 +806,6 @@ abstract class AppLocalizations {
   /// **'Experimental Feature'**
   String get experimentalFeature;
 
-  /// Experimental feature warning content
-  ///
-  /// In en, this message translates to:
-  /// **'WebDAV sync is currently in experimental stage and may have some issues or instability.\n\nPlease ensure before using:\n• Important data is backed up\n• Understand WebDAV server configuration\n• Network connection is stable\n\nPlease provide feedback if you encounter any issues.'**
-  String get experimentalFeatureWarning;
-
   /// I know button text
   ///
   /// In en, this message translates to:
@@ -821,7 +815,7 @@ abstract class AppLocalizations {
   /// Invalid file type error message
   ///
   /// In en, this message translates to:
-  /// **'Invalid file type. Please select an EPUB file.'**
+  /// **'Invalid file type. Please select an EPUB file'**
   String get invalidFileType;
 
   /// File access error message
@@ -857,7 +851,7 @@ abstract class AppLocalizations {
   /// Clean cache success message
   ///
   /// In en, this message translates to:
-  /// **'Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.'**
+  /// **'Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}'**
   String cleanCacheSuccessWithCount(int count);
 
   /// Clean cache success message when no files were removed
@@ -1151,7 +1145,7 @@ abstract class AppLocalizations {
   /// Restore success message with book count
   ///
   /// In en, this message translates to:
-  /// **'Successfully restored {count} {count, plural, =1{book} other{books}}.'**
+  /// **'Successfully restored {count} {count, plural, =1{book} other{books}}'**
   String restoreSuccess(int count);
 
   /// Restore failure message
@@ -1265,7 +1259,7 @@ abstract class AppLocalizations {
   /// Message shown on iOS when user tries to open storage location, since it's not possible to open it directly
   ///
   /// In en, this message translates to:
-  /// **'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.'**
+  /// **'Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data'**
   String get openStorageLocationIOSMessage;
 
   /// Title of the dialog shown when the user tries to leave edit mode with unsaved changes
@@ -1400,11 +1394,41 @@ abstract class AppLocalizations {
   /// **'Follow in-book links'**
   String get readerHandleIntraLink;
 
-  /// Reader style sheet section title for page-turning animation
+  /// Reader style sheet section title for the chapter layout mode
   ///
   /// In en, this message translates to:
-  /// **'Pagination'**
-  String get readerPageAnimationSection;
+  /// **'Reading Layout'**
+  String get readerScrollModeSection;
+
+  /// Reader style sheet subsection label grouping the layout options (paged or scrolling)
+  ///
+  /// In en, this message translates to:
+  /// **'Pagination Mode'**
+  String get readerPaginationMode;
+
+  /// Reading layout option: discrete pages turned horizontally
+  ///
+  /// In en, this message translates to:
+  /// **'Paged'**
+  String get readerScrollModePaginated;
+
+  /// Reading layout option: continuous vertical scrolling
+  ///
+  /// In en, this message translates to:
+  /// **'Scrolling'**
+  String get readerScrollModeScrolling;
+
+  /// Explanation shown when the scrolling layout is disabled because the book's page progression is not left-to-right
+  ///
+  /// In en, this message translates to:
+  /// **'Scrolling is unavailable for vertical or right-to-left books'**
+  String get readerScrollModeUnsupported;
+
+  /// Reader style sheet subsection label for the page-turning animation, shown only while the layout is paged
+  ///
+  /// In en, this message translates to:
+  /// **'Page Turn'**
+  String get readerPageTurn;
 
   /// Page animation option: no animation
   ///
@@ -1412,11 +1436,11 @@ abstract class AppLocalizations {
   /// **'None'**
   String get readerPageAnimationNone;
 
-  /// Page animation option: slide/swipe transition
+  /// Page animation option: the incoming page covers the current one
   ///
   /// In en, this message translates to:
-  /// **'Slide'**
-  String get readerPageAnimationSlide;
+  /// **'Cover'**
+  String get readerPageAnimationCover;
 
   /// Toggle label to use hardware volume keys for page turning
   ///
@@ -1457,7 +1481,7 @@ abstract class AppLocalizations {
   /// Tip shown in the reader font subsection directing users to the settings screen
   ///
   /// In en, this message translates to:
-  /// **'Manage custom fonts in Settings.'**
+  /// **'Manage custom fonts in Settings'**
   String get readerFontManageTip;
 
   /// Title of the font management screen
@@ -1619,7 +1643,7 @@ abstract class AppLocalizations {
   /// Shown in the external source dialog when its stored configuration cannot be read
   ///
   /// In en, this message translates to:
-  /// **'Could not read this source\'s configuration.'**
+  /// **'Could not read this source\'s configuration'**
   String get externalSourceConfigurationLoadFailed;
 
   /// Label of the WebDAV server URL field
@@ -1709,7 +1733,7 @@ abstract class AppLocalizations {
   /// Body of the external source delete confirmation dialog
   ///
   /// In en, this message translates to:
-  /// **'Delete “{name}” and its configuration? Imported books are not affected.'**
+  /// **'Delete “{name}” and its configuration? Imported books are not affected'**
   String externalSourceDeleteConfirmText(String name);
 
   /// Action that opens the external source editor
@@ -1871,7 +1895,7 @@ abstract class AppLocalizations {
   /// Error message shown when the cover picker fails to load an image
   ///
   /// In en, this message translates to:
-  /// **'Could not load this image. Please choose another image file.'**
+  /// **'Could not load this image. Please choose another image file'**
   String get coverPickFailed;
 }
 

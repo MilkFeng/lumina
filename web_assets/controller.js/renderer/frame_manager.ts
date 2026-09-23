@@ -1,4 +1,4 @@
-import type { ReaderState, FrameSlot, Direction } from '../common/types';
+import type { ReaderState, FrameSlot, Direction, ScrollPosition } from '../common/types';
 
 export class FrameManager {
   constructor(private state: ReaderState) { }
@@ -29,6 +29,32 @@ export class FrameManager {
     return this.state.config.direction === 1;
   }
 
+  /// Check if the chapter is laid out as one continuous vertical column
+  isScrollMode(): boolean {
+    return this.state.config.scrollMode === true;
+  }
+
+  /// Whether content advances along the vertical axis — either because the
+  /// book itself is vertically paginated, or because scroll mode is on
+  isVerticalAxis(): boolean {
+    return this.isVertical() || this.isScrollMode();
+  }
+
+  /// Where the given iframe is scrolled to along the scrolling axis.
+  ///
+  /// `maxOffset` is the largest reachable offset — `0` when the chapter fits on
+  /// one screen.
+  getScrollPosition(iframe: HTMLIFrameElement | null): ScrollPosition {
+    if (!iframe || !iframe.contentDocument || !iframe.contentDocument.body) {
+      return { offset: 0, maxOffset: 0 };
+    }
+    const body = iframe.contentDocument.body;
+    return {
+      offset: body.scrollTop,
+      maxOffset: Math.max(0, body.scrollHeight - body.clientHeight),
+    };
+  }
+
   /// Get the safe width for the iframes based on the configuration
   getWidth(): number {
     return this.state.config.safeWidth;
@@ -43,7 +69,7 @@ export class FrameManager {
   scrollTo(iframe: HTMLIFrameElement, offset: number): void {
     if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
 
-    const scrollOptions: ScrollToOptions = this.isVertical()
+    const scrollOptions: ScrollToOptions = this.isVerticalAxis()
       ? { top: offset, left: 0, behavior: 'auto' }
       : { top: 0, left: offset, behavior: 'auto' };
 

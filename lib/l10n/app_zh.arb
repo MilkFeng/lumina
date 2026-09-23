@@ -586,10 +586,6 @@
   "@experimentalFeature": {
     "description": "实验性功能标题"
   },
-  "experimentalFeatureWarning": "WebDAV同步功能目前处于实验阶段，可能存在一些问题或不稳定的情况。\n\n使用前请确保：\n• 已备份重要数据\n• 了解WebDAV服务器的配置\n• 网络连接稳定\n\n如遇到问题，请及时反馈。",
-  "@experimentalFeatureWarning": {
-    "description": "实验性功能警告内容"
-  },
   "iKnow": "我知道了",
   "@iKnow": {
     "description": "我知道了按钮文本"
@@ -959,7 +955,7 @@
   "@unsavedChangesTitle": {
     "description": "退出编辑模式时提示有未保存修改的对话框标题"
   },
-  "unsavedChangesMessage": "您有未保存的修改，请选择操作。",
+  "unsavedChangesMessage": "您有未保存的修改，请选择操作",
   "@unsavedChangesMessage": {
     "description": "退出编辑模式时提示有未保存修改的对话框正文"
   },
@@ -1043,17 +1039,37 @@
   "@readerHandleIntraLink": {
     "description": "是否跟随书内（epub://）链接跳转的开关标签"
   },
-  "readerPageAnimationSection": "翻页",
-  "@readerPageAnimationSection": {
-    "description": "阅读器样式面板翻页动画区块标题"
+  "readerScrollModeSection": "阅读版式",
+  "@readerScrollModeSection": {
+    "description": "阅读器样式面板章节版式区块标题"
+  },
+  "readerPaginationMode": "分页方式",
+  "@readerPaginationMode": {
+    "description": "阅读器样式面板小节标题：版式选项（分页或滚动）"
+  },
+  "readerScrollModePaginated": "分页",
+  "@readerScrollModePaginated": {
+    "description": "阅读版式选项：横向分页翻页"
+  },
+  "readerScrollModeScrolling": "滚动",
+  "@readerScrollModeScrolling": {
+    "description": "阅读版式选项：连续纵向滚动"
+  },
+  "readerScrollModeUnsupported": "竖排或从右向左排版的书籍不支持滚动版式",
+  "@readerScrollModeUnsupported": {
+    "description": "当书籍翻页方向不是从左向右、滚动版式被禁用时显示的说明"
+  },
+  "readerPageTurn": "翻页",
+  "@readerPageTurn": {
+    "description": "阅读器样式面板小节标题：翻页动画，仅在分页方式为分页时显示"
   },
   "readerPageAnimationNone": "无动画",
   "@readerPageAnimationNone": {
     "description": "翻页动画选项：无动画"
   },
-  "readerPageAnimationSlide": "滑动翻页",
-  "@readerPageAnimationSlide": {
-    "description": "翻页动画选项：滑动过渡"
+  "readerPageAnimationCover": "覆盖",
+  "@readerPageAnimationCover": {
+    "description": "翻页动画选项：新页面覆盖当前页面"
   },
   "readerVolumeKeyTurnsPage": "用音量键翻页",
   "@readerVolumeKeyTurnsPage": {
@@ -1222,7 +1238,7 @@
   "@externalSourceConfiguration": {
     "description": "外部源对话框中类型专属字段上方的标题"
   },
-  "externalSourceConfigurationLoadFailed": "无法读取该外部源的配置。",
+  "externalSourceConfigurationLoadFailed": "无法读取该外部源的配置",
   "@externalSourceConfigurationLoadFailed": {
     "description": "外部源对话框无法读取已保存配置时显示的提示"
   },
@@ -1302,7 +1318,7 @@
   "@externalSourceDeleteConfirm": {
     "description": "删除外部源确认对话框的标题"
   },
-  "externalSourceDeleteConfirmText": "确定要删除“{name}”及其配置吗？已导入的书籍不受影响。",
+  "externalSourceDeleteConfirmText": "确定要删除“{name}”及其配置吗？已导入的书籍不受影响",
   "@externalSourceDeleteConfirmText": {
     "description": "删除外部源确认对话框的内容",
     "placeholders": {
@@ -1430,7 +1446,7 @@
   "@changeCover": {
     "description": "更换书籍封面的按钮提示"
   },
-  "coverPickFailed": "无法读取此图片，请选择其他图片文件。",
+  "coverPickFailed": "无法读取此图片，请选择其他图片文件",
   "@coverPickFailed": {
     "description": "更换封面失败时的提示"
   }

@@ -578,15 +578,11 @@
   "@experimentalFeature": {
     "description": "Experimental feature title"
   },
-  "experimentalFeatureWarning": "WebDAV sync is currently in experimental stage and may have some issues or instability.\n\nPlease ensure before using:\n• Important data is backed up\n• Understand WebDAV server configuration\n• Network connection is stable\n\nPlease provide feedback if you encounter any issues.",
-  "@experimentalFeatureWarning": {
-    "description": "Experimental feature warning content"
-  },
   "iKnow": "I Know",
   "@iKnow": {
     "description": "I know button text"
   },
-  "invalidFileType": "Invalid file type. Please select an EPUB file.",
+  "invalidFileType": "Invalid file type. Please select an EPUB file",
   "@invalidFileType": {
     "description": "Invalid file type error message"
   },
@@ -610,7 +606,7 @@
   "@cleanCacheSubtitle": {
     "description": "Clean cache subtitle"
   },
-  "cleanCacheSuccessWithCount": "Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}.",
+  "cleanCacheSuccessWithCount": "Cache cleaned. Removed {count} unused {count, plural, =1{file} other{files}}",
   "@cleanCacheSuccessWithCount": {
     "description": "Clean cache success message",
     "placeholders": {
@@ -831,7 +827,7 @@
   "@restoreCompleted": {
     "description": "Title shown when restore finishes"
   },
-  "restoreSuccess": "Successfully restored {count} {count, plural, =1{book} other{books}}.",
+  "restoreSuccess": "Successfully restored {count} {count, plural, =1{book} other{books}}",
   "@restoreSuccess": {
     "description": "Restore success message with book count",
     "placeholders": {
@@ -943,7 +939,7 @@
       }
     }
   },
-  "openStorageLocationIOSMessage": "Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data.",
+  "openStorageLocationIOSMessage": "Please open the \"Lumina\" folder under the \"On My iPhone/iPad\" section in the Files app to access your data",
   "@openStorageLocationIOSMessage": {
     "description": "Message shown on iOS when user tries to open storage location, since it's not possible to open it directly"
   },
@@ -1035,17 +1031,37 @@
   "@readerHandleIntraLink": {
     "description": "Switch label to enable/disable following intra-book (epub://) links"
   },
-  "readerPageAnimationSection": "Pagination",
-  "@readerPageAnimationSection": {
-    "description": "Reader style sheet section title for page-turning animation"
+  "readerScrollModeSection": "Reading Layout",
+  "@readerScrollModeSection": {
+    "description": "Reader style sheet section title for the chapter layout mode"
+  },
+  "readerPaginationMode": "Pagination Mode",
+  "@readerPaginationMode": {
+    "description": "Reader style sheet subsection label grouping the layout options (paged or scrolling)"
+  },
+  "readerScrollModePaginated": "Paged",
+  "@readerScrollModePaginated": {
+    "description": "Reading layout option: discrete pages turned horizontally"
+  },
+  "readerScrollModeScrolling": "Scrolling",
+  "@readerScrollModeScrolling": {
+    "description": "Reading layout option: continuous vertical scrolling"
+  },
+  "readerScrollModeUnsupported": "Scrolling is unavailable for vertical or right-to-left books",
+  "@readerScrollModeUnsupported": {
+    "description": "Explanation shown when the scrolling layout is disabled because the book's page progression is not left-to-right"
+  },
+  "readerPageTurn": "Page Turn",
+  "@readerPageTurn": {
+    "description": "Reader style sheet subsection label for the page-turning animation, shown only while the layout is paged"
   },
   "readerPageAnimationNone": "None",
   "@readerPageAnimationNone": {
     "description": "Page animation option: no animation"
   },
-  "readerPageAnimationSlide": "Slide",
-  "@readerPageAnimationSlide": {
-    "description": "Page animation option: slide/swipe transition"
+  "readerPageAnimationCover": "Cover",
+  "@readerPageAnimationCover": {
+    "description": "Page animation option: the incoming page covers the current one"
   },
   "readerVolumeKeyTurnsPage": "Volume Keys Turn Pages",
   "@readerVolumeKeyTurnsPage": {
@@ -1071,7 +1087,7 @@
   "@readerManageFonts": {
     "description": "Button/link label to navigate to the font management screen"
   },
-  "readerFontManageTip": "Manage custom fonts in Settings.",
+  "readerFontManageTip": "Manage custom fonts in Settings",
   "@readerFontManageTip": {
     "description": "Tip shown in the reader font subsection directing users to the settings screen"
   },
@@ -1214,7 +1230,7 @@
   "@externalSourceConfiguration": {
     "description": "Heading above the type-specific fields of the external source dialog"
   },
-  "externalSourceConfigurationLoadFailed": "Could not read this source's configuration.",
+  "externalSourceConfigurationLoadFailed": "Could not read this source's configuration",
   "@externalSourceConfigurationLoadFailed": {
     "description": "Shown in the external source dialog when its stored configuration cannot be read"
   },
@@ -1294,7 +1310,7 @@
   "@externalSourceDeleteConfirm": {
     "description": "Title of the external source delete confirmation dialog"
   },
-  "externalSourceDeleteConfirmText": "Delete “{name}” and its configuration? Imported books are not affected.",
+  "externalSourceDeleteConfirmText": "Delete “{name}” and its configuration? Imported books are not affected",
   "@externalSourceDeleteConfirmText": {
     "description": "Body of the external source delete confirmation dialog",
     "placeholders": {
@@ -1422,7 +1438,7 @@
   "@changeCover": {
     "description": "Button that opens the cover picker"
   },
-  "coverPickFailed": "Could not load this image. Please choose another image file.",
+  "coverPickFailed": "Could not load this image. Please choose another image file",
   "@coverPickFailed": {
     "description": "Error message shown when the cover picker fails to load an image"
   }

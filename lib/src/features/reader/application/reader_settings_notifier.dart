@@ -21,6 +21,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   static const _kLinkHandling = 'reader_link_handling';
   static const _kHandleIntraLink = 'reader_handle_intra_link';
   static const _kPageAnimation = 'reader_page_animation';
+  static const _kScrollMode = 'reader_scroll_mode';
   static const _kFontFileName = 'reader_font_file_name';
   static const _kOverrideFontFamily = 'reader_override_font_family';
   static const _kVolumeKeyTurnsPage = 'reader_volume_key_turns_page';
@@ -31,6 +32,7 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
     final prefs = ref.watch(sharedPreferencesProvider);
     final linkHandlingIndex = prefs.getInt(_kLinkHandling);
     final pageAnimationIndex = prefs.getInt(_kPageAnimation);
+    final scrollModeIndex = prefs.getInt(_kScrollMode);
 
     // Validate stored font is still in the imported fonts list; clean up if not.
     String? fontFileName = prefs.getString(_kFontFileName);
@@ -63,6 +65,9 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
       handleIntraLink: prefs.getBool(_kHandleIntraLink),
       pageAnimation: pageAnimationIndex != null
           ? ReaderPageAnimation.values.elementAt(pageAnimationIndex)
+          : null,
+      scrollMode: scrollModeIndex != null
+          ? ReaderScrollMode.values.elementAt(scrollModeIndex)
           : null,
       fontFileName: fontFileName,
       overrideFontFamily: overrideFontFamily,
@@ -137,6 +142,11 @@ class ReaderSettingsNotifier extends _$ReaderSettingsNotifier {
   Future<void> setPageAnimation(ReaderPageAnimation value) async {
     await _prefs.setInt(_kPageAnimation, value.index);
     state = state.copyWith(pageAnimation: value);
+  }
+
+  Future<void> setScrollMode(ReaderScrollMode value) async {
+    await _prefs.setInt(_kScrollMode, value.index);
+    state = state.copyWith(scrollMode: value);
   }
 
   Future<void> setFontFileName(String? value) async {

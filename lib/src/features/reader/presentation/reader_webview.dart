@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -11,6 +12,7 @@ import 'package:lumina/src/features/reader/domain/epub_theme.dart';
 import '../data/book_session.dart';
 import '../data/epub_webview_handler.dart';
 import '../data/reader_scripts.dart';
+import '../data/services/reader_haptics_service.dart';
 import 'package:lumina/src/web/api/webview_bridge.dart';
 import 'package:lumina/src/web/api/lumina_api.dart';
 
@@ -41,17 +43,37 @@ class ReaderWebViewController {
     String frame,
     String url,
     String anchors,
-    String properties,
-  ) async {
-    return await _webViewState?._loadFrame(frame, url, anchors, properties);
+    String properties, {
+    double? initialScrollRatio,
+  }) async {
+    return await _webViewState?._loadFrame(
+      frame,
+      url,
+      anchors,
+      properties,
+      initialScrollRatio: initialScrollRatio,
+    );
   }
 
   Future<void> jumpToPage(int pageIndex) async {
     await _webViewState?._jumpToPage(pageIndex);
   }
 
-  Future<void> restoreScrollPosition(double ratio) async {
-    await _webViewState?._restoreScrollPosition(ratio);
+  /// Scrolls by roughly one screenful, in scroll mode.
+  ///
+  /// A one-shot command for a turn the reader started: the page does the
+  /// scrolling.  The future completes when the screenful has landed, so a
+  /// caller can keep one turn running at a time.
+  Future<void> scrollByViewport(bool isNext) async {
+    await _webViewState?._scrollByViewport(isNext);
+  }
+
+  /// Lands the viewport scroll that is animating, if any, on its target now.
+  ///
+  /// Fire-and-forget: the turn it settles is the one whose
+  /// [scrollByViewport] future is already being awaited.
+  Future<void> finishScrollByViewport() async {
+    await _webViewState?._finishScrollByViewport();
   }
 
   Future<void> checkLongPressElementAt(double x, double y) async {
@@ -83,25 +105,48 @@ class ReaderWebViewController {
   }
 }
 
-final InAppWebViewSettings defaultSettings = InAppWebViewSettings(
-  disableContextMenu: true,
-  disableLongPressContextMenuOnLinks: true,
-  selectionGranularity: SelectionGranularity.CHARACTER,
-  transparentBackground: true,
-  allowFileAccessFromFileURLs: true,
-  allowUniversalAccessFromFileURLs: true,
-  useShouldInterceptRequest: true,
-  useOnLoadResource: false,
-  useShouldOverrideUrlLoading: true,
-  javaScriptEnabled: true,
-  disableHorizontalScroll: true,
-  disableVerticalScroll: true,
-  supportZoom: false,
-  useHybridComposition: false,
-  resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
-  verticalScrollBarEnabled: false,
-  horizontalScrollBarEnabled: false,
-  overScrollMode: OverScrollMode.NEVER,
+/// Builds the reader WebView settings for a given layout mode.
+///
+/// The two modes differ in two ways.
+///
+/// **Composition.**  Paginated mode must stay on the virtual display, because
+/// the Android page-turn animation screenshots the WebView through
+/// `RepaintBoundary.toImage()` and hybrid composition renders into a separate
+/// surface that the boundary cannot capture.  Scroll mode has no screenshot
+/// path and uses hybrid composition instead.
+///
+/// **Who scrolls.**  Paginated mode keeps native scrolling off: Flutter owns
+/// the page-turn gesture and drives every offset with `jumpToPage`.  Scroll
+/// mode does the opposite — the chapter scrolls itself with the browser's own
+/// scroller, because pushing an offset in from Flutter costs a platform-channel
+/// round-trip per frame and lags behind the finger.  Only the vertical axis is
+/// handed over; the horizontal one stays pinned, which is what
+/// `disableHorizontalScroll` does on both platforms.
+InAppWebViewSettings readerWebViewSettings({required bool scrollMode}) =>
+    InAppWebViewSettings(
+      disableContextMenu: true,
+      disableLongPressContextMenuOnLinks: true,
+      selectionGranularity: SelectionGranularity.CHARACTER,
+      transparentBackground: true,
+      allowFileAccessFromFileURLs: true,
+      allowUniversalAccessFromFileURLs: true,
+      useShouldInterceptRequest: true,
+      useOnLoadResource: false,
+      useShouldOverrideUrlLoading: true,
+      javaScriptEnabled: true,
+      disableHorizontalScroll: true,
+      disableVerticalScroll: !scrollMode,
+      supportZoom: false,
+      useHybridComposition: false,
+      resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
+      verticalScrollBarEnabled: false,
+      horizontalScrollBarEnabled: false,
+      overScrollMode: OverScrollMode.NEVER,
+    );
+
+/// Settings used by the WebView pre-warm in `main.dart` and by paginated mode.
+final InAppWebViewSettings defaultSettings = readerWebViewSettings(
+  scrollMode: false,
 );
 
 /// Callbacks for WebView events
@@ -110,6 +155,14 @@ class ReaderWebViewCallbacks {
   final Function(int totalPages) onPageCountReady;
   final Function(int pageIndex) onPageChanged;
   final Function(List<String> anchors) onScrollAnchors;
+
+  /// Reports where the page scrolled itself to: the current offset and the
+  /// largest one the chapter allows, both in CSS pixels.
+  final Function(double offset, double maxOffset) onScrollProgress;
+
+  /// Reports that the page stopped scrolling, which is when reading progress is
+  /// worth persisting.
+  final Function() onScrollSettled;
   final Function(String imageUrl, Rect rect) onImageLongPress;
   final Function(double x, double y) onTap;
   final Function(String innerHtml, Rect rect, String baseUrl) onFootnoteTap;
@@ -121,6 +174,8 @@ class ReaderWebViewCallbacks {
     required this.onPageCountReady,
     required this.onPageChanged,
     required this.onScrollAnchors,
+    required this.onScrollProgress,
+    required this.onScrollSettled,
     required this.onImageLongPress,
     required this.onTap,
     required this.onFootnoteTap,
@@ -143,6 +198,12 @@ class ReaderWebView extends StatefulWidget {
   final String? coverRelativePath;
   final int direction;
 
+  /// Whether the chapter is laid out as one continuous scrollable column.
+  ///
+  /// Toggling this recreates the WebView, because the Android composition mode
+  /// is baked into the platform view at creation time.
+  final bool scrollMode;
+
   const ReaderWebView({
     super.key,
     required this.bookSession,
@@ -156,6 +217,7 @@ class ReaderWebView extends StatefulWidget {
     required this.shouldShowWebView,
     this.coverRelativePath,
     required this.direction,
+    required this.scrollMode,
   });
 
   @override
@@ -168,6 +230,17 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   InAppWebViewController? _controller;
   HeadlessInAppWebView? _headlessWebView;
   bool _isHeadlessInitialized = false;
+
+  /// Whether the visible platform view still has to wait for the pre-warm of the
+  /// current layout mode to start before it can be created.
+  ///
+  /// The visible WebView attaches the pre-warmed engine, and it can only do that
+  /// once that engine is running: a platform view created before then builds a
+  /// WebView of its own instead — which, right after a layout-mode change, is a
+  /// WebView created in the same frame its predecessor is torn down, and one
+  /// that never gets painted.  See [_ReaderWebViewState.build] and
+  /// [_startHeadlessWebView].
+  bool _isWaitingForHeadless = true;
 
   bool _isSubsequentLoad = false;
 
@@ -186,6 +259,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
   @override
   void didUpdateWidget(covariant ReaderWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollMode != widget.scrollMode) {
+      _recreateWebView();
+    }
     if (!oldWidget.isLoading && widget.isLoading) {
       setState(() {
         _isSubsequentLoad = true;
@@ -193,12 +269,49 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     }
   }
 
+  @override
+  void dispose() {
+    widget.controller._attachState(null);
+    _disposeWebView();
+    super.dispose();
+  }
+
+  /// Tears the WebView down so that the next build recreates it.
+  ///
+  /// The Android platform-view composition mode is fixed when the view is
+  /// created, so switching layout mode has to go through a full recreation —
+  /// see [readerWebViewSettings].
+  void _disposeWebView() {
+    _bridge.detach();
+    _controller = null;
+    _headlessWebView?.dispose();
+    _headlessWebView = null;
+    _isHeadlessInitialized = false;
+  }
+
+  /// Recreates the WebView for the layout mode that was just switched to.
+  ///
+  /// The replacement cannot be created in this frame: a platform view built in
+  /// the same frame as its predecessor's teardown is never painted — the page
+  /// loads, runs and reports its chapters, but stays invisible — and the fresh
+  /// pre-warm it would have to attach to has not started yet in that frame
+  /// either.  Holding the visible view back until that pre-warm is running
+  /// reproduces the sequence of the reader's first open, which is the one that
+  /// paints.  The empty frame in between shows the theme surface, exactly like
+  /// the loading layer that follows it.
+  void _recreateWebView() {
+    _disposeWebView();
+    _isWaitingForHeadless = true;
+    // No `setState`: this runs from `didUpdateWidget`, in the build that is
+    // already on its way.
+  }
+
   void _initHeadlessWebViewIfNeeded(double width, double height) {
     if (_isHeadlessInitialized) return;
 
     _headlessWebView = HeadlessInAppWebView(
       initialData: _generateInitialData(width, height),
-      initialSettings: defaultSettings,
+      initialSettings: readerWebViewSettings(scrollMode: widget.scrollMode),
       shouldInterceptRequest: _shouldInterceptRequest,
       onLoadResourceWithCustomScheme: _onLoadResourceWithCustomScheme,
       shouldOverrideUrlLoading: _shouldOverrideUrlLoading,
@@ -206,8 +319,36 @@ class _ReaderWebViewState extends State<ReaderWebView> {
       onLoadStop: _onLoadStop,
     );
 
-    _headlessWebView?.run();
     _isHeadlessInitialized = true;
+    _isWaitingForHeadless = true;
+    unawaited(_startHeadlessWebView());
+  }
+
+  /// Starts the pre-warm and releases the visible WebView once it runs.
+  ///
+  /// The timeout is a safety net: an engine that cannot be started must not
+  /// leave the reader on an empty page, and the visible WebView still works
+  /// without a pre-warm to attach to.
+  Future<void> _startHeadlessWebView() async {
+    final headless = _headlessWebView;
+    if (headless == null) return;
+
+    try {
+      await headless.run().timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('ReaderWebView: WebView pre-warm failed: $e');
+    }
+
+    if (!mounted || !identical(headless, _headlessWebView)) {
+      // Torn down or replaced while it was starting: the `dispose()` of that
+      // moment could do nothing, because the engine was not running yet.
+      await headless.dispose();
+      return;
+    }
+
+    setState(() {
+      _isWaitingForHeadless = false;
+    });
   }
 
   Future<void> _waitForWebviewRender() async {
@@ -231,13 +372,21 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     String frame,
     String url,
     String anchors,
-    String properties,
-  ) => _api.loadFrame(frame, url, anchors, properties);
+    String properties, {
+    double? initialScrollRatio,
+  }) => _api.loadFrame(
+    frame,
+    url,
+    anchors,
+    properties,
+    initialScrollRatio: initialScrollRatio,
+  );
 
   Future<void> _jumpToPage(int pageIndex) => _api.jumpToPage(pageIndex);
 
-  Future<void> _restoreScrollPosition(double ratio) =>
-      _api.restoreScrollPosition(ratio);
+  Future<void> _scrollByViewport(bool isNext) => _api.scrollByViewport(isNext);
+
+  Future<void> _finishScrollByViewport() => _api.finishScrollByViewport();
 
   Future<void> _checkLongPressElementAt(double x, double y) =>
       _api.checkLongPressElementAt(x, y);
@@ -252,6 +401,7 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         height,
         _currentTheme,
         widget.direction,
+        scrollMode: widget.scrollMode,
       ),
       baseUrl: WebUri(EpubWebViewHandler.getBaseUrl()),
     );
@@ -297,6 +447,9 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     _controller = controller;
     _bridge.attach(controller);
     _setupJavaScriptHandlers(controller);
+    // The platform view exists now; whether it is in the window yet decides how
+    // many attempts this needs — see `ReaderHapticsService`.
+    unawaited(ReaderHapticsService.muteWebViewHaptics());
     widget.onWebViewCreated?.call();
   }
 
@@ -317,11 +470,23 @@ class _ReaderWebViewState extends State<ReaderWebView> {
             RepaintBoundary(
               key: _repaintKey,
               child: AbsorbPointer(
-                child: widget.shouldShowWebView
+                // While paginated the WebView must not be hit at all: Flutter
+                // claims every gesture.  In scroll mode it has to be reachable,
+                // because that is what lets the chapter scroll itself — the
+                // gesture arena hands a drag to the platform view as soon as
+                // Flutter does not claim it.  See `ReaderRenderer` for the
+                // gestures Flutter keeps.
+                absorbing: !widget.scrollMode,
+                // The platform view cannot be built before the pre-warm it
+                // attaches to is running; see [_isWaitingForHeadless].
+                child: widget.shouldShowWebView && !_isWaitingForHeadless
                     ? InAppWebView(
+                        key: ValueKey(widget.scrollMode),
                         headlessWebView: _headlessWebView,
                         initialData: _generateInitialData(width, height),
-                        initialSettings: defaultSettings,
+                        initialSettings: readerWebViewSettings(
+                          scrollMode: widget.scrollMode,
+                        ),
                         shouldInterceptRequest: _shouldInterceptRequest,
                         onLoadResourceWithCustomScheme:
                             _onLoadResourceWithCustomScheme,
@@ -401,6 +566,24 @@ class _ReaderWebViewState extends State<ReaderWebView> {
         if (args.isEmpty) return;
         final List<String> anchors = List<String>.from(args[0] as List);
         widget.callbacks.onScrollAnchors(anchors);
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onScrollProgress',
+      callback: (args) {
+        if (args.length < 2) return;
+        widget.callbacks.onScrollProgress(
+          (args[0] as num).toDouble(),
+          (args[1] as num).toDouble(),
+        );
+      },
+    );
+
+    controller.addJavaScriptHandler(
+      handlerName: 'onScrollSettled',
+      callback: (args) {
+        widget.callbacks.onScrollSettled();
       },
     );
 
@@ -504,6 +687,11 @@ class _ReaderWebViewState extends State<ReaderWebView> {
     final width = MediaQuery.of(context).size.width - theme.padding.horizontal;
     final height = MediaQuery.of(context).size.height - theme.padding.vertical;
     _currentTheme = theme;
-    await _api.updateTheme(width, height, theme.toThemeMap());
+    await _api.updateTheme(
+      width,
+      height,
+      theme.toThemeMap(),
+      scrollMode: widget.scrollMode,
+    );
   }
 }

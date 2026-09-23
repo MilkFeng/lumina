@@ -11,6 +11,7 @@ class MainActivity : FlutterFragmentActivity() {
         super.configureFlutterEngine(flutterEngine)
         flutterEngine.plugins.add(NativePickerPlugin())
         flutterEngine.plugins.add(volumeControlPlugin)
+        flutterEngine.plugins.add(ReaderHapticsPlugin())
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
