@@ -126,7 +126,7 @@ InAppWebViewSettings readerWebViewSettings({required bool scrollMode}) =>
       disableHorizontalScroll: true,
       disableVerticalScroll: !scrollMode,
       supportZoom: false,
-      useHybridComposition: scrollMode,
+      useHybridComposition: false,
       resourceCustomSchemes: [EpubWebViewHandler.virtualScheme],
       verticalScrollBarEnabled: false,
       horizontalScrollBarEnabled: false,
