@@ -13,6 +13,7 @@ import { applyTyp } from '../typ/typ';
 import { FrameManager } from './frame_manager';
 import { PaginationManager } from './pagination';
 import { ScrollObserver } from './scroll_observer';
+import { GestureObserver } from './gesture_observer';
 import { InteractionManager } from './interaction';
 import { ThemeManager } from './theme_manager';
 import { CssPolyfillManager } from './css_polyfill';
@@ -28,6 +29,7 @@ export class Renderer implements LuminaApi {
   private frameMgr: FrameManager;
   private paginationMgr: PaginationManager;
   private scrollObserver: ScrollObserver;
+  private gestureObserver: GestureObserver;
   private interactionMgr: InteractionManager;
   private themeMgr: ThemeManager;
   private polyfillMgr: CssPolyfillManager;
@@ -83,6 +85,7 @@ export class Renderer implements LuminaApi {
     this.paginationMgr = new PaginationManager(this.state, this.frameMgr);
     this.scrollObserver = new ScrollObserver(this.frameMgr, this.paginationMgr);
     this.interactionMgr = new InteractionManager(this.state, this.frameMgr);
+    this.gestureObserver = new GestureObserver(this.frameMgr, this.interactionMgr);
     this.themeMgr = new ThemeManager(this.state, this.frameMgr);
     this.polyfillMgr = new CssPolyfillManager(this.state, this.themeMgr, this.frameMgr);
     this.resourceMgr = new ResourceManager(this.state);
@@ -346,8 +349,10 @@ export class Renderer implements LuminaApi {
     const doc = iframe.contentDocument;
     this.themeMgr.injectInitialStyles(doc, iframe);
     // The window is recreated by every navigation, so the scroll listener has
-    // to be re-attached per load.
+    // to be re-attached per load.  The gesture listeners go with it: a frame
+    // that reloads gets a fresh document.
     this.scrollObserver.observe(iframe);
+    this.gestureObserver.observe(iframe);
 
     this.resourceMgr.waitForAllResources(doc).then(() => {
       if (!iframe.contentWindow) return;
@@ -440,6 +445,7 @@ export class Renderer implements LuminaApi {
     if (!iframe || !iframe.contentDocument || !iframe.contentWindow) return;
 
     this.scrollObserver.observe(iframe);
+    this.gestureObserver.observe(iframe);
 
     this.resourceMgr.waitForAllResources(iframe.contentDocument).then(() => {
       const doc = iframe.contentDocument!;

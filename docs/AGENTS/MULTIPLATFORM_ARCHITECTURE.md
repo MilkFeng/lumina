@@ -364,37 +364,60 @@ Android 没有原生翻页插件。`AndroidPageTurnSession` 在 Flutter 内完�
 "a pointer event sequence will only be dispatched to the platform view if no other member
 of the arena claimed it"。所以「谁来滚」这件事完全由 Flutter 侧声明了哪些手势决定：
 
-- 分页模式：`ReaderRenderer` 的 `GestureDetector` 声明了水平拖动、tap、长按，加上 WebView
-  外层的 `AbsorbPointer`，平台视图既不参与命中测试也拿不到指针序列——手势全部属于 Flutter，
+- 分页模式：`ReaderRenderer` 声明 tap、长按、水平拖动，加上 WebView 外层的
+  `AbsorbPointer`，平台视图既不参与命中测试也拿不到指针序列——手势全部属于 Flutter，
   这与 `disableVerticalScroll: true` 一起保证 WebView 不自行滚动。
-- 滚动模式：`ReaderRenderer` **不声明任何拖动识别器**，于是拖动整段被转发成原生 MotionEvent
-  交给 WebView，由浏览器自己的滚动器跟手滚动；tap 与长按仍由 Flutter 抢到，所以链接、脚注、
-  图片查看器、点击切换控制栏的行为完全不变。`AbsorbPointer` 在滚动模式下改为
+- 滚动模式：`ReaderRenderer` **一个识别器都不声明**（gesture map 为空），整段指针序列因此
+  交给 WebView，由浏览器自己的滚动器跟手滚动。`AbsorbPointer` 在滚动模式下改为
   `absorbing: false`，iframe 也要恢复 `pointer-events`（见
   `WEB_ASSETS_ARCHITECTURE.md` 的"连续滚动模式"）。
 - `disableVerticalScroll` 在滚动模式为 `false`（Android 侧插件在 `OnTouchListener` 里会吃掉
   `ACTION_MOVE`；iOS 侧它同时决定 `scrollView.isScrollEnabled`），水平方向仍然禁用。
 
-##### 竞技场是按 sweep 决定 tap 的
+##### 为什么滚动模式下 Flutter 不能声明任何手势
 
-让平台视图进入命中测试会连带改变 **tap 的归属**，这一点必须显式处理：
+框架对平台视图的指针序列是「**先缓存、等竞技场裁决**」：
+`_PlatformViewGestureRecognizer`（`rendering/platform_view.dart`）在竞技场裁决之前把
+down/move/up 全部缓存，赢了才转发给原生视图，输了则 `stopTrackingPointer` 并
+`cachedEvents.remove(pointer)` 直接丢弃。由此有两条不能碰的红线：
 
-- 一次点击既没有识别器「主动声明胜利」，平台视图的 team 也不会自己认输，于是 Flutter 在
-  PointerUp 之后 **sweep** 竞技场，把胜利交给成员列表里的**第一个**成员。
-- 平台视图的识别器（`_PlatformViewGestureRecognizer`）在命中路径上比外层 Flutter 组件更深，
-  所以它永远是第一个成员；它的 team 有 captain，而
-  [GestureArenaTeam](https://api.flutter.dev/flutter/gestures/GestureArenaTeam-class.html)
-  的语义是：**只要队里有人获胜、或竞技场里没有别的竞争者，captain 就代表全队获胜**。
-  结果就是普通 `TapGestureRecognizer` 永远拿不到 tap —— 点击被转发进页面，
-  `onTapUp` 不再触发（长按不受影响，因为 `LongPressGestureRecognizer` 到点会自己声明胜利）。
-- 因此 `ReaderRenderer` 用 `EagerTapGestureRecognizer`
-  （`presentation/gestures/eager_tap_gesture_recognizer.dart`）替代普通 tap 识别器：
-  它在 PointerUp 时主动 `resolve(accepted)`，赶在 sweep 之前拿下竞技场。
-- 拖动仍然归 WebView：`PrimaryPointerGestureRecognizer` 在位移超过 `preAcceptSlopTolerance`
-  时会自我否定，于是拖动照旧落到平台视图手里。
+- **惯性滚动只能被真正的 touch-down 打断。** Chromium 的 fling 由浏览器自己的滚动器/合成器
+  驱动，JS 侧 `scrollTop` / `scrollTo` 无法可靠中止它；本工程 web 端也没有任何 touch 监听，
+  唯一的滚动命令 `scrollByViewport` 只服务于音量键。所以只要 Flutter 抢下一次点击，WebView
+  一个事件都收不到，惯性会一直滚下去——这正是"滑动结束后点击停不下来"的成因。
+- **抢一次点击 = 让出一次滚动能力。** 长按识别器到 500ms 会 `resolve(accepted)` 拿下竞技场，
+  而 `LongPressGestureRecognizer` 的 `postAcceptSlopTolerance` 为 `null`：赢下之后手指怎么
+  移动都不会退出，整个 pointer 序列既不给 WebView 也不给别的识别器。"按住半秒再滑"因此完全
+  滚不动，慢点击也什么都不发生（长按回调只处理图片）。
 
-`test/eager_tap_gesture_recognizer_test.dart` 把这两半都钉住了：普通 `GestureDetector` 会把
-tap 输给平台视图，`EagerTapGestureRecognizer` 拿得到，而超过 slop 的拖动仍然归平台视图。
+所以滚动模式下的 tap、链接、脚注、图片长按全部移进页面：`GestureObserver`
+（`web_assets/controller.js/renderer/gesture_observer.ts`）用 `click` 判 tap——Chromium 在
+触摸变成滚动之后不会派发 `click`，不需要自己写位移/时长阈值——并且每次 `click` 都
+`preventDefault()`（链接与脚注都在页面里判完再回报 Flutter，绝不能让 `<a>` 原生导航）；
+图片长按由页面自己的定时器检测。Dart 侧照旧消费 `onTap` / `onLinkTap` / `onFootnoteTap` /
+`onImageLongPress`，而 `checkTapElementAt` 与 `checkLongPressElementAt` 从此只服务分页模式。
+
+副作用是好的那一面：落在惯性上的一次点击会同时做两件事——touch-down 打断惯性（原生行为），
+紧接着的 `click` 切换控制栏。
+
+##### 分页模式下 tap 的归属与 sweep
+
+分页模式下 tap 由 **sweep** 决定：一次点击若没有识别器主动声明胜利，Flutter 会在 PointerUp
+之后 sweep 竞技场，把胜利交给成员列表里的**第一个**成员，也就是命中路径上最深的那个。这个
+顺序不总是 reader 的——reader 活在 `Scaffold` 里，抽屉关闭时 `DrawerController` 会在 body
+的起始边留一条 `_kEdgeDragWidth` 宽、全高的 `HitTestBehavior.translucent` 拖动带，而
+`scaffold.dart` 把抽屉槽位加在 body **之后**（Stack 里后加者在上、命中测试在前），
+translucent 即使没命中子节点也会把自己记进结果：落在这一条带子里的 tap，抽屉的水平拖动
+识别器比 reader 的 tap 更早进竞技场，sweep 会把这次点击判给抽屉，reader 最左侧的翻页区会
+静默失效。
+
+`EagerTapGestureRecognizer`（`presentation/gestures/eager_tap_gesture_recognizer.dart`）在
+PointerUp 时主动 `resolve(accepted)`，赶在 sweep 之前拿下竞技场，因此与成员顺序无关。拖动
+不受影响：`PrimaryPointerGestureRecognizer` 在位移超过 `preAcceptSlopTolerance` 时会自我
+否定，拖动照旧落到水平拖动识别器手里（滚动模式下则直接落到平台视图手里）。
+
+> 原 `test/eager_tap_gesture_recognizer_test.dart` 已随方案 B 删除，这个识别器目前没有测试
+> 覆盖；它守着的是上面那条起始边拖动带里的点击。
 
 这样滚动不再需要 Flutter 每帧调用 JS 推偏移：被删除的 `WebViewScrollSession` 正是那条路径。
 

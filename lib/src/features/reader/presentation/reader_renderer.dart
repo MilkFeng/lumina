@@ -305,6 +305,11 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     }
   }
 
+  /// Handles a tap in paginated mode, the one mode where Flutter owns it.
+  ///
+  /// Scroll mode has no Flutter tap to reach this: the page recognises its own
+  /// taps and reports them over the bridge, which lands in [_handleTapZone]
+  /// directly.
   void _handleTap(TapUpDetails details) {
     if (widget.showControls) {
       widget.onToggleControls();
@@ -377,11 +382,74 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     }
   }
 
+  /// Handles a long press in paginated mode.
+  ///
+  /// Scroll mode reports image long presses from the page instead, because a
+  /// recogniser that claims the arena there would keep the touch sequence away
+  /// from the WebView.
   Future<void> _handleLongPressStart(LongPressStartDetails details) async {
     await _webViewController.checkLongPressElementAt(
       details.localPosition.dx,
       details.localPosition.dy,
     );
+  }
+
+  /// The recognizers this widget declares.
+  ///
+  /// Gesture ownership is split by layout mode, and this map is the whole
+  /// contract.
+  ///
+  /// * Paginated: Flutter declares the tap, the long press and the horizontal
+  ///   drag.  `ReaderWebView` puts an `AbsorbPointer` over the WebView, so the
+  ///   platform view never competes in the arena and these are simply the
+  ///   reader's own gestures.
+  /// * Scroll mode: Flutter declares *nothing*.  The framework hands a pointer
+  ///   sequence to a platform view only when no member of the gesture arena
+  ///   claims it, so an empty map is exactly what lets every touch reach the
+  ///   page.  Two things depend on that: the chapter scrolls with the browser's
+  ///   own scroller, one compositor step per frame, instead of being pushed an
+  ///   offset over the platform channel for each of them — and, the part that
+  ///   cannot be given up, a touch-down arriving while the chapter is still
+  ///   flinging is delivered, which is the only thing that aborts Chromium's
+  ///   momentum scroll.  Claiming a tap here would buffer and then drop that
+  ///   touch-down, which is why taps, links, footnotes and the image long press
+  ///   are recognised inside the page instead and reported back over the bridge
+  ///   — see `GestureObserver` in `web_assets/controller.js`.
+  Map<Type, GestureRecognizerFactory> get _gestures {
+    if (widget.scrollMode) {
+      return const <Type, GestureRecognizerFactory>{};
+    }
+
+    return <Type, GestureRecognizerFactory>{
+      // Not a plain TapGestureRecognizer: a tap is decided by the arena sweep,
+      // which goes to whoever joined first.  See
+      // `EagerTapGestureRecognizer`.
+      EagerTapGestureRecognizer:
+          GestureRecognizerFactoryWithHandlers<EagerTapGestureRecognizer>(
+            () => EagerTapGestureRecognizer(debugOwner: this),
+            (instance) {
+              instance.onTapUp = widget.shouldShowWebView ? _handleTap : null;
+            },
+          ),
+      LongPressGestureRecognizer:
+          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+            () => LongPressGestureRecognizer(debugOwner: this),
+            (instance) {
+              instance.onLongPressStart = widget.shouldShowWebView
+                  ? _handleLongPressStart
+                  : null;
+            },
+          ),
+      if (widget.shouldShowWebView)
+        HorizontalDragGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<
+              HorizontalDragGestureRecognizer
+            >(() => HorizontalDragGestureRecognizer(debugOwner: this), (
+              instance,
+            ) {
+              instance.onEnd = _handleHorizontalDragEnd;
+            }),
+    };
   }
 
   @override
@@ -398,47 +466,7 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
     return Positioned.fill(
       child: RawGestureDetector(
         behavior: HitTestBehavior.opaque,
-        // Scroll mode deliberately claims no drag at all.  Flutter forwards a
-        // pointer sequence to the platform view exactly when no recognizer in
-        // the arena claims it, so leaving the vertical axis unclaimed is what
-        // hands the drag to the WebView — which then scrolls its own content
-        // natively, one compositor step per frame, instead of being pushed an
-        // offset over the platform channel for every one of them.  Taps and
-        // long presses are still claimed, so links, footnotes and the image
-        // viewer keep going through Flutter.
-        gestures: <Type, GestureRecognizerFactory>{
-          // Not a plain TapGestureRecognizer: a tap is decided by the arena
-          // sweep, and the WebView's team captain takes that sweep.  See
-          // `EagerTapGestureRecognizer`.
-          EagerTapGestureRecognizer:
-              GestureRecognizerFactoryWithHandlers<EagerTapGestureRecognizer>(
-                () => EagerTapGestureRecognizer(debugOwner: this),
-                (instance) {
-                  instance.onTapUp = widget.shouldShowWebView
-                      ? _handleTap
-                      : null;
-                },
-              ),
-          LongPressGestureRecognizer:
-              GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
-                () => LongPressGestureRecognizer(debugOwner: this),
-                (instance) {
-                  instance.onLongPressStart = widget.shouldShowWebView
-                      ? _handleLongPressStart
-                      : null;
-                },
-              ),
-          if (widget.shouldShowWebView && !widget.scrollMode)
-            HorizontalDragGestureRecognizer:
-                GestureRecognizerFactoryWithHandlers<
-                  HorizontalDragGestureRecognizer
-                >(
-                  () => HorizontalDragGestureRecognizer(debugOwner: this),
-                  (instance) {
-                    instance.onEnd = _handleHorizontalDragEnd;
-                  },
-                ),
-        },
+        gestures: _gestures,
         child: Stack(
           fit: StackFit.expand,
           children: [_buildBody(), _buildBottomStatusBarOverlay()],
@@ -480,30 +508,40 @@ class _ReaderRendererState extends ConsumerState<ReaderRenderer>
       left: 0,
       right: 0,
       bottom: 0,
-      child: Container(
-        padding: const EdgeInsets.only(left: 32, right: 32, bottom: 8),
-        constraints: const BoxConstraints(minHeight: 32, maxHeight: 32),
-        child: AnimatedOpacity(
-          duration: (widget.isLoading || !widget.shouldShowWebView)
-              ? Duration.zero
-              : const Duration(
-                  milliseconds: AppTheme.defaultAnimationDurationMs,
+      // The badges are decoration and own no gesture, but a `Text` still absorbs
+      // the hit test, and this band sits *above* the WebView in the stack.  Left
+      // as is, the bottom of the screen would swallow touches in scroll mode,
+      // where no Flutter recognizer is left to pick them up — no page scroll, no
+      // tap.  Letting them through costs nothing: the badges have no behaviour to
+      // lose.
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.only(left: 32, right: 32, bottom: 8),
+          constraints: const BoxConstraints(minHeight: 32, maxHeight: 32),
+          child: AnimatedOpacity(
+            duration: (widget.isLoading || !widget.shouldShowWebView)
+                ? Duration.zero
+                : const Duration(
+                    milliseconds: AppTheme.defaultAnimationDurationMs,
+                  ),
+            curve: Curves.easeOut,
+            opacity: (widget.isLoading || !widget.shouldShowWebView)
+                ? 0.0
+                : 1.0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: buildBadge(
+                    widget.statusBarLeftContent,
+                    false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-          curve: Curves.easeOut,
-          opacity: (widget.isLoading || !widget.shouldShowWebView) ? 0.0 : 1.0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: buildBadge(
-                  widget.statusBarLeftContent,
-                  false,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              buildBadge(widget.statusBarRightContent, true),
-            ],
+                const SizedBox(width: 8),
+                buildBadge(widget.statusBarRightContent, true),
+              ],
+            ),
           ),
         ),
       ),

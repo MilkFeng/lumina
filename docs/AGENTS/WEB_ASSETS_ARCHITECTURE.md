@@ -20,6 +20,7 @@
 | `web_assets/controller.js/api/lumina_api.ts` | Web 端对 Flutter 暴露的 `window.api` TypeScript 接口。 |
 | `web_assets/controller.js/api/flutter_bridge.ts` | Web 端回调 Flutter handler 的封装。 |
 | `web_assets/controller.js/renderer/scroll_observer.ts` | 观察章节自身的原生滚动，向 Flutter 上报位置、锚点与停止滚动。 |
+| `web_assets/controller.js/renderer/gesture_observer.ts` | 滚动模式下在页面内识别 tap 与图片长按，回报 Flutter（见"交互命中"）。 |
 | `web_assets/controller.js/renderer/*` | 渲染、分页、主题、交互命中、CSS polyfill、资源等待等核心逻辑。 |
 | `web_assets/controller.js/typ/*` | 多看和 rendition 固定版式适配。 |
 | `web_assets/controller.js/common/*` | 公共类型、颜色解析、四叉树命中索引。 |
@@ -81,10 +82,14 @@ window.api = api;
 - `PaginationManager` 在滚动模式下短路：`calculatePageCount` 返回 `1`、
   `calculateCurrentPageIndex` 返回 `0`、`calculateScrollOffset` 返回 `0`，
   跳过所有 `+128` 的 column gap 运算；`detectActiveAnchor` 改用纵向轴。
-- **滚动由页面自己完成，不走 JS 接口。** Flutter 在滚动模式下不声明任何拖动识别器，
-  框架的手势竞技场因此把拖动整段转发给平台视图（原生 WebView），由浏览器自身的滚动器
-  跟手滚动。Web 端不提供任何"把偏移推给我"的接口：早期实现由 Flutter 每帧调用
+- **滚动由页面自己完成，不走 JS 接口。** Flutter 在滚动模式下不声明任何手势识别器，
+  框架的手势竞技场因此把整段指针序列转发给平台视图（原生 WebView），由浏览器自身的滚动器
+  跟手滚动。这一点不可放宽：任何 Flutter 识别器抢下指针，框架就会把这次序列缓存后丢弃，
+  页面连 touch-down 都收不到，惯性滚动便无法被打断（详见
+  `MULTIPLATFORM_ARCHITECTURE.md` 的"为什么滚动模式下 Flutter 不能声明任何手势"）。
+  Web 端不提供任何"把偏移推给我"的接口：早期实现由 Flutter 每帧调用
   `scrollContentTo` 推绝对偏移，一次平台通道往返往往超过一帧，内容会明显落后于手指。
+  手势因此也归页面：见"交互命中"里的 `GestureObserver`。
 - Web 端只做**观察**（`ScrollObserver`）：监听当前 frame 的 `scroll` 事件，按
   `requestAnimationFrame` 合并成每帧一次 `onScrollProgress(offset, maxOffset)`，
   active anchor 按 250ms 节流，停止滚动 150ms 后上报一次 `onScrollSettled`。
@@ -151,9 +156,21 @@ window.api = api;
 ### 交互命中
 
 分页模式下 WebView iframe 设置 `pointer-events: none`，手势全部由 Flutter 捕获，再把坐标
-转给 Web 端 API。滚动模式下 iframe 接收指针事件（章节要自己滚动），但拖动之外的触摸仍由
-Flutter 赢得手势竞技场：tap 和长按照旧走 `checkTapElementAt` / `checkLongPressElementAt`，
-链接、脚注与图片查看器的行为与分页模式完全一致。
+转给 Web 端 API（`checkTapElementAt` / `checkLongPressElementAt`，这两个接口从此只服务这一
+模式）。滚动模式下 iframe 接收指针事件，Flutter 侧一个识别器都不声明（原因见
+`MULTIPLATFORM_ARCHITECTURE.md` 的"为什么滚动模式下 Flutter 不能声明任何手势"），tap 与
+图片长按因此由页面自己识别：
+
+- `GestureObserver` 给每个 frame 的 **document**（不是 slot：`cycleFrames` 靠交换 id 复用
+  同一批 iframe 元素）挂 `click` / `touchstart` / `touchmove` / `touchend` / `touchcancel`。
+- tap 用 `click` 判定：Chromium 在触摸变成滚动或惯性之后不会派发 `click`，所以不需要自己写
+  位移或时长阈值，而且落在惯性上的那次点击既打断了滚动、又仍然算一次 tap。每次 `click` 都
+  `preventDefault()`（链接绝不能在页面内原生导航），再用 `event.clientX/clientY`（iframe
+  视口坐标）走 `InteractionManager.checkTapElementAt` —— 链接、脚注与普通 tap 的判定与分页
+  模式完全一致，区别只是 Flutter 不再需要把屏幕坐标传进来，命中用的滚动位置也不再滞后。
+- 图片长按由页面自己的 500ms 定时器检测（位移超过 10px 或抬手即取消），命中后走
+  `checkImageAt` 上报 `onImageLongPress`；紧随其后的那次抬手产生的 `click` 会被吞掉，
+  不再重复算作 tap。
 
 `InteractionManager` 负责：
 
@@ -289,7 +306,9 @@ Flutter 赢得手势竞技场：tap 和长按照旧走 `checkTapElementAt` / `ch
 2. 链接：上报 `onLinkTap(href, x, y)`。
 3. 普通点击：上报 `onTap(x, y)`。
 
-该方法是 fire-and-forget，不使用 token。
+该方法是 fire-and-forget，不使用 token。分页模式由 Flutter 在拿到点击后调用；滚动模式没有
+Flutter 手势，由 `GestureObserver` 在自己的 `click` 处理里调用同一个方法，命中逻辑因此只有
+一份。
 
 ### `checkLongPressElementAt(x, y): void`
 
@@ -448,7 +467,8 @@ npm run typecheck
 - 所有需要 Flutter 等待的 JS 方法都应接收 `token`，最终调用 `onEventFinished(token)`。
 - 滚动模式下的滚动位置由页面自己产生，只通过 `onScrollProgress` / `onScrollSettled` 上报；
   除音量键的 `scrollByViewport` 外，不要再新增让 Flutter 推偏移的接口。
-- `checkTapElementAt` 和 `checkLongPressElementAt` 是手势命中查询，不走 token。
+- `checkTapElementAt` 和 `checkLongPressElementAt` 是手势命中查询，不走 token：分页模式由
+  Flutter 调用，滚动模式由页面内的 `GestureObserver` 调用（`checkImageAt` 亦同）。
 - `cycleFrames` 隐含依赖 `frame-prev`、`frame-curr`、`frame-next` 三个 iframe 都存在。
 - `loadFrame` 的 `properties` 会直接拼成 class 名，传入值需要与 typ 模块和 CSS 约定保持一致。
 - 每个 frame URL 都带 `#anchor`（默认 `#top`），判断"URL 里有没有 anchor"时必须排除 `top`；
