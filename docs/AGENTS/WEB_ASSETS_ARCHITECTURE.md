@@ -92,6 +92,10 @@ window.api = api;
 长按箭头仍然直接翻章并保留 `HapticFeedback.selectionClick()`：那一下振动标记的是"落到另一
 章"，与分页模式一致；翻一屏和分页模式里的翻一页一样不振动。
 
+底部工具栏中间的位置指示两行，两种模式结构相同：第一行是 `当前章/总章数`，第二行分页模式是
+`当前页/总页数`（只有一页的章节不显示），滚动模式是阅读进度百分比——取的就是
+`_ProgressMixin` 里 `displayProgress` 那个字符串，与阅读区底部常驻状态栏右侧显示的是同一个值。
+
 - `body` 上加 `lumina-is-scroll` class，`pagination.css/main.css` 中的
   `body.lumina-is-scroll` 规则把 `column-width` / `column-count` 还原成 `initial`，
   并强制 `overflow-y: auto` / `overflow-x: hidden`。
@@ -248,6 +252,10 @@ window.api = api;
 | `properties` | `string[]?` | spine properties，会转成 `lumina-spine-property-*` class。 |
 | `initialScrollRatio` | `number \| null?` | 起始位置：滚动模式下是滚动范围的比例，分页模式下是页数比例。 |
 
+请求的 URL 与 frame 当前 URL 的 origin + pathname 相同时，frame **不会被重新加载**（fragment
+不同则是文档内跳转）：`onFrameLoad` 会被直接调用一次，并按下文规则重新应用位置。所以"跳到
+本章开头"这类请求必须靠位置应用来完成，不能指望重新加载把页面带回顶部。
+
 加载完成后会：
 
 1. 注入主题 CSS 变量和分页 CSS。
@@ -257,7 +265,11 @@ window.api = api;
 5. 执行 CSS polyfill。
 6. 计算页数，并按 URL hash anchor 或 `initialScrollRatio` 定位；**只有真实 anchor 才算 anchor**
    （`top` 是阅读器自己的默认 anchor，`EpubWebViewHandler.getFileUrl` 会给每个 frame URL
-   追加它），带 `#top` 加载时仍然应用 `initialScrollRatio`。
+   追加它），带 `#top` 加载时仍然应用 `initialScrollRatio`。两者都没有时定位到本章开头
+   （`scrollTo(0)`）：正在加载的文档本来就在开头，但**请求的 URL 与 frame 当前 URL 相同时
+   浏览器不会重新加载它**，没有这一步的话"跳到正在阅读的这一章的开头"（TOC 项指向本章顶部、
+   章节内链接指向本章开头）会毫无反应——URL 一模一样，`onFrameLoad` 里既没有 anchor 也没有
+   `initialScrollRatio` 可应用，页面就停在原处。
 7. 重建交互四叉树，并挂上滚动观察（滚动模式）。
 8. 若是 `curr`，上报 `onPageCountReady(pageCount)`、`onPageChanged(pageIndex)` 和一次
    `onScrollProgress`。

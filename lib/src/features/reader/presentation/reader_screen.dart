@@ -506,6 +506,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen>
                       scrollMode: scrollMode,
                       atScrollStart: atChapterScrollStart,
                       atScrollEnd: atChapterScrollEnd,
+                      scrollProgress: displayProgress,
                       onBack: () {
                         saveProgress();
                         context.pop();

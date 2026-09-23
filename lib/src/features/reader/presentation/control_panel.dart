@@ -24,6 +24,10 @@ class ControlPanel extends ConsumerStatefulWidget {
   /// arrow leads into the chapter on that side once it is.
   final bool atScrollStart;
   final bool atScrollEnd;
+
+  /// How far through the chapter the reader is, as the page reported it — the
+  /// panel's second line while scrolling, where paginated shows a page number.
+  final String scrollProgress;
   final VoidCallback onBack;
   final VoidCallback onOpenDrawer;
   final VoidCallback onPreviousPage;
@@ -49,6 +53,7 @@ class ControlPanel extends ConsumerStatefulWidget {
     required this.scrollMode,
     required this.atScrollStart,
     required this.atScrollEnd,
+    required this.scrollProgress,
     required this.onBack,
     required this.onOpenDrawer,
     required this.onPreviousPage,
@@ -220,6 +225,27 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     return '$currentStr/$totalStr';
   }
 
+  /// The panel's second line: where in the chapter the reader is.
+  ///
+  /// The two layout modes measure that differently.  Paginated counts the pages
+  /// it laid out, so a chapter of one page has nothing to show.  Scrolling has
+  /// no pages at all, and shows the reading progress the page reported instead —
+  /// the same percentage the always-visible status bar carries.
+  String? get _positionInChapterLabel {
+    if (widget.scrollMode) {
+      // Empty until the page reports its first position, which is a frame or
+      // two after it loads.
+      return widget.scrollProgress.isEmpty ? null : widget.scrollProgress;
+    }
+
+    if (widget.totalPagesInChapter <= 1) return null;
+
+    return _formatPageIndicator(
+      widget.currentPageInChapter + 1,
+      widget.totalPagesInChapter,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(readerSettingsProvider);
@@ -380,12 +406,11 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
                                 ),
                               ],
                             ),
-                            if (widget.totalPagesInChapter > 1)
+                            // The second line is the position *within* the
+                            // chapter; see [_positionInChapterLabel].
+                            if (_positionInChapterLabel != null)
                               Text(
-                                _formatPageIndicator(
-                                  widget.currentPageInChapter + 1,
-                                  widget.totalPagesInChapter,
-                                ),
+                                _positionInChapterLabel!,
                                 style: themeData.textTheme.bodyMedium?.copyWith(
                                   fontSize: 10,
                                   fontFeatures: const [

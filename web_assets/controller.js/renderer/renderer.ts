@@ -552,6 +552,15 @@ export class Renderer implements LuminaApi {
                 // The reading position travelled with `loadFrame`, so the frame
                 // comes up already scrolled instead of being moved afterwards.
                 pageIndex = this.applyPositionRatio(iframe, initialRatio);
+              } else {
+                // Neither a position inside the chapter nor a reading position
+                // travelled with the load, so the chapter starts at its top.
+                // A document that is loading is already there, but a load of the
+                // URL the frame is *already* showing does not reload it: without
+                // this, asking for the top of the chapter being read — a TOC
+                // entry, or a link, that points at the chapter's beginning —
+                // would leave the reader exactly where they were.
+                this.frameMgr.scrollTo(iframe, 0);
               }
 
               requestAnimationFrame(() => {
