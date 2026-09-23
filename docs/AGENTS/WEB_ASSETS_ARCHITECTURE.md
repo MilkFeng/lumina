@@ -75,6 +75,8 @@ window.api = api;
 
 `InitConfig.scrollMode` 为 `true` 时，`curr` iframe 内部改为一整列连续内容，垂直滚动阅读，
 章节之间**不**连续（章节切换仍走底部工具栏的左右箭头与 `cycleFrames`）。三帧结构本身不变。
+箭头在这里翻的是整章而不是一页，因此 `ControlPanel` 在滚动模式下不发那一下振动反馈：
+`HapticFeedback.selectionClick()` 的语义是"翻了一页"，只在分页模式成立。
 
 - `body` 上加 `lumina-is-scroll` class，`pagination.css/main.css` 中的
   `body.lumina-is-scroll` 规则把 `column-width` / `column-count` 还原成 `initial`，
@@ -95,6 +97,12 @@ window.api = api;
   active anchor 按 250ms 节流，停止滚动 150ms 后上报一次 `onScrollSettled`。
   `scroll` 事件监听在 window 上以 **capture** 方式注册：章节的滚动容器是 `body` 元素，
   元素滚动事件不会冒泡到 window。
+- 监听按**文档**去重，不能按 window 去重：frame 导航到新章节后 `contentWindow` 返回的
+  window proxy 对象不变，而它当前指向的文档已经换了一个。以 window 作"这个页面我挂过了吗"
+  的判断，会让每个 frame 只在打开时挂上一次监听，此后所有章节切换（TOC 跳转、`cycleFrames`
+  翻章、预加载相邻章节）得到的新文档都不再有监听：滚动照常，但 `onScrollProgress`、
+  `onScrollAnchors`、`onScrollSettled` 全部停报——表现为章节切换后进度百分比与章节名不再更新、
+  阅读位置也不再落盘。判据与 `GestureObserver` 一致，用 `contentDocument`。
 - 让原生滚动成立的四处前提：`InAppWebViewSettings.disableVerticalScroll` 在滚动模式下为
   `false`；`pagination.css` 用 `--lumina-reader-touch-action`（分页 `none` / 滚动 `pan-y`）放开
   纵向平移，且必须写在 `body` 上（有效 `touch-action` 只算到滚动容器为止，写在 `html`

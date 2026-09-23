@@ -10,11 +10,20 @@ import { PaginationManager } from './pagination';
 /// command — pushing an offset from Flutter crosses the platform channel once
 /// per frame and cannot keep up with a finger.
 ///
-/// The listener is attached per iframe element rather than per slot, because
-/// `cycleFrames` swaps the `id`s of the three recycled iframes: an element that
-/// used to be `frame-next` becomes `frame-curr` without ever reloading, so its
-/// listener has to keep working and decide from the current `id` whether it is
-/// still reporting the frame the reader is looking at.
+/// The listener is attached per *document*, because `cycleFrames` swaps the
+/// `id`s of the three recycled iframes: an element that used to be `frame-next`
+/// becomes `frame-curr` without ever reloading, so its listener has to keep
+/// working and decide from the current `id` whether it is still reporting the
+/// frame the reader is looking at.
+///
+/// What is tracked is the document, not the window.  A frame that navigates to
+/// another chapter keeps the same `contentWindow` — that object is the window
+/// proxy, which outlives the document it currently forwards to — so a window is
+/// the wrong thing to ask "have I seen this page before?".  Asking it meant the
+/// listener was attached to the chapter the reader opened at and never again:
+/// after any chapter change the reader kept scrolling (the next document got no
+/// listener) and every report — progress, anchors, settled — stopped coming.
+/// See `GestureObserver`, which keys the same decision on the document.
 export class ScrollObserver {
   /// Anchor detection walks every anchor in the chapter, so it is throttled
   /// rather than run on every scroll frame.
@@ -23,7 +32,7 @@ export class ScrollObserver {
   /// How long the page has to stand still before the scroll counts as settled.
   private static readonly settleDelayMs = 150;
 
-  private readonly observed = new WeakSet<Window>();
+  private readonly observed = new WeakSet<Document>();
 
   private anchorTimer: ReturnType<typeof setTimeout> | null = null;
   private settleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -36,16 +45,17 @@ export class ScrollObserver {
 
   /// Starts observing the scrolling of [iframe].
   ///
-  /// Calling it again for a frame that is already observed is a no-op.  Does
+  /// Calling it again for a document that is already observed is a no-op.  Does
   /// nothing while paginated: there the page never scrolls itself, so there is
   /// nothing to report and no listener to keep.
   observe(iframe: HTMLIFrameElement | null): void {
     if (!this.frameMgr.isScrollMode()) return;
 
     const win = iframe ? iframe.contentWindow : null;
-    if (!iframe || !win || this.observed.has(win)) return;
+    const doc = iframe ? iframe.contentDocument : null;
+    if (!iframe || !win || !doc || this.observed.has(doc)) return;
 
-    this.observed.add(win);
+    this.observed.add(doc);
     // Capture, because the chapter scrolls as an *element* (the chapter body is
     // the scroll container), and a scroll event on an element does not bubble
     // up to the window.  The capture phase still walks down from the window, so

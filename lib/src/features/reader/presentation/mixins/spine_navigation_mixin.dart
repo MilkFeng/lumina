@@ -104,6 +104,13 @@ mixin _SpineNavigationMixin on ConsumerState<ReaderScreen> {
     setState(() {
       isWebViewLoading = false;
     });
+
+    // The chapter reported its position while it was still loading, and
+    // [updateProgressDebounced] drops those reports — that is the point of the
+    // flag.  Without this the badge keeps the chapter that was left behind on
+    // screen until the reader happens to scroll, which reads as the progress
+    // never catching up with a chapter change.
+    updateProgressDebounced();
   }
 
   Future<void> preloadNextOf(int currentIndex) async {

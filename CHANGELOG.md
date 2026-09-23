@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backup Export**: A book's cover is now exported under the file name its record points at, so a cover that does not follow the `{hash}.{ext}` naming convention is no longer left out of the backup.
 - **Scrolling Mode: Switching Layout Keeps the Chapter**: Switching between paginated and scrolling layout no longer leaves the reading area blank. The replacement WebView had been created in the same frame its predecessor was torn down and before the engine it attaches to had started, which left it unpainted: its chapter loaded and every event arrived, but nothing was ever drawn. The reader now recreates it the way its first open does — dispose, start the pre-warm, then build the new view — so the chapter is on screen as soon as the switch is over.
 - **Reader Overscroll**: Dragging past the start or end of a chapter no longer draws Android's native overscroll glow / stretch, and the leftover drag is no longer handed to the document behind the chapter. The WebView's over-scroll mode is a property of the view and does not cover a scroller inside the frame document, so the chapter's own scroller — and the skeleton holding the three frames — now declare `overscroll-behavior: none`.
+- **Scrolling Mode: Progress After a Chapter Change**: Changing chapter no longer leaves the reading percentage and the chapter name frozen for the rest of the chapter, and where you stopped inside a chapter is saved again. The scroll listener was attached once per frame and never re-attached: a frame keeps the same `contentWindow` when it navigates to another chapter, so the check that asked "have I already observed this window?" said yes forever, and the new chapter's document came up without a listener — it still scrolled, but its position, anchors and "came to rest" reports never reached the reader. The check is now keyed on the document, the same way the page's gesture observers are. A chapter's own position report, which arrives while it is still loading, is also published once the load is over instead of being dropped, so the status bar switches to the new chapter's percentage as soon as the chapter appears.
+- **Scrolling Mode: Arrow Vibration**: The bottom bar's arrows no longer vibrate while the reading layout is scrolling. There they turn whole chapters rather than pages, which is not what the tick belongs to; paged layout keeps it.
 
 ### Chinese
 
@@ -71,6 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **备份导出**：导出封面时优先使用书籍记录中保存的文件名，文件名不符合 `{hash}.{ext}` 约定的封面不再被漏掉。
 - **滚动模式：切换版式不再白屏**：在分页与滚动之间切换版式后，阅读区域不再空白。此前替换用的 WebView 与被拆掉的旧视图在同一帧创建，且创建时它要接管的预热引擎还没起来，结果新视图始终不上屏：章节照常加载、事件照常到达，但屏幕上一片空白。现在改为按阅读器“首次打开”的时序重建——先拆、再启动预热、最后才建可见视图——切换结束后章节即已显示。
 - **阅读器 overscroll**：在章节首尾继续拖动时不再出现 Android 原生的 overscroll 辉光/拉伸，多出来的拖动也不会再传给章节背后的文档。WebView 的 over-scroll 模式只是视图自身的属性，管不到 frame 文档内部的滚动容器，因此章节自身的滚动容器与承载三个 frame 的 skeleton 现在都声明 `overscroll-behavior: none`。
+- **滚动模式：切换章节后进度不再更新**：切换章节后，阅读百分比与章节名不再从此刻起一直停住不动，章节内部的阅读位置也会重新落盘。此前滚动监听是「每个 frame 只挂一次」：frame 导航到新章节时 `contentWindow` 返回的还是同一个 window proxy，于是「这个 window 我挂过了吗」的判断永远为真，新章节的文档再也不会挂上监听——页面照常滚动，但位置、锚点与「停止滚动」三类上报全部到不了阅读器。现在改为按**文档**判断，与页面内手势监听的判据一致。另外，章节在加载过程中上报的那次位置信息，会在加载结束后补发一次，而不是被直接丢弃，因此状态栏会在章节出现的瞬间切到新章节的百分比。
+- **滚动模式：箭头按钮振动**：阅读版式为滚动时，底部工具栏的左右箭头不再振动。此时它们翻的是整章而不是一页，那一下振动反馈并不属于这种操作；分页模式下保持原样。
 
 ## [v0.2.4] - 2026-09-19
 

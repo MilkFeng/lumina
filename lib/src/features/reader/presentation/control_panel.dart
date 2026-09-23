@@ -120,23 +120,33 @@ class _ControlPanelState extends ConsumerState<ControlPanel> {
     }
   }
 
+  /// Fires the tick that goes with an arrow press, except in scroll mode.
+  ///
+  /// The tick belongs to a page turn, which is what the arrows do while
+  /// paginated.  In scroll mode they turn whole chapters — the only way through
+  /// the book — and that reads better silent.
+  void _selectionClick() {
+    if (widget.scrollMode) return;
+    HapticFeedback.selectionClick();
+  }
+
   void _handlePreviousChapter() {
     if (widget.currentPageInChapter == 0 && widget.currentSpineItemIndex > 0) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onPreviousChapter();
     } else if (widget.currentPageInChapter > 0) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onFirstPage();
     }
   }
 
   void _handleNextChapter() {
     if (widget.currentSpineItemIndex < widget.totalSpineItems - 1) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onNextChapter();
     } else if (widget.currentSpineItemIndex == widget.totalSpineItems - 1 &&
         widget.currentPageInChapter < widget.totalPagesInChapter - 1) {
-      HapticFeedback.selectionClick();
+      _selectionClick();
       widget.onLastPage();
     }
   }
